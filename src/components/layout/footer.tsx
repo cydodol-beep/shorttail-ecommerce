@@ -7,13 +7,26 @@ import { useStoreSettings } from '@/hooks/use-store-settings';
 import { useCategories } from '@/hooks/use-categories';
 import { useSocialMedia } from '@/hooks/use-social-media';
 import { SocialIcon } from '@/components/ui/social-icon';
+import { useLandingSections } from '@/hooks/use-landing-sections';
 
 export function Footer() {
   const { settings: storeSettings } = useStoreSettings();
   const { getActiveCategories } = useCategories();
   const { getActiveLinks } = useSocialMedia();
+  const { getSectionSettings } = useLandingSections();
   const categories = getActiveCategories();
   const socialLinks = getActiveLinks();
+  
+  const footerSettings = getSectionSettings('footer', {
+    showSocialLinks: true,
+    showCategories: true,
+    showSupport: true,
+    showLegal: true,
+  });
+  const showSocialLinks = footerSettings.showSocialLinks;
+  const showCategories = footerSettings.showCategories;
+  const showSupport = footerSettings.showSupport;
+  const showLegal = footerSettings.showLegal;
 
   return (
     <footer className="border-t border-brown-200 bg-brown-50">
@@ -46,7 +59,7 @@ export function Footer() {
               )}
               <span className="font-bold text-xl text-brown-900">{storeSettings?.storeName || 'ShortTail.id'}</span>
             </Link>
-            {socialLinks.length > 0 && (
+            {showSocialLinks && socialLinks.length > 0 && (
               <div className="flex gap-4 mt-4">
                 {socialLinks.map((link) => (
                   <a
@@ -65,75 +78,81 @@ export function Footer() {
           </div>
 
           {/* Shop */}
-          <div>
-            <h3 className="font-semibold text-brown-900 mb-4">Shop</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/products" className="text-sm text-brown-600 hover:text-primary">
-                  All Products
-                </Link>
-              </li>
-              {categories.slice(0, 5).map((cat) => (
-                <li key={cat.slug}>
-                  <Link 
-                    href={`/products?category=${cat.slug}`} 
-                    className="text-sm text-brown-600 hover:text-primary"
-                  >
-                    {cat.name}
+          {showCategories && (
+            <div>
+              <h3 className="font-semibold text-brown-900 mb-4">Shop</h3>
+              <ul className="space-y-2">
+                <li>
+                  <Link href="/products" className="text-sm text-brown-600 hover:text-primary">
+                    All Products
                   </Link>
                 </li>
-              ))}
-            </ul>
-          </div>
+                {categories.slice(0, 5).map((cat) => (
+                  <li key={cat.slug}>
+                    <Link 
+                      href={`/products?category=${cat.slug}`} 
+                      className="text-sm text-brown-600 hover:text-primary"
+                    >
+                      {cat.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Support */}
-          <div>
-            <h3 className="font-semibold text-brown-900 mb-4">Support</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/help" className="text-sm text-brown-600 hover:text-primary">
-                  Help Center
-                </Link>
-              </li>
-              <li>
-                <Link href="/shipping" className="text-sm text-brown-600 hover:text-primary">
-                  Shipping Info
-                </Link>
-              </li>
-              <li>
-                <Link href="/returns" className="text-sm text-brown-600 hover:text-primary">
-                  Returns & Refunds
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="text-sm text-brown-600 hover:text-primary">
-                  Contact Us
-                </Link>
-              </li>
-            </ul>
-          </div>
+          {showSupport && (
+            <div>
+              <h3 className="font-semibold text-brown-900 mb-4">Support</h3>
+              <ul className="space-y-2">
+                <li>
+                  <Link href="/help" className="text-sm text-brown-600 hover:text-primary">
+                    Help Center
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/shipping" className="text-sm text-brown-600 hover:text-primary">
+                    Shipping Info
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/returns" className="text-sm text-brown-600 hover:text-primary">
+                    Returns & Refunds
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/contact" className="text-sm text-brown-600 hover:text-primary">
+                    Contact Us
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          )}
 
           {/* Legal */}
-          <div>
-            <h3 className="font-semibold text-brown-900 mb-4">Legal</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/privacy" className="text-sm text-brown-600 hover:text-primary">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link href="/terms" className="text-sm text-brown-600 hover:text-primary">
-                  Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link href="/cookies" className="text-sm text-brown-600 hover:text-primary">
-                  Cookie Policy
-                </Link>
-              </li>
-            </ul>
-          </div>
+          {showLegal && (
+            <div>
+              <h3 className="font-semibold text-brown-900 mb-4">Legal</h3>
+              <ul className="space-y-2">
+                <li>
+                  <Link href="/privacy" className="text-sm text-brown-600 hover:text-primary">
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/terms" className="text-sm text-brown-600 hover:text-primary">
+                    Terms of Service
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/cookies" className="text-sm text-brown-600 hover:text-primary">
+                    Cookie Policy
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          )}
         </div>
 
         <div className="border-t border-brown-200 mt-8 pt-8 text-center">
