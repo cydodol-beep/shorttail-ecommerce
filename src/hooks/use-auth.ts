@@ -18,7 +18,7 @@ export function useAuth() {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, user_name, user_phoneno, role, is_approved, tier, points_balance, created_at')
+          .select('id, user_name, user_phoneno, role, is_approved, tier, points_balance, referral_code, created_at')
           .eq('id', userId)
           .single();
         
@@ -157,7 +157,7 @@ export function useAuth() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, user_name, user_phoneno, role, is_approved, tier, points_balance, created_at')
+        .select('id, user_name, user_phoneno, role, is_approved, tier, points_balance, referral_code, created_at')
         .eq('id', user.id)
         .single();
       

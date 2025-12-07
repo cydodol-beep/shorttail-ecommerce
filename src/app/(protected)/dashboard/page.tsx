@@ -46,10 +46,17 @@ function formatPrice(price: number): string {
   }).format(price);
 }
 
+function generateReferralCode(userId: string): string {
+  const prefix = 'ST';
+  const hash = userId.slice(0, 6).toUpperCase();
+  return `${prefix}${hash}`;
+}
+
 export default function DashboardPage() {
-  const { profile, user } = useAuth();
+  const { profile, user, refetchProfile } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [pets, setPets] = useState<Pet[]>([]);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
   const [, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
@@ -73,6 +80,34 @@ export default function DashboardPage() {
     setPets(petsRes.data || []);
     setLoading(false);
   }, [user]);
+
+  // Generate referral code if not exists
+  useEffect(() => {
+    const ensureReferralCode = async () => {
+      if (!user || !profile) return;
+      
+      if (profile.referral_code) {
+        setReferralCode(profile.referral_code);
+        return;
+      }
+      
+      // Generate and save referral code
+      const supabase = createClient();
+      const newCode = generateReferralCode(user.id);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({ referral_code: newCode })
+        .eq('id', user.id);
+      
+      if (!error) {
+        setReferralCode(newCode);
+        refetchProfile?.();
+      }
+    };
+    
+    ensureReferralCode();
+  }, [user, profile, refetchProfile]);
 
   useEffect(() => {
     if (user) {
@@ -222,10 +257,21 @@ export default function DashboardPage() {
               </p>
               <div className="p-3 bg-brown-50 rounded-lg text-center">
                 <code className="text-lg font-mono font-bold text-primary">
-                  {profile?.referral_code || 'LOADING...'}
+                  {referralCode || profile?.referral_code || 'Generating...'}
                 </code>
               </div>
-              <Button className="w-full mt-3" variant="outline" size="sm">
+              <Button 
+                className="w-full mt-3" 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  const code = referralCode || profile?.referral_code;
+                  if (code) {
+                    navigator.clipboard.writeText(`${window.location.origin}/register?ref=${code}`);
+                  }
+                }}
+                disabled={!referralCode && !profile?.referral_code}
+              >
                 Copy Referral Link
               </Button>
             </CardContent>
