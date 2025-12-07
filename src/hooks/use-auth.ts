@@ -148,8 +148,9 @@ export function useAuth() {
 
   const isAdmin = profile?.role === 'master_admin' || profile?.role === 'normal_admin';
   const isMasterAdmin = profile?.role === 'master_admin';
-  const isKasir = profile?.role === 'kasir';
-  const isUser = profile?.role === 'normal_user';
+  const isKasir = profile?.role === 'kasir' || profile?.role === 'super_user';
+  const isSuperUser = profile?.role === 'super_user';
+  const isUser = profile?.role === 'normal_user' || profile?.role === 'super_user';
 
   const refetchProfile = useCallback(async () => {
     if (!user) return;
@@ -186,6 +187,7 @@ export function useAuth() {
     isAdmin,
     isMasterAdmin,
     isKasir,
+    isSuperUser,
     isUser,
     refetchProfile,
   };

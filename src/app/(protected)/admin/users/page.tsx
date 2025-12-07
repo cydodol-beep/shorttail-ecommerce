@@ -421,6 +421,7 @@ export default function AdminUsersPage() {
                 <SelectItem value="master_admin">Master Admin</SelectItem>
                 <SelectItem value="normal_admin">Admin</SelectItem>
                 <SelectItem value="kasir">Kasir</SelectItem>
+                <SelectItem value="super_user">Super User</SelectItem>
                 <SelectItem value="normal_user">User</SelectItem>
               </SelectContent>
             </Select>
@@ -673,6 +674,7 @@ export default function AdminUsersPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="normal_user">User</SelectItem>
+                    <SelectItem value="super_user">Super User</SelectItem>
                     <SelectItem value="kasir">Kasir</SelectItem>
                     <SelectItem value="normal_admin">Admin</SelectItem>
                     <SelectItem value="master_admin">Master Admin</SelectItem>
@@ -794,6 +796,7 @@ export default function AdminUsersPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="normal_user">User</SelectItem>
+                      <SelectItem value="super_user">Super User</SelectItem>
                       <SelectItem value="kasir">Kasir</SelectItem>
                       <SelectItem value="normal_admin">Admin</SelectItem>
                       <SelectItem value="master_admin">Master Admin</SelectItem>

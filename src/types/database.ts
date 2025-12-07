@@ -1,4 +1,4 @@
-export type AppRole = 'master_admin' | 'normal_admin' | 'kasir' | 'normal_user';
+export type AppRole = 'master_admin' | 'normal_admin' | 'kasir' | 'super_user' | 'normal_user';
 export type MembershipTier = 'Newborn' | 'Transitional' | 'Juvenile' | 'Adolescence' | 'Adulthood';
 export type OrderStatus = 'pending' | 'paid' | 'packed' | 'shipped' | 'delivered' | 'cancelled' | 'returned';
 export type OrderSource = 'marketplace' | 'pos';

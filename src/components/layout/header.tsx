@@ -38,7 +38,7 @@ import { useCategories } from '@/hooks/use-categories';
 
 export function Header() {
   const router = useRouter();
-  const { user, profile, signOut, isAdmin, isKasir, loading } = useAuth();
+  const { user, profile, signOut, isAdmin, isKasir, isSuperUser, loading } = useAuth();
   const itemCount = useCartItemCount();
   const unreadCount = useNotificationStore((state) => state.unreadCount);
   const { settings: storeSettings } = useStoreSettings();
@@ -220,6 +220,12 @@ export function Header() {
                       <LayoutDashboard className="mr-2 h-4 w-4" />
                       Dashboard
                     </DropdownMenuItem>
+                    {isSuperUser && (
+                      <DropdownMenuItem onClick={() => router.push('/kasir')}>
+                        <ShoppingBag className="mr-2 h-4 w-4" />
+                        POS System
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
                       <Settings className="mr-2 h-4 w-4" />
                       Settings

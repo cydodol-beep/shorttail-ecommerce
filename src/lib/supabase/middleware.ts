@@ -79,9 +79,9 @@ export async function updateSession(request: NextRequest) {
       }
     }
 
-    // Kasir routes - only kasir
+    // Kasir routes - kasir and super_user
     if (pathname.startsWith('/kasir')) {
-      if (role !== 'kasir') {
+      if (!['kasir', 'super_user'].includes(role)) {
         const url = request.nextUrl.clone();
         url.pathname = '/dashboard';
         return NextResponse.redirect(url);
