@@ -1,0 +1,715 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { 
+  Eye, 
+  EyeOff, 
+  Save, 
+  Layout, 
+  GripVertical,
+  Settings,
+  ChevronDown,
+  ChevronUp,
+  RotateCcw,
+  ExternalLink
+} from 'lucide-react';
+import { toast } from 'sonner';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { useLandingSectionsStore, type LandingSection } from '@/store/landing-sections-store';
+
+const sectionIcons: Record<string, string> = {
+  hero: '🏠',
+  promo_banner: '📢',
+  benefits: '✨',
+  categories: '📁',
+  flash_sale: '⚡',
+  featured_products: '⭐',
+  new_arrivals: '🆕',
+  testimonials: '💬',
+  newsletter: '📧',
+  footer: '📋',
+};
+
+const sectionDescriptions: Record<string, string> = {
+  hero: 'Main banner. Edit title, subtitle, and trust badges here. Background managed in Store Settings.',
+  promo_banner: 'Active promotions banner. Manage promotion content in Admin → Promotions.',
+  benefits: 'Trust badges and benefits grid. Edit icons, titles, descriptions, and colors directly here.',
+  categories: 'Product categories grid. Manage categories in Admin → Categories.',
+  flash_sale: 'Flash sale products. Manage flash sale promotions in Admin → Promotions.',
+  featured_products: 'Best selling products. Automatically shows products with highest sales.',
+  new_arrivals: 'Latest products. Automatically shows newest products from Admin → Products.',
+  testimonials: 'Customer reviews. Manage testimonials in database (coming soon).',
+  newsletter: 'Email subscription form. Subscribers saved to database automatically.',
+  footer: 'Footer links and info. Social media links managed in Store Settings.',
+};
+
+export default function LandingPageSettingsPage() {
+  const { sections, loading, fetchSections, updateSection, batchUpdateSections } = useLandingSectionsStore();
+  const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [localSettings, setLocalSettings] = useState<Record<string, Record<string, any>>>({});
+  const [saving, setSaving] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchSections();
+  }, [fetchSections]);
+
+  useEffect(() => {
+    const settings: Record<string, Record<string, any>> = {};
+    sections.forEach((s) => {
+      settings[s.id] = { ...s.settings };
+    });
+    setLocalSettings(settings);
+  }, [sections]);
+
+  const handleToggleVisibility = async (section: LandingSection) => {
+    try {
+      setSaving(section.id);
+      await updateSection(section.id, { is_visible: !section.is_visible });
+      toast.success(`${section.section_name} ${!section.is_visible ? 'shown' : 'hidden'}`);
+    } catch {
+      toast.error('Failed to update section');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const handleMoveUp = async (section: LandingSection, index: number) => {
+    if (index === 0) return;
+    const prevSection = sections[index - 1];
+    const currentOrder = section.sort_order;
+    const prevOrder = prevSection.sort_order;
+    
+    try {
+      setSaving(section.id);
+      // Use batch update to swap both at once
+      await batchUpdateSections([
+        { id: section.id, data: { sort_order: prevOrder } },
+        { id: prevSection.id, data: { sort_order: currentOrder } }
+      ]);
+      // Force refresh to show changes immediately
+      await fetchSections(true);
+      toast.success('Section order updated');
+    } catch (error) {
+      console.error('Reorder error:', error);
+      toast.error('Failed to reorder sections');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const handleMoveDown = async (section: LandingSection, index: number) => {
+    if (index === sections.length - 1) return;
+    const nextSection = sections[index + 1];
+    const currentOrder = section.sort_order;
+    const nextOrder = nextSection.sort_order;
+    
+    try {
+      setSaving(section.id);
+      // Use batch update to swap both at once
+      await batchUpdateSections([
+        { id: section.id, data: { sort_order: nextOrder } },
+        { id: nextSection.id, data: { sort_order: currentOrder } }
+      ]);
+      // Force refresh to show changes immediately
+      await fetchSections(true);
+      toast.success('Section order updated');
+    } catch (error) {
+      console.error('Reorder error:', error);
+      toast.error('Failed to reorder sections');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const handleSaveSettings = async (section: LandingSection) => {
+    try {
+      setSaving(section.id);
+      await updateSection(section.id, { settings: localSettings[section.id] });
+      toast.success(`${section.section_name} settings saved`);
+      setEditingSection(null);
+    } catch {
+      toast.error('Failed to save settings');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const updateLocalSetting = (sectionId: string, key: string, value: any) => {
+    setLocalSettings((prev) => ({
+      ...prev,
+      [sectionId]: {
+        ...prev[sectionId],
+        [key]: value,
+      },
+    }));
+  };
+
+  const renderSettingsEditor = (section: LandingSection) => {
+    const settings = localSettings[section.id] || {};
+
+    switch (section.section_key) {
+      case 'hero':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor={`${section.id}-title`}>Title</Label>
+              <Input
+                id={`${section.id}-title`}
+                value={settings.title || ''}
+                onChange={(e) => updateLocalSetting(section.id, 'title', e.target.value)}
+                placeholder="Hero title"
+              />
+            </div>
+            <div>
+              <Label htmlFor={`${section.id}-subtitle`}>Subtitle</Label>
+              <Input
+                id={`${section.id}-subtitle`}
+                value={settings.subtitle || ''}
+                onChange={(e) => updateLocalSetting(section.id, 'subtitle', e.target.value)}
+                placeholder="Hero subtitle"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={settings.showTrustBadges !== false}
+                onCheckedChange={(v) => updateLocalSetting(section.id, 'showTrustBadges', v)}
+              />
+              <Label>Show Trust Badges</Label>
+            </div>
+            
+            {/* Trust Badges Editor */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">Trust Badges</Label>
+              <p className="text-xs text-brown-500">Add up to 6 trust badges. Icons are auto-detected from text (e.g., "Fast Delivery" = truck icon)</p>
+              
+              {(settings.trustBadges || []).map((badge: any, index: number) => (
+                <div key={index} className="flex gap-2 items-center">
+                  <Input
+                    value={badge.text}
+                    onChange={(e) => {
+                      const newBadges = [...(settings.trustBadges || [])];
+                      newBadges[index] = { ...newBadges[index], text: e.target.value };
+                      updateLocalSetting(section.id, 'trustBadges', newBadges);
+                    }}
+                    placeholder="e.g., Fast Delivery"
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      const newBadges = (settings.trustBadges || []).filter((_: any, i: number) => i !== index);
+                      updateLocalSetting(section.id, 'trustBadges', newBadges);
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ))}
+              
+              {(!settings.trustBadges || settings.trustBadges.length < 6) && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const newBadges = [...(settings.trustBadges || []), { text: '', icon: '' }];
+                    updateLocalSetting(section.id, 'trustBadges', newBadges);
+                  }}
+                >
+                  + Add Trust Badge
+                </Button>
+              )}
+            </div>
+          </div>
+        );
+
+      case 'promo_banner':
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={settings.autoRotate !== false}
+                onCheckedChange={(v) => updateLocalSetting(section.id, 'autoRotate', v)}
+              />
+              <Label>Auto Rotate</Label>
+            </div>
+            <div>
+              <Label htmlFor={`${section.id}-interval`}>Rotation Interval (ms)</Label>
+              <Input
+                id={`${section.id}-interval`}
+                type="number"
+                value={settings.rotateInterval || 5000}
+                onChange={(e) => updateLocalSetting(section.id, 'rotateInterval', parseInt(e.target.value))}
+              />
+            </div>
+          </div>
+        );
+
+      case 'categories':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor={`${section.id}-title`}>Title</Label>
+              <Input
+                id={`${section.id}-title`}
+                value={settings.title || ''}
+                onChange={(e) => updateLocalSetting(section.id, 'title', e.target.value)}
+                placeholder="Section title"
+              />
+            </div>
+            <div>
+              <Label htmlFor={`${section.id}-subtitle`}>Subtitle</Label>
+              <Input
+                id={`${section.id}-subtitle`}
+                value={settings.subtitle || ''}
+                onChange={(e) => updateLocalSetting(section.id, 'subtitle', e.target.value)}
+                placeholder="Section subtitle"
+              />
+            </div>
+          </div>
+        );
+
+      case 'flash_sale':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor={`${section.id}-title`}>Title</Label>
+              <Input
+                id={`${section.id}-title`}
+                value={settings.title || ''}
+                onChange={(e) => updateLocalSetting(section.id, 'title', e.target.value)}
+                placeholder="Flash Sale"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={settings.showCountdown !== false}
+                onCheckedChange={(v) => updateLocalSetting(section.id, 'showCountdown', v)}
+              />
+              <Label>Show Countdown</Label>
+            </div>
+          </div>
+        );
+
+      case 'featured_products':
+      case 'new_arrivals':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor={`${section.id}-title`}>Title</Label>
+              <Input
+                id={`${section.id}-title`}
+                value={settings.title || ''}
+                onChange={(e) => updateLocalSetting(section.id, 'title', e.target.value)}
+                placeholder="Section title"
+              />
+            </div>
+            <div>
+              <Label htmlFor={`${section.id}-subtitle`}>Subtitle</Label>
+              <Input
+                id={`${section.id}-subtitle`}
+                value={settings.subtitle || ''}
+                onChange={(e) => updateLocalSetting(section.id, 'subtitle', e.target.value)}
+                placeholder="Section subtitle"
+              />
+            </div>
+            <div>
+              <Label htmlFor={`${section.id}-limit`}>Products to show</Label>
+              <Input
+                id={`${section.id}-limit`}
+                type="number"
+                min={4}
+                max={16}
+                value={settings.limit || 8}
+                onChange={(e) => updateLocalSetting(section.id, 'limit', parseInt(e.target.value))}
+              />
+            </div>
+          </div>
+        );
+
+      case 'testimonials':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor={`${section.id}-title`}>Title</Label>
+              <Input
+                id={`${section.id}-title`}
+                value={settings.title || ''}
+                onChange={(e) => updateLocalSetting(section.id, 'title', e.target.value)}
+                placeholder="Section title"
+              />
+            </div>
+            <div>
+              <Label htmlFor={`${section.id}-subtitle`}>Subtitle</Label>
+              <Input
+                id={`${section.id}-subtitle`}
+                value={settings.subtitle || ''}
+                onChange={(e) => updateLocalSetting(section.id, 'subtitle', e.target.value)}
+                placeholder="Section subtitle"
+              />
+            </div>
+          </div>
+        );
+
+      case 'newsletter':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor={`${section.id}-title`}>Title</Label>
+              <Input
+                id={`${section.id}-title`}
+                value={settings.title || ''}
+                onChange={(e) => updateLocalSetting(section.id, 'title', e.target.value)}
+                placeholder="Section title"
+              />
+            </div>
+            <div>
+              <Label htmlFor={`${section.id}-subtitle`}>Subtitle</Label>
+              <Input
+                id={`${section.id}-subtitle`}
+                value={settings.subtitle || ''}
+                onChange={(e) => updateLocalSetting(section.id, 'subtitle', e.target.value)}
+                placeholder="Section subtitle"
+              />
+            </div>
+          </div>
+        );
+
+      case 'footer':
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={settings.showSocialLinks !== false}
+                onCheckedChange={(v) => updateLocalSetting(section.id, 'showSocialLinks', v)}
+              />
+              <Label>Show Social Links</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={settings.showCategories !== false}
+                onCheckedChange={(v) => updateLocalSetting(section.id, 'showCategories', v)}
+              />
+              <Label>Show Categories</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={settings.showSupport !== false}
+                onCheckedChange={(v) => updateLocalSetting(section.id, 'showSupport', v)}
+              />
+              <Label>Show Support Links</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={settings.showLegal !== false}
+                onCheckedChange={(v) => updateLocalSetting(section.id, 'showLegal', v)}
+              />
+              <Label>Show Legal Links</Label>
+            </div>
+          </div>
+        );
+
+      case 'benefits':
+        const iconOptions = [
+          { value: 'truck', label: 'Truck (Delivery)' },
+          { value: 'shield', label: 'Shield (Security)' },
+          { value: 'card', label: 'Credit Card (Payment)' },
+          { value: 'headphones', label: 'Headphones (Support)' },
+          { value: 'rotate', label: 'Rotate (Returns)' },
+          { value: 'award', label: 'Award (Quality)' },
+          { value: 'package', label: 'Package (Product)' },
+          { value: 'heart', label: 'Heart (Care)' },
+          { value: 'star', label: 'Star (Rating)' },
+          { value: 'gift', label: 'Gift (Promo)' },
+        ];
+
+        const colorOptions = [
+          { value: 'bg-green-100 text-green-600', label: 'Green' },
+          { value: 'bg-blue-100 text-blue-600', label: 'Blue' },
+          { value: 'bg-purple-100 text-purple-600', label: 'Purple' },
+          { value: 'bg-orange-100 text-orange-600', label: 'Orange' },
+          { value: 'bg-red-100 text-red-600', label: 'Red' },
+          { value: 'bg-yellow-100 text-yellow-600', label: 'Yellow' },
+          { value: 'bg-pink-100 text-pink-600', label: 'Pink' },
+          { value: 'bg-indigo-100 text-indigo-600', label: 'Indigo' },
+        ];
+
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label className="text-sm font-semibold">Benefits Grid</Label>
+              <p className="text-xs text-brown-500 mb-3">Manage up to 6 benefits displayed on homepage</p>
+              
+              <div className="space-y-4">
+                {(settings.benefits || []).map((benefit: any, index: number) => (
+                  <div key={index} className="border border-brown-200 rounded-lg p-4 space-y-3">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-brown-700">Benefit {index + 1}</span>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          const newBenefits = (settings.benefits || []).filter((_: any, i: number) => i !== index);
+                          updateLocalSetting(section.id, 'benefits', newBenefits);
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor={`benefit-icon-${index}`} className="text-xs">Icon</Label>
+                        <select
+                          id={`benefit-icon-${index}`}
+                          value={benefit.icon}
+                          onChange={(e) => {
+                            const newBenefits = [...(settings.benefits || [])];
+                            newBenefits[index] = { ...newBenefits[index], icon: e.target.value };
+                            updateLocalSetting(section.id, 'benefits', newBenefits);
+                          }}
+                          className="w-full px-3 py-2 border border-brown-200 rounded-md text-sm"
+                        >
+                          {iconOptions.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor={`benefit-color-${index}`} className="text-xs">Color</Label>
+                        <select
+                          id={`benefit-color-${index}`}
+                          value={benefit.color}
+                          onChange={(e) => {
+                            const newBenefits = [...(settings.benefits || [])];
+                            newBenefits[index] = { ...newBenefits[index], color: e.target.value };
+                            updateLocalSetting(section.id, 'benefits', newBenefits);
+                          }}
+                          className="w-full px-3 py-2 border border-brown-200 rounded-md text-sm"
+                        >
+                          {colorOptions.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor={`benefit-title-${index}`} className="text-xs">Title</Label>
+                      <Input
+                        id={`benefit-title-${index}`}
+                        value={benefit.title}
+                        onChange={(e) => {
+                          const newBenefits = [...(settings.benefits || [])];
+                          newBenefits[index] = { ...newBenefits[index], title: e.target.value };
+                          updateLocalSetting(section.id, 'benefits', newBenefits);
+                        }}
+                        placeholder="e.g., Fast Delivery"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor={`benefit-desc-${index}`} className="text-xs">Description</Label>
+                      <Input
+                        id={`benefit-desc-${index}`}
+                        value={benefit.description}
+                        onChange={(e) => {
+                          const newBenefits = [...(settings.benefits || [])];
+                          newBenefits[index] = { ...newBenefits[index], description: e.target.value };
+                          updateLocalSetting(section.id, 'benefits', newBenefits);
+                        }}
+                        placeholder="e.g., 2-3 days delivery"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {(!settings.benefits || settings.benefits.length < 6) && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const newBenefits = [...(settings.benefits || []), {
+                      icon: 'package',
+                      title: '',
+                      description: '',
+                      color: 'bg-green-100 text-green-600'
+                    }];
+                    updateLocalSetting(section.id, 'benefits', newBenefits);
+                  }}
+                  className="mt-3"
+                >
+                  + Add Benefit
+                </Button>
+              )}
+            </div>
+          </div>
+        );
+
+      default:
+        return (
+          <p className="text-sm text-muted-foreground">No customizable settings for this section.</p>
+        );
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-brown-900">Landing Page Settings</h1>
+          <p className="text-brown-600">Manage your homepage sections</p>
+        </div>
+        <div className="space-y-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton key={i} className="h-20 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-brown-900 flex items-center gap-2">
+            <Layout className="h-8 w-8" />
+            Landing Page Settings
+          </h1>
+          <p className="text-brown-600">Show/hide, reorder, and customize homepage sections</p>
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => window.open('/', '_blank')}
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            Preview Frontend
+          </Button>
+          <Button variant="outline" onClick={() => fetchSections(true)}>
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {sections.map((section, index) => (
+          <Card key={section.id} className={`transition-opacity ${!section.is_visible ? 'opacity-60' : ''}`}>
+            <Collapsible
+              open={editingSection === section.id}
+              onOpenChange={(open: boolean) => setEditingSection(open ? section.id : null)}
+            >
+              <div className="flex items-center gap-4 p-4">
+                {/* Drag Handle & Icon */}
+                <div className="flex items-center gap-2">
+                  <GripVertical className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-2xl">{sectionIcons[section.section_key] || '📦'}</span>
+                </div>
+
+                {/* Section Info */}
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold">{section.section_name}</h3>
+                    <Badge variant={section.is_visible ? 'default' : 'secondary'}>
+                      {section.is_visible ? 'Visible' : 'Hidden'}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {sectionDescriptions[section.section_key] || 'Section configuration'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Order: {section.sort_order}</p>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-2">
+                  {/* Move Up/Down */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleMoveUp(section, index)}
+                    disabled={index === 0 || saving === section.id}
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleMoveDown(section, index)}
+                    disabled={index === sections.length - 1 || saving === section.id}
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+
+                  {/* Toggle Visibility */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleToggleVisibility(section)}
+                    disabled={saving === section.id}
+                  >
+                    {section.is_visible ? (
+                      <Eye className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+
+                  {/* Settings Toggle */}
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  </CollapsibleTrigger>
+                </div>
+              </div>
+
+              <CollapsibleContent>
+                <div className="border-t px-4 py-4 bg-muted/50">
+                  <h4 className="font-medium mb-4">Section Settings</h4>
+                  {renderSettingsEditor(section)}
+                  <div className="flex justify-end gap-2 mt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditingSection(null)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleSaveSettings(section)}
+                      disabled={saving === section.id}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Settings
+                    </Button>
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}

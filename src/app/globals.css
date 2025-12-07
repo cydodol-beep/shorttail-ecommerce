@@ -1,0 +1,136 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.75rem;
+  /* Orange Brownish Theme - Light Mode */
+  --background: #fef7f0;
+  --foreground: #4a3728;
+  --card: #ffffff;
+  --card-foreground: #4a3728;
+  --popover: #ffffff;
+  --popover-foreground: #4a3728;
+  --primary: #c87941;
+  --primary-foreground: #ffffff;
+  --secondary: #faeee5;
+  --secondary-foreground: #6b4423;
+  --muted: #f5e6da;
+  --muted-foreground: #8b6914;
+  --accent: #ecd5c3;
+  --accent-foreground: #4a3728;
+  --destructive: #dc2626;
+  --border: #e0c4a8;
+  --input: #f0dfd0;
+  --ring: #c87941;
+  --chart-1: #c87941;
+  --chart-2: #e09f6e;
+  --chart-3: #a65e2e;
+  --chart-4: #d4a574;
+  --chart-5: #8b5a2b;
+  --sidebar: #fef7f0;
+  --sidebar-foreground: #4a3728;
+  --sidebar-primary: #c87941;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #faeee5;
+  --sidebar-accent-foreground: #6b4423;
+  --sidebar-border: #e0c4a8;
+  --sidebar-ring: #c87941;
+  
+  /* Custom orange-brown shades */
+  --brown-50: #fef7f0;
+  --brown-100: #faeee5;
+  --brown-200: #f5e6da;
+  --brown-300: #ecd5c3;
+  --brown-400: #e0c4a8;
+  --brown-500: #c87941;
+  --brown-600: #a65e2e;
+  --brown-700: #8b5a2b;
+  --brown-800: #6b4423;
+  --brown-900: #4a3728;
+}
+
+.dark {
+  /* Orange Brownish Theme - Dark Mode */
+  --background: #1a1310;
+  --foreground: #f5ebe4;
+  --card: #261d17;
+  --card-foreground: #f5ebe4;
+  --popover: #261d17;
+  --popover-foreground: #f5ebe4;
+  --primary: #e09f6e;
+  --primary-foreground: #1a1310;
+  --secondary: #3d2e24;
+  --secondary-foreground: #f5ebe4;
+  --muted: #3d2e24;
+  --muted-foreground: #b8a090;
+  --accent: #4a3728;
+  --accent-foreground: #f5ebe4;
+  --destructive: #ef4444;
+  --border: #4a3728;
+  --input: #3d2e24;
+  --ring: #e09f6e;
+  --chart-1: #e09f6e;
+  --chart-2: #c87941;
+  --chart-3: #d4a574;
+  --chart-4: #a65e2e;
+  --chart-5: #8b5a2b;
+  --sidebar: #1a1310;
+  --sidebar-foreground: #f5ebe4;
+  --sidebar-primary: #e09f6e;
+  --sidebar-primary-foreground: #1a1310;
+  --sidebar-accent: #3d2e24;
+  --sidebar-accent-foreground: #f5ebe4;
+  --sidebar-border: #4a3728;
+  --sidebar-ring: #e09f6e;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

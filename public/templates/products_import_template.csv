@@ -1,0 +1,9 @@
+name,description,sku,category,base_price,stock_quantity,condition,unit_weight_grams,main_image_url,is_active
+"Premium Dog Food - Chicken & Rice","High-quality dog food made with real chicken and rice. Perfect for adult dogs.",DOG-FOOD-001,dog-food,185000,50,new,2000,https://example.com/images/dog-food-1.jpg,true
+"Cat Treats - Salmon Flavor","Delicious salmon-flavored treats for cats. Made with real fish.",CAT-TREAT-001,cat-food,45000,100,new,150,https://example.com/images/cat-treats-1.jpg,true
+"Interactive Dog Toy - Ball","Durable rubber ball for dogs. Great for fetch and chewing.",TOY-DOG-001,toys,75000,30,new,200,https://example.com/images/dog-toy-1.jpg,true
+"Cat Scratching Post","Tall scratching post with sisal rope. Includes hanging toy.",ACC-CAT-001,accessories,250000,15,new,3500,https://example.com/images/cat-post-1.jpg,true
+"Pet Shampoo - Oatmeal","Gentle oatmeal shampoo for sensitive skin. For dogs and cats.",GROOM-001,grooming,89000,40,new,500,https://example.com/images/pet-shampoo-1.jpg,true
+"Vitamin Supplement for Dogs","Daily vitamin supplement to support dog health and immunity.",HEALTH-DOG-001,health,120000,25,new,300,https://example.com/images/dog-vitamins-1.jpg,true
+"Used Pet Carrier - Medium","Gently used pet carrier in good condition. Suitable for small to medium pets.",ACC-CARRIER-002,accessories,150000,5,secondhand,1500,https://example.com/images/carrier-used-1.jpg,true
+"Puppy Training Pads - 50 Pack","Absorbent training pads for puppies. Leak-proof bottom layer.",ACC-PAD-001,accessories,95000,60,new,800,https://example.com/images/training-pads-1.jpg,true
