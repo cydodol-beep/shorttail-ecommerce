@@ -48,13 +48,6 @@ export function Header() {
   const [searchQuery, setSearchQuery] = useState('');
   const [mounted, setMounted] = useState(false);
 
-  console.log('Header storeSettings:', storeSettings);
-  console.log('Header logo check:', {
-    hasSettings: !!storeSettings,
-    hasLogo: !!storeSettings?.storeLogo,
-    logoLength: storeSettings?.storeLogo?.length || 0
-  });
-
   // Prevent hydration mismatch for Sheet component
   useEffect(() => {
     setMounted(true);
