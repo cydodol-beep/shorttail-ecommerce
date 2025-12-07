@@ -97,8 +97,8 @@ export const useReviewsStore = create<ReviewsStore>((set, get) => ({
       const productsMap = new Map((productsData || []).map((p: any) => [p.id, p]));
 
       const reviews = (reviewsData || []).map((review: any) => {
-        const user = usersMap.get(review.user_id);
-        const product = productsMap.get(review.product_id);
+        const user = usersMap.get(review.user_id) as any;
+        const product = productsMap.get(review.product_id) as any;
 
         return {
           id: review.id,
@@ -152,7 +152,7 @@ export const useReviewsStore = create<ReviewsStore>((set, get) => ({
       const usersMap = new Map((usersData || []).map((u: any) => [u.id, u]));
 
       return (reviewsData || []).map((review: any) => {
-        const user = usersMap.get(review.user_id);
+        const user = usersMap.get(review.user_id) as any;
         return {
           id: review.id,
           user_id: review.user_id,

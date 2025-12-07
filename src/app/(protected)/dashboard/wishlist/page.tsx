@@ -42,14 +42,7 @@ export default function WishlistPage() {
   };
 
   const handleAddToCart = (product: any) => {
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.base_price,
-      image: product.main_image_url,
-      quantity: 1,
-      weight: product.unit_weight_grams || 0,
-    });
+    addToCart(product);
     toast.success('Added to cart');
   };
 

@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { HeroSection } from '@/components/home/hero-section';
@@ -21,7 +22,7 @@ export default function HomePage() {
   const visibleSections = getVisibleSections();
   
   // Map section keys to their components
-  const sectionComponents: Record<string, JSX.Element> = {
+  const sectionComponents: Record<string, React.ReactElement> = {
     hero: <HeroSection key="hero" />,
     promo_banner: <PromoBanner key="promo_banner" />,
     benefits: <BenefitsSection key="benefits" />,

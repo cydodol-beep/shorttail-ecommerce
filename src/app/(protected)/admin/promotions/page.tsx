@@ -184,7 +184,7 @@ export default function AdminPromotionsPage() {
           .order('min_quantity');
         
         if (data && data.length > 0) {
-          tiers = data.map(t => ({
+          tiers = data.map((t: any) => ({
             min_quantity: t.min_quantity,
             discount_percentage: parseFloat(t.discount_percentage)
           }));
@@ -392,7 +392,7 @@ export default function AdminPromotionsPage() {
   };
 
   // Format date
-  const formatDate = (date: string | null) => {
+  const formatDate = (date: string | null | undefined) => {
     if (!date) return 'No limit';
     return new Date(date).toLocaleDateString('id-ID', {
       year: 'numeric',
