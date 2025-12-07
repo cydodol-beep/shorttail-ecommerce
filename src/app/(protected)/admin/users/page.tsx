@@ -61,6 +61,7 @@ const ROLE_CONFIG = {
   master_admin: { label: 'Master Admin', color: 'bg-red-100 text-red-800', icon: Shield },
   normal_admin: { label: 'Admin', color: 'bg-orange-100 text-orange-800', icon: UserCog },
   kasir: { label: 'Kasir', color: 'bg-blue-100 text-blue-800', icon: ShoppingBag },
+  super_user: { label: 'Super User', color: 'bg-purple-100 text-purple-800', icon: Award },
   normal_user: { label: 'User', color: 'bg-green-100 text-green-800', icon: Users },
 };
 
