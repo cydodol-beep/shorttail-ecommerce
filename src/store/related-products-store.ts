@@ -2,8 +2,11 @@ import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
 import type { Product } from '@/types/database';
 
-export interface RelatedProduct extends Product {
+export interface RelatedProduct extends Omit<Product, 'has_variants'> {
   is_manual?: boolean;
+  has_variants?: boolean;
+  min_variant_price?: number;
+  max_variant_price?: number;
 }
 
 interface CachedProducts {

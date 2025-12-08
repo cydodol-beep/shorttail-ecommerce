@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Related Products</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Related Products Test</h1>
+    <div id="output"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://gggpkciminardekbmpyk.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdnZ3BrY2ltaW5hcmRla2JtcHlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQyMzk0MzcsImV4cCI6MjA3OTgxNTQzN30.2mx1CKUBZDnhyNpeZ1JlwDk_OJ7MAwyW_VBVDIBQMKc';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function testRelatedProducts() {
+            const output = document.getElementById('output');
+            const productId = 'bdc555dc-3b26-4c04-b5dc-7afa27b59f0e';
+
+            output.innerHTML = '<p>Testing product ID: ' + productId + '</p>';
+
+            // Check product_relations table
+            output.innerHTML += '<h2>1. Checking product_relations table...</h2>';
+            const { data: relations, error: relError } = await supabase
+                .from('product_relations')
+                .select('*')
+                .eq('product_id', productId);
+
+            if (relError) {
+                output.innerHTML += '<p style="color:red">Error: ' + relError.message + '</p>';
+            } else {
+                output.innerHTML += '<p>Found ' + (relations?.length || 0) + ' manual relations</p>';
+                output.innerHTML += '<pre>' + JSON.stringify(relations, null, 2) + '</pre>';
+            }
+
+            // Check the RPC function
+            output.innerHTML += '<h2>2. Calling get_related_products RPC...</h2>';
+            const { data: rpcData, error: rpcError } = await supabase
+                .rpc('get_related_products', {
+                    p_product_id: productId,
+                    p_limit: 5
+                });
+
+            if (rpcError) {
+                output.innerHTML += '<p style="color:red">RPC Error: ' + rpcError.message + '</p>';
+                output.innerHTML += '<pre>' + JSON.stringify(rpcError, null, 2) + '</pre>';
+            } else {
+                output.innerHTML += '<p style="color:green">RPC Success! Found ' + (rpcData?.length || 0) + ' products</p>';
+                output.innerHTML += '<pre>' + JSON.stringify(rpcData, null, 2) + '</pre>';
+            }
+
+            // Check product category for fallback
+            output.innerHTML += '<h2>3. Checking product category...</h2>';
+            const { data: product, error: prodError } = await supabase
+                .from('products')
+                .select('id, name, category, is_active, stock_quantity')
+                .eq('id', productId)
+                .single();
+
+            if (prodError) {
+                output.innerHTML += '<p style="color:red">Error: ' + prodError.message + '</p>';
+            } else {
+                output.innerHTML += '<p>Product: ' + product.name + '</p>';
+                output.innerHTML += '<p>Category: ' + product.category + '</p>';
+                output.innerHTML += '<p>Active: ' + product.is_active + '</p>';
+                output.innerHTML += '<p>Stock: ' + product.stock_quantity + '</p>';
+            }
+
+            // Check other products in same category
+            if (product && product.category) {
+                output.innerHTML += '<h2>4. Checking other products in category "' + product.category + '"...</h2>';
+                const { data: categoryProducts, error: catError } = await supabase
+                    .from('products')
+                    .select('id, name, is_active, stock_quantity')
+                    .eq('category', product.category)
+                    .neq('id', productId)
+                    .limit(10);
+
+                if (catError) {
+                    output.innerHTML += '<p style="color:red">Error: ' + catError.message + '</p>';
+                } else {
+                    output.innerHTML += '<p>Found ' + (categoryProducts?.length || 0) + ' products in same category</p>';
+                    output.innerHTML += '<pre>' + JSON.stringify(categoryProducts, null, 2) + '</pre>';
+                }
+            }
+        }
+
+        testRelatedProducts();
+    </script>
+</body>
+</html>

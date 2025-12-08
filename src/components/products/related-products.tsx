@@ -18,6 +18,13 @@ function formatPrice(price: number): string {
   }).format(price);
 }
 
+function formatPriceRange(minPrice: number, maxPrice: number, hasVariants: boolean): string {
+  if (!hasVariants || minPrice === maxPrice) {
+    return formatPrice(minPrice);
+  }
+  return `${formatPrice(minPrice)} - ${formatPrice(maxPrice)}`;
+}
+
 interface RelatedProductsProps {
   productId: string;
   title?: string;
@@ -104,17 +111,45 @@ export function RelatedProducts({
                 </h3>
               </Link>
 
-              <p className="font-bold text-primary text-base mb-3">
-                {formatPrice(product.base_price)}
-              </p>
+              <div className="mb-3">
+                <p className="font-bold text-primary text-base">
+                  {formatPriceRange(
+                    product.min_variant_price || product.base_price,
+                    product.max_variant_price || product.base_price,
+                    product.has_variants || false
+                  )}
+                </p>
+                
+                {/* Stock quantity and low stock warning */}
+                {product.stock_quantity !== undefined && product.stock_quantity !== null && (
+                  <p className="text-xs mt-1">
+                    {product.stock_quantity > 0 ? (
+                      product.stock_quantity < 5 ? (
+                        <span className="text-orange-600 font-medium">
+                          Only {product.stock_quantity} left
+                        </span>
+                      ) : (
+                        <span className="text-green-600">
+                          {product.stock_quantity} in stock
+                        </span>
+                      )
+                    ) : (
+                      <span className="text-red-600 font-medium">
+                        Out of stock
+                      </span>
+                    )}
+                  </p>
+                )}
+              </div>
 
               <Button
                 size="sm"
                 className="w-full"
                 onClick={() => handleAddToCart(product)}
+                disabled={product.stock_quantity === 0}
               >
                 <ShoppingBag className="h-4 w-4 mr-1" />
-                Add
+                {product.stock_quantity === 0 ? 'Out of Stock' : 'Add'}
               </Button>
             </CardContent>
           </Card>
