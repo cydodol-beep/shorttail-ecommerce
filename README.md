@@ -2,7 +2,32 @@
 
 A sophisticated e-commerce platform for pet supplies built with Next.js 16 and Supabase, featuring Role-Based Access Control (RBAC), Point of Sale (POS) system, and gamification features.
 
-## 🆕 Recent Updates (December 6, 2025)
+## 🆕 Recent Updates (December 8, 2025)
+
+### Bug Fixes 🐛
+- **Fixed Session Timeout Causing Database Operations to Hang**:
+  - Users could browse for 3+ minutes and then experience hanging when saving/editing data
+  - **Root Cause**: Missing Next.js middleware file and incorrect session refresh method
+  - **Fixes Applied**:
+    - Created `src/middleware.ts` to enable session refresh on every request
+    - Changed `getSession()` to `getUser()` in middleware for proper token validation and refresh
+    - Added proactive session refresh every 2 minutes in `useAuth` hook
+    - Added proper handling for `TOKEN_REFRESHED`, `SIGNED_OUT`, `SIGNED_IN`, and other auth events
+  - Sessions now stay alive during long browsing sessions without hanging
+
+---
+
+## Recent Updates (December 7, 2025)
+
+### Bug Fixes 🐛
+- **Fixed Admin Users Page Crash**:
+  - Added `super_user` role to `ROLE_CONFIG` in admin users page
+  - Previously caused "Cannot read properties of undefined (reading 'icon')" error
+  - Super users now display correctly with purple badge and Award icon
+
+---
+
+## Recent Updates (December 6, 2025)
 
 ### Performance Optimization 🚀
 - **Fixed Critical Performance Issues**:
