@@ -121,35 +121,53 @@ export function RelatedProducts({
                 </p>
                 
                 {/* Stock quantity and low stock warning */}
-                {product.stock_quantity !== undefined && product.stock_quantity !== null && (
-                  <p className="text-xs mt-1">
-                    {product.stock_quantity > 0 ? (
-                      product.stock_quantity < 5 ? (
-                        <span className="text-orange-600 font-medium">
-                          Only {product.stock_quantity} left
-                        </span>
+                {(() => {
+                  // Use variant stock if product has variants, otherwise use base stock
+                  const effectiveStock = product.has_variants 
+                    ? (product.total_variant_stock || 0)
+                    : (product.stock_quantity !== undefined && product.stock_quantity !== null ? product.stock_quantity : 0);
+                  
+                  // For display purposes, show the highest variant stock for low stock warnings
+                  const displayStock = product.has_variants 
+                    ? (product.max_variant_stock || 0)
+                    : effectiveStock;
+
+                  return (
+                    <p className="text-xs mt-1">
+                      {effectiveStock > 0 ? (
+                        displayStock < 5 ? (
+                          <span className="text-orange-600 font-medium">
+                            Only {displayStock} left
+                          </span>
+                        ) : (
+                          <span className="text-green-600">
+                            In stock
+                          </span>
+                        )
                       ) : (
-                        <span className="text-green-600">
-                          {product.stock_quantity} in stock
+                        <span className="text-red-600 font-medium">
+                          Out of stock
                         </span>
-                      )
-                    ) : (
-                      <span className="text-red-600 font-medium">
-                        Out of stock
-                      </span>
-                    )}
-                  </p>
-                )}
+                      )}
+                    </p>
+                  );
+                })()}
               </div>
 
               <Button
                 size="sm"
                 className="w-full"
                 onClick={() => handleAddToCart(product)}
-                disabled={product.stock_quantity === 0}
+                disabled={
+                  product.has_variants 
+                    ? (product.total_variant_stock || 0) === 0
+                    : product.stock_quantity === 0
+                }
               >
                 <ShoppingBag className="h-4 w-4 mr-1" />
-                {product.stock_quantity === 0 ? 'Out of Stock' : 'Add'}
+                {(product.has_variants 
+                  ? (product.total_variant_stock || 0) === 0
+                  : product.stock_quantity === 0) ? 'Out of Stock' : 'Add'}
               </Button>
             </CardContent>
           </Card>

@@ -7,6 +7,8 @@ export interface RelatedProduct extends Omit<Product, 'has_variants'> {
   has_variants?: boolean;
   min_variant_price?: number;
   max_variant_price?: number;
+  total_variant_stock?: number;
+  max_variant_stock?: number;
 }
 
 interface CachedProducts {

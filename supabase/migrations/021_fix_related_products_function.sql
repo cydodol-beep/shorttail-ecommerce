@@ -6,6 +6,9 @@
 -- 2. Removed stock_quantity > 0 filter (show products even if out of stock)
 -- 3. Added variant price range support (min_variant_price, max_variant_price)
 -- 4. Returns has_variants flag for proper price display
+-- 5. Added variant stock tracking (total_variant_stock, max_variant_stock)
+--    - For products with variants, uses variant stock instead of base stock
+--    - Shows highest variant stock for low stock warnings
 
 DROP FUNCTION IF EXISTS get_related_products(UUID, INTEGER);
 
@@ -23,7 +26,9 @@ RETURNS TABLE (
   is_manual BOOLEAN,
   has_variants BOOLEAN,
   min_variant_price NUMERIC,
-  max_variant_price NUMERIC
+  max_variant_price NUMERIC,
+  total_variant_stock INTEGER,
+  max_variant_stock INTEGER
 ) 
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -42,7 +47,9 @@ BEGIN
     true as is_manual,
     p.has_variants,
     COALESCE((SELECT MIN(p.base_price + pv.price_adjustment) FROM product_variants pv WHERE pv.product_id = p.id), p.base_price) as min_variant_price,
-    COALESCE((SELECT MAX(p.base_price + pv.price_adjustment) FROM product_variants pv WHERE pv.product_id = p.id), p.base_price) as max_variant_price
+    COALESCE((SELECT MAX(p.base_price + pv.price_adjustment) FROM product_variants pv WHERE pv.product_id = p.id), p.base_price) as max_variant_price,
+    COALESCE((SELECT SUM(pv.stock_quantity) FROM product_variants pv WHERE pv.product_id = p.id), 0) as total_variant_stock,
+    COALESCE((SELECT MAX(pv.stock_quantity) FROM product_variants pv WHERE pv.product_id = p.id), 0) as max_variant_stock
   FROM products p
   INNER JOIN product_relations pr ON p.id = pr.related_product_id
   WHERE pr.product_id = p_product_id
@@ -63,7 +70,9 @@ BEGIN
       false as is_manual,
       p.has_variants,
       COALESCE((SELECT MIN(p.base_price + pv.price_adjustment) FROM product_variants pv WHERE pv.product_id = p.id), p.base_price) as min_variant_price,
-      COALESCE((SELECT MAX(p.base_price + pv.price_adjustment) FROM product_variants pv WHERE pv.product_id = p.id), p.base_price) as max_variant_price
+      COALESCE((SELECT MAX(p.base_price + pv.price_adjustment) FROM product_variants pv WHERE pv.product_id = p.id), p.base_price) as max_variant_price,
+      COALESCE((SELECT SUM(pv.stock_quantity) FROM product_variants pv WHERE pv.product_id = p.id), 0) as total_variant_stock,
+      COALESCE((SELECT MAX(pv.stock_quantity) FROM product_variants pv WHERE pv.product_id = p.id), 0) as max_variant_stock
     FROM products p
     WHERE p.id != p_product_id
       AND p.category = (SELECT category FROM products WHERE id = p_product_id)
