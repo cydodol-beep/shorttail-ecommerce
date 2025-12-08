@@ -6,13 +6,14 @@ export function useRelatedProducts(productId: string, limit = 5) {
 
   useEffect(() => {
     if (productId) {
-      fetchRelatedProducts(productId, limit);
+      // Force refresh to get new fields from updated RPC function
+      fetchRelatedProducts(productId, limit, true);
     }
   }, [productId, limit, fetchRelatedProducts]);
 
   return {
     relatedProducts: getRelatedProducts(productId),
     loading,
-    refresh: () => fetchRelatedProducts(productId, limit),
+    refresh: () => fetchRelatedProducts(productId, limit, true),
   };
 }
