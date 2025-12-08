@@ -16,10 +16,13 @@ import { useLandingSections } from '@/hooks/use-landing-sections';
 import Script from 'next/script';
 
 export default function HomePage() {
-  const { getVisibleSections } = useLandingSections();
+  const { getVisibleSections, sections, loading } = useLandingSections();
   
   // Get sections in the correct order (sorted by sort_order)
   const visibleSections = getVisibleSections();
+  
+  // Debug: log visible sections
+  console.log('HomePage - sections loaded:', sections.length, 'visible:', visibleSections.map(s => s.section_key));
   
   // Map section keys to their components
   const sectionComponents: Record<string, React.ReactElement> = {
