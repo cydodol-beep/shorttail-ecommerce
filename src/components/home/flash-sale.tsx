@@ -56,6 +56,8 @@ export function FlashSale() {
       .lte('start_date', now)
       .gte('end_date', now);
 
+    console.log('Flash sale promotions:', promoData);
+
     if (!promoData || promoData.length === 0) {
       setProducts([]);
       setLoading(false);
@@ -114,12 +116,17 @@ export function FlashSale() {
       return;
     }
 
+    console.log('Flash sale - allProductsDiscountValue:', allProductsDiscountValue);
+    console.log('Flash sale - productDiscountMap:', Object.fromEntries(productDiscountMap));
+
     // Apply discounts from promotions
     const productsWithDiscounts: FlashSaleProduct[] = [];
     
     for (const product of (data || [])) {
       // Get discount: specific product discount or all-products discount
       const discountPercent = productDiscountMap.get(product.id) || allProductsDiscountValue;
+      
+      console.log(`Product ${product.name}: discountPercent=${discountPercent}, base_price=${product.base_price}`);
       
       if (discountPercent <= 0) {
         continue; // Skip products without percentage discount
@@ -137,6 +144,7 @@ export function FlashSale() {
       });
     }
 
+    console.log('Flash sale products with discounts:', productsWithDiscounts.map(p => ({ name: p.name, discount: p.discount_percentage })));
     setProducts(productsWithDiscounts);
     setLoading(false);
   }, []);
