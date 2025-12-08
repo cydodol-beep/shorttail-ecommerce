@@ -1,42 +1,8 @@
--- Related Products System
--- Allows admin to manually set related products to cross-sell
+-- Quick Fix: Update get_related_products function with SECURITY DEFINER
+-- Run this in Supabase SQL Editor
 
-CREATE TABLE IF NOT EXISTS product_relations (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-  related_product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-  sort_order INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  
-  -- Prevent duplicate relations and self-relations
-  UNIQUE(product_id, related_product_id),
-  CHECK (product_id != related_product_id)
-);
+DROP FUNCTION IF EXISTS get_related_products(UUID, INTEGER);
 
--- Enable RLS
-ALTER TABLE product_relations ENABLE ROW LEVEL SECURITY;
-
--- RLS Policies
-CREATE POLICY "Anyone can view product relations"
-  ON product_relations FOR SELECT
-  USING (true);
-
-CREATE POLICY "Admins can manage product relations"
-  ON product_relations FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid()
-      AND profiles.role IN ('master_admin', 'normal_admin')
-    )
-  );
-
--- Create indexes for performance
-CREATE INDEX IF NOT EXISTS idx_product_relations_product ON product_relations(product_id);
-CREATE INDEX IF NOT EXISTS idx_product_relations_related ON product_relations(related_product_id);
-CREATE INDEX IF NOT EXISTS idx_product_relations_sort ON product_relations(product_id, sort_order);
-
--- Function to get related products with fallback to category-based suggestions
 CREATE OR REPLACE FUNCTION get_related_products(
   p_product_id UUID,
   p_limit INTEGER DEFAULT 5

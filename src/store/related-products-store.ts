@@ -6,10 +6,15 @@ export interface RelatedProduct extends Product {
   is_manual?: boolean;
 }
 
+interface CachedProducts {
+  products: RelatedProduct[];
+  timestamp: number;
+}
+
 interface RelatedProductsStore {
-  relatedProducts: Record<string, RelatedProduct[]>;
+  relatedProducts: Record<string, CachedProducts>;
   loading: boolean;
-  fetchRelatedProducts: (productId: string, limit?: number) => Promise<RelatedProduct[]>;
+  fetchRelatedProducts: (productId: string, limit?: number, forceRefresh?: boolean) => Promise<RelatedProduct[]>;
   getRelatedProducts: (productId: string) => RelatedProduct[];
   addRelation: (productId: string, relatedProductId: string) => Promise<boolean>;
   removeRelation: (productId: string, relatedProductId: string) => Promise<boolean>;
@@ -17,18 +22,24 @@ interface RelatedProductsStore {
   invalidate: (productId: string) => void;
 }
 
+const CACHE_DURATION = 30 * 1000; // 30 seconds
+
 export const useRelatedProductsStore = create<RelatedProductsStore>((set, get) => ({
   relatedProducts: {},
   loading: false,
 
-  fetchRelatedProducts: async (productId: string, limit = 5) => {
+  fetchRelatedProducts: async (productId: string, limit = 5, forceRefresh = false) => {
     const state = get();
+    const now = Date.now();
     
-    // Return cached if available
-    if (state.relatedProducts[productId]) {
-      return state.relatedProducts[productId];
+    // Return cached if available and not expired (unless force refresh)
+    const cached = state.relatedProducts[productId];
+    if (!forceRefresh && cached && (now - cached.timestamp) < CACHE_DURATION) {
+      console.log('Returning cached related products for', productId);
+      return cached.products;
     }
 
+    console.log('Fetching fresh related products for', productId);
     set({ loading: true });
 
     try {
@@ -48,12 +59,16 @@ export const useRelatedProductsStore = create<RelatedProductsStore>((set, get) =
       }
 
       const products = (data || []) as RelatedProduct[];
+      console.log('Fetched related products:', products.length, 'items');
 
-      // Cache the results
+      // Cache the results with timestamp
       set((state) => ({
         relatedProducts: {
           ...state.relatedProducts,
-          [productId]: products
+          [productId]: {
+            products,
+            timestamp: Date.now()
+          }
         },
         loading: false
       }));
@@ -67,7 +82,8 @@ export const useRelatedProductsStore = create<RelatedProductsStore>((set, get) =
   },
 
   getRelatedProducts: (productId: string) => {
-    return get().relatedProducts[productId] || [];
+    const cached = get().relatedProducts[productId];
+    return cached ? cached.products : [];
   },
 
   addRelation: async (productId: string, relatedProductId: string) => {
