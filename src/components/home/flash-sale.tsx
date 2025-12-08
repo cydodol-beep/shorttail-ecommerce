@@ -114,24 +114,28 @@ export function FlashSale() {
       return;
     }
 
-    // Calculate actual discounts from promotions
-    const productsWithDiscounts = (data || []).map((product: FlashSaleProduct) => {
+    // Apply discounts from promotions
+    const productsWithDiscounts: FlashSaleProduct[] = [];
+    
+    for (const product of (data || [])) {
       // Get discount: specific product discount or all-products discount
-      const discountPercentage = productDiscountMap.get(product.id) || allProductsDiscountValue;
+      const discountPercent = productDiscountMap.get(product.id) || allProductsDiscountValue;
       
-      if (discountPercentage <= 0) {
-        return null; // Skip products without percentage discount
+      if (discountPercent <= 0) {
+        continue; // Skip products without percentage discount
       }
       
-      // base_price is the original price, calculate the discounted price
-      const discountedPrice = Math.round(product.base_price * (1 - discountPercentage / 100));
-      return {
+      // Calculate discounted price from original base_price
+      const originalPrice = product.base_price;
+      const discountedPrice = Math.round(originalPrice * (1 - discountPercent / 100));
+      
+      productsWithDiscounts.push({
         ...product,
-        original_price: product.base_price, // Original price from database
-        base_price: discountedPrice, // Override with discounted price for display
-        discount_percentage: discountPercentage,
-      };
-    }).filter(Boolean) as FlashSaleProduct[];
+        original_price: originalPrice,
+        base_price: discountedPrice,
+        discount_percentage: discountPercent, // Use exact promotion percentage
+      });
+    }
 
     setProducts(productsWithDiscounts);
     setLoading(false);
