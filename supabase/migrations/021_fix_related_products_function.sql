@@ -27,8 +27,8 @@ RETURNS TABLE (
   has_variants BOOLEAN,
   min_variant_price NUMERIC,
   max_variant_price NUMERIC,
-  total_variant_stock INTEGER,
-  max_variant_stock INTEGER
+  total_variant_stock BIGINT,
+  max_variant_stock BIGINT
 ) 
 LANGUAGE plpgsql
 SECURITY DEFINER
