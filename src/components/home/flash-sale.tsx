@@ -48,17 +48,24 @@ export function FlashSale() {
     const now = new Date().toISOString();
     
     // Fetch only percentage-type promotions that are currently active
+    // First get all active percentage promotions, then filter by date in JS
+    // This handles NULL dates (no date restriction)
     const { data: promoData } = await supabase
       .from('promotions')
-      .select('product_ids, discount_type, discount_value, applies_to')
+      .select('product_ids, discount_type, discount_value, applies_to, start_date, end_date')
       .eq('is_active', true)
-      .eq('discount_type', 'percentage')
-      .lte('start_date', now)
-      .gte('end_date', now);
+      .eq('discount_type', 'percentage');
 
-    console.log('Flash sale promotions:', promoData);
+    // Filter by date - NULL dates mean no restriction
+    const validPromos = (promoData || []).filter((promo: { start_date: string | null; end_date: string | null }) => {
+      const startOk = !promo.start_date || new Date(promo.start_date) <= new Date(now);
+      const endOk = !promo.end_date || new Date(promo.end_date) >= new Date(now);
+      return startOk && endOk;
+    });
 
-    if (!promoData || promoData.length === 0) {
+    console.log('Flash sale promotions:', validPromos);
+
+    if (validPromos.length === 0) {
       setProducts([]);
       setLoading(false);
       return;
@@ -69,7 +76,7 @@ export function FlashSale() {
     let hasAllProductsPromo = false;
     let allProductsDiscountValue = 0;
 
-    for (const promo of promoData) {
+    for (const promo of validPromos) {
       if (promo.applies_to === 'all_products') {
         hasAllProductsPromo = true;
         // Use the highest discount for all products
