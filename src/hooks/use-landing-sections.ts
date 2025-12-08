@@ -50,17 +50,27 @@ export function useLandingSections() {
       }
     };
 
-    // Refresh when window gains focus (user switches back to tab)
+    // Only refresh on focus/visibility if cache is stale (not on every focus)
+    // This prevents aggressive refetching that can cause race conditions
     const handleFocus = () => {
-      console.log('[LandingSections] Window focused, refreshing...');
-      useLandingSectionsStore.getState().fetchSections(true);
+      const state = useLandingSectionsStore.getState();
+      const now = Date.now();
+      // Only refresh if cache is older than 30 seconds
+      if (!state.lastFetched || now - state.lastFetched > 30000) {
+        console.log('[LandingSections] Window focused, cache stale, refreshing...');
+        state.fetchSections();
+      }
     };
 
-    // Refresh on visibility change (more reliable than focus in some cases)
+    // Refresh on visibility change only if cache is stale
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        console.log('[LandingSections] Tab became visible, refreshing...');
-        useLandingSectionsStore.getState().fetchSections(true);
+        const state = useLandingSectionsStore.getState();
+        const now = Date.now();
+        if (!state.lastFetched || now - state.lastFetched > 30000) {
+          console.log('[LandingSections] Tab became visible, cache stale, refreshing...');
+          state.fetchSections();
+        }
       }
     };
 

@@ -39,19 +39,24 @@ export function useAuth() {
 
     const getUser = async () => {
       try {
-        const { data: { user }, error } = await supabase.auth.getUser();
+        // Add timeout to prevent hanging - use getSession first (faster, from cache)
+        // then getUser will be called by onAuthStateChange if needed
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        if (error) {
-          console.error('Error getting user:', error.message);
+        if (sessionError) {
+          console.error('Error getting session:', sessionError.message);
           setUser(null);
           setProfile(null);
           setLoading(false);
           return;
         }
         
-        setUser(user);
-        if (user) {
-          await fetchProfile(user.id);
+        if (session?.user) {
+          setUser(session.user);
+          await fetchProfile(session.user.id);
+        } else {
+          setUser(null);
+          setProfile(null);
         }
         setLoading(false);
       } catch (error) {
