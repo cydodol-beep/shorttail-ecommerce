@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ChevronLeft, Plus, Trash2, Loader2 } from 'lucide-react';
+import { ChevronLeft, Plus, Trash2, Loader2, GripVertical } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { createClient } from '@/lib/supabase/client';
 import { useCategories } from '@/hooks/use-categories';
 import { ImageUpload } from '@/components/ui/image-upload';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { PawPrint } from 'lucide-react';
+import { useRelatedProductsStore } from '@/store/related-products-store';
 
 const variantSchema = z.object({
   id: z.string().optional(),
@@ -42,6 +46,7 @@ const productSchema = z.object({
   is_active: z.boolean(),
   has_variants: z.boolean(),
   variants: z.array(variantSchema).optional(),
+  related_product_ids: z.array(z.string()).optional(),
 });
 
 type ProductForm = z.infer<typeof productSchema>;
@@ -54,8 +59,12 @@ export default function EditProductPage() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [isPending, startTransition] = useTransition();
+  const [allProducts, setAllProducts] = useState<Array<{ id: string; name: string; main_image_url: string | null }>>([]);
+  const [relatedProductIds, setRelatedProductIds] = useState<string[]>([]);
+  const [initialRelatedIds, setInitialRelatedIds] = useState<string[]>([]);
   const { getActiveCategories, loading: categoriesLoading } = useCategories();
   const categories = getActiveCategories();
+  const { addRelation, removeRelation, updateRelationOrder } = useRelatedProductsStore();
 
   const form = useForm<ProductForm>({
     resolver: zodResolver(productSchema),
@@ -72,6 +81,7 @@ export default function EditProductPage() {
       is_active: true,
       has_variants: false,
       variants: [],
+      related_product_ids: [],
     },
   });
 
@@ -88,8 +98,8 @@ export default function EditProductPage() {
     const fetchProduct = async () => {
       const supabase = createClient();
       
-      // Fetch product and variants in parallel
-      const [productResult, variantsResult] = await Promise.all([
+      // Fetch product, variants, related products, and all products in parallel
+      const [productResult, variantsResult, relationsResult, allProductsResult] = await Promise.all([
         supabase
           .from('products')
           .select('*')
@@ -100,6 +110,17 @@ export default function EditProductPage() {
           .select('*')
           .eq('product_id', productId)
           .order('variant_name'),
+        supabase
+          .from('product_relations')
+          .select('related_product_id, sort_order')
+          .eq('product_id', productId)
+          .order('sort_order'),
+        supabase
+          .from('products')
+          .select('id, name, main_image_url')
+          .eq('is_active', true)
+          .neq('id', productId)
+          .order('name'),
       ]);
 
       if (!isMounted) return;
@@ -112,6 +133,15 @@ export default function EditProductPage() {
 
       const product = productResult.data;
       const variants = variantsResult.data;
+      const relations = relationsResult.data || [];
+
+      // Set all products for the related products selector
+      setAllProducts(allProductsResult.data || []);
+      
+      // Set related products from product_relations table
+      const relatedIds = relations.map((r: any) => r.related_product_id);
+      setRelatedProductIds(relatedIds);
+      setInitialRelatedIds(relatedIds);
 
       form.reset({
         name: product.name,
@@ -133,6 +163,7 @@ export default function EditProductPage() {
           stock_quantity: v.stock_quantity,
           weight_grams: v.weight_grams || 0,
         })) || [],
+        related_product_ids: relatedIds,
       });
 
       setFetching(false);
@@ -166,7 +197,7 @@ export default function EditProductPage() {
       const supabase = createClient();
       console.log('2. Supabase client created');
       
-      const { variants, ...productData } = data;
+      const { variants, related_product_ids, ...productData } = data;
 
       // Step 1: Update product
       const productToUpdate = {
@@ -201,6 +232,30 @@ export default function EditProductPage() {
 
       if (!response.ok) {
         throw new Error(result.error || 'Failed to update product');
+      }
+
+      // Step 2: Update related products in product_relations table
+      const newRelatedIds = related_product_ids || [];
+      const addedIds = newRelatedIds.filter((id: string) => !initialRelatedIds.includes(id));
+      const removedIds = initialRelatedIds.filter(id => !newRelatedIds.includes(id));
+
+      // Add new relations
+      for (const relatedId of addedIds) {
+        await addRelation(productId, relatedId);
+      }
+
+      // Remove old relations
+      for (const relatedId of removedIds) {
+        await removeRelation(productId, relatedId);
+      }
+
+      // Update sort order if order changed
+      if (newRelatedIds.length > 0) {
+        const relations = newRelatedIds.map((id: string, index: number) => ({
+          id,
+          sort_order: index
+        }));
+        await updateRelationOrder(productId, relations);
       }
 
       console.log('5. All updates successful');
@@ -590,6 +645,73 @@ export default function EditProductPage() {
                     </Button>
                   </CardContent>
                 )}
+              </Card>
+
+              {/* Related Products */}
+              <Card className="border-brown-200">
+                <CardHeader>
+                  <CardTitle>Related Products</CardTitle>
+                  <CardDescription>Select up to 5 products to show as recommendations</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <FormField
+                    control={form.control}
+                    name="related_product_ids"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="mb-2 text-sm text-brown-600">
+                          {field.value?.length || 0}/5 selected
+                        </div>
+                        <ScrollArea className="h-[300px] border rounded-md p-2">
+                          <div className="space-y-2">
+                            {allProducts.map((product) => {
+                              const isSelected = field.value?.includes(product.id);
+                              const isDisabled = !isSelected && (field.value?.length || 0) >= 5;
+                              return (
+                                <div
+                                  key={product.id}
+                                  className={`flex items-center gap-3 p-2 rounded-lg hover:bg-brown-50 ${isDisabled ? 'opacity-50' : ''}`}
+                                >
+                                  <Checkbox
+                                    checked={isSelected}
+                                    disabled={isDisabled}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        field.onChange([...(field.value || []), product.id]);
+                                      } else {
+                                        field.onChange(field.value?.filter((id: string) => id !== product.id) || []);
+                                      }
+                                    }}
+                                  />
+                                  <div className="w-10 h-10 rounded bg-brown-100 flex-shrink-0 overflow-hidden">
+                                    {product.main_image_url ? (
+                                      <img
+                                        src={product.main_image_url}
+                                        alt={product.name}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center">
+                                        <PawPrint className="h-5 w-5 text-brown-300" />
+                                      </div>
+                                    )}
+                                  </div>
+                                  <span className="text-sm truncate flex-1">{product.name}</span>
+                                </div>
+                              );
+                            })}
+                            {allProducts.length === 0 && (
+                              <p className="text-sm text-brown-500 text-center py-4">
+                                No other products available
+                              </p>
+                            )}
+                          </div>
+                        </ScrollArea>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
               </Card>
             </div>
 

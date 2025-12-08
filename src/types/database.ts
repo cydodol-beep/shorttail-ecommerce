@@ -60,6 +60,7 @@ export interface Product {
   gallery_image_urls: string[] | null;
   unit_weight_grams: number;
   is_active: boolean;
+  related_product_ids: string[] | null;
   created_at: string;
   updated_at: string;
 }

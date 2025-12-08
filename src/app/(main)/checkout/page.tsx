@@ -26,6 +26,7 @@ import { Separator } from '@/components/ui/separator';
 import { useCartStore } from '@/store/cart-store';
 import { useAuth } from '@/hooks/use-auth';
 import { createClient } from '@/lib/supabase/client';
+import { RelatedProducts } from '@/components/products/related-products';
 
 const checkoutSchema = z.object({
   recipient_name: z.string().min(2, 'Name is required'),
@@ -489,6 +490,17 @@ export default function CheckoutPage() {
           </div>
         </form>
       </Form>
+
+      {/* Last Chance - Add More Items */}
+      {items.length > 0 && (
+        <div className="mt-12">
+          <RelatedProducts 
+            productId={items[0].product.id}
+            title="Add More to Your Order"
+            limit={5}
+          />
+        </div>
+      )}
     </div>
   );
 }

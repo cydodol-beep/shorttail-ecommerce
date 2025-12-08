@@ -31,6 +31,7 @@ import { useCartStore } from '@/store/cart-store';
 import { useAuth } from '@/hooks/use-auth';
 import { fetchProductReviews, submitReview, checkUserPurchased, checkUserReviewed, type Review } from '@/hooks/use-reviews';
 import type { Product, ProductVariant } from '@/types/database';
+import { RelatedProducts } from '@/components/products/related-products';
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('id-ID', {
@@ -644,6 +645,13 @@ export default function ProductDetailPage({
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Related Products */}
+      <RelatedProducts 
+        productId={product.id} 
+        title="You Might Also Like"
+        limit={5}
+      />
     </div>
   );
 }
