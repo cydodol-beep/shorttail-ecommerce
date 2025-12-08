@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { User, AuthChangeEvent, Session } from '@supabase/supabase-js';
 import type { Profile } from '@/types/database';
@@ -12,6 +12,7 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const sessionCheckInterval = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const fetchProfile = async (userId: string) => {
@@ -37,29 +38,94 @@ export function useAuth() {
     };
 
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      if (user) {
-        await fetchProfile(user.id);
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        
+        if (error) {
+          console.error('Error getting user:', error.message);
+          setUser(null);
+          setProfile(null);
+          setLoading(false);
+          return;
+        }
+        
+        setUser(user);
+        if (user) {
+          await fetchProfile(user.id);
+        }
+        setLoading(false);
+      } catch (error) {
+        console.error('Exception getting user:', error);
+        setUser(null);
+        setProfile(null);
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     getUser();
 
+    // Listen to auth state changes including TOKEN_REFRESHED
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event: AuthChangeEvent, session: Session | null) => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        } else {
+      async (event: AuthChangeEvent, session: Session | null) => {
+        // Handle different auth events
+        if (event === 'TOKEN_REFRESHED') {
+          // Token was refreshed successfully, update user state
+          if (session?.user) {
+            setUser(session.user);
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
           setProfile(null);
+        } else if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+          setUser(session?.user ?? null);
+          if (session?.user) {
+            await fetchProfile(session.user.id);
+          } else {
+            setProfile(null);
+          }
+        } else if (event === 'INITIAL_SESSION') {
+          setUser(session?.user ?? null);
+          if (session?.user) {
+            await fetchProfile(session.user.id);
+          }
         }
         setLoading(false);
       }
     );
 
-    return () => subscription.unsubscribe();
+    // Periodically check and refresh session to prevent expiry during long browsing
+    // This runs every 2 minutes to keep the session alive
+    sessionCheckInterval.current = setInterval(async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error || !session) {
+          return;
+        }
+
+        // Check if token expires within 5 minutes
+        const expiresAt = session.expires_at;
+        if (expiresAt) {
+          const expiresIn = expiresAt * 1000 - Date.now();
+          // If token expires in less than 5 minutes, refresh it
+          if (expiresIn < 5 * 60 * 1000) {
+            const { error: refreshError } = await supabase.auth.refreshSession();
+            if (refreshError) {
+              console.error('Failed to refresh session:', refreshError.message);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Session check failed:', error);
+      }
+    }, 2 * 60 * 1000); // Every 2 minutes
+
+    return () => {
+      subscription.unsubscribe();
+      if (sessionCheckInterval.current) {
+        clearInterval(sessionCheckInterval.current);
+      }
+    };
   }, []);
 
   const signInWithPhoneOtp = async (phone: string) => {

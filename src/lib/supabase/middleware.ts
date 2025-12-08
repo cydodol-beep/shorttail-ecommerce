@@ -34,12 +34,14 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Refresh session to ensure cookies are up to date
+  // IMPORTANT: Use getUser() instead of getSession() to refresh the token
+  // getSession() only reads from storage and doesn't refresh expired tokens
+  // getUser() makes a network request that validates and refreshes the token
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-  const user = session?.user;
   const pathname = request.nextUrl.pathname;
 
   // Public routes that don't require authentication
@@ -47,6 +49,13 @@ export async function updateSession(request: NextRequest) {
   const isPublicRoute = publicRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
+
+  // If there's a refresh error, redirect to login for protected routes
+  if (error && !isPublicRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    return NextResponse.redirect(url);
+  }
 
   // If not authenticated and trying to access protected route
   if (!user && !isPublicRoute) {
