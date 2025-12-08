@@ -45,16 +45,48 @@ export function FlashSale() {
 
   const fetchFlashSaleProducts = useCallback(async () => {
     const supabase = createClient();
+    const now = new Date().toISOString();
     
-    // Fetch products with active promotions (percentage or fixed discount)
+    // Fetch only percentage-type promotions that are currently active
     const { data: promoData } = await supabase
       .from('promotions')
-      .select('product_ids, discount_type, discount_value')
+      .select('product_ids, discount_type, discount_value, applies_to')
       .eq('is_active', true)
-      .in('discount_type', ['percentage', 'fixed_amount'])
-      .not('product_ids', 'is', null);
+      .eq('discount_type', 'percentage')
+      .lte('start_date', now)
+      .gte('end_date', now);
 
-    const productIdsWithPromo = promoData?.flatMap((p: { product_ids?: string[] }) => p.product_ids || []) || [];
+    if (!promoData || promoData.length === 0) {
+      setProducts([]);
+      setLoading(false);
+      return;
+    }
+
+    // Build a map of product_id -> discount_value for specific products
+    const productDiscountMap = new Map<string, number>();
+    let hasAllProductsPromo = false;
+    let allProductsDiscountValue = 0;
+
+    for (const promo of promoData) {
+      if (promo.applies_to === 'all_products') {
+        hasAllProductsPromo = true;
+        // Use the highest discount for all products
+        if (promo.discount_value > allProductsDiscountValue) {
+          allProductsDiscountValue = promo.discount_value;
+        }
+      } else if (promo.product_ids && promo.product_ids.length > 0) {
+        for (const productId of promo.product_ids) {
+          const existing = productDiscountMap.get(productId) || 0;
+          // Use the highest discount for each product
+          if (promo.discount_value > existing) {
+            productDiscountMap.set(productId, promo.discount_value);
+          }
+        }
+      }
+    }
+
+    // Get specific product IDs with promotions
+    const specificProductIds = Array.from(productDiscountMap.keys());
 
     let query = supabase
       .from('products')
@@ -64,9 +96,14 @@ export function FlashSale() {
       .order('created_at', { ascending: false })
       .limit(6);
 
-    // If there are products with promotions, prioritize them
-    if (productIdsWithPromo.length > 0) {
-      query = query.in('id', productIdsWithPromo);
+    // If there are specific products with promotions, prioritize them
+    if (specificProductIds.length > 0) {
+      query = query.in('id', specificProductIds);
+    } else if (!hasAllProductsPromo) {
+      // No products to show
+      setProducts([]);
+      setLoading(false);
+      return;
     }
 
     const { data, error } = await query;
@@ -77,16 +114,24 @@ export function FlashSale() {
       return;
     }
 
-    // Add mock discount data for display (in real app, this would come from promotions)
+    // Calculate actual discounts from promotions
     const productsWithDiscounts = (data || []).map((product: FlashSaleProduct) => {
-      const discountPercentage = Math.floor(Math.random() * 30) + 10; // 10-40% discount
-      const originalPrice = product.base_price * (100 / (100 - discountPercentage));
+      // Get discount: specific product discount or all-products discount
+      const discountPercentage = productDiscountMap.get(product.id) || allProductsDiscountValue;
+      
+      if (discountPercentage <= 0) {
+        return null; // Skip products without percentage discount
+      }
+      
+      // base_price is the original price, calculate the discounted price
+      const discountedPrice = Math.round(product.base_price * (1 - discountPercentage / 100));
       return {
         ...product,
-        original_price: Math.round(originalPrice),
+        original_price: product.base_price, // Original price from database
+        base_price: discountedPrice, // Override with discounted price for display
         discount_percentage: discountPercentage,
       };
-    });
+    }).filter(Boolean) as FlashSaleProduct[];
 
     setProducts(productsWithDiscounts);
     setLoading(false);
