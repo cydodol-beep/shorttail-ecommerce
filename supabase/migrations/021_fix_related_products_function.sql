@@ -10,7 +10,10 @@
 --    - For products with variants, uses variant stock instead of base stock
 --    - Shows highest variant stock for low stock warnings
 
+-- Drop all versions of the function to avoid signature conflicts
 DROP FUNCTION IF EXISTS get_related_products(UUID, INTEGER);
+DROP FUNCTION IF EXISTS get_related_products(UUID);
+DROP FUNCTION IF EXISTS get_related_products;
 
 CREATE OR REPLACE FUNCTION get_related_products(
   p_product_id UUID,
@@ -48,8 +51,8 @@ BEGIN
     p.has_variants,
     COALESCE((SELECT MIN(p.base_price + pv.price_adjustment) FROM product_variants pv WHERE pv.product_id = p.id), p.base_price) as min_variant_price,
     COALESCE((SELECT MAX(p.base_price + pv.price_adjustment) FROM product_variants pv WHERE pv.product_id = p.id), p.base_price) as max_variant_price,
-    COALESCE((SELECT SUM(pv.stock_quantity) FROM product_variants pv WHERE pv.product_id = p.id), 0) as total_variant_stock,
-    COALESCE((SELECT MAX(pv.stock_quantity) FROM product_variants pv WHERE pv.product_id = p.id), 0) as max_variant_stock
+    COALESCE((SELECT SUM(pv.stock_quantity) FROM product_variants pv WHERE pv.product_id = p.id), 0::BIGINT) as total_variant_stock,
+    COALESCE((SELECT MAX(pv.stock_quantity) FROM product_variants pv WHERE pv.product_id = p.id), 0::BIGINT) as max_variant_stock
   FROM products p
   INNER JOIN product_relations pr ON p.id = pr.related_product_id
   WHERE pr.product_id = p_product_id
@@ -71,8 +74,8 @@ BEGIN
       p.has_variants,
       COALESCE((SELECT MIN(p.base_price + pv.price_adjustment) FROM product_variants pv WHERE pv.product_id = p.id), p.base_price) as min_variant_price,
       COALESCE((SELECT MAX(p.base_price + pv.price_adjustment) FROM product_variants pv WHERE pv.product_id = p.id), p.base_price) as max_variant_price,
-      COALESCE((SELECT SUM(pv.stock_quantity) FROM product_variants pv WHERE pv.product_id = p.id), 0) as total_variant_stock,
-      COALESCE((SELECT MAX(pv.stock_quantity) FROM product_variants pv WHERE pv.product_id = p.id), 0) as max_variant_stock
+      COALESCE((SELECT SUM(pv.stock_quantity) FROM product_variants pv WHERE pv.product_id = p.id), 0::BIGINT) as total_variant_stock,
+      COALESCE((SELECT MAX(pv.stock_quantity) FROM product_variants pv WHERE pv.product_id = p.id), 0::BIGINT) as max_variant_stock
     FROM products p
     WHERE p.id != p_product_id
       AND p.category = (SELECT category FROM products WHERE id = p_product_id)
