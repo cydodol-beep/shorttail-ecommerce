@@ -40,18 +40,31 @@ async function getRelatedProductsMulti(cartProductIds: string[], limit: number):
 
   // Fetch related products for each item in the cart
   const fetchPromises = cartProductIds.map(async (productId) => {
-    const { data, error } = await supabase
-      .rpc('get_related_products', {
-        p_product_id: productId,
-        p_limit: 3 // Fetch up to 3 related products for each cart item
-      });
+    try {
+      const { data, error } = await supabase
+        .rpc('get_related_products', {
+          p_product_id: productId,
+          p_limit: 3 // Fetch up to 3 related products for each cart item
+        });
 
-    if (error) {
-      console.error('Error fetching related products for product:', productId, error);
+      if (error) {
+        console.error('Error fetching related products for product:', productId, error);
+        // Try to get popular products as fallback
+        const { data: fallbackData } = await supabase
+          .from('products')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(2);
+
+        return (fallbackData || []) as RelatedProduct[];
+      }
+
+      return (data || []) as RelatedProduct[];
+    } catch (error) {
+      console.error('Exception fetching related products for product:', productId, error);
       return [];
     }
-
-    return (data || []) as RelatedProduct[];
   });
 
   const results = await Promise.all(fetchPromises);
@@ -97,24 +110,28 @@ export function CartRelatedProducts({
       }
 
       setLoading(true);
-      
+
       try {
         // Get unique product IDs from cart (excluding variants for diversity)
         const productIds = Array.from(
           new Set(items.map(item => item.product.id))
         );
-        
+
         // Fetch related products for all items in cart
         const relatedProducts = await getRelatedProductsMulti(productIds, limit);
         setProducts(relatedProducts);
       } catch (error) {
         console.error('Error fetching cart related products:', error);
+        // Don't let errors break the page, just show no related products
       } finally {
         setLoading(false);
       }
     };
 
-    fetchRelatedProducts();
+    // Use setTimeout to prevent blocking the main execution thread
+    const timeoutId = setTimeout(fetchRelatedProducts, 0);
+
+    return () => clearTimeout(timeoutId);
   }, [items, limit]);
 
   const handleAddToCart = (product: any) => {
