@@ -66,17 +66,35 @@ export async function updateSession(request: NextRequest) {
 
   // Role-based access control - use session metadata for role instead of fetching
   if (user) {
-    // Get role from user metadata or fetch once
+    // Extract role from user metadata or session to minimize DB calls in middleware
     let role = user.user_metadata?.role;
-    
+
     // Only fetch profile if role not in metadata (backward compatibility)
     if (!role) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-      role = profile?.role || 'normal_user';
+      // Use a 2-second timeout to prevent hanging on database operations
+      const profileController = new AbortController();
+      const timeoutId = setTimeout(() => profileController.abort(), 2000);
+
+      try {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        clearTimeout(timeoutId);
+
+        if (profileError && profileError.code !== 'PGRST116') { // PGRST116 is "Results contain 0 rows"
+          console.error('Error fetching profile in middleware:', profileError);
+        }
+
+        role = profile?.role || 'normal_user';
+      } catch (timeoutError) {
+        clearTimeout(timeoutId);
+        console.error('Profile fetch timeout in middleware:', timeoutError);
+        // If profile fetch fails, default to normal user to prevent hanging
+        role = 'normal_user';
+      }
     }
 
     // Admin routes - only master_admin and normal_admin

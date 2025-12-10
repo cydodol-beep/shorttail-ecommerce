@@ -15,20 +15,34 @@ export function useAuth() {
   const sessionCheckInterval = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    // Create a timeout function for async operations
+    const withTimeout = <T>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
+      return Promise.race([
+        promise,
+        new Promise<T>((_, reject) =>
+          setTimeout(() => reject(new Error(`Operation timed out after ${timeoutMs}ms`)), timeoutMs)
+        ) as Promise<T>
+      ]);
+    };
+
     const fetchProfile = async (userId: string) => {
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, user_name, user_phoneno, role, is_approved, tier, points_balance, referral_code, created_at')
-          .eq('id', userId)
-          .single();
-        
+        // Add timeout to prevent hanging on profile fetch
+        const { data, error } = await withTimeout(
+          supabase
+            .from('profiles')
+            .select('id, user_name, user_phoneno, role, is_approved, tier, points_balance, referral_code, created_at')
+            .eq('id', userId)
+            .single(),
+          5000 // 5 second timeout
+        );
+
         if (error) {
           console.error('Error fetching profile:', error.message || error);
           setProfile(null);
           return;
         }
-        
+
         setProfile(data);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -41,8 +55,9 @@ export function useAuth() {
       try {
         // Add timeout to prevent hanging - use getSession first (faster, from cache)
         // then getUser will be called by onAuthStateChange if needed
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
+        const getSessionPromise = supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await withTimeout(getSessionPromise, 5000);
+
         if (sessionError) {
           console.error('Error getting session:', sessionError.message);
           setUser(null);
@@ -50,7 +65,7 @@ export function useAuth() {
           setLoading(false);
           return;
         }
-        
+
         if (session?.user) {
           setUser(session.user);
           await fetchProfile(session.user.id);
@@ -102,8 +117,9 @@ export function useAuth() {
     // This runs every 2 minutes to keep the session alive
     sessionCheckInterval.current = setInterval(async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
+        const getSessionPromise = supabase.auth.getSession();
+        const { data: { session }, error } = await withTimeout(getSessionPromise, 5000);
+
         if (error || !session) {
           return;
         }
@@ -114,7 +130,8 @@ export function useAuth() {
           const expiresIn = expiresAt * 1000 - Date.now();
           // If token expires in less than 5 minutes, refresh it
           if (expiresIn < 5 * 60 * 1000) {
-            const { error: refreshError } = await supabase.auth.refreshSession();
+            const refreshPromise = supabase.auth.refreshSession();
+            const { error: refreshError } = await withTimeout(refreshPromise, 5000);
             if (refreshError) {
               console.error('Failed to refresh session:', refreshError.message);
             }
