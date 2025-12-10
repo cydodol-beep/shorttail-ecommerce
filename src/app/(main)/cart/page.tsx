@@ -10,7 +10,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Separator } from '@/components/ui/separator';
 import { useCartStore } from '@/store/cart-store';
 import { useAuth } from '@/hooks/use-auth';
-import { RelatedProducts } from '@/components/products/related-products';
+import { CartRelatedProducts } from '@/components/products/cart-related-products';
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('id-ID', {
@@ -223,13 +223,10 @@ export default function CartPage() {
 
       {/* Related Products - based on items in cart */}
       {items.length > 0 && (
-        <div className="mt-12">
-          <RelatedProducts 
-            productId={items[0].product.id}
-            title="Customers Also Bought"
-            limit={5}
-          />
-        </div>
+        <CartRelatedProducts
+          title="You May Also Like"
+          limit={5}
+        />
       )}
     </div>
   );
