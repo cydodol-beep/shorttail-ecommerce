@@ -297,10 +297,10 @@ export default function CheckoutPage() {
       // Format order data for invoice (similar to how it's retrieved in the order store)
       const orderForInvoice = {
         id: order.id,
-        user_id: order.user_id,
+        user_id: order.user_id || undefined, // Convert null to undefined
         user_name: profile?.user_name || '',
         user_email: profile?.user_email || '',
-        cashier_id: order.cashier_id,
+        cashier_id: order.cashier_id || undefined, // Convert null to undefined
         cashier_name: profile?.user_name || '',
         source: order.source,
         status: order.status,
@@ -316,8 +316,8 @@ export default function CheckoutPage() {
         shipping_courier_name: order.shipping_courier_name || '',
         shipping_address_snapshot: order.shipping_address_snapshot,
         customer_notes: (order as any).customer_notes || '', // customer_notes might not be in the main Order type but could be returned by select('*')
-        invoice_url: order.invoice_url || '',
-        packing_list_url: order.packing_list_url || '',
+        invoice_url: order.invoice_url || undefined, // Convert null to undefined
+        packing_list_url: order.packing_list_url || undefined, // Convert null to undefined
         items_count: items.length,
         items: items.map(item => ({
           product_id: item.product.id,

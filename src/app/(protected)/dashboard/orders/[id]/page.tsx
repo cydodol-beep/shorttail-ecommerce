@@ -100,10 +100,10 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       // Format the order data to match the expected structure for the invoice generator
       const orderForInvoice = {
         id: order.id,
-        user_id: order.user_id,
+        user_id: order.user_id || undefined, // Convert null to undefined
         user_name: '', // This is not part of the database order object
         user_email: '', // This is not part of the database order object
-        cashier_id: order.cashier_id,
+        cashier_id: order.cashier_id || undefined, // Convert null to undefined
         cashier_name: '', // This is not available here
         source: order.source,
         status: order.status,
@@ -115,12 +115,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         recipient_phone: order.shipping_address_snapshot?.phone || '',
         recipient_address: order.shipping_address_snapshot?.address_line1 || '',
         recipient_province: order.shipping_address_snapshot?.province || '',
-        shipping_courier: order.shipping_courier_name,
-        shipping_courier_name: order.shipping_courier_name,
+        shipping_courier: order.shipping_courier_name || '',
+        shipping_courier_name: order.shipping_courier_name || '',
         shipping_address_snapshot: order.shipping_address_snapshot,
         customer_notes: (order as any).customer_notes || '', // customer_notes might not be in the main Order type but could be returned by select('*')
-        invoice_url: order.invoice_url || '',
-        packing_list_url: order.packing_list_url || '',
+        invoice_url: order.invoice_url || undefined, // Convert null to undefined
+        packing_list_url: order.packing_list_url || undefined, // Convert null to undefined
         items_count: order.order_items?.length || 0,
         items: order.order_items?.map(item => ({
           product_id: item.product_id,
