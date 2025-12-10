@@ -23,10 +23,6 @@ export async function createClient() {
           }
         },
       },
-      global: {
-        // Set default timeout for requests to prevent hanging
-        timeout: 10000, // 10 seconds
-      },
     }
   );
 }

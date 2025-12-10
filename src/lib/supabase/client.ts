@@ -23,14 +23,12 @@ export function createClient() {
           headers: {
             'Content-Type': 'application/json',
           },
-          // Set default timeout for requests to prevent hanging
-          timeout: 10000, // 10 seconds
           // Configure fetch options
           fetch: (url, options = {}) => {
             // Set timeout explicitly in fetch options
             return fetch(url, {
               ...options,
-              signal: options.signal || AbortSignal.timeout(10000),
+              signal: options.signal || AbortSignal.timeout(10000), // 10 seconds timeout
             });
           },
         },
