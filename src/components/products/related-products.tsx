@@ -154,21 +154,29 @@ export function RelatedProducts({
                 })()}
               </div>
 
-              <Button
-                size="sm"
-                className="w-full"
-                onClick={() => handleAddToCart(product)}
-                disabled={
-                  product.has_variants 
-                    ? (product.total_variant_stock || 0) === 0
-                    : product.stock_quantity === 0
-                }
-              >
-                <ShoppingBag className="h-4 w-4 mr-1" />
-                {(product.has_variants 
-                  ? (product.total_variant_stock || 0) === 0
-                  : product.stock_quantity === 0) ? 'Out of Stock' : 'Add'}
-              </Button>
+              {/* Different button behavior for products with variants */}
+              {!product.has_variants && (
+                <Button
+                  size="sm"
+                  className="w-full"
+                  onClick={() => handleAddToCart(product)}
+                  disabled={product.stock_quantity === 0}
+                >
+                  <ShoppingBag className="h-4 w-4 mr-1" />
+                  {product.stock_quantity === 0 ? 'Out of Stock' : 'Add'}
+                </Button>
+              )}
+              {product.has_variants && (
+                <Button
+                  size="sm"
+                  className="w-full"
+                  onClick={() => window.location.href = `/products/${product.id}`}
+                  disabled={(product.total_variant_stock || 0) === 0}
+                >
+                  <ShoppingBag className="h-4 w-4 mr-1" />
+                  {(product.total_variant_stock || 0) === 0 ? 'Out of Stock' : 'Choose Options'}
+                </Button>
+              )}
             </CardContent>
           </Card>
         ))}

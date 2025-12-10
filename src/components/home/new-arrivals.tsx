@@ -166,7 +166,7 @@ export function NewArrivals() {
                     <Badge className="absolute top-3 left-3 bg-primary hover:bg-primary z-10">
                       NEW
                     </Badge>
-                    {/* Quick Add Overlay */}
+                    {/* Quick Add Overlay - different behavior for products with variants */}
                     {!product.has_variants && (
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20">
                         <Button
@@ -176,6 +176,18 @@ export function NewArrivals() {
                         >
                           <ShoppingBag className="h-4 w-4 mr-2" />
                           Add to Cart
+                        </Button>
+                      </div>
+                    )}
+                    {product.has_variants && (
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20">
+                        <Button
+                          size="sm"
+                          className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300"
+                          onClick={() => window.location.href = `/products/${product.id}`}
+                        >
+                          <ShoppingBag className="h-4 w-4 mr-2" />
+                          Choose Options
                         </Button>
                       </div>
                     )}

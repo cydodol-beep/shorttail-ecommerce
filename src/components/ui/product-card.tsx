@@ -105,6 +105,15 @@ export function ProductCard({ product, onAddToCart, rank, showQuickActions = tru
                   <ShoppingBag className="h-5 w-5" />
                 </Button>
               )}
+              {product.has_variants && (
+                <Button
+                  size="icon"
+                  className="rounded-full h-10 w-10 shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-75"
+                  onClick={() => window.location.href = `/products/${product.id}`}
+                >
+                  <ShoppingBag className="h-5 w-5" />
+                </Button>
+              )}
             </div>
           )}
         </div>
@@ -151,6 +160,28 @@ export function ProductCard({ product, onAddToCart, rank, showQuickActions = tru
             )}
           </div>
         </div>
+
+        {/* Add to Cart button - different behavior for products with variants */}
+        {!product.has_variants && onAddToCart && (
+          <Button
+            className="w-full mt-3"
+            onClick={() => onAddToCart(product)}
+            disabled={isOutOfStock}
+          >
+            <ShoppingBag className="h-4 w-4 mr-2" />
+            {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+          </Button>
+        )}
+        {product.has_variants && (
+          <Button
+            className="w-full mt-3"
+            onClick={() => window.location.href = `/products/${product.id}`}
+            variant="default"
+          >
+            <ShoppingBag className="h-4 w-4 mr-2" />
+            Choose Options
+          </Button>
+        )}
       </CardContent>
     </Card>
   );
