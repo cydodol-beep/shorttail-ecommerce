@@ -278,9 +278,21 @@ export default function CheckoutPage() {
           .eq('id', user.id);
       }
 
-      // Fetch store settings for invoice generation
-      const { getStoreSettings } = useStoreSettingsStore.getState();
-      const storeSettings = getStoreSettings();
+      // Fetch store settings for invoice generation using the store
+      const { allSettings } = useStoreSettingsStore.getState();
+      const storeSettings = allSettings?.store || {
+        storeName: 'ShortTail.id',
+        storeDescription: 'Premium Pet Shop - Your one-stop shop for pet supplies',
+        storeLogo: '',
+        storeEmail: 'support@shorttail.id',
+        storePhone: '+6281234567890',
+        storeAddress: 'Jl. Pet Lovers No. 123',
+        storeCity: 'Jakarta',
+        storeProvince: 'DKI Jakarta',
+        storePostalCode: '12345',
+        storeCurrency: 'IDR',
+        storeTimezone: 'Asia/Jakarta',
+      };
 
       // Format order data for invoice (similar to how it's retrieved in the order store)
       const orderForInvoice = {

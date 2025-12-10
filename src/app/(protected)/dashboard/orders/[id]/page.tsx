@@ -82,8 +82,20 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     setGeneratingInvoice(true);
     try {
       // Get store settings for invoice generation
-      const { getStoreSettings } = useStoreSettingsStore.getState();
-      const storeSettings = getStoreSettings();
+      const { allSettings } = useStoreSettingsStore.getState();
+      const storeSettings = allSettings?.store || {
+        storeName: 'ShortTail.id',
+        storeDescription: 'Premium Pet Shop - Your one-stop shop for pet supplies',
+        storeLogo: '',
+        storeEmail: 'support@shorttail.id',
+        storePhone: '+6281234567890',
+        storeAddress: 'Jl. Pet Lovers No. 123',
+        storeCity: 'Jakarta',
+        storeProvince: 'DKI Jakarta',
+        storePostalCode: '12345',
+        storeCurrency: 'IDR',
+        storeTimezone: 'Asia/Jakarta',
+      };
 
       // Format the order data to match the expected structure for the invoice generator
       const orderForInvoice = {
