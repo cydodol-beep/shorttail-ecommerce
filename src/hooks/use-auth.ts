@@ -68,7 +68,8 @@ export function useAuth() {
         // Add timeout to prevent hanging - use getSession first (faster, from cache)
         // then getUser will be called by onAuthStateChange if needed
         const getSessionPromise = supabase.auth.getSession();
-        const { data: { session }, error: sessionError } = await withTimeout(getSessionPromise, 5000);
+        const sessionResult = await withTimeout(getSessionPromise, 5000);
+        const { data: { session }, error: sessionError } = sessionResult;
 
         if (sessionError) {
           console.error('Error getting session:', sessionError.message);
@@ -130,7 +131,8 @@ export function useAuth() {
     sessionCheckInterval.current = setInterval(async () => {
       try {
         const getSessionPromise = supabase.auth.getSession();
-        const { data: { session }, error } = await withTimeout(getSessionPromise, 5000);
+        const sessionResult = await withTimeout(getSessionPromise, 5000);
+        const { data: { session }, error } = sessionResult;
 
         if (error || !session) {
           return;
@@ -143,7 +145,8 @@ export function useAuth() {
           // If token expires in less than 5 minutes, refresh it
           if (expiresIn < 5 * 60 * 1000) {
             const refreshPromise = supabase.auth.refreshSession();
-            const { error: refreshError } = await withTimeout(refreshPromise, 5000);
+            const refreshResult = await withTimeout(refreshPromise, 5000);
+            const { error: refreshError } = refreshResult;
             if (refreshError) {
               console.error('Failed to refresh session:', refreshError.message);
             }
