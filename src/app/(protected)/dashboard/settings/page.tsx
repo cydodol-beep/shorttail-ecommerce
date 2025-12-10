@@ -127,33 +127,39 @@ export default function UserSettingsPage() {
     try {
       const supabase = createClient();
 
+      // Convert province IDs to integers
+      const provinceId = region ? parseInt(region, 10) : null;
+      const recipientProvinceId = recipientRegion ? parseInt(recipientRegion, 10) : null;
+
       const { error } = await supabase
         .from('profiles')
         .update({
           user_name: userName,
           user_email: userEmail,
           user_phoneno: userPhone,
+          // Personal address fields
           address_line1: addressLine1,
           city: city,
-          province_id: region ? parseInt(region) : null,
+          province_id: provinceId,
           postal_code: postalCode,
+          // Recipient/shipping address fields
           recipient_name: recipientName,
           recipient_address_line1: recipientAddress,
           recipient_city: recipientCity,
-          recipient_province_id: recipientRegion ? parseInt(recipientRegion) : null,
+          recipient_province_id: recipientProvinceId,
           recipient_postal_code: recipientPostalCode,
         })
         .eq('id', user.id);
 
       if (error) {
         console.error('Error updating profile:', error);
-        toast.error('Failed to update profile');
+        toast.error('Failed to update profile: ' + error.message);
       } else {
-        toast.success('Profile updated successfully');
+        toast.success('Profile and shipping address updated successfully!');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Exception updating profile:', err);
-      toast.error('Failed to update profile');
+      toast.error('Failed to update profile: ' + (err.message || 'Unknown error'));
     } finally {
       setSaving(false);
     }
