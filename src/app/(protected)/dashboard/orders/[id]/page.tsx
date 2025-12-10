@@ -125,10 +125,10 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         items: order.order_items?.map(item => ({
           product_id: item.product_id,
           product_name: item.product?.name || 'Product',
-          product_sku: item.product_sku || '',
+          product_sku: item.product?.sku || '', // Get SKU from joined product
           variant_id: item.variant_id || undefined,
-          variant_name: item.variant_name || undefined,
-          variant_sku: item.variant_sku || undefined, // Convert null to undefined
+          variant_name: (item as any).variant_name || undefined, // variant_name might be an additional field
+          variant_sku: (item as any).variant_sku || undefined, // variant_sku might be an additional field
           quantity: item.quantity,
           price_at_purchase: item.price_at_purchase,
         })) || [],
