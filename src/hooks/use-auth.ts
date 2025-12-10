@@ -9,32 +9,51 @@ import type { Profile } from '@/types/database';
 const supabase = createClient();
 
 export function useAuth() {
+  // Create a timeout function for async operations
+  const withTimeout = <T>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
+    return Promise.race([
+      promise,
+      new Promise<T>((_, reject) =>
+        setTimeout(() => reject(new Error(`Operation timed out after ${timeoutMs}ms`)), timeoutMs)
+      ) as Promise<T>
+    ]);
+  };
+
+  // Specialized timeout function for Supabase operations that preserves type
+  const withTimeoutSupabase = useCallback(async <T>(
+    promise: Promise<{ data: T | null; error: any }>,
+    timeoutMs: number
+  ): Promise<{ data: T | null; error: any }> => {
+    try {
+      const withTimeoutInner = <T>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
+        return Promise.race([
+          promise,
+          new Promise<T>((_, reject) =>
+            setTimeout(() => reject(new Error(`Operation timed out after ${timeoutMs}ms`)), timeoutMs)
+          ) as Promise<T>
+        ]);
+      };
+
+      return await withTimeoutInner(promise, timeoutMs);
+    } catch (error) {
+      return { data: null, error: error as any };
+    }
+  }, []);
+
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const sessionCheckInterval = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Create a timeout function for async operations
-    const withTimeout = <T>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
+    // Define a local timeout function for use in this effect
+    const withTimeoutEffect = <T>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
       return Promise.race([
         promise,
         new Promise<T>((_, reject) =>
           setTimeout(() => reject(new Error(`Operation timed out after ${timeoutMs}ms`)), timeoutMs)
         ) as Promise<T>
       ]);
-    };
-
-    // Specialized timeout function for Supabase operations that preserves type
-    const withTimeoutSupabase = async <T>(
-      promise: Promise<{ data: T | null; error: any }>,
-      timeoutMs: number
-    ): Promise<{ data: T | null; error: any }> => {
-      try {
-        return await withTimeout(promise, timeoutMs);
-      } catch (error) {
-        return { data: null, error: error as any };
-      }
     };
 
     const fetchProfile = async (userId: string) => {
@@ -73,7 +92,7 @@ export function useAuth() {
           error: any
         };
 
-        const sessionResult = await withTimeout(
+        const sessionResult = await withTimeoutEffect(
           getSessionPromise,
           5000
         ) as SessionResult;
@@ -145,7 +164,7 @@ export function useAuth() {
           error: any
         };
 
-        const sessionResult = await withTimeout(
+        const sessionResult = await withTimeoutEffect(
           getSessionPromise,
           5000
         ) as SessionResult;
@@ -168,7 +187,7 @@ export function useAuth() {
               error: any
             };
 
-            const refreshResult = await withTimeout(
+            const refreshResult = await withTimeoutEffect(
               refreshPromise,
               5000
             ) as RefreshResult;
@@ -285,8 +304,30 @@ export function useAuth() {
   const refetchProfile = useCallback(async () => {
     if (!user) return;
 
+    // Create a timeout function for async operations within this callback
+    const withTimeoutInner = <T>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
+      return Promise.race([
+        promise,
+        new Promise<T>((_, reject) =>
+          setTimeout(() => reject(new Error(`Operation timed out after ${timeoutMs}ms`)), timeoutMs)
+        ) as Promise<T>
+      ]);
+    };
+
+    // Specialized timeout function for Supabase operations that preserves type
+    const withTimeoutSupabaseInner = async <T>(
+      promise: Promise<{ data: T | null; error: any }>,
+      timeoutMs: number
+    ): Promise<{ data: T | null; error: any }> => {
+      try {
+        return await withTimeoutInner(promise, timeoutMs);
+      } catch (error) {
+        return { data: null, error: error as any };
+      }
+    };
+
     try {
-      const { data, error } = await withTimeoutSupabase<Profile>(
+      const { data, error } = await withTimeoutSupabaseInner<Profile>(
         supabase
           .from('profiles')
           .select('id, user_name, user_phoneno, role, is_approved, tier, points_balance, referral_code, created_at')
