@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Package, Truck, CheckCircle, Clock, MapPin, CreditCard } from 'lucide-react';
+import { ArrowLeft, Package, Truck, CheckCircle, Clock, MapPin, CreditCard, Download, Receipt } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,8 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/use-auth';
 import { createClient } from '@/lib/supabase/client';
+import { generateInvoiceJPEG, downloadInvoice } from '@/lib/invoice-generator';
+import { useStoreSettingsStore } from '@/store/store-settings-store';
 import type { Order, OrderItem as OrderItemType } from '@/types/database';
 
 function formatPrice(price: number): string {
@@ -49,11 +51,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const { user } = useAuth();
   const [order, setOrder] = useState<OrderWithItems | null>(null);
   const [loading, setLoading] = useState(true);
+  const [generatingInvoice, setGeneratingInvoice] = useState(false);
 
   const fetchOrder = useCallback(async () => {
     if (!user || !id) return;
     const supabase = createClient();
-    
+
     const { data, error } = await supabase
       .from('orders')
       .select(`
@@ -72,6 +75,57 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     }
     setLoading(false);
   }, [user, id]);
+
+  const handleDownloadInvoice = async () => {
+    if (!order || !user) return;
+
+    setGeneratingInvoice(true);
+    try {
+      // Get store settings for invoice generation
+      const { getStoreSettings } = useStoreSettingsStore.getState();
+      const storeSettings = getStoreSettings();
+
+      // Format the order data to match the expected structure for the invoice generator
+      const orderForInvoice = {
+        id: order.id,
+        user_id: order.user_id,
+        cashier_id: order.cashier_id,
+        source: order.source,
+        status: order.status,
+        subtotal: order.subtotal,
+        shipping_fee: order.shipping_fee,
+        discount_amount: order.discount_amount,
+        total_amount: order.total_amount,
+        shipping_courier: order.shipping_courier_name,
+        recipient_name: order.shipping_address_snapshot?.recipient_name || '',
+        recipient_phone: order.shipping_address_snapshot?.phone || '',
+        recipient_address: order.shipping_address_snapshot?.address_line1 || '',
+        recipient_city: order.shipping_address_snapshot?.city || '',
+        recipient_province: order.shipping_address_snapshot?.province || '',
+        customer_notes: order.customer_notes || '',
+        created_at: order.created_at,
+        items: order.order_items?.map(item => ({
+          product_name: item.product?.name || 'Product',
+          variant_name: item.variant_name,
+          variant_sku: item.variant_sku,
+          product_sku: item.product_sku,
+          quantity: item.quantity,
+          price_at_purchase: item.price_at_purchase,
+        })),
+      };
+
+      // Generate the invoice
+      const invoiceBlob = await generateInvoiceJPEG(orderForInvoice, storeSettings);
+
+      // Download the invoice
+      downloadInvoice(invoiceBlob, order.id);
+    } catch (error) {
+      console.error('Error generating invoice:', error);
+      // Optionally, show a toast error here
+    } finally {
+      setGeneratingInvoice(false);
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -117,17 +171,36 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           </Link>
         </Button>
 
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-brown-900">Order #{order.id.slice(0, 8)}</h1>
             <p className="text-brown-600">{formatDate(order.created_at)}</p>
           </div>
-          <Badge className={`${status.color} text-sm px-3 py-1`}>
-            <span className="flex items-center gap-1">
-              {status.icon}
-              {status.label}
-            </span>
-          </Badge>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleDownloadInvoice}
+              disabled={generatingInvoice}
+            >
+              {generatingInvoice ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-gray-900 border-t-transparent"></div>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Receipt className="mr-2 h-4 w-4" />
+                  Download Invoice
+                </>
+              )}
+            </Button>
+            <Badge className={`${status.color} text-sm px-3 py-1 h-fit`}>
+              <span className="flex items-center gap-1">
+                {status.icon}
+                {status.label}
+              </span>
+            </Badge>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6">
