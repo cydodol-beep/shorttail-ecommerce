@@ -71,9 +71,10 @@ export async function updateSession(request: NextRequest) {
 
     // Only fetch profile if role not in metadata (backward compatibility)
     if (!role) {
-      // Use a 2-second timeout to prevent hanging on database operations
+      // Use a 5-second timeout to prevent hanging on database operations
+      // This addresses the timeout issues seen in console
       const profileController = new AbortController();
-      const timeoutId = setTimeout(() => profileController.abort(), 2000);
+      const timeoutId = setTimeout(() => profileController.abort(), 5000);
 
       try {
         const { data: profile, error: profileError } = await supabase
