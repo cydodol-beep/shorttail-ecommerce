@@ -25,10 +25,22 @@ export function useAuth() {
       ]);
     };
 
+    // Specialized timeout function for Supabase operations that preserves type
+    const withTimeoutSupabase = async <T>(
+      promise: Promise<{ data: T | null; error: any }>,
+      timeoutMs: number
+    ): Promise<{ data: T | null; error: any }> => {
+      try {
+        return await withTimeout(promise, timeoutMs);
+      } catch (error) {
+        return { data: null, error };
+      }
+    };
+
     const fetchProfile = async (userId: string) => {
       try {
         // Add timeout to prevent hanging on profile fetch
-        const { data, error } = await withTimeout(
+        const { data, error } = await withTimeoutSupabase(
           supabase
             .from('profiles')
             .select('id, user_name, user_phoneno, role, is_approved, tier, points_balance, referral_code, created_at')
@@ -242,19 +254,22 @@ export function useAuth() {
 
   const refetchProfile = useCallback(async () => {
     if (!user) return;
-    
+
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, user_name, user_phoneno, role, is_approved, tier, points_balance, referral_code, created_at')
-        .eq('id', user.id)
-        .single();
-      
+      const { data, error } = await withTimeoutSupabase(
+        supabase
+          .from('profiles')
+          .select('id, user_name, user_phoneno, role, is_approved, tier, points_balance, referral_code, created_at')
+          .eq('id', user.id)
+          .single(),
+        5000 // 5 second timeout
+      );
+
       if (error) {
         console.error('Error refetching profile:', error.message || error);
         return;
       }
-      
+
       setProfile(data);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
