@@ -325,7 +325,7 @@ export default function CheckoutPage() {
           product_sku: item.product.sku || '',
           variant_id: item.variant?.id,
           variant_name: item.variant?.variant_name,
-          variant_sku: item.variant?.sku,
+          variant_sku: item.variant?.sku || undefined, // Convert null to undefined
           quantity: item.quantity,
           price_at_purchase: item.variant ? (item.variant.price_adjustment || 0) : item.product.base_price,
         })),

@@ -126,9 +126,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           product_id: item.product_id,
           product_name: item.product?.name || 'Product',
           product_sku: item.product_sku || '',
-          variant_id: item.variant_id,
-          variant_name: item.variant_name,
-          variant_sku: item.variant_sku,
+          variant_id: item.variant_id || undefined,
+          variant_name: item.variant_name || undefined,
+          variant_sku: item.variant_sku || undefined, // Convert null to undefined
           quantity: item.quantity,
           price_at_purchase: item.price_at_purchase,
         })) || [],
