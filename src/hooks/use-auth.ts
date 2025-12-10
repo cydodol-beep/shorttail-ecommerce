@@ -33,19 +33,19 @@ export function useAuth() {
       try {
         return await withTimeout(promise, timeoutMs);
       } catch (error) {
-        return { data: null, error };
+        return { data: null, error: error as any };
       }
     };
 
     const fetchProfile = async (userId: string) => {
       try {
         // Add timeout to prevent hanging on profile fetch
-        const { data, error } = await withTimeoutSupabase(
+        const { data, error } = await withTimeoutSupabase<Profile>(
           supabase
             .from('profiles')
             .select('id, user_name, user_phoneno, role, is_approved, tier, points_balance, referral_code, created_at')
             .eq('id', userId)
-            .single(),
+            .single() as Promise<{ data: Profile | null; error: any }>,
           5000 // 5 second timeout
         );
 
@@ -256,12 +256,12 @@ export function useAuth() {
     if (!user) return;
 
     try {
-      const { data, error } = await withTimeoutSupabase(
+      const { data, error } = await withTimeoutSupabase<Profile>(
         supabase
           .from('profiles')
           .select('id, user_name, user_phoneno, role, is_approved, tier, points_balance, referral_code, created_at')
           .eq('id', user.id)
-          .single(),
+          .single() as Promise<{ data: Profile | null; error: any }>,
         5000 // 5 second timeout
       );
 
