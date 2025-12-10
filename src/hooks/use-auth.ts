@@ -94,7 +94,7 @@ export function useAuth() {
 
         const sessionResult = await withTimeoutEffect(
           getSessionPromise,
-          10000
+          15000  // Increase this from 10000 to 15000 to prevent timeout error
         ) as SessionResult;
 
         const { data: { session }, error: sessionError } = sessionResult;
@@ -166,7 +166,7 @@ export function useAuth() {
 
         const sessionResult = await withTimeoutEffect(
           getSessionPromise,
-          5000
+          15000  // Increase to 15000 to prevent timeout error
         ) as SessionResult;
 
         const { data: { session }, error } = sessionResult;
@@ -189,7 +189,7 @@ export function useAuth() {
 
             const refreshResult = await withTimeoutEffect(
               refreshPromise,
-              10000
+              15000  // Increase to 15000 to prevent timeout error
             ) as RefreshResult;
 
             const { error: refreshError } = refreshResult;
