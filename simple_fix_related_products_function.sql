@@ -1,0 +1,87 @@
+-- Simple fix for the get_related_products function to resolve 'category' column ambiguity
+-- The main issue is in the subquery where 'category' is referenced without table qualification
+-- Run this in your Supabase SQL Editor
+
+-- Drop the existing function
+DROP FUNCTION IF EXISTS get_related_products(UUID, INTEGER);
+
+-- Recreate with the fix - properly qualifying the category column reference
+CREATE OR REPLACE FUNCTION get_related_products(
+  p_product_id UUID,
+  p_limit INTEGER DEFAULT 5
+)
+RETURNS TABLE (
+  id UUID,
+  name TEXT,
+  base_price NUMERIC,
+  main_image_url TEXT,
+  category TEXT,
+  stock_quantity INTEGER,
+  is_manual BOOLEAN,
+  has_variants BOOLEAN,
+  min_variant_price NUMERIC,
+  max_variant_price NUMERIC,
+  total_variant_stock BIGINT,
+  max_variant_stock BIGINT
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- First, try to get manually set related products
+  RETURN QUERY
+  SELECT
+    p.id,
+    p.name,
+    p.base_price,
+    p.main_image_url,
+    p.category,
+    p.stock_quantity,
+    true as is_manual,
+    p.has_variants,
+    COALESCE((SELECT MIN(p.base_price + pv.price_adjustment) FROM product_variants pv WHERE pv.product_id = p.id), p.base_price) as min_variant_price,
+    COALESCE((SELECT MAX(p.base_price + pv.price_adjustment) FROM product_variants pv WHERE pv.product_id = p.id), p.base_price) as max_variant_price,
+    COALESCE((SELECT SUM(pv.stock_quantity) FROM product_variants pv WHERE pv.product_id = p.id), 0::BIGINT) as total_variant_stock,
+    COALESCE((SELECT MAX(pv.stock_quantity) FROM product_variants pv WHERE pv.product_id = p.id), 0::BIGINT) as max_variant_stock
+  FROM products p
+  INNER JOIN product_relations pr ON p.id = pr.related_product_id
+  WHERE pr.product_id = p_product_id
+    AND p.is_active = true
+  ORDER BY pr.sort_order, pr.created_at
+  LIMIT p_limit;
+
+  -- If we don't have enough manual relations, fill with category-based suggestions
+  -- KEY FIX: Qualify the 'category' reference in the subquery to avoid ambiguity
+  IF (SELECT COUNT(*) FROM product_relations WHERE product_id = p_product_id) < p_limit THEN
+    RETURN QUERY
+    SELECT
+      p.id,
+      p.name,
+      p.base_price,
+      p.main_image_url,
+      p.category,
+      p.stock_quantity,
+      false as is_manual,
+      p.has_variants,
+      COALESCE((SELECT MIN(p.base_price + pv.price_adjustment) FROM product_variants pv WHERE pv.product_id = p.id), p.base_price) as min_variant_price,
+      COALESCE((SELECT MAX(p.base_price + pv.price_adjustment) FROM product_variants pv WHERE pv.product_id = p.id), p.base_price) as max_variant_price,
+      COALESCE((SELECT SUM(pv.stock_quantity) FROM product_variants pv WHERE pv.product_id = p.id), 0::BIGINT) as total_variant_stock,
+      COALESCE((SELECT MAX(pv.stock_quantity) FROM product_variants pv WHERE pv.product_id = p.id), 0::BIGINT) as max_variant_stock
+    FROM products p
+    WHERE p.id != p_product_id
+      AND p.category = (SELECT p_sub.category FROM products p_sub WHERE p_sub.id = p_product_id)  -- Fully qualified as p_sub.category
+      AND p.is_active = true
+      AND p.id NOT IN (
+        SELECT related_product_id
+        FROM product_relations
+        WHERE product_id = p_product_id
+      )
+    ORDER BY RANDOM()
+    LIMIT p_limit - (SELECT COUNT(*) FROM product_relations WHERE product_id = p_product_id);
+  END IF;
+END;
+$$;
+
+-- Grant execute permissions
+GRANT EXECUTE ON FUNCTION get_related_products TO authenticated, anon;

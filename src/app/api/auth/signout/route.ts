@@ -17,7 +17,7 @@ export async function POST() {
     const supabase = await createClient();
 
     // Sign out from Supabase with timeout to prevent hanging
-    await withTimeout(supabase.auth.signOut(), 5000);
+    await withTimeout(supabase.auth.signOut(), 10000);
 
     // Clear all auth cookies
     const cookieStore = await cookies();

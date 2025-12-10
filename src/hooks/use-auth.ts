@@ -65,7 +65,7 @@ export function useAuth() {
             .select('id, user_name, user_phoneno, role, is_approved, tier, points_balance, referral_code, created_at')
             .eq('id', userId)
             .single() as Promise<{ data: Profile | null; error: any }>,
-          5000 // 5 second timeout
+          10000 // 10 second timeout - increasing to prevent timeout error
         );
 
         if (error) {
@@ -94,7 +94,7 @@ export function useAuth() {
 
         const sessionResult = await withTimeoutEffect(
           getSessionPromise,
-          5000
+          10000
         ) as SessionResult;
 
         const { data: { session }, error: sessionError } = sessionResult;
@@ -189,7 +189,7 @@ export function useAuth() {
 
             const refreshResult = await withTimeoutEffect(
               refreshPromise,
-              5000
+              10000
             ) as RefreshResult;
 
             const { error: refreshError } = refreshResult;
@@ -333,7 +333,7 @@ export function useAuth() {
           .select('id, user_name, user_phoneno, role, is_approved, tier, points_balance, referral_code, created_at')
           .eq('id', user.id)
           .single() as Promise<{ data: Profile | null; error: any }>,
-        5000 // 5 second timeout
+        10000 // 10 second timeout - increasing to prevent timeout error
       );
 
       if (error) {

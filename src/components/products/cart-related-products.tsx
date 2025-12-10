@@ -61,9 +61,23 @@ async function getRelatedProductsMulti(cartProductIds: string[], limit: number):
       }
 
       return (data || []) as RelatedProduct[];
-    } catch (error) {
+    } catch (error: any) {
       console.error('Exception fetching related products for product:', productId, error);
-      return [];
+      // Additional fallback: try to get trending products
+      try {
+        // First, get random active products as fallback
+        const { data: fallbackData } = await supabase
+          .from('products')
+          .select('id, name, main_image_url, base_price, stock_quantity, has_variants, condition')
+          .eq('is_active', true)
+          .not('id', 'in', `(${cartProductIds.join(',')})`) // Exclude current products in cart
+          .limit(2);
+
+        return (fallbackData || []) as RelatedProduct[];
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError);
+        return [];
+      }
     }
   });
 
