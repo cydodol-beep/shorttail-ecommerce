@@ -43,7 +43,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.R
 };
 
 interface OrderWithItems extends Order {
-  order_items: (OrderItemType & { product: { name: string; images: string[] } })[];
+  order_items: (OrderItemType & { product: { name: string; images: string[]; sku?: string } })[];
 }
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -63,7 +63,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         *,
         order_items (
           *,
-          product:products (name, images)
+          product:products (name, images, sku)
         )
       `)
       .eq('id', id)
@@ -125,7 +125,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         items: order.order_items?.map(item => ({
           product_id: item.product_id,
           product_name: item.product?.name || 'Product',
-          product_sku: item.product?.sku || '', // Get SKU from joined product
+          product_sku: item.product?.sku || '',
           variant_id: item.variant_id || undefined,
           variant_name: (item as any).variant_name || undefined, // variant_name might be an additional field
           variant_sku: (item as any).variant_sku || undefined, // variant_sku might be an additional field
