@@ -101,29 +101,39 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       const orderForInvoice = {
         id: order.id,
         user_id: order.user_id,
+        user_name: '', // This is not part of the database order object
+        user_email: '', // This is not part of the database order object
         cashier_id: order.cashier_id,
+        cashier_name: '', // This is not available here
         source: order.source,
         status: order.status,
         subtotal: order.subtotal,
         shipping_fee: order.shipping_fee,
         discount_amount: order.discount_amount,
         total_amount: order.total_amount,
-        shipping_courier: order.shipping_courier_name,
         recipient_name: order.shipping_address_snapshot?.recipient_name || '',
         recipient_phone: order.shipping_address_snapshot?.phone || '',
         recipient_address: order.shipping_address_snapshot?.address_line1 || '',
-        recipient_city: order.shipping_address_snapshot?.city || '',
         recipient_province: order.shipping_address_snapshot?.province || '',
+        shipping_courier: order.shipping_courier_name,
+        shipping_courier_name: order.shipping_courier_name,
+        shipping_address_snapshot: order.shipping_address_snapshot,
         customer_notes: order.customer_notes || '',
-        created_at: order.created_at,
+        invoice_url: order.invoice_url || '',
+        packing_list_url: order.packing_list_url || '',
+        items_count: order.order_items?.length || 0,
         items: order.order_items?.map(item => ({
+          product_id: item.product_id,
           product_name: item.product?.name || 'Product',
+          product_sku: item.product_sku || '',
+          variant_id: item.variant_id,
           variant_name: item.variant_name,
           variant_sku: item.variant_sku,
-          product_sku: item.product_sku,
           quantity: item.quantity,
           price_at_purchase: item.price_at_purchase,
-        })),
+        })) || [],
+        created_at: order.created_at,
+        updated_at: order.updated_at,
       };
 
       // Generate the invoice
