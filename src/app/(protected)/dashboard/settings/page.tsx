@@ -140,13 +140,13 @@ export default function UserSettingsPage() {
           // Personal address fields
           address_line1: addressLine1,
           city: city,
-          region_state_province: provinceId,
+          region_state_province_id: provinceId,
           postal_code: postalCode,
           // Recipient/shipping address fields
           recipient_name: recipientName,
           recipient_address_line1: recipientAddress,
           recipient_city: recipientCity,
-          recipient_region_state_province: recipientProvinceId,
+          recipient_region_state_province_id: recipientProvinceId,
           recipient_postal_code: recipientPostalCode,
         })
         .eq('id', user.id);
