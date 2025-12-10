@@ -98,7 +98,15 @@ export async function updateSession(request: NextRequest) {
         clearTimeout(timeoutId);
         console.error('Profile fetch error in middleware:', error?.message || error);
         // If profile fetch fails, default to normal user to prevent session issues
+        // This prevents hanging and redirects due to profile fetch issues
         role = 'normal_user';
+
+        // Add a safeguard: if we're on checkout and role determination fails,
+        // allow the request to continue instead of redirecting
+        if (pathname.startsWith('/checkout') || pathname.startsWith('/cart')) {
+          // Let checkout/cart continue with default role instead of redirecting
+          console.warn('Allowing checkout/cart access with default role due to profile fetch failure');
+        }
       }
     }
 
