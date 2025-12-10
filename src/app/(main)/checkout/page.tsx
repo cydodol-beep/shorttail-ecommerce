@@ -82,7 +82,7 @@ async function validatePromotionCode(code: string, userId: string, productIds: s
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { user, profile } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const { items, getTotal, clearCart } = useCartStore();
   const [loading, setLoading] = useState(false);
   const [selectedCourier, setSelectedCourier] = useState<typeof couriers[0] | null>(null);
@@ -107,13 +107,14 @@ export default function CheckoutPage() {
   });
 
   useEffect(() => {
-    if (!user) {
+    // Don't redirect while auth state is loading/stabilizing
+    if (!authLoading && !user) {
       router.push('/login?redirect=/checkout');
     }
-    if (items.length === 0) {
+    if (!authLoading && items.length === 0) {
       router.push('/cart');
     }
-  }, [user, items.length, router]);
+  }, [user, authLoading, items.length, router]);
 
   const subtotal = getTotal();
   const shippingFee = selectedCourier?.price || 0;

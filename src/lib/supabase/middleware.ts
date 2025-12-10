@@ -110,19 +110,14 @@ export async function updateSession(request: NextRequest) {
       }
     }
 
-    // Determine if current route should bypass role-based redirection
-    // These routes should be accessible to all authenticated users regardless of role
-    const isRouteWithRoleBypass = pathname.startsWith('/checkout') ||
-                                  pathname.startsWith('/cart') ||
-                                  pathname.startsWith('/products') ||
-                                  pathname.startsWith('/api') ||
-                                  pathname === '/' ||
-                                  pathname.startsWith('/login') ||
-                                  pathname.startsWith('/register');
+    // Check if accessing checkout/cart routes to prevent any role-based redirects
+    // These routes should be accessible to any authenticated user regardless of role
+    const isCheckoutRoute = pathname === '/checkout' || pathname.startsWith('/checkout/');
+    const isCartRoute = pathname === '/cart' || pathname.startsWith('/cart/');
 
     // Apply role-based redirection only to routes that should have it
-    // Skip role checks for routes that any authenticated user should access
-    if (!isRouteWithRoleBypass) {
+    // Never apply role checks to checkout and cart routes to prevent accidental redirects
+    if (!isCheckoutRoute && !isCartRoute) {
       // Admin routes - only master_admin and normal_admin
       if (pathname.startsWith('/admin')) {
         if (!['master_admin', 'normal_admin'].includes(role)) {
