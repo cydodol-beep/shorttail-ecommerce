@@ -98,15 +98,19 @@ export async function updateSession(request: NextRequest) {
       }
     }
 
-    // Only apply role-based redirection for specific protected areas, not for marketplace routes
-    // Marketplace routes like /checkout should be accessible to any authenticated user
-    const isMarketplaceRoute = pathname.startsWith('/checkout') ||
-                              pathname.startsWith('/cart') ||
-                              pathname.startsWith('/dashboard/orders') ||
-                              pathname.startsWith('/dashboard/settings') ||
-                              pathname.startsWith('/dashboard/pets');
+    // Determine if current route should bypass role-based redirection
+    // These routes should be accessible to all authenticated users regardless of role
+    const isRouteWithRoleBypass = pathname.startsWith('/checkout') ||
+                                  pathname.startsWith('/cart') ||
+                                  pathname.startsWith('/products') ||
+                                  pathname.startsWith('/api') ||
+                                  pathname === '/' ||
+                                  pathname.startsWith('/login') ||
+                                  pathname.startsWith('/register');
 
-    if (!isMarketplaceRoute) {
+    // Apply role-based redirection only to routes that should have it
+    // Skip role checks for routes that any authenticated user should access
+    if (!isRouteWithRoleBypass) {
       // Admin routes - only master_admin and normal_admin
       if (pathname.startsWith('/admin')) {
         if (!['master_admin', 'normal_admin'].includes(role)) {
@@ -116,11 +120,25 @@ export async function updateSession(request: NextRequest) {
         }
       }
 
-      // Kasir routes - kasir and super_user
+      // Kasir routes - only for kasir and super_user
       if (pathname.startsWith('/kasir')) {
         if (!['kasir', 'super_user'].includes(role)) {
           const url = request.nextUrl.clone();
           url.pathname = '/dashboard';
+          return NextResponse.redirect(url);
+        }
+      }
+
+      // Dashboard routes - handle role-specific redirects
+      if (pathname === '/dashboard') {
+        if (['master_admin', 'normal_admin'].includes(role)) {
+          const url = request.nextUrl.clone();
+          url.pathname = '/admin';
+          return NextResponse.redirect(url);
+        }
+        if (role === 'kasir') {
+          const url = request.nextUrl.clone();
+          url.pathname = '/kasir';
           return NextResponse.redirect(url);
         }
       }
