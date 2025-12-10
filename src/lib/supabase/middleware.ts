@@ -71,10 +71,10 @@ export async function updateSession(request: NextRequest) {
 
     // Only fetch profile if role not in metadata (backward compatibility)
     if (!role) {
-      // Use a 5-second timeout to prevent hanging on database operations
-      // This addresses the timeout issues seen in console
-      const profileController = new AbortController();
-      const timeoutId = setTimeout(() => profileController.abort(), 5000);
+      // Use a 10-second timeout to prevent hanging on database operations
+      // The previous timeout error shows we need more time for stable connections
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       try {
         const { data: profile, error: profileError } = await supabase
@@ -85,15 +85,19 @@ export async function updateSession(request: NextRequest) {
 
         clearTimeout(timeoutId);
 
-        if (profileError && profileError.code !== 'PGRST116') { // PGRST116 is "Results contain 0 rows"
-          console.error('Error fetching profile in middleware:', profileError);
+        if (profileError) {
+          if (profileError.code !== 'PGRST116') { // PGRST116 is "Results contain 0 rows"
+            console.error('Error fetching profile in middleware:', profileError);
+          }
+          // If profile doesn't exist or error occurs, default to normal_user
+          role = 'normal_user';
+        } else {
+          role = profile?.role || 'normal_user';
         }
-
-        role = profile?.role || 'normal_user';
-      } catch (timeoutError) {
+      } catch (error: any) {
         clearTimeout(timeoutId);
-        console.error('Profile fetch timeout in middleware:', timeoutError);
-        // If profile fetch fails, default to normal user to prevent hanging
+        console.error('Profile fetch error in middleware:', error?.message || error);
+        // If profile fetch fails, default to normal user to prevent session issues
         role = 'normal_user';
       }
     }
