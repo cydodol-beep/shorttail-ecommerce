@@ -46,18 +46,12 @@ export async function updateSession(request: NextRequest) {
 
   // Public routes that don't require authentication
   const publicRoutes = ['/', '/login', '/register', '/products', '/api'];
-  // Routes that require authentication but shouldn't redirect based on role
-  const authRequiredRoutes = ['/checkout', '/dashboard/orders', '/dashboard/settings', '/dashboard/pets'];
-
   const isPublicRoute = publicRoutes.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
-  );
-  const isAuthRequiredRoute = authRequiredRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
 
   // If there's a refresh error, redirect to login for protected routes
-  if (error && (!isPublicRoute && !isAuthRequiredRoute)) {
+  if (error && !isPublicRoute) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
@@ -65,24 +59,13 @@ export async function updateSession(request: NextRequest) {
 
   // If not authenticated and trying to access protected route
   if (!user && !isPublicRoute) {
-    // For auth-required routes that aren't public, redirect to login
-    if (isAuthRequiredRoute) {
-      const url = request.nextUrl.clone();
-      // Preserve the original path for redirect after login
-      url.pathname = '/login';
-      url.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(url);
-    } else {
-      // For other protected routes, redirect to login
-      const url = request.nextUrl.clone();
-      url.pathname = '/login';
-      return NextResponse.redirect(url);
-    }
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    return NextResponse.redirect(url);
   }
 
-  // Role-based access control - only apply to routes that should be restricted by role
-  // Skip role checks for auth-required routes like /checkout to allow regular users to access them
-  if (user && !isAuthRequiredRoute) {
+  // Role-based access control - use session metadata for role instead of fetching
+  if (user) {
     // Extract role from user metadata or session to minimize DB calls in middleware
     let role = user.user_metadata?.role;
 
@@ -114,21 +97,31 @@ export async function updateSession(request: NextRequest) {
       }
     }
 
-    // Admin routes - only master_admin and normal_admin
-    if (pathname.startsWith('/admin')) {
-      if (!['master_admin', 'normal_admin'].includes(role)) {
-        const url = request.nextUrl.clone();
-        url.pathname = '/dashboard';
-        return NextResponse.redirect(url);
-      }
-    }
+    // Only apply role-based redirection for specific protected areas, not for marketplace routes
+    // Marketplace routes like /checkout should be accessible to any authenticated user
+    const isMarketplaceRoute = pathname.startsWith('/checkout') ||
+                              pathname.startsWith('/cart') ||
+                              pathname.startsWith('/dashboard/orders') ||
+                              pathname.startsWith('/dashboard/settings') ||
+                              pathname.startsWith('/dashboard/pets');
 
-    // Kasir routes - kasir and super_user
-    if (pathname.startsWith('/kasir')) {
-      if (!['kasir', 'super_user'].includes(role)) {
-        const url = request.nextUrl.clone();
-        url.pathname = '/dashboard';
-        return NextResponse.redirect(url);
+    if (!isMarketplaceRoute) {
+      // Admin routes - only master_admin and normal_admin
+      if (pathname.startsWith('/admin')) {
+        if (!['master_admin', 'normal_admin'].includes(role)) {
+          const url = request.nextUrl.clone();
+          url.pathname = '/dashboard';
+          return NextResponse.redirect(url);
+        }
+      }
+
+      // Kasir routes - kasir and super_user
+      if (pathname.startsWith('/kasir')) {
+        if (!['kasir', 'super_user'].includes(role)) {
+          const url = request.nextUrl.clone();
+          url.pathname = '/dashboard';
+          return NextResponse.redirect(url);
+        }
       }
     }
 
