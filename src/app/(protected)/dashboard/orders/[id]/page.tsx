@@ -118,7 +118,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         shipping_courier: order.shipping_courier_name,
         shipping_courier_name: order.shipping_courier_name,
         shipping_address_snapshot: order.shipping_address_snapshot,
-        customer_notes: order.customer_notes || '',
+        customer_notes: (order as any).customer_notes || '', // customer_notes might not be in the main Order type but could be returned by select('*')
         invoice_url: order.invoice_url || '',
         packing_list_url: order.packing_list_url || '',
         items_count: order.order_items?.length || 0,
