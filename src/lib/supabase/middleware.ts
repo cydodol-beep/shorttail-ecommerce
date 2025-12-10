@@ -46,12 +46,18 @@ export async function updateSession(request: NextRequest) {
 
   // Public routes that don't require authentication
   const publicRoutes = ['/', '/login', '/register', '/products', '/api'];
+  // Routes that require authentication but shouldn't redirect based on role
+  const authRequiredRoutes = ['/checkout', '/dashboard/orders', '/dashboard/settings', '/dashboard/pets'];
+
   const isPublicRoute = publicRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
+  const isAuthRequiredRoute = authRequiredRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
 
   // If there's a refresh error, redirect to login for protected routes
-  if (error && !isPublicRoute) {
+  if (error && (!isPublicRoute && !isAuthRequiredRoute)) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
@@ -59,13 +65,24 @@ export async function updateSession(request: NextRequest) {
 
   // If not authenticated and trying to access protected route
   if (!user && !isPublicRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/login';
-    return NextResponse.redirect(url);
+    // For auth-required routes that aren't public, redirect to login
+    if (isAuthRequiredRoute) {
+      const url = request.nextUrl.clone();
+      // Preserve the original path for redirect after login
+      url.pathname = '/login';
+      url.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(url);
+    } else {
+      // For other protected routes, redirect to login
+      const url = request.nextUrl.clone();
+      url.pathname = '/login';
+      return NextResponse.redirect(url);
+    }
   }
 
-  // Role-based access control - use session metadata for role instead of fetching
-  if (user) {
+  // Role-based access control - only apply to routes that should be restricted by role
+  // Skip role checks for auth-required routes like /checkout to allow regular users to access them
+  if (user && !isAuthRequiredRoute) {
     // Extract role from user metadata or session to minimize DB calls in middleware
     let role = user.user_metadata?.role;
 
