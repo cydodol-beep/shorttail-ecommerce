@@ -65,7 +65,7 @@ export function useAuth() {
             .select('id, user_name, user_phoneno, role, is_approved, tier, points_balance, referral_code, created_at')
             .eq('id', userId)
             .single() as Promise<{ data: Profile | null; error: any }>,
-          10000 // 10 second timeout - increasing to prevent timeout error
+          15000 // 15 second timeout - increasing to prevent timeout error
         );
 
         if (error) {
@@ -333,7 +333,7 @@ export function useAuth() {
           .select('id, user_name, user_phoneno, role, is_approved, tier, points_balance, referral_code, created_at')
           .eq('id', user.id)
           .single() as Promise<{ data: Profile | null; error: any }>,
-        10000 // 10 second timeout - increasing to prevent timeout error
+        15000 // 15 second timeout - increasing to prevent timeout error
       );
 
       if (error) {
