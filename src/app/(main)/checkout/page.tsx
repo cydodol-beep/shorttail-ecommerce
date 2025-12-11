@@ -86,7 +86,7 @@ type ShippingCourier = {
 async function calculateShippingRates(destinationProvinceId: number, totalWeightGrams: number): Promise<ShippingCourier[]> {
   const supabase = createClient();
 
-  // Call the RPC to get base rates based on province
+  // Call the RPC to get rates based on province
   const { data: ratesData, error } = await supabase
     .rpc('get_shipping_rates_for_province', {
       p_province_id: destinationProvinceId
@@ -115,8 +115,9 @@ async function calculateShippingRates(destinationProvinceId: number, totalWeight
     }
     // If under 1kg, use base rate (which is already set above)
 
+    // Return the correct structure for ShippingCourier type
     return {
-      id: rate.id?.toString() || rate.courier_id?.toString() || '',
+      id: rate.courier_id?.toString() || rate.id?.toString() || '',
       name: rate.courier_name || rate.name || 'Unknown Courier',
       price: cost,
       eta: rate.estimated_days ? `${rate.estimated_days} days` : '1-2 days'
@@ -382,18 +383,29 @@ export default function CheckoutPage() {
   // Set the initial province from the profile when both profile and provinces are available
   useEffect(() => {
     if (profile && provinces.length > 0) {
-      const initialProvince = profile.recipient_region || profile.region_state_province || '';
-      if (initialProvince) {
-        // Find the matching province ID based on the name
-        const matchedProvince = provinces.find((prov: { id: number; name: string }) =>
-          prov.name.toLowerCase().includes(initialProvince.toLowerCase()) ||
-          initialProvince.toLowerCase().includes(prov.name.toLowerCase())
+      // Prioritize recipient_province_id from profile if available
+      const recipientProvinceId = profile.recipient_province_id;
+      const regionProvince = profile.recipient_region || profile.region_state_province || '';
+
+      let matchedProvince: { id: number; name: string } | undefined;
+
+      if (recipientProvinceId) {
+        // Use the ID directly if available
+        matchedProvince = provinces.find((prov: { id: number; name: string }) =>
+          prov.id === recipientProvinceId
         );
-        if (matchedProvince) {
-          setSelectedProvince(matchedProvince.id.toString());
-          // Also update the form value to match the province name
-          form.setValue('province', matchedProvince.name);
-        }
+      } else if (regionProvince) {
+        // Fallback to name matching if no ID
+        matchedProvince = provinces.find((prov: { id: number; name: string }) =>
+          prov.name.toLowerCase().includes(regionProvince.toLowerCase()) ||
+          regionProvince.toLowerCase().includes(prov.name.toLowerCase())
+        );
+      }
+
+      if (matchedProvince) {
+        setSelectedProvince(matchedProvince.id.toString());
+        // Also update the form value to match the province name
+        form.setValue('province', matchedProvince.name);
       }
     }
   }, [profile, provinces, form]);
