@@ -26,6 +26,7 @@ export interface Profile {
   recipient_region: string | null;
   recipient_province_id: number | null;
   recipient_postal_code: string | null;
+  recipient_phoneno: string | null;
   is_approved: boolean;
   created_at: string;
   updated_at: string;
