@@ -98,8 +98,8 @@ async function calculateShippingRates(destinationProvinceId: number): Promise<Sh
   return (data as ShippingCourier[]) || staticCouriers;
 }
 
-// Fetch available payment methods
-async function fetchPaymentMethods() {
+// Fetch available payment methods from payment_methods table
+async function fetchDirectPaymentMethods() {
   const supabase = createClient();
 
   const { data, error } = await supabase
@@ -208,7 +208,7 @@ async function validatePromotionCode(code: string, userId: string, productIds: s
   return (data?.[0] as PromotionValidationResult) || null;
 }
 
-function CheckoutPage() {
+export default function CheckoutPage() {
   const router = useRouter();
   const { user, profile, loading: authLoading } = useAuth();
   const { items, getTotal, clearCart } = useCartStore();
@@ -1127,5 +1127,3 @@ function CheckoutPage() {
     </div>
   );
 }
-
-export default CheckoutPage;
