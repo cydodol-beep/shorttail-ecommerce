@@ -1549,7 +1549,10 @@ export default function CheckoutPage() {
                   <ul className="text-sm">
                     {previewOrderData.items.map((item: any, index: number) => (
                       <li key={index} className="flex justify-between">
-                        <span>{item.product_name}{item.variant_name ? ` (${item.variant_name})`} - Qty: {item.quantity}</span>
+                        <span>
+                          {item.product_name}
+                          {item.variant_name && <span> ({item.variant_name})</span>} - Qty: {item.quantity}
+                        </span>
                         <span>{formatPrice(item.price_at_purchase * item.quantity)}</span>
                       </li>
                     ))}
