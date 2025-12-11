@@ -225,6 +225,23 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
 
+        {/* Information about editing orders */}
+        <Card className="mb-6 border-blue-200 bg-blue-50">
+          <CardContent className="py-4">
+            <div className="flex items-start gap-3">
+              <FileText className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="font-medium text-brown-900">Need to Edit Your Order?</h3>
+                <p className="text-sm text-brown-600 mt-1">
+                  Orders cannot be edited directly. If you need to make changes to your order,
+                  please contact our admin team. They will assist you with any modifications
+                  from the admin panel.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="grid md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-6">
             <Card>
