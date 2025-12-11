@@ -66,6 +66,7 @@ export default function UserSettingsPage() {
   const [recipientCity, setRecipientCity] = useState('');
   const [recipientRegion, setRecipientRegion] = useState(''); // stores recipient_province_id
   const [recipientPostalCode, setRecipientPostalCode] = useState('');
+  const [recipientPhone, setRecipientPhone] = useState('');
   const [sameAsPersonal, setSameAsPersonal] = useState(false);
 
   // Password
@@ -107,6 +108,7 @@ export default function UserSettingsPage() {
       setRecipientCity(profile.recipient_city || '');
       setRecipientRegion(profile.recipient_province_id ? profile.recipient_province_id.toString() : '');
       setRecipientPostalCode(profile.recipient_postal_code || '');
+      setRecipientPhone(profile.recipient_phoneno || profile.recipient_phone || '');
     }
   }, [profile]);
 
@@ -117,8 +119,9 @@ export default function UserSettingsPage() {
       setRecipientCity(city);
       setRecipientRegion(region);
       setRecipientPostalCode(postalCode);
+      setRecipientPhone(userPhone); // Also copy the user's phone number
     }
-  }, [sameAsPersonal, userName, addressLine1, city, region, postalCode]);
+  }, [sameAsPersonal, userName, addressLine1, city, region, postalCode, userPhone]);
 
   const handleSaveProfile = async () => {
     if (!user) return;
@@ -148,6 +151,7 @@ export default function UserSettingsPage() {
           recipient_city: recipientCity,
           recipient_province_id: recipientProvinceId,
           recipient_postal_code: recipientPostalCode,
+          recipient_phoneno: recipientPhone,
         })
         .eq('id', user.id);
 
@@ -687,6 +691,17 @@ export default function UserSettingsPage() {
                       value={recipientAddress}
                       onChange={(e) => setRecipientAddress(e.target.value)}
                       placeholder="Street address"
+                      disabled={sameAsPersonal}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="recipient_phone">Phone Number</Label>
+                    <Input
+                      id="recipient_phone"
+                      value={recipientPhone}
+                      onChange={(e) => setRecipientPhone(e.target.value)}
+                      placeholder="Recipient phone number"
                       disabled={sameAsPersonal}
                     />
                   </div>

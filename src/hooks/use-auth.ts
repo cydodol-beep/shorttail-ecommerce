@@ -82,7 +82,8 @@ export function useAuth() {
               recipient_address_line1,
               recipient_city,
               recipient_province_id,
-              recipient_postal_code
+              recipient_postal_code,
+              recipient_phoneno
             `)
             .eq('id', userId)
             .single() as Promise<{ data: Profile | null; error: any }>,

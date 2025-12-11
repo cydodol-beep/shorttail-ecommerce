@@ -2,6 +2,20 @@
 
 A sophisticated e-commerce platform for pet supplies built with Next.js 16 and Supabase, featuring Role-Based Access Control (RBAC), Point of Sale (POS) system, and gamification features.
 
+## 🆕 Recent Updates (December 12, 2025)
+
+### Profile & Province Integration Enhancement 💼
+- **Fixed Profile Data Loading & Saving Issues**:
+  - Resolved timeout errors when fetching user profiles (Operation timed out after 15000ms)
+  - Fixed missing profile data in dashboard settings page
+  - Implemented proper column mapping for address and province fields in profiles table
+  - Enhanced profile fetching query to include all necessary address fields including province IDs
+  - Fixed province selection saving to correctly store `province_id` and `recipient_province_id` in database
+  - Integrated provinces table to enable dropdown selection of provinces/states in user settings
+  - Established proper foreign key relationships between profiles table and provinces table
+  - Added error handling for province-related operations to prevent system failures
+  - Improved user experience by ensuring all saved address data properly displays in settings form
+
 ## 🆕 Recent Updates (December 8, 2025)
 
 ### Bug Fixes 🐛
