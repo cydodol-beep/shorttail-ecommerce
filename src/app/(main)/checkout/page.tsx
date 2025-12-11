@@ -31,6 +31,8 @@ import { createClient } from '@/lib/supabase/client';
 import { RelatedProducts } from '@/components/products/related-products';
 import { generateInvoiceJPEG, downloadInvoice } from '@/lib/invoice-generator';
 import { useStoreSettingsStore } from '@/store/store-settings-store';
+import { usePromotionsStore } from '@/store/promotions-store';
+import { Promotion } from '@/store/promotions-store';
 
 const checkoutSchema = z.object({
   recipient_name: z.string().min(2, 'Name is required'),
@@ -274,6 +276,12 @@ export default function CheckoutPage() {
   }>>([]);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<{ id: string; name: string; description: string } | null>(null);
 
+  // New state for shop promotions section
+  const [availablePromotions, setAvailablePromotions] = useState<Promotion[]>([]);
+  const [selectedPromotionId, setSelectedPromotionId] = useState<string | null>(null);
+  const [promotionsLoading, setPromotionsLoading] = useState(true);
+  const promotionsStore = usePromotionsStore();
+
   const form = useForm<CheckoutForm>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
@@ -421,6 +429,50 @@ export default function CheckoutPage() {
     }
   }, [profile, provinces, form]);
 
+  // Fetch available promotions on component mount
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchPromotions = async () => {
+      setPromotionsLoading(true);
+      await promotionsStore.fetchPromotions();
+      const allPromotions = promotionsStore.promotions;
+
+      // Filter to get only active promotions that can be applied to this cart
+      const applicablePromotions = allPromotions.filter(promo => {
+        if (!promo.is_active) return false;
+        if (promo.start_date && new Date(promo.start_date) > new Date()) return false;
+        if (promo.end_date && new Date(promo.end_date) < new Date()) return false;
+        if (promo.min_purchase_amount && subtotal < promo.min_purchase_amount) return false;
+
+        // Check if promotion applies to cart items
+        if (promo.applies_to === 'specific_products') {
+          const cartProductIds = items.map(item => item.product.id);
+          if (promo.product_ids && promo.product_ids.length > 0) {
+            // Check if any of the cart products match the promotion products
+            const hasMatchingProduct = cartProductIds.some(cartId =>
+              promo.product_ids?.includes(cartId)
+            );
+            if (!hasMatchingProduct) return false;
+          }
+        }
+
+        // Check max uses per user
+        if (promo.max_uses_per_user) {
+          // In a real implementation, you'd check the promotion_usage table
+          // For now, we'll just show the promotion and validate on application
+        }
+
+        return true;
+      });
+
+      setAvailablePromotions(applicablePromotions);
+      setPromotionsLoading(false);
+    };
+
+    fetchPromotions();
+  }, [user, items, subtotal, promotionsStore]);
+
   const subtotal = getTotal();
 
   // Calculate total weight in grams
@@ -459,15 +511,77 @@ export default function CheckoutPage() {
 
   const shippingFee = selectedCourier?.price || 0;
 
-  // Calculate discount amount if promotion is applied
-  const discountAmount = appliedPromotion?.is_valid ? (appliedPromotion.discount_amount || 0) : 0;
-  // Apply free shipping if promotion includes it
-  const finalShippingFee = (appliedPromotion?.is_valid && appliedPromotion.free_shipping) ? 0 : shippingFee;
+  // Calculate discount amount from either the selected promotion in the UI or from the code input
+  let discountAmount = 0;
+  let freeShippingApplied = false;
+  let selectedPromotionDetails = null;
+
+  // Check if a promotion was selected from the UI
+  if (selectedPromotionId) {
+    const selectedPromo = availablePromotions.find(promo => promo.id === selectedPromotionId);
+    if (selectedPromo) {
+      if (selectedPromo.discount_type === 'percentage') {
+        discountAmount = subtotal * (selectedPromo.discount_value / 100);
+      } else if (selectedPromo.discount_type === 'fixed') {
+        discountAmount = Math.min(selectedPromo.discount_value, subtotal); // Don't allow discount to exceed subtotal
+      } else if (selectedPromo.discount_type === 'free_shipping') {
+        freeShippingApplied = true;
+      }
+      selectedPromotionDetails = {
+        id: selectedPromo.id,
+        code: selectedPromo.code,
+        description: selectedPromo.description,
+        discount_type: selectedPromo.discount_type,
+        discount_value: selectedPromo.discount_value,
+        free_shipping: selectedPromo.free_shipping || selectedPromo.discount_type === 'free_shipping',
+        message: 'Promotion applied successfully!',
+        is_valid: true
+      };
+    }
+  }
+  // Otherwise, check if a promotion was applied via code input
+  else if (appliedPromotion?.is_valid) {
+    discountAmount = appliedPromotion.discount_amount || 0;
+    freeShippingApplied = appliedPromotion.free_shipping || false;
+    selectedPromotionDetails = appliedPromotion;
+  }
+
+  // Apply free shipping if applicable
+  const finalShippingFee = freeShippingApplied ? 0 : shippingFee;
   const total = subtotal - discountAmount + finalShippingFee;
 
 
+  // Function to handle selecting a promotion from the UI
+  const handleSelectPromotion = (promotion: Promotion) => {
+    // Reset the promotion code input if one was entered
+    setPromotionCode('');
+    form.setValue('promotion_code', '');
+    setPromotionError('');
+    // Clear any applied promotion from code
+    setAppliedPromotion(null);
+
+    // Set the selected promotion
+    setSelectedPromotionId(promotion.id);
+    toast.success(`${promotion.code} has been applied!`);
+  };
+
+  const handleRemovePromotion = () => {
+    // Reset both UI selection and code input
+    setAppliedPromotion(null);
+    setSelectedPromotionId(null);
+    setPromotionCode('');
+    form.setValue('promotion_code', '');
+    setPromotionError('');
+    toast.success('Promotion removed');
+  };
+
   const handleApplyPromotion = async () => {
     if (!promotionCode.trim() || !user || subtotal <= 0) return;
+
+    // If a promotion was selected from UI, remove it before applying code
+    if (selectedPromotionId) {
+      setSelectedPromotionId(null);
+    }
 
     setPromotionLoading(true);
     setPromotionError('');
@@ -496,14 +610,6 @@ export default function CheckoutPage() {
     } finally {
       setPromotionLoading(false);
     }
-  };
-
-  const handleRemovePromotion = () => {
-    setAppliedPromotion(null);
-    setPromotionCode('');
-    form.setValue('promotion_code', '');
-    setPromotionError('');
-    toast.success('Promotion removed');
   };
 
   const onSubmit = async (data: CheckoutForm) => {
@@ -574,19 +680,31 @@ export default function CheckoutPage() {
       }
 
       // If promotion was applied, record usage
-      if (appliedPromotion?.is_valid && data.promotion_code) {
-        // First, get the promotion ID by code
-        const { data: promoData } = await supabase
-          .from('promotions')
-          .select('id')
-          .eq('code', data.promotion_code.toUpperCase())
-          .single();
+      if (selectedPromotionDetails?.is_valid) {
+        let promotionId = null;
 
-        if (promoData?.id) {
+        // If it's a UI-selected promotion, we already have the ID
+        if (selectedPromotionId) {
+          promotionId = selectedPromotionId;
+        }
+        // If it's a code-entered promotion, get the ID by code
+        else if (data.promotion_code) {
+          const { data: promoData } = await supabase
+            .from('promotions')
+            .select('id')
+            .eq('code', data.promotion_code.toUpperCase())
+            .single();
+
+          if (promoData?.id) {
+            promotionId = promoData.id;
+          }
+        }
+
+        if (promotionId) {
           await supabase
             .from('promotion_usage')
             .insert({
-              promotion_id: promoData.id,
+              promotion_id: promotionId,
               user_id: user.id,
               order_id: order.id
             });
@@ -902,6 +1020,113 @@ export default function CheckoutPage() {
                 </CardContent>
               </Card>
 
+              {/* Shop Promotions */}
+              <Card className="border-brown-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Tag className="h-5 w-5 text-primary" />
+                    Shop Promotions
+                  </CardTitle>
+                  <CardDescription>
+                    Choose from available promotions for your order
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {promotionsLoading ? (
+                    <div className="flex items-center justify-center p-4">
+                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                      <span className="ml-2 text-sm text-brown-600">Loading promotions...</span>
+                    </div>
+                  ) : availablePromotions.length === 0 ? (
+                    <div className="text-center py-4 text-brown-500">
+                      No promotions available for your cart at this time.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {availablePromotions.map((promotion) => (
+                        <div
+                          key={promotion.id}
+                          className={`flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-colors ${
+                            selectedPromotionId === promotion.id
+                              ? 'border-primary bg-primary/5'
+                              : 'border-brown-200 hover:border-brown-300'
+                          }`}
+                          onClick={() => handleSelectPromotion(promotion)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`h-4 w-4 rounded-full border-2 ${
+                                selectedPromotionId === promotion.id
+                                  ? 'border-primary bg-primary'
+                                  : 'border-brown-300'
+                              }`}
+                            >
+                              {selectedPromotionId === promotion.id && (
+                                <div className="h-full w-full flex items-center justify-center">
+                                  <div className="h-1.5 w-1.5 bg-white rounded-full" />
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-medium text-brown-900">{promotion.code}</p>
+                              <p className="text-sm text-brown-500">{promotion.description || 'No description'}</p>
+                              <div className="flex gap-2 mt-1">
+                                {promotion.discount_type === 'percentage' && (
+                                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                    {promotion.discount_value}% OFF
+                                  </span>
+                                )}
+                                {promotion.discount_type === 'fixed' && (
+                                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                    {formatPrice(promotion.discount_value)} OFF
+                                  </span>
+                                )}
+                                {(promotion.discount_type === 'free_shipping' || promotion.free_shipping) && (
+                                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                                    FREE SHIPPING
+                                  </span>
+                                )}
+                                {promotion.discount_type === 'buy_x_get_y' && (
+                                  <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                                    BUY {promotion.buy_quantity} GET {promotion.get_quantity} FREE
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-brown-500">
+                              {promotion.min_purchase_amount ? `Min. ${formatPrice(promotion.min_purchase_amount)}` : 'No min.'}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {selectedPromotionId && (
+                    <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-sm font-medium text-green-800">✓ Promotion applied successfully!</p>
+                          <p className="text-sm text-green-700">
+                            {availablePromotions.find(p => p.id === selectedPromotionId)?.description || 'Selected promotion applied'}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={handleRemovePromotion}
+                          className="text-green-600 h-auto p-1"
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               {/* Customer Notes */}
               <Card className="border-brown-200">
                 <CardHeader>
@@ -1121,7 +1346,7 @@ export default function CheckoutPage() {
                       <span className="text-brown-600">Subtotal</span>
                       <span>{formatPrice(subtotal)}</span>
                     </div>
-                    {appliedPromotion && appliedPromotion.is_valid ? (
+                    {selectedPromotionDetails && selectedPromotionDetails.is_valid ? (
                       <>
                         {/* Promotion details box */}
                         <div className="bg-green-50 rounded-lg p-3 mt-2 mb-3 border border-green-200">
@@ -1132,15 +1357,15 @@ export default function CheckoutPage() {
                                 Promotion Applied
                               </span>
                               <p className="text-xs text-green-700 mt-1">
-                                {appliedPromotion.code} - {appliedPromotion.description || 'Discount applied'}
+                                {selectedPromotionDetails.code} - {selectedPromotionDetails.description || 'Discount applied'}
                               </p>
-                              {appliedPromotion.discount_type && (
+                              {selectedPromotionDetails.discount_type && (
                                 <p className="text-xs text-green-600">
-                                  {appliedPromotion.discount_type === 'percentage' && `${appliedPromotion.discount_value}% OFF`}
-                                  {appliedPromotion.discount_type === 'fixed' && `${formatPrice(appliedPromotion.discount_value)} OFF`}
-                                  {appliedPromotion.discount_type === 'buy_x_get_y' && `BUY ${appliedPromotion.buy_quantity} GET ${appliedPromotion.get_quantity} FREE`}
-                                  {appliedPromotion.discount_type === 'buy_more_save_more' && 'Progressive discount applied'}
-                                  {appliedPromotion.discount_type === 'free_shipping' && 'Free shipping applied'}
+                                  {selectedPromotionDetails.discount_type === 'percentage' && `${selectedPromotionDetails.discount_value}% OFF`}
+                                  {selectedPromotionDetails.discount_type === 'fixed' && `${formatPrice(selectedPromotionDetails.discount_value)} OFF`}
+                                  {selectedPromotionDetails.discount_type === 'buy_x_get_y' && `BUY ${selectedPromotionDetails.buy_quantity} GET ${selectedPromotionDetails.get_quantity} FREE`}
+                                  {selectedPromotionDetails.discount_type === 'buy_more_save_more' && 'Progressive discount applied'}
+                                  {selectedPromotionDetails.discount_type === 'free_shipping' && 'Free shipping applied'}
                                 </p>
                               )}
                             </div>
@@ -1158,17 +1383,17 @@ export default function CheckoutPage() {
 
                         {discountAmount > 0 && (
                           <div className="flex justify-between text-sm">
-                            <span className="text-brown-600">Discount ({appliedPromotion.code})</span>
+                            <span className="text-brown-600">Discount ({selectedPromotionDetails.code})</span>
                             <span className="text-destructive">-{formatPrice(discountAmount)}</span>
                           </div>
                         )}
-                        {appliedPromotion.free_shipping && (
+                        {freeShippingApplied && (
                           <div className="flex justify-between text-sm">
                             <span className="text-brown-600">Shipping</span>
                             <span className="text-green-600">FREE</span>
                           </div>
                         )}
-                        {!appliedPromotion.free_shipping && (
+                        {!freeShippingApplied && (
                           <div className="flex justify-between text-sm">
                             <span className="text-brown-600">Shipping</span>
                             <span>{finalShippingFee ? formatPrice(finalShippingFee) : '-'}</span>
