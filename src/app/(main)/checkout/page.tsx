@@ -395,6 +395,19 @@ export default function CheckoutPage() {
     loadProvinces();
   }, [profile]); // Only run when profile changes
 
+  const subtotal = getTotal();
+
+  // Calculate total weight in grams
+  const totalWeightGrams = items.reduce((sum, item) => {
+    const itemWeight = item.variant
+      ? (item.variant.weight_grams || item.product.unit_weight_grams || 0)
+      : (item.product.unit_weight_grams || 0);
+    return sum + (itemWeight * item.quantity);
+  }, 0);
+
+  // Convert to kg for display
+  const totalWeightKg = (totalWeightGrams / 1000).toFixed(2);
+
   // Calculate shipping rates when province or weight changes
   useEffect(() => {
     if (selectedProvince) {
@@ -418,19 +431,7 @@ export default function CheckoutPage() {
     }
   }, [selectedProvince, totalWeightGrams]);
 
-  const subtotal = getTotal();
   const shippingFee = selectedCourier?.price || 0;
-
-  // Calculate total weight in grams
-  const totalWeightGrams = items.reduce((sum, item) => {
-    const itemWeight = item.variant
-      ? (item.variant.weight_grams || item.product.unit_weight_grams || 0)
-      : (item.product.unit_weight_grams || 0);
-    return sum + (itemWeight * item.quantity);
-  }, 0);
-
-  // Convert to kg for display
-  const totalWeightKg = (totalWeightGrams / 1000).toFixed(2);
 
   // Calculate discount amount if promotion is applied
   const discountAmount = appliedPromotion?.is_valid ? (appliedPromotion.discount_amount || 0) : 0;
