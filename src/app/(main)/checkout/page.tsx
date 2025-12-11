@@ -45,6 +45,23 @@ const checkoutSchema = z.object({
 
 type CheckoutForm = z.infer<typeof checkoutSchema>;
 
+// Define payment method type
+interface PaymentMethod {
+  id: string;
+  name: string;
+  description: string;
+  provider: string; // e.g. 'midtrans', 'xendit', 'manual'
+  is_active: boolean;
+  is_available: boolean;
+  min_amount?: number;
+  max_amount?: number;
+  fee_fixed?: number;
+  fee_percentage?: number;
+  icon_url?: string;
+  instruction?: string;
+  account_details?: string; // For bank transfers
+}
+
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
@@ -53,7 +70,64 @@ function formatPrice(price: number): string {
   }).format(price);
 }
 
-const couriers = [
+// Fetch provinces for shipping calculator
+async function fetchProvinces() {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('provinces')
+    .select('id, province_name')
+    .eq('is_active', true)
+    .order('province_name');
+
+  if (error) {
+    console.error('Error fetching provinces:', error);
+    return [];
+  }
+
+  return data?.map(province => ({
+    id: province.id,
+    name: province.province_name
+  })) || [];
+}
+
+// Calculate shipping rates based on destination province
+async function calculateShippingRates(destinationProvinceId: number) {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .rpc('get_shipping_rates_for_province', {
+      p_province_id: destinationProvinceId
+    });
+
+  if (error) {
+    console.error('Error calculating shipping rates:', error);
+    // Fallback to static rates if calculation fails
+    return staticCouriers;
+  }
+
+  return data || staticCouriers;
+}
+
+// Fetch available payment methods
+async function fetchPaymentMethods() {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from('payment_methods')
+    .select('*')
+    .eq('is_active', true)
+    .eq('is_available', true) // Only fetch methods available to customers
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching payment methods:', error);
+    return [];
+  }
+
+  return data as PaymentMethod[];
+}
+
+// This will be dynamically populated based on selected province
+const staticCouriers = [
   { id: 'jne-reg', name: 'JNE Regular', price: 25000, eta: '3-5 days' },
   { id: 'jne-yes', name: 'JNE YES', price: 35000, eta: '1-2 days' },
   { id: 'jnt-express', name: 'J&T Express', price: 22000, eta: '2-4 days' },
@@ -85,17 +159,29 @@ export default function CheckoutPage() {
   const { user, profile, loading: authLoading } = useAuth();
   const { items, getTotal, clearCart } = useCartStore();
   const [loading, setLoading] = useState(false);
-  const [selectedCourier, setSelectedCourier] = useState<typeof couriers[0] | null>(null);
+  const [dynamicCouriers, setDynamicCouriers] = useState(staticCouriers);
+  const [selectedCourier, setSelectedCourier] = useState<typeof staticCouriers[0] | null>(null);
+  const [selectedProvince, setSelectedProvince] = useState('');
+  const [provinces, setProvinces] = useState<{ id: number; name: string }[]>([]);
+  const [shippingLoading, setShippingLoading] = useState(false);
   const [promotionCode, setPromotionCode] = useState('');
   const [appliedPromotion, setAppliedPromotion] = useState<any>(null);
   const [promotionLoading, setPromotionLoading] = useState(false);
   const [promotionError, setPromotionError] = useState('');
 
+  // Payment methods state
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [paymentMethodsLoading, setPaymentMethodsLoading] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
+
   const form = useForm<CheckoutForm>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
+      // Load recipient data first, fallback to user data if no recipient data exists
       recipient_name: profile?.recipient_name || profile?.user_name || '',
-      phone: profile?.user_phoneno || '',
+      // Use recipient phone if exists, otherwise use user's phone
+      phone: profile?.recipient_phoneno || profile?.user_phoneno || '',
+      // Use recipient address if exists, otherwise use user's address
       address_line1: profile?.recipient_address_line1 || profile?.address_line1 || '',
       city: profile?.recipient_city || profile?.city || '',
       province: profile?.recipient_region || profile?.region_state_province || '',
@@ -116,6 +202,70 @@ export default function CheckoutPage() {
     }
   }, [user, authLoading, items.length, router]);
 
+  // Set up field value watchers for province changes
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === 'province' && value.province) {
+        // Find the matching province ID based on the name
+        const matchedProvince = provinces.find(prov =>
+          prov.name.toLowerCase().includes(value.province!.toLowerCase()) ||
+          value.province!.toLowerCase().includes(prov.name.toLowerCase())
+        );
+        if (matchedProvince && matchedProvince.id.toString() !== selectedProvince) {
+          setSelectedProvince(matchedProvince.id.toString());
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form, provinces, selectedProvince]);
+
+  // Fetch provinces on component mount
+  useEffect(() => {
+    const loadProvinces = async () => {
+      const fetchedProvinces = await fetchProvinces();
+      setProvinces(fetchedProvinces);
+
+      // Set the initial province from the form if exists
+      const initialProvince = form.getValues('province');
+      if (initialProvince) {
+        // Find the matching province ID based on the name
+        const matchedProvince = fetchedProvinces.find(prov =>
+          prov.name.toLowerCase().includes(initialProvince.toLowerCase()) ||
+          initialProvince.toLowerCase().includes(prov.name.toLowerCase())
+        );
+        if (matchedProvince) {
+          setSelectedProvince(matchedProvince.id.toString());
+        }
+      }
+    };
+
+    loadProvinces();
+  }, []);
+
+  // Calculate shipping rates when province changes
+  useEffect(() => {
+    if (selectedProvince) {
+      const calculateRates = async () => {
+        setShippingLoading(true);
+        const rates = await calculateShippingRates(parseInt(selectedProvince));
+        setDynamicCouriers(rates);
+
+        // If the previously selected courier is no longer available, reset selection
+        if (selectedCourier && !rates.some(rate => rate.id === selectedCourier.id)) {
+          setSelectedCourier(rates[0] || null);
+          form.setValue('courier', rates[0]?.id || '');
+        } else if (!selectedCourier && rates.length > 0) {
+          setSelectedCourier(rates[0]);
+          form.setValue('courier', rates[0].id);
+        }
+
+        setShippingLoading(false);
+      };
+      calculateRates();
+    }
+  }, [selectedProvince]);
+
   const subtotal = getTotal();
   const shippingFee = selectedCourier?.price || 0;
 
@@ -124,6 +274,29 @@ export default function CheckoutPage() {
   // Apply free shipping if promotion includes it
   const finalShippingFee = (appliedPromotion?.is_valid && appliedPromotion.free_shipping) ? 0 : shippingFee;
   const total = subtotal - discountAmount + finalShippingFee;
+
+  // Load payment methods on component mount
+  useEffect(() => {
+    const loadPaymentMethods = async () => {
+      setPaymentMethodsLoading(true);
+      try {
+        const methods = await fetchPaymentMethods();
+        setPaymentMethods(methods);
+
+        // If there's only one available method, select it by default
+        if (methods.length === 1) {
+          setSelectedPaymentMethod(methods[0]);
+        }
+      } catch (error) {
+        console.error('Error loading payment methods:', error);
+        // Don't show error to user, just log it - they can still proceed with order
+      } finally {
+        setPaymentMethodsLoading(false);
+      }
+    };
+
+    loadPaymentMethods();
+  }, []);
 
   const handleApplyPromotion = async () => {
     if (!promotionCode.trim() || !user || subtotal <= 0) return;
@@ -201,6 +374,8 @@ export default function CheckoutPage() {
             province: data.province,
             postal_code: data.postal_code,
           },
+          payment_method_id: selectedPaymentMethod?.id || null, // Store selected payment method
+          payment_method_name: selectedPaymentMethod?.name || null, // Store payment method name
         })
         .select()
         .single();
@@ -317,6 +492,8 @@ export default function CheckoutPage() {
         shipping_courier_name: order.shipping_courier_name || '',
         shipping_address_snapshot: order.shipping_address_snapshot,
         customer_notes: (order as any).customer_notes || '', // customer_notes might not be in the main Order type but could be returned by select('*')
+        payment_method_id: order.payment_method_id || undefined, // Include payment method info
+        payment_method_name: order.payment_method_name || 'Not specified', // Include payment method name
         invoice_url: order.invoice_url || undefined, // Convert null to undefined
         packing_list_url: order.packing_list_url || undefined, // Convert null to undefined
         items_count: items.length,
@@ -595,43 +772,50 @@ export default function CheckoutPage() {
                       <FormItem>
                         <FormControl>
                           <div className="space-y-3">
-                            {couriers.map((courier) => (
-                              <label
-                                key={courier.id}
-                                className={`flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-colors ${
-                                  field.value === courier.id
-                                    ? 'border-primary bg-primary/5'
-                                    : 'border-brown-200 hover:border-brown-300'
-                                }`}
-                                onClick={() => {
-                                  field.onChange(courier.id);
-                                  setSelectedCourier(courier);
-                                }}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div
-                                    className={`h-4 w-4 rounded-full border-2 ${
-                                      field.value === courier.id
-                                        ? 'border-primary bg-primary'
-                                        : 'border-brown-300'
-                                    }`}
-                                  >
-                                    {field.value === courier.id && (
-                                      <div className="h-full w-full flex items-center justify-center">
-                                        <div className="h-1.5 w-1.5 bg-white rounded-full" />
-                                      </div>
-                                    )}
+                            {shippingLoading ? (
+                              <div className="flex items-center justify-center p-4">
+                                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                                <span className="ml-2 text-sm text-brown-600">Calculating shipping rates...</span>
+                              </div>
+                            ) : (
+                              dynamicCouriers.map((courier) => (
+                                <label
+                                  key={courier.id}
+                                  className={`flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-colors ${
+                                    field.value === courier.id
+                                      ? 'border-primary bg-primary/5'
+                                      : 'border-brown-200 hover:border-brown-300'
+                                  }`}
+                                  onClick={() => {
+                                    field.onChange(courier.id);
+                                    setSelectedCourier(courier);
+                                  }}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div
+                                      className={`h-4 w-4 rounded-full border-2 ${
+                                        field.value === courier.id
+                                          ? 'border-primary bg-primary'
+                                          : 'border-brown-300'
+                                      }`}
+                                    >
+                                      {field.value === courier.id && (
+                                        <div className="h-full w-full flex items-center justify-center">
+                                          <div className="h-1.5 w-1.5 bg-white rounded-full" />
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div>
+                                      <p className="font-medium text-brown-900">{courier.name}</p>
+                                      <p className="text-sm text-brown-500">{courier.eta}</p>
+                                    </div>
                                   </div>
-                                  <div>
-                                    <p className="font-medium text-brown-900">{courier.name}</p>
-                                    <p className="text-sm text-brown-500">{courier.eta}</p>
-                                  </div>
-                                </div>
-                                <p className="font-bold text-primary">
-                                  {formatPrice(courier.price)}
-                                </p>
-                              </label>
-                            ))}
+                                  <p className="font-bold text-primary">
+                                    {formatPrice(courier.price)}
+                                  </p>
+                                </label>
+                              ))
+                            )}
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -641,27 +825,94 @@ export default function CheckoutPage() {
                 </CardContent>
               </Card>
 
-              {/* Payment Method */}
+              {/* Payment Methods */}
               <Card className="border-brown-200">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CreditCard className="h-5 w-5 text-primary" />
-                    Payment Method
+                    Payment Methods
                   </CardTitle>
                   <CardDescription>
-                    Payment will be processed after order confirmation
+                    Select your preferred payment method
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="p-4 bg-brown-50 rounded-lg flex items-center gap-3">
-                    <ShieldCheck className="h-5 w-5 text-green-600" />
-                    <div>
-                      <p className="font-medium text-brown-900">Bank Transfer</p>
-                      <p className="text-sm text-brown-600">
-                        Payment instructions will be sent to your email
-                      </p>
+                  {paymentMethodsLoading ? (
+                    <div className="flex items-center justify-center p-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <span className="ml-2 text-brown-600">Loading payment methods...</span>
                     </div>
-                  </div>
+                  ) : paymentMethods.length > 0 ? (
+                    <div className="space-y-3">
+                      {paymentMethods.map((method) => (
+                        <label
+                          key={method.id}
+                          className={`flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-colors ${
+                            selectedPaymentMethod?.id === method.id
+                              ? 'border-primary bg-primary/5'
+                              : 'border-brown-200 hover:border-brown-300'
+                          }`}
+                          onClick={() => setSelectedPaymentMethod(method)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`h-4 w-4 rounded-full border-2 ${
+                                selectedPaymentMethod?.id === method.id
+                                  ? 'border-primary bg-primary'
+                                  : 'border-brown-300'
+                              }`}
+                            >
+                              {selectedPaymentMethod?.id === method.id && (
+                                <div className="h-full w-full flex items-center justify-center">
+                                  <div className="h-1.5 w-1.5 bg-white rounded-full" />
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-medium text-brown-900">{method.name}</p>
+                              <p className="text-sm text-brown-500">{method.description}</p>
+                              {method.provider && (
+                                <p className="text-xs text-brown-400 mt-1">
+                                  Powered by {method.provider}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          {method.icon_url && (
+                            <img
+                              src={method.icon_url}
+                              alt={method.name}
+                              className="h-8 w-8 object-contain rounded"
+                              onError={(e) => {
+                                // Hide broken image icons
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          )}
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <PawPrint className="h-12 w-12 text-brown-300 mx-auto mb-3" />
+                      <p className="text-brown-600">No payment methods are currently available</p>
+                      <p className="text-sm text-brown-500 mt-1">Please contact support for assistance</p>
+                    </div>
+                  )}
+
+                  {selectedPaymentMethod && selectedPaymentMethod.instruction && (
+                    <div className="mt-4 p-4 bg-brown-50 rounded-lg border border-brown-200">
+                      <h4 className="font-medium text-brown-900 mb-2">Payment Instructions</h4>
+                      <p className="text-sm text-brown-700 whitespace-pre-line">{selectedPaymentMethod.instruction}</p>
+
+                      {selectedPaymentMethod.account_details && (
+                        <div className="mt-3">
+                          <h5 className="font-medium text-brown-900 text-sm">Account Details</h5>
+                          <p className="text-sm text-brown-700 mt-1 whitespace-pre-line">{selectedPaymentMethod.account_details}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -721,9 +972,42 @@ export default function CheckoutPage() {
                     </div>
                     {appliedPromotion && appliedPromotion.is_valid ? (
                       <>
+                        {/* Promotion details box */}
+                        <div className="bg-green-50 rounded-lg p-3 mt-2 mb-3 border border-green-200">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <span className="font-medium text-green-800 flex items-center">
+                                <Tag className="h-4 w-4 mr-1" />
+                                Promotion Applied
+                              </span>
+                              <p className="text-xs text-green-700 mt-1">
+                                {appliedPromotion.code} - {appliedPromotion.description || 'Discount applied'}
+                              </p>
+                              {appliedPromotion.discount_type && (
+                                <p className="text-xs text-green-600">
+                                  {appliedPromotion.discount_type === 'percentage' && `${appliedPromotion.discount_value}% OFF`}
+                                  {appliedPromotion.discount_type === 'fixed' && `${formatPrice(appliedPromotion.discount_value)} OFF`}
+                                  {appliedPromotion.discount_type === 'buy_x_get_y' && `BUY ${appliedPromotion.buy_quantity} GET ${appliedPromotion.get_quantity} FREE`}
+                                  {appliedPromotion.discount_type === 'buy_more_save_more' && 'Progressive discount applied'}
+                                  {appliedPromotion.discount_type === 'free_shipping' && 'Free shipping applied'}
+                                </p>
+                              )}
+                            </div>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={handleRemovePromotion}
+                              className="text-green-600 h-auto p-1"
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        </div>
+
                         {discountAmount > 0 && (
                           <div className="flex justify-between text-sm">
-                            <span className="text-brown-600">Discount</span>
+                            <span className="text-brown-600">Discount ({appliedPromotion.code})</span>
                             <span className="text-destructive">-{formatPrice(discountAmount)}</span>
                           </div>
                         )}
