@@ -84,14 +84,22 @@ async function fetchProvinces() {
     return [];
   }
 
-  return data?.map(province => ({
+  return data?.map((province: { id: number; province_name: string }) => ({
     id: province.id,
     name: province.province_name
   })) || [];
 }
 
+// Define shipping courier type
+type ShippingCourier = {
+  id: string;
+  name: string;
+  price: number;
+  eta: string;
+};
+
 // Calculate shipping rates based on destination province
-async function calculateShippingRates(destinationProvinceId: number) {
+async function calculateShippingRates(destinationProvinceId: number): Promise<ShippingCourier[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .rpc('get_shipping_rates_for_province', {
@@ -104,7 +112,7 @@ async function calculateShippingRates(destinationProvinceId: number) {
     return staticCouriers;
   }
 
-  return data || staticCouriers;
+  return (data as ShippingCourier[]) || staticCouriers;
 }
 
 // Fetch available payment methods
@@ -123,19 +131,34 @@ async function fetchPaymentMethods() {
     return [];
   }
 
-  return data as PaymentMethod[];
+  return (data || []) as PaymentMethod[];
 }
 
 // This will be dynamically populated based on selected province
-const staticCouriers = [
+const staticCouriers: ShippingCourier[] = [
   { id: 'jne-reg', name: 'JNE Regular', price: 25000, eta: '3-5 days' },
   { id: 'jne-yes', name: 'JNE YES', price: 35000, eta: '1-2 days' },
   { id: 'jnt-express', name: 'J&T Express', price: 22000, eta: '2-4 days' },
   { id: 'sicepat', name: 'SiCepat REG', price: 20000, eta: '2-3 days' },
 ];
 
+// Type for promotion validation result
+type PromotionValidationResult = {
+  is_valid: boolean;
+  discount_amount: number;
+  free_shipping: boolean;
+  discount_type: string;
+  discount_value: number;
+  buy_quantity?: number;
+  get_quantity?: number;
+  min_purchase_amount?: number;
+  code: string;
+  description: string;
+  message: string;
+};
+
 // Function to validate promotion code
-async function validatePromotionCode(code: string, userId: string, productIds: string[], subtotal: number) {
+async function validatePromotionCode(code: string, userId: string, productIds: string[], subtotal: number): Promise<PromotionValidationResult | null> {
   const supabase = createClient();
 
   const { data, error } = await supabase
@@ -151,7 +174,7 @@ async function validatePromotionCode(code: string, userId: string, productIds: s
     return null;
   }
 
-  return data?.[0] || null;
+  return (data?.[0] as PromotionValidationResult) || null;
 }
 
 export default function CheckoutPage() {
@@ -160,7 +183,7 @@ export default function CheckoutPage() {
   const { items, getTotal, clearCart } = useCartStore();
   const [loading, setLoading] = useState(false);
   const [dynamicCouriers, setDynamicCouriers] = useState(staticCouriers);
-  const [selectedCourier, setSelectedCourier] = useState<typeof staticCouriers[0] | null>(null);
+  const [selectedCourier, setSelectedCourier] = useState<ShippingCourier | null>(null);
   const [selectedProvince, setSelectedProvince] = useState('');
   const [provinces, setProvinces] = useState<{ id: number; name: string }[]>([]);
   const [shippingLoading, setShippingLoading] = useState(false);
