@@ -114,6 +114,9 @@ async function fetchDirectPaymentMethods() {
     return [];
   }
 
+  return [];
+}
+
 // Fetch available payment methods based on store settings
 async function fetchPaymentMethods() {
   const supabase = createClient();
