@@ -200,20 +200,52 @@ export default function CheckoutPage() {
   const form = useForm<CheckoutForm>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
-      // Load recipient data first, fallback to user data if no recipient data exists
-      recipient_name: profile?.recipient_name || profile?.user_name || '',
-      // Use recipient phone if exists, otherwise use user's phone
-      phone: profile?.recipient_phoneno || profile?.user_phoneno || '',
-      // Use recipient address if exists, otherwise use user's address
-      address_line1: profile?.recipient_address_line1 || profile?.address_line1 || '',
-      city: profile?.recipient_city || profile?.city || '',
-      province: profile?.recipient_region || profile?.region_state_province || '',
-      postal_code: profile?.recipient_postal_code || profile?.postal_code || '',
+      // Set default values to empty initially, will be updated via useEffect when profile loads
+      recipient_name: '',
+      phone: '',
+      address_line1: '',
+      city: '',
+      province: '',
+      postal_code: '',
       courier: '',
       customer_notes: '',
       promotion_code: '',
     },
   });
+
+  // Update form values when profile data becomes available
+  useEffect(() => {
+    if (profile) {
+      // Set form values based on profile data
+      const formValues = {
+        // Load recipient data first, fallback to user data if no recipient data exists
+        recipient_name: profile.recipient_name || profile.user_name || '',
+        // Use recipient phone if exists, otherwise use user's phone
+        phone: profile.recipient_phoneno || profile.user_phoneno || '',
+        // Use recipient address if exists, otherwise use user's address
+        address_line1: profile.recipient_address_line1 || profile.address_line1 || '',
+        city: profile.recipient_city || profile.city || '',
+        province: profile.recipient_region || profile.region_state_province || '',
+        postal_code: profile.recipient_postal_code || profile.postal_code || '',
+        courier: '',
+        customer_notes: '',
+        promotion_code: '',
+      };
+
+      form.reset(formValues);
+
+      // Update the selectedProvince state based on the province value
+      if (formValues.province) {
+        const matchedProvince = provinces.find((prov: { id: number; name: string }) =>
+          prov.name.toLowerCase().includes(formValues.province.toLowerCase()) ||
+          formValues.province.toLowerCase().includes(prov.name.toLowerCase())
+        );
+        if (matchedProvince) {
+          setSelectedProvince(matchedProvince.id.toString());
+        }
+      }
+    }
+  }, [profile, form, provinces]);
 
   useEffect(() => {
     // Don't redirect while auth state is loading/stabilizing
@@ -231,8 +263,8 @@ export default function CheckoutPage() {
       if (name === 'province' && value.province) {
         // Find the matching province ID based on the name
         const matchedProvince = provinces.find((prov: { id: number; name: string }) =>
-          prov.name.toLowerCase().includes(value.province!.toLowerCase()) ||
-          value.province!.toLowerCase().includes(prov.name.toLowerCase())
+          prov.name.toLowerCase().includes(value.province?.toLowerCase() || '') ||
+          (value.province || '').toLowerCase().includes(prov.name.toLowerCase())
         );
         if (matchedProvince && matchedProvince.id.toString() !== selectedProvince) {
           setSelectedProvince(matchedProvince.id.toString());
@@ -249,22 +281,37 @@ export default function CheckoutPage() {
       const fetchedProvinces = await fetchProvinces();
       setProvinces(fetchedProvinces);
 
-      // Set the initial province from the form if exists
-      const initialProvince = form.getValues('province');
-      if (initialProvince) {
-        // Find the matching province ID based on the name
-        const matchedProvince = fetchedProvinces.find((prov: { id: number; name: string }) =>
-          prov.name.toLowerCase().includes(initialProvince.toLowerCase()) ||
-          initialProvince.toLowerCase().includes(prov.name.toLowerCase())
-        );
-        if (matchedProvince) {
-          setSelectedProvince(matchedProvince.id.toString());
+      // Set the initial province from the profile if available
+      if (profile) {
+        const initialProvince = profile.recipient_region || profile.region_state_province || '';
+        if (initialProvince) {
+          // Find the matching province ID based on the name
+          const matchedProvince = fetchedProvinces.find((prov: { id: number; name: string }) =>
+            prov.name.toLowerCase().includes(initialProvince.toLowerCase()) ||
+            initialProvince.toLowerCase().includes(prov.name.toLowerCase())
+          );
+          if (matchedProvince) {
+            setSelectedProvince(matchedProvince.id.toString());
+          }
+        }
+      } else {
+        // Fallback: Set the initial province from the form if profile is not loaded yet
+        const initialProvince = form.getValues('province');
+        if (initialProvince) {
+          // Find the matching province ID based on the name
+          const matchedProvince = fetchedProvinces.find((prov: { id: number; name: string }) =>
+            prov.name.toLowerCase().includes(initialProvince.toLowerCase()) ||
+            initialProvince.toLowerCase().includes(prov.name.toLowerCase())
+          );
+          if (matchedProvince) {
+            setSelectedProvince(matchedProvince.id.toString());
+          }
         }
       }
     };
 
     loadProvinces();
-  }, []);
+  }, [profile]); // Only run when profile changes
 
   // Calculate shipping rates when province changes
   useEffect(() => {
@@ -300,6 +347,8 @@ export default function CheckoutPage() {
 
   // Load payment methods on component mount
   useEffect(() => {
+    if (!user) return; // Only load payment methods if user is authenticated
+
     const loadPaymentMethods = async () => {
       setPaymentMethodsLoading(true);
       try {
@@ -319,7 +368,7 @@ export default function CheckoutPage() {
     };
 
     loadPaymentMethods();
-  }, []);
+  }, [user]);
 
   const handleApplyPromotion = async () => {
     if (!promotionCode.trim() || !user || subtotal <= 0) return;
