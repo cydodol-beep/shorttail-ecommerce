@@ -282,6 +282,10 @@ export default function CheckoutPage() {
   const [promotionsLoading, setPromotionsLoading] = useState(true);
   const promotionsStore = usePromotionsStore();
 
+  // State for order preview step
+  const [showInvoicePreview, setShowInvoicePreview] = useState(false);
+  const [previewOrderData, setPreviewOrderData] = useState<any>(null);
+
   const form = useForm<CheckoutForm>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
@@ -623,6 +627,53 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (!selectedPaymentMethod) {
+      toast.error('Please select a payment method');
+      return;
+    }
+
+    // Prepare order data for preview
+    const orderData = {
+      user_id: user.id,
+      source: 'marketplace',
+      status: 'pending',
+      subtotal,
+      shipping_fee: finalShippingFee, // Use the potentially reduced shipping fee
+      discount_amount: discountAmount, // Use the calculated discount amount
+      total_amount: total,
+      shipping_courier_name: selectedCourier?.name,
+      customer_notes: data.customer_notes || null,
+      shipping_address_snapshot: {
+        recipient_name: data.recipient_name,
+        phone: data.phone,
+        address_line1: data.address_line1,
+        city: data.city,
+        province: data.province,
+        postal_code: data.postal_code,
+      },
+      payment_method: selectedPaymentMethod.name, // Store selected payment method name
+      payment_method_description: selectedPaymentMethod.description, // Store payment method details
+      items: items.map((item) => ({
+        product_id: item.product.id,
+        product_name: item.product.name,
+        product_sku: item.product.sku || '',
+        variant_id: item.variant?.id || null,
+        variant_name: item.variant?.variant_name || '',
+        quantity: item.quantity,
+        // For variant products, use variant price_adjustment; for simple products, use base_price
+        price_at_purchase: item.variant ? (item.variant.price_adjustment || 0) : item.product.base_price,
+      })),
+      total_weight_grams: totalWeightGrams,
+      selected_promotion: selectedPromotionDetails,
+    };
+
+    setPreviewOrderData(orderData);
+    setShowInvoicePreview(true);
+  };
+
+  const finalizeOrder = async () => {
+    if (!user || !previewOrderData) return;
+
     setLoading(true);
     const supabase = createClient();
 
@@ -631,24 +682,18 @@ export default function CheckoutPage() {
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
-          user_id: user.id,
-          source: 'marketplace',
-          status: 'pending',
-          subtotal,
-          shipping_fee: finalShippingFee, // Use the potentially reduced shipping fee
-          discount_amount: discountAmount, // Use the calculated discount amount
-          total_amount: total,
-          shipping_courier_name: selectedCourier?.name,
-          customer_notes: data.customer_notes || null,
-          shipping_address_snapshot: {
-            recipient_name: data.recipient_name,
-            phone: data.phone,
-            address_line1: data.address_line1,
-            city: data.city,
-            province: data.province,
-            postal_code: data.postal_code,
-          },
-          payment_method: selectedPaymentMethod?.name || null, // Store selected payment method name
+          user_id: previewOrderData.user_id,
+          source: previewOrderData.source,
+          status: previewOrderData.status,
+          subtotal: previewOrderData.subtotal,
+          shipping_fee: previewOrderData.shipping_fee,
+          discount_amount: previewOrderData.discount_amount,
+          total_amount: previewOrderData.total_amount,
+          shipping_courier_name: previewOrderData.shipping_courier_name,
+          customer_notes: previewOrderData.customer_notes,
+          shipping_address_snapshot: previewOrderData.shipping_address_snapshot,
+          payment_method: previewOrderData.payment_method,
+          total_weight_grams: previewOrderData.total_weight_grams,
         })
         .select()
         .single();
@@ -660,13 +705,12 @@ export default function CheckoutPage() {
       }
 
       // Create order items
-      const orderItems = items.map((item) => ({
+      const orderItems = previewOrderData.items.map((item: any) => ({
         order_id: order.id,
-        product_id: item.product.id,
-        variant_id: item.variant?.id || null,
+        product_id: item.product_id,
+        variant_id: item.variant_id,
         quantity: item.quantity,
-        // For variant products, use variant price_adjustment; for simple products, use base_price
-        price_at_purchase: item.variant ? (item.variant.price_adjustment || 0) : item.product.base_price,
+        price_at_purchase: item.price_at_purchase,
       }));
 
       const { error: itemsError } = await supabase
@@ -680,7 +724,7 @@ export default function CheckoutPage() {
       }
 
       // If promotion was applied, record usage
-      if (selectedPromotionDetails?.is_valid) {
+      if (previewOrderData.selected_promotion?.is_valid) {
         let promotionId = null;
 
         // If it's a UI-selected promotion, we already have the ID
@@ -688,11 +732,11 @@ export default function CheckoutPage() {
           promotionId = selectedPromotionId;
         }
         // If it's a code-entered promotion, get the ID by code
-        else if (data.promotion_code) {
+        else if (previewOrderData.promotion_code) {
           const { data: promoData } = await supabase
             .from('promotions')
             .select('id')
-            .eq('code', data.promotion_code.toUpperCase())
+            .eq('code', previewOrderData.promotion_code.toUpperCase())
             .single();
 
           if (promoData?.id) {
@@ -712,26 +756,43 @@ export default function CheckoutPage() {
       }
 
       // Update stock
-      for (const item of items) {
-        if (item.variant) {
+      for (const item of previewOrderData.items) {
+        if (item.variant_id) {
           // For variant products, update the specific variant stock
-          const newVariantStock = item.variant.stock_quantity - item.quantity;
-          await supabase
+          // We need to fetch current stock to calculate new value
+          const { data: variantData } = await supabase
             .from('product_variants')
-            .update({ stock_quantity: newVariantStock })
-            .eq('id', item.variant.id);
+            .select('stock_quantity')
+            .eq('id', item.variant_id)
+            .single();
+
+          if (variantData) {
+            const newVariantStock = variantData.stock_quantity - item.quantity;
+            await supabase
+              .from('product_variants')
+              .update({ stock_quantity: newVariantStock })
+              .eq('id', item.variant_id);
+          }
         } else {
           // For simple products, update product stock
-          const newStock = item.product.stock_quantity - item.quantity;
-          await supabase
+          const { data: productData } = await supabase
             .from('products')
-            .update({ stock_quantity: newStock })
-            .eq('id', item.product.id);
+            .select('stock_quantity')
+            .eq('id', item.product_id)
+            .single();
+
+          if (productData) {
+            const newStock = productData.stock_quantity - item.quantity;
+            await supabase
+              .from('products')
+              .update({ stock_quantity: newStock })
+              .eq('id', item.product_id);
+          }
         }
       }
 
       // Add points to user (1 point per 10,000 IDR spent, after discount)
-      const pointsEarned = Math.floor(total / 10000);
+      const pointsEarned = Math.floor(previewOrderData.total_amount / 10000);
       if (pointsEarned > 0 && profile) {
         await supabase
           .from('profiles')
@@ -780,16 +841,16 @@ export default function CheckoutPage() {
         payment_method: order.payment_method || 'Not specified', // Include payment method info
         invoice_url: order.invoice_url || undefined, // Convert null to undefined
         packing_list_url: order.packing_list_url || undefined, // Convert null to undefined
-        items_count: items.length,
-        items: items.map(item => ({
-          product_id: item.product.id,
-          product_name: item.product.name,
-          product_sku: item.product.sku || '',
-          variant_id: item.variant?.id,
-          variant_name: item.variant?.variant_name || undefined,
-          variant_sku: item.variant?.sku || undefined, // Convert null to undefined
+        items_count: previewOrderData.items.length,
+        items: previewOrderData.items.map((item: any) => ({
+          product_id: item.product_id,
+          product_name: item.product_name,
+          product_sku: item.product_sku || '',
+          variant_id: item.variant_id,
+          variant_name: item.variant_name || undefined,
+          variant_sku: undefined, // Convert null to undefined
           quantity: item.quantity,
-          price_at_purchase: item.variant ? (item.variant.price_adjustment || 0) : item.product.base_price,
+          price_at_purchase: item.price_at_purchase,
         })),
         created_at: order.created_at,
         updated_at: order.updated_at || new Date().toISOString(),
@@ -808,8 +869,10 @@ export default function CheckoutPage() {
         // Continue with order creation even if invoice generation fails
       }
 
-      clearCart();
       toast.success(`Order placed successfully! You earned ${pointsEarned} points. Downloading your invoice...`);
+
+      // Clear cart after successful order
+      clearCart();
 
       // Navigate to order details
       router.push(`/dashboard/orders/${order.id}`);
@@ -1331,9 +1394,9 @@ export default function CheckoutPage() {
 
                   <Separator />
 
-                  {/* Total Weight */}
+                  {/* Estimated Weight */}
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-sm font-medium text-blue-900">Total Package Weight</p>
+                    <p className="text-sm font-medium text-blue-900">Estimated Package Weight</p>
                     <p className="text-2xl font-bold text-blue-700">{totalWeightKg} kg</p>
                     <p className="text-xs text-blue-600 mt-1">({totalWeightGrams} grams)</p>
                   </div>
@@ -1431,11 +1494,126 @@ export default function CheckoutPage() {
       {/* Last Chance - Add More Items */}
       {items.length > 0 && (
         <div className="mt-12">
-          <RelatedProducts 
+          <RelatedProducts
             productId={items[0].product.id}
             title="Add More to Your Order"
             limit={5}
           />
+        </div>
+      )}
+
+      {/* Invoice Preview Modal */}
+      {showInvoicePreview && previewOrderData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Order Confirmation</h2>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setShowInvoicePreview(false)}
+                  disabled={loading}
+                >
+                  Close
+                </Button>
+              </div>
+
+              <div className="border rounded-lg p-4 mb-4">
+                <h3 className="font-bold text-lg mb-2">Invoice Preview</h3>
+
+                {/* Shipping Address */}
+                <div className="mb-4">
+                  <h4 className="font-medium mb-1">Shipping Address</h4>
+                  <p className="text-sm">{previewOrderData.shipping_address_snapshot.recipient_name}</p>
+                  <p className="text-sm">{previewOrderData.shipping_address_snapshot.phone}</p>
+                  <p className="text-sm">{previewOrderData.shipping_address_snapshot.address_line1}</p>
+                  <p className="text-sm">{previewOrderData.shipping_address_snapshot.city}, {previewOrderData.shipping_address_snapshot.province} {previewOrderData.shipping_address_snapshot.postal_code}</p>
+                </div>
+
+                {/* Shipping Courier */}
+                <div className="mb-4">
+                  <h4 className="font-medium mb-1">Shipping Method</h4>
+                  <p className="text-sm">{previewOrderData.shipping_courier_name}</p>
+                </div>
+
+                {/* Package Weight */}
+                <div className="mb-4">
+                  <h4 className="font-medium mb-1">Package Weight</h4>
+                  <p className="text-sm">{(previewOrderData.total_weight_grams / 1000).toFixed(2)} kg ({previewOrderData.total_weight_grams} grams)</p>
+                </div>
+
+                {/* Order Items */}
+                <div className="mb-4">
+                  <h4 className="font-medium mb-1">Order Items</h4>
+                  <ul className="text-sm">
+                    {previewOrderData.items.map((item: any, index: number) => (
+                      <li key={index} className="flex justify-between">
+                        <span>{item.product_name}{item.variant_name ? ` (${item.variant_name})`} - Qty: {item.quantity}</span>
+                        <span>{formatPrice(item.price_at_purchase * item.quantity)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Pricing Breakdown */}
+                <div className="mb-4">
+                  <div className="flex justify-between mb-1">
+                    <span>Subtotal:</span>
+                    <span>{formatPrice(previewOrderData.subtotal)}</span>
+                  </div>
+                  {previewOrderData.discount_amount > 0 && (
+                    <div className="flex justify-between mb-1">
+                      <span>Discount:</span>
+                      <span className="text-destructive">-{formatPrice(previewOrderData.discount_amount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between mb-1">
+                    <span>Shipping:</span>
+                    <span>{formatPrice(previewOrderData.shipping_fee)}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-lg mt-2 pt-2 border-t">
+                    <span>Total:</span>
+                    <span className="text-primary">{formatPrice(previewOrderData.total_amount)}</span>
+                  </div>
+                </div>
+
+                {/* Payment Method */}
+                <div className="mb-6">
+                  <h4 className="font-medium mb-1">Payment Method</h4>
+                  <p className="text-sm font-medium">{previewOrderData.payment_method}</p>
+                  <p className="text-sm text-brown-600">{previewOrderData.payment_method_description}</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowInvoicePreview(false)}
+                  disabled={loading}
+                  className="flex-1"
+                >
+                  Back to Edit
+                </Button>
+                <Button
+                  type="button"
+                  onClick={finalizeOrder}
+                  disabled={loading}
+                  className="flex-1"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    'Confirm & Pay'
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
