@@ -230,7 +230,7 @@ export default function CheckoutPage() {
     const subscription = form.watch((value, { name }) => {
       if (name === 'province' && value.province) {
         // Find the matching province ID based on the name
-        const matchedProvince = provinces.find(prov =>
+        const matchedProvince = provinces.find((prov: { id: number; name: string }) =>
           prov.name.toLowerCase().includes(value.province!.toLowerCase()) ||
           value.province!.toLowerCase().includes(prov.name.toLowerCase())
         );
@@ -253,7 +253,7 @@ export default function CheckoutPage() {
       const initialProvince = form.getValues('province');
       if (initialProvince) {
         // Find the matching province ID based on the name
-        const matchedProvince = fetchedProvinces.find(prov =>
+        const matchedProvince = fetchedProvinces.find((prov: { id: number; name: string }) =>
           prov.name.toLowerCase().includes(initialProvince.toLowerCase()) ||
           initialProvince.toLowerCase().includes(prov.name.toLowerCase())
         );
