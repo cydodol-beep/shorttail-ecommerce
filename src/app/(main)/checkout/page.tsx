@@ -357,43 +357,46 @@ export default function CheckoutPage() {
     return () => subscription.unsubscribe();
   }, [form, provinces, selectedProvince]);
 
+  // Set up a reverse watcher to update form when selectedProvince changes (for pre-selection from profile)
+  useEffect(() => {
+    if (selectedProvince && provinces.length > 0) {
+      const matchedProvince = provinces.find((prov: { id: number; name: string }) =>
+        prov.id.toString() === selectedProvince
+      );
+      if (matchedProvince && form.getValues('province') !== matchedProvince.name) {
+        form.setValue('province', matchedProvince.name);
+      }
+    }
+  }, [selectedProvince, provinces, form]);
+
   // Fetch provinces on component mount
   useEffect(() => {
     const loadProvinces = async () => {
       const fetchedProvinces = await fetchProvinces();
       setProvinces(fetchedProvinces);
-
-      // Set the initial province from the profile if available
-      if (profile) {
-        const initialProvince = profile.recipient_region || profile.region_state_province || '';
-        if (initialProvince) {
-          // Find the matching province ID based on the name
-          const matchedProvince = fetchedProvinces.find((prov: { id: number; name: string }) =>
-            prov.name.toLowerCase().includes(initialProvince.toLowerCase()) ||
-            initialProvince.toLowerCase().includes(prov.name.toLowerCase())
-          );
-          if (matchedProvince) {
-            setSelectedProvince(matchedProvince.id.toString());
-          }
-        }
-      } else {
-        // Fallback: Set the initial province from the form if profile is not loaded yet
-        const initialProvince = form.getValues('province');
-        if (initialProvince) {
-          // Find the matching province ID based on the name
-          const matchedProvince = fetchedProvinces.find((prov: { id: number; name: string }) =>
-            prov.name.toLowerCase().includes(initialProvince.toLowerCase()) ||
-            initialProvince.toLowerCase().includes(prov.name.toLowerCase())
-          );
-          if (matchedProvince) {
-            setSelectedProvince(matchedProvince.id.toString());
-          }
-        }
-      }
     };
 
     loadProvinces();
-  }, [profile]); // Only run when profile changes
+  }, []);
+
+  // Set the initial province from the profile when both profile and provinces are available
+  useEffect(() => {
+    if (profile && provinces.length > 0) {
+      const initialProvince = profile.recipient_region || profile.region_state_province || '';
+      if (initialProvince) {
+        // Find the matching province ID based on the name
+        const matchedProvince = provinces.find((prov: { id: number; name: string }) =>
+          prov.name.toLowerCase().includes(initialProvince.toLowerCase()) ||
+          initialProvince.toLowerCase().includes(prov.name.toLowerCase())
+        );
+        if (matchedProvince) {
+          setSelectedProvince(matchedProvince.id.toString());
+          // Also update the form value to match the province name
+          form.setValue('province', matchedProvince.name);
+        }
+      }
+    }
+  }, [profile, provinces, form]);
 
   const subtotal = getTotal();
 
