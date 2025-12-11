@@ -208,7 +208,7 @@ async function validatePromotionCode(code: string, userId: string, productIds: s
   return (data?.[0] as PromotionValidationResult) || null;
 }
 
-export default function CheckoutPage() {
+function CheckoutPage() {
   const router = useRouter();
   const { user, profile, loading: authLoading } = useAuth();
   const { items, getTotal, clearCart } = useCartStore();
@@ -1127,3 +1127,5 @@ export default function CheckoutPage() {
     </div>
   );
 }
+
+export default CheckoutPage;
