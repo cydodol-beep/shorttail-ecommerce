@@ -24,6 +24,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCartStore } from '@/store/cart-store';
 import { useAuth } from '@/hooks/use-auth';
 import { createClient } from '@/lib/supabase/client';
@@ -81,10 +82,12 @@ type ShippingCourier = {
   eta: string;
 };
 
-// Calculate shipping rates based on destination province
-async function calculateShippingRates(destinationProvinceId: number): Promise<ShippingCourier[]> {
+// Calculate shipping rates based on destination province and weight
+async function calculateShippingRates(destinationProvinceId: number, totalWeightGrams: number): Promise<ShippingCourier[]> {
   const supabase = createClient();
-  const { data, error } = await supabase
+
+  // Call the RPC to get base rates based on province
+  const { data: ratesData, error } = await supabase
     .rpc('get_shipping_rates_for_province', {
       p_province_id: destinationProvinceId
     });
@@ -95,7 +98,32 @@ async function calculateShippingRates(destinationProvinceId: number): Promise<Sh
     return staticCouriers;
   }
 
-  return (data as ShippingCourier[]) || staticCouriers;
+  // If no rates found, return static couriers
+  if (!ratesData || ratesData.length === 0) {
+    return staticCouriers;
+  }
+
+  // Calculate rates based on weight (similar logic to POS)
+  const calculatedCouriers = ratesData.map((rate: any) => {
+    // Get base rate cost
+    let cost = parseFloat(rate.cost) || 0;
+
+    // If weight is more than 1kg, calculate per-kg rate
+    if (totalWeightGrams > 1000) {
+      const weightInKg = Math.ceil(totalWeightGrams / 1000);
+      cost = cost * weightInKg;
+    }
+    // If under 1kg, use base rate (which is already set above)
+
+    return {
+      id: rate.id?.toString() || rate.courier_id?.toString() || '',
+      name: rate.courier_name || rate.name || 'Unknown Courier',
+      price: cost,
+      eta: rate.estimated_days ? `${rate.estimated_days} days` : '1-2 days'
+    };
+  });
+
+  return calculatedCouriers;
 }
 
 // Fetch available payment methods from payment_methods table
@@ -367,12 +395,12 @@ export default function CheckoutPage() {
     loadProvinces();
   }, [profile]); // Only run when profile changes
 
-  // Calculate shipping rates when province changes
+  // Calculate shipping rates when province or weight changes
   useEffect(() => {
     if (selectedProvince) {
       const calculateRates = async () => {
         setShippingLoading(true);
-        const rates = await calculateShippingRates(parseInt(selectedProvince));
+        const rates = await calculateShippingRates(parseInt(selectedProvince), totalWeightGrams);
         setDynamicCouriers(rates);
 
         // If the previously selected courier is no longer available, reset selection
@@ -388,10 +416,21 @@ export default function CheckoutPage() {
       };
       calculateRates();
     }
-  }, [selectedProvince]);
+  }, [selectedProvince, totalWeightGrams]);
 
   const subtotal = getTotal();
   const shippingFee = selectedCourier?.price || 0;
+
+  // Calculate total weight in grams
+  const totalWeightGrams = items.reduce((sum, item) => {
+    const itemWeight = item.variant
+      ? (item.variant.weight_grams || item.product.unit_weight_grams || 0)
+      : (item.product.unit_weight_grams || 0);
+    return sum + (itemWeight * item.quantity);
+  }, 0);
+
+  // Convert to kg for display
+  const totalWeightKg = (totalWeightGrams / 1000).toFixed(2);
 
   // Calculate discount amount if promotion is applied
   const discountAmount = appliedPromotion?.is_valid ? (appliedPromotion.discount_amount || 0) : 0;
@@ -728,9 +767,20 @@ export default function CheckoutPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Province</FormLabel>
-                          <FormControl>
-                            <Input placeholder="DKI Jakarta" {...field} />
-                          </FormControl>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select Province" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {provinces.map((province) => (
+                                <SelectItem key={province.id} value={province.name}>
+                                  {province.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -1025,6 +1075,15 @@ export default function CheckoutPage() {
                         </div>
                       );
                     })}
+                  </div>
+
+                  <Separator />
+
+                  {/* Total Weight */}
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm font-medium text-blue-900">Total Package Weight</p>
+                    <p className="text-2xl font-bold text-blue-700">{totalWeightKg} kg</p>
+                    <p className="text-xs text-blue-600 mt-1">({totalWeightGrams} grams)</p>
                   </div>
 
                   <Separator />
