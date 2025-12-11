@@ -165,7 +165,7 @@ async function fetchPaymentMethods() {
   // Get store settings
   const { data: settings, error: settingsError } = await supabase
     .from('store_settings')
-    .select('bank_transfer_enabled, bank_name, bank_account_number, bank_account_name, ewallet_enabled, ewallet_provider, ewallet_number, enable_cod')
+    .select('bank_transfer_enabled, bank_name, bank_account_number, bank_account_name, ewallet_enabled, ewallet_provider, ewallet_number, qris_enabled, qris_name')
     .single();
 
   if (settingsError) {
@@ -173,7 +173,6 @@ async function fetchPaymentMethods() {
     // Return default payment methods if store settings fetch fails
     return [
       { id: 'bank_transfer', name: 'Bank Transfer', description: 'Transfer payment via bank', enabled: true },
-      { id: 'cod', name: 'Cash on Delivery', description: 'Pay when delivered', enabled: true },
     ];
   }
 
@@ -197,11 +196,11 @@ async function fetchPaymentMethods() {
     });
   }
 
-  if (settings?.enable_cod) {
+  if (settings?.qris_enabled) {
     paymentMethods.push({
-      id: 'cod',
-      name: 'Cash on Delivery',
-      description: 'Pay cash when your order is delivered',
+      id: 'qris',
+      name: 'QRIS',
+      description: `QRIS Payment${settings.qris_name ? ` - ${settings.qris_name}` : ''}`,
       enabled: true,
     });
   }
