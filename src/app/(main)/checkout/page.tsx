@@ -45,23 +45,6 @@ const checkoutSchema = z.object({
 
 type CheckoutForm = z.infer<typeof checkoutSchema>;
 
-// Define payment method type
-interface PaymentMethod {
-  id: string;
-  name: string;
-  description: string;
-  provider: string; // e.g. 'midtrans', 'xendit', 'manual'
-  is_active: boolean;
-  is_available: boolean;
-  min_amount?: number;
-  max_amount?: number;
-  fee_fixed?: number;
-  fee_percentage?: number;
-  icon_url?: string;
-  instruction?: string;
-  account_details?: string; // For bank transfers
-}
-
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
@@ -131,7 +114,55 @@ async function fetchPaymentMethods() {
     return [];
   }
 
-  return (data || []) as PaymentMethod[];
+// Fetch available payment methods based on store settings
+async function fetchPaymentMethods() {
+  const supabase = createClient();
+
+  // Get store settings
+  const { data: settings, error: settingsError } = await supabase
+    .from('store_settings')
+    .select('bank_transfer_enabled, bank_name, bank_account_number, bank_account_name, ewallet_enabled, ewallet_provider, ewallet_number, enable_cod')
+    .single();
+
+  if (settingsError) {
+    console.error('Error fetching store settings for payment methods:', settingsError);
+    // Return default payment methods if store settings fetch fails
+    return [
+      { id: 'bank_transfer', name: 'Bank Transfer', description: 'Transfer payment via bank', enabled: true },
+      { id: 'cod', name: 'Cash on Delivery', description: 'Pay when delivered', enabled: true },
+    ];
+  }
+
+  const paymentMethods = [];
+
+  if (settings?.bank_transfer_enabled) {
+    paymentMethods.push({
+      id: 'bank_transfer',
+      name: 'Bank Transfer',
+      description: `Pay via ${settings.bank_name || 'Bank'}: ${settings.bank_account_number || 'Account'} a.n. ${settings.bank_account_name || 'Account Name'}`,
+      enabled: true,
+    });
+  }
+
+  if (settings?.ewallet_enabled) {
+    paymentMethods.push({
+      id: 'ewallet',
+      name: 'E-Wallet',
+      description: `Pay via ${settings.ewallet_provider || 'E-Wallet'}: ${settings.ewallet_number || 'Number'}`,
+      enabled: true,
+    });
+  }
+
+  if (settings?.enable_cod) {
+    paymentMethods.push({
+      id: 'cod',
+      name: 'Cash on Delivery',
+      description: 'Pay cash when your order is delivered',
+      enabled: true,
+    });
+  }
+
+  return paymentMethods;
 }
 
 // This will be dynamically populated based on selected province
@@ -191,11 +222,14 @@ export default function CheckoutPage() {
   const [appliedPromotion, setAppliedPromotion] = useState<any>(null);
   const [promotionLoading, setPromotionLoading] = useState(false);
   const [promotionError, setPromotionError] = useState('');
-
-  // Payment methods state
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [paymentMethodsLoading, setPaymentMethodsLoading] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [storePaymentSettings, setStorePaymentSettings] = useState<any>(null);
+  const [availablePaymentMethods, setAvailablePaymentMethods] = useState<Array<{
+    id: string;
+    name: string;
+    description: string;
+    enabled: boolean;
+  }>>([]);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<{ id: string; name: string; description: string } | null>(null);
 
   const form = useForm<CheckoutForm>({
     resolver: zodResolver(checkoutSchema),
@@ -256,6 +290,23 @@ export default function CheckoutPage() {
       router.push('/cart');
     }
   }, [user, authLoading, items.length, router]);
+
+  // Load payment methods when user is authenticated
+  useEffect(() => {
+    if (!user) return; // Only load payment methods if user is authenticated
+
+    const loadPaymentMethods = async () => {
+      try {
+        const methods = await fetchPaymentMethods();
+        setAvailablePaymentMethods(methods);
+      } catch (error) {
+        console.error('Error loading payment methods:', error);
+        // Don't show error to user, just log it - they can still proceed with order
+      }
+    };
+
+    loadPaymentMethods();
+  }, [user]);
 
   // Set up field value watchers for province changes
   useEffect(() => {
@@ -345,30 +396,6 @@ export default function CheckoutPage() {
   const finalShippingFee = (appliedPromotion?.is_valid && appliedPromotion.free_shipping) ? 0 : shippingFee;
   const total = subtotal - discountAmount + finalShippingFee;
 
-  // Load payment methods on component mount
-  useEffect(() => {
-    if (!user) return; // Only load payment methods if user is authenticated
-
-    const loadPaymentMethods = async () => {
-      setPaymentMethodsLoading(true);
-      try {
-        const methods = await fetchPaymentMethods();
-        setPaymentMethods(methods);
-
-        // If there's only one available method, select it by default
-        if (methods.length === 1) {
-          setSelectedPaymentMethod(methods[0]);
-        }
-      } catch (error) {
-        console.error('Error loading payment methods:', error);
-        // Don't show error to user, just log it - they can still proceed with order
-      } finally {
-        setPaymentMethodsLoading(false);
-      }
-    };
-
-    loadPaymentMethods();
-  }, [user]);
 
   const handleApplyPromotion = async () => {
     if (!promotionCode.trim() || !user || subtotal <= 0) return;
@@ -446,8 +473,7 @@ export default function CheckoutPage() {
             province: data.province,
             postal_code: data.postal_code,
           },
-          payment_method_id: selectedPaymentMethod?.id || null, // Store selected payment method
-          payment_method_name: selectedPaymentMethod?.name || null, // Store payment method name
+          payment_method: selectedPaymentMethod?.name || null, // Store selected payment method name
         })
         .select()
         .single();
@@ -564,8 +590,7 @@ export default function CheckoutPage() {
         shipping_courier_name: order.shipping_courier_name || '',
         shipping_address_snapshot: order.shipping_address_snapshot,
         customer_notes: (order as any).customer_notes || '', // customer_notes might not be in the main Order type but could be returned by select('*')
-        payment_method_id: order.payment_method_id || undefined, // Include payment method info
-        payment_method_name: order.payment_method_name || 'Not specified', // Include payment method name
+        payment_method: order.payment_method || 'Not specified', // Include payment method info
         invoice_url: order.invoice_url || undefined, // Convert null to undefined
         packing_list_url: order.packing_list_url || undefined, // Convert null to undefined
         items_count: items.length,
@@ -909,14 +934,15 @@ export default function CheckoutPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {paymentMethodsLoading ? (
-                    <div className="flex items-center justify-center p-8">
-                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                      <span className="ml-2 text-brown-600">Loading payment methods...</span>
+                  {availablePaymentMethods.length === 0 ? (
+                    <div className="text-center py-8">
+                      <PawPrint className="h-12 w-12 text-brown-300 mx-auto mb-3" />
+                      <p className="text-brown-600">No payment methods available</p>
+                      <p className="text-sm text-brown-500 mt-1">Contact admin to enable payment methods</p>
                     </div>
-                  ) : paymentMethods.length > 0 ? (
+                  ) : (
                     <div className="space-y-3">
-                      {paymentMethods.map((method) => (
+                      {availablePaymentMethods.map((method) => (
                         <label
                           key={method.id}
                           className={`flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-colors ${
@@ -943,46 +969,10 @@ export default function CheckoutPage() {
                             <div>
                               <p className="font-medium text-brown-900">{method.name}</p>
                               <p className="text-sm text-brown-500">{method.description}</p>
-                              {method.provider && (
-                                <p className="text-xs text-brown-400 mt-1">
-                                  Powered by {method.provider}
-                                </p>
-                              )}
                             </div>
                           </div>
-                          {method.icon_url && (
-                            <img
-                              src={method.icon_url}
-                              alt={method.name}
-                              className="h-8 w-8 object-contain rounded"
-                              onError={(e) => {
-                                // Hide broken image icons
-                                e.currentTarget.style.display = 'none';
-                              }}
-                            />
-                          )}
                         </label>
                       ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <PawPrint className="h-12 w-12 text-brown-300 mx-auto mb-3" />
-                      <p className="text-brown-600">No payment methods are currently available</p>
-                      <p className="text-sm text-brown-500 mt-1">Please contact support for assistance</p>
-                    </div>
-                  )}
-
-                  {selectedPaymentMethod && selectedPaymentMethod.instruction && (
-                    <div className="mt-4 p-4 bg-brown-50 rounded-lg border border-brown-200">
-                      <h4 className="font-medium text-brown-900 mb-2">Payment Instructions</h4>
-                      <p className="text-sm text-brown-700 whitespace-pre-line">{selectedPaymentMethod.instruction}</p>
-
-                      {selectedPaymentMethod.account_details && (
-                        <div className="mt-3">
-                          <h5 className="font-medium text-brown-900 text-sm">Account Details</h5>
-                          <p className="text-sm text-brown-700 mt-1 whitespace-pre-line">{selectedPaymentMethod.account_details}</p>
-                        </div>
-                      )}
                     </div>
                   )}
                 </CardContent>
