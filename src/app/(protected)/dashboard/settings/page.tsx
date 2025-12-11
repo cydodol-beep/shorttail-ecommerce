@@ -108,7 +108,7 @@ export default function UserSettingsPage() {
       setRecipientCity(profile.recipient_city || '');
       setRecipientRegion(profile.recipient_province_id ? profile.recipient_province_id.toString() : '');
       setRecipientPostalCode(profile.recipient_postal_code || '');
-      setRecipientPhone(profile.recipient_phoneno || profile.recipient_phone || '');
+      setRecipientPhone(profile.recipient_phoneno || '');
     }
   }, [profile]);
 
