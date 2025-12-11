@@ -86,11 +86,23 @@ type ShippingCourier = {
 async function calculateShippingRates(destinationProvinceId: number, totalWeightGrams: number): Promise<ShippingCourier[]> {
   const supabase = createClient();
 
-  // Call the RPC to get rates based on province
+  // Get shipping rates that match the destination province, joining with couriers table
   const { data: ratesData, error } = await supabase
-    .rpc('get_shipping_rates_for_province', {
-      p_province_id: destinationProvinceId
-    });
+    .from('shipping_rates')
+    .select(`
+      id,
+      courier_id,
+      province_id,
+      cost,
+      estimated_days,
+      shipping_couriers!inner (
+        id,
+        courier_name,
+        is_active
+      )
+    `)
+    .eq('province_id', destinationProvinceId)
+    .eq('shipping_couriers.is_active', true); // Only get active couriers
 
   if (error) {
     console.error('Error calculating shipping rates:', error);
@@ -98,14 +110,14 @@ async function calculateShippingRates(destinationProvinceId: number, totalWeight
     return staticCouriers;
   }
 
-  // If no rates found, return static couriers
+  // If no rates found for this province, return static couriers
   if (!ratesData || ratesData.length === 0) {
     return staticCouriers;
   }
 
   // Calculate rates based on weight (similar logic to POS)
   const calculatedCouriers = ratesData.map((rate: any) => {
-    // Get base rate cost
+    // Get base rate cost from shipping_rates table
     let cost = parseFloat(rate.cost) || 0;
 
     // If weight is more than 1kg, calculate per-kg rate
@@ -117,8 +129,8 @@ async function calculateShippingRates(destinationProvinceId: number, totalWeight
 
     // Return the correct structure for ShippingCourier type
     return {
-      id: rate.courier_id?.toString() || rate.id?.toString() || '',
-      name: rate.courier_name || rate.name || 'Unknown Courier',
+      id: rate.shipping_couriers.id?.toString() || rate.courier_id?.toString() || '',
+      name: rate.shipping_couriers.courier_name || 'Unknown Courier',
       price: cost,
       eta: rate.estimated_days ? `${rate.estimated_days} days` : '1-2 days'
     };
