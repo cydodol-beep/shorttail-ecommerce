@@ -429,6 +429,8 @@ export default function CheckoutPage() {
     }
   }, [profile, provinces, form]);
 
+  const subtotal = getTotal();
+
   // Fetch available promotions on component mount
   useEffect(() => {
     if (!user) return;
@@ -472,8 +474,6 @@ export default function CheckoutPage() {
 
     fetchPromotions();
   }, [user, items, subtotal, promotionsStore]);
-
-  const subtotal = getTotal();
 
   // Calculate total weight in grams
   const totalWeightGrams = items.reduce((sum, item) => {
