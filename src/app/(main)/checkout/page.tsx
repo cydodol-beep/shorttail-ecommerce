@@ -632,6 +632,36 @@ export default function CheckoutPage() {
       return;
     }
 
+    // Check stock availability for all items in cart before proceeding
+    const supabase = createClient();
+    for (const item of items) {
+      if (item.variant) {
+        // Check variant stock
+        const { data: variantData, error: variantError } = await supabase
+          .from('product_variants')
+          .select('stock_quantity')
+          .eq('id', item.variant.id)
+          .single();
+
+        if (variantError || !variantData || variantData.stock_quantity < item.quantity) {
+          toast.error(`Not enough stock for ${item.product.name} - ${item.variant.variant_name}. Only ${variantData?.stock_quantity || 0} available.`);
+          return;
+        }
+      } else {
+        // Check product stock
+        const { data: productData, error: productError } = await supabase
+          .from('products')
+          .select('stock_quantity')
+          .eq('id', item.product.id)
+          .single();
+
+        if (productError || !productData || productData.stock_quantity < item.quantity) {
+          toast.error(`Not enough stock for ${item.product.name}. Only ${productData?.stock_quantity || 0} available.`);
+          return;
+        }
+      }
+    }
+
     // Prepare order data for preview
     const orderData = {
       user_id: user.id,
@@ -755,38 +785,102 @@ export default function CheckoutPage() {
         }
       }
 
-      // Update stock
+      // Update stock - ensure it's done after all items are processed
       for (const item of previewOrderData.items) {
         if (item.variant_id) {
           // For variant products, update the specific variant stock
           // We need to fetch current stock to calculate new value
-          const { data: variantData } = await supabase
+          const { data: variantData, error: variantError } = await supabase
             .from('product_variants')
             .select('stock_quantity')
             .eq('id', item.variant_id)
             .single();
 
+          if (variantError) {
+            console.error('Error fetching variant stock:', variantError);
+            toast.error(`Failed to update stock for variant. ${item.variant_name || item.product_name}`);
+            setLoading(false);
+            // Rollback the order since inventory update failed
+            await supabase
+              .from('orders')
+              .delete()
+              .eq('id', order.id);
+            await supabase
+              .from('order_items')
+              .delete()
+              .eq('order_id', order.id);
+            return;
+          }
+
           if (variantData) {
             const newVariantStock = variantData.stock_quantity - item.quantity;
-            await supabase
+            const { error: updateError } = await supabase
               .from('product_variants')
               .update({ stock_quantity: newVariantStock })
               .eq('id', item.variant_id);
+
+            if (updateError) {
+              console.error('Error updating variant stock:', updateError);
+              toast.error(`Failed to update stock for variant. ${item.variant_name || item.product_name}`);
+              setLoading(false);
+              // Rollback the order since inventory update failed
+              await supabase
+                .from('orders')
+                .delete()
+                .eq('id', order.id);
+              await supabase
+                .from('order_items')
+                .delete()
+                .eq('order_id', order.id);
+              return;
+            }
           }
         } else {
           // For simple products, update product stock
-          const { data: productData } = await supabase
+          const { data: productData, error: productError } = await supabase
             .from('products')
             .select('stock_quantity')
             .eq('id', item.product_id)
             .single();
 
+          if (productError) {
+            console.error('Error fetching product stock:', productError);
+            toast.error(`Failed to update stock for product. ${item.product_name}`);
+            setLoading(false);
+            // Rollback the order since inventory update failed
+            await supabase
+              .from('orders')
+              .delete()
+              .eq('id', order.id);
+            await supabase
+              .from('order_items')
+              .delete()
+              .eq('order_id', order.id);
+            return;
+          }
+
           if (productData) {
             const newStock = productData.stock_quantity - item.quantity;
-            await supabase
+            const { error: updateError } = await supabase
               .from('products')
               .update({ stock_quantity: newStock })
               .eq('id', item.product_id);
+
+            if (updateError) {
+              console.error('Error updating product stock:', updateError);
+              toast.error(`Failed to update stock for product. ${item.product_name}`);
+              setLoading(false);
+              // Rollback the order since inventory update failed
+              await supabase
+                .from('orders')
+                .delete()
+                .eq('id', order.id);
+              await supabase
+                .from('order_items')
+                .delete()
+                .eq('order_id', order.id);
+              return;
+            }
           }
         }
       }

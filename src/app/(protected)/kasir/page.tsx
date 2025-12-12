@@ -692,8 +692,39 @@ export default function KasirPOSPage() {
       return;
     }
 
-    setProcessing(true);
+    // Check stock availability for all items in cart before proceeding
     const supabase = createClient();
+    for (const item of cart) {
+      if (item.variant) {
+        // Check variant stock
+        const { data: variantData, error: variantError } = await supabase
+          .from('product_variants')
+          .select('stock_quantity')
+          .eq('id', item.variant.id)
+          .single();
+
+        if (variantError || !variantData || variantData.stock_quantity < item.quantity) {
+          toast.error(`Not enough stock for ${item.product.name} - ${item.variant.variant_name || 'Variant'}. Only ${variantData?.stock_quantity || 0} available.`);
+          setProcessing(false);
+          return;
+        }
+      } else {
+        // Check product stock
+        const { data: productData, error: productError } = await supabase
+          .from('products')
+          .select('stock_quantity')
+          .eq('id', item.product.id)
+          .single();
+
+        if (productError || !productData || productData.stock_quantity < item.quantity) {
+          toast.error(`Not enough stock for ${item.product.name}. Only ${productData?.stock_quantity || 0} available.`);
+          setProcessing(false);
+          return;
+        }
+      }
+    }
+
+    setProcessing(true);
 
     // Get selected courier name
     let courierName = '';
@@ -764,17 +795,63 @@ export default function KasirPOSPage() {
     // Update stock
     for (const item of cart) {
       if (item.variant) {
-        // Update variant stock
-        await supabase
+        // Update variant stock - fetch current stock first to ensure accuracy
+        const { data: variantData, error: variantError } = await supabase
           .from('product_variants')
-          .update({ stock_quantity: item.variant.stock_quantity - item.quantity })
-          .eq('id', item.variant.id);
+          .select('stock_quantity')
+          .eq('id', item.variant.id)
+          .single();
+
+        if (variantError) {
+          console.error('Error fetching variant stock:', variantError);
+          toast.error(`Failed to update stock for variant: ${item.displayName || 'Unknown'}`);
+          setProcessing(false);
+          return; // Stop processing if stock update fails
+        }
+
+        if (variantData) {
+          const newVariantStock = variantData.stock_quantity - item.quantity;
+          const { error: updateError } = await supabase
+            .from('product_variants')
+            .update({ stock_quantity: newVariantStock })
+            .eq('id', item.variant.id);
+
+          if (updateError) {
+            console.error('Error updating variant stock:', updateError);
+            toast.error(`Failed to update stock for variant: ${item.displayName || 'Unknown'}`);
+            setProcessing(false);
+            return; // Stop processing if stock update fails
+          }
+        }
       } else {
-        // Update product stock
-        await supabase
+        // Update product stock - fetch current stock first to ensure accuracy
+        const { data: productData, error: productError } = await supabase
           .from('products')
-          .update({ stock_quantity: item.product.stock_quantity - item.quantity })
-          .eq('id', item.product.id);
+          .select('stock_quantity')
+          .eq('id', item.product.id)
+          .single();
+
+        if (productError) {
+          console.error('Error fetching product stock:', productError);
+          toast.error(`Failed to update stock for product: ${item.displayName || 'Unknown'}`);
+          setProcessing(false);
+          return; // Stop processing if stock update fails
+        }
+
+        if (productData) {
+          const newStock = productData.stock_quantity - item.quantity;
+          const { error: updateError } = await supabase
+            .from('products')
+            .update({ stock_quantity: newStock })
+            .eq('id', item.product.id);
+
+          if (updateError) {
+            console.error('Error updating product stock:', updateError);
+            toast.error(`Failed to update stock for product: ${item.displayName || 'Unknown'}`);
+            setProcessing(false);
+            return; // Stop processing if stock update fails
+          }
+        }
       }
     }
 
