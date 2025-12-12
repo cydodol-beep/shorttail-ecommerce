@@ -115,6 +115,15 @@ export interface Order {
   invoice_url: string | null;
   packing_list_url: string | null;
   is_packing_list_downloaded: boolean;
+  payment_method: string | null;
+  recipient_name: string | null;
+  recipient_phone: string | null;
+  recipient_address: string | null;
+  recipient_province: string | null;
+  recipient_province_id: number | null;
+  shipping_courier: string | null;
+  shipping_weight_grams: number | null;
+  customer_notes: string | null;
   created_at: string;
   updated_at: string;
 }

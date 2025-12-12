@@ -129,16 +129,17 @@ export default function OrdersPage() {
         shipping_fee: orderWithItems.shipping_fee,
         discount_amount: orderWithItems.discount_amount,
         total_amount: orderWithItems.total_amount,
-        recipient_name: (orderWithItems.shipping_address_snapshot as any)?.recipient_name || '',
-        recipient_phone: (orderWithItems.shipping_address_snapshot as any)?.phone || '',
-        recipient_address: (orderWithItems.shipping_address_snapshot as any)?.address_line1 || '',
-        recipient_province: (orderWithItems.shipping_address_snapshot as any)?.province || '',
-        shipping_courier: orderWithItems.shipping_courier_name || '',
+        recipient_name: orderWithItems.recipient_name || (orderWithItems.shipping_address_snapshot as any)?.recipient_name || '',
+        recipient_phone: orderWithItems.recipient_phone || (orderWithItems.shipping_address_snapshot as any)?.phone || '',
+        recipient_address: orderWithItems.recipient_address || (orderWithItems.shipping_address_snapshot as any)?.address_line1 || '',
+        recipient_province: orderWithItems.recipient_province || (orderWithItems.shipping_address_snapshot as any)?.province || '',
+        shipping_courier: orderWithItems.shipping_courier || orderWithItems.shipping_courier_name || '',
         shipping_courier_name: orderWithItems.shipping_courier_name || '',
         shipping_address_snapshot: orderWithItems.shipping_address_snapshot,
-        customer_notes: (orderWithItems as any).customer_notes || '', // customer_notes might not be in the main Order type but could be returned by select('*')
+        customer_notes: orderWithItems.customer_notes || (orderWithItems as any).customer_notes || '',
         invoice_url: orderWithItems.invoice_url || undefined, // Convert null to undefined
         packing_list_url: orderWithItems.packing_list_url || undefined, // Convert null to undefined
+        payment_method: orderWithItems.payment_method || null,
         items_count: orderWithItems.order_items?.length || 0,
         items: orderWithItems.order_items?.map((item: any) => ({
           product_id: item.product_id,

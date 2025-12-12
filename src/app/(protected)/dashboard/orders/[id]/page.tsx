@@ -52,6 +52,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [order, setOrder] = useState<OrderWithItems | null>(null);
   const [loading, setLoading] = useState(true);
   const [generatingInvoice, setGeneratingInvoice] = useState(false);
+  const [promotion, setPromotion] = useState<any>(null); // Store related promotion data
 
   const fetchOrder = useCallback(async () => {
     if (!user || !id) return;
@@ -72,6 +73,25 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
     if (!error && data) {
       setOrder(data as OrderWithItems);
+
+      // Try to find the promotion used for this order
+      const { data: promotionUsageData } = await supabase
+        .from('promotion_usage')
+        .select('promotion_id')
+        .eq('order_id', data.id)
+        .single();
+
+      if (promotionUsageData) {
+        const { data: promoData } = await supabase
+          .from('promotions')
+          .select('*')
+          .eq('id', promotionUsageData.promotion_id)
+          .single();
+
+        if (promoData) {
+          setPromotion(promoData);
+        }
+      }
     }
     setLoading(false);
   }, [user, id]);
@@ -111,16 +131,17 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         shipping_fee: order.shipping_fee,
         discount_amount: order.discount_amount,
         total_amount: order.total_amount,
-        recipient_name: (order.shipping_address_snapshot as any)?.recipient_name || '',
-        recipient_phone: (order.shipping_address_snapshot as any)?.phone || '',
-        recipient_address: (order.shipping_address_snapshot as any)?.address_line1 || '',
-        recipient_province: (order.shipping_address_snapshot as any)?.province || '',
-        shipping_courier: order.shipping_courier_name || '',
+        recipient_name: order.recipient_name || (order.shipping_address_snapshot as any)?.recipient_name || '',
+        recipient_phone: order.recipient_phone || (order.shipping_address_snapshot as any)?.phone || '',
+        recipient_address: order.recipient_address || (order.shipping_address_snapshot as any)?.address_line1 || '',
+        recipient_province: order.recipient_province || (order.shipping_address_snapshot as any)?.province || '',
+        shipping_courier: order.shipping_courier || order.shipping_courier_name || '',
         shipping_courier_name: order.shipping_courier_name || '',
         shipping_address_snapshot: order.shipping_address_snapshot,
-        customer_notes: (order as any).customer_notes || '', // customer_notes might not be in the main Order type but could be returned by select('*')
+        customer_notes: order.customer_notes || (order as any).customer_notes || '',
         invoice_url: order.invoice_url || undefined, // Convert null to undefined
         packing_list_url: order.packing_list_url || undefined, // Convert null to undefined
+        payment_method: order.payment_method || null,
         items_count: order.order_items?.length || 0,
         items: order.order_items?.map(item => ({
           product_id: item.product_id,
@@ -241,6 +262,82 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             </div>
           </CardContent>
         </Card>
+
+        {/* Promotion, Payment, and Notes Info Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          {/* Promotion Information */}
+          {promotion && (
+            <Card className="border-green-200 bg-green-50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Receipt className="h-5 w-5 text-green-600" />
+                  Promotion Applied
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-brown-600">Code:</span>
+                    <span className="font-semibold text-brown-900">{promotion.code}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-brown-600">Type:</span>
+                    <span className="font-semibold text-brown-900 capitalize">{promotion.discount_type.replace('_', ' ')}</span>
+                  </div>
+                  {order.discount_amount > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-brown-600">Discount:</span>
+                      <span className="font-semibold text-green-600">-{formatPrice(order.discount_amount)}</span>
+                    </div>
+                  )}
+                  {promotion.description && (
+                    <div className="flex justify-between">
+                      <span className="text-brown-600">Description:</span>
+                      <span className="font-semibold text-brown-900">{promotion.description}</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Payment Information */}
+          <Card className="border-purple-200 bg-purple-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-purple-600" />
+                Payment Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-brown-600">Payment Method:</span>
+                  <span className="font-semibold text-brown-900 capitalize">{order.payment_method || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-brown-600">Order Source:</span>
+                  <span className="font-semibold text-brown-900 capitalize">{order.source.replace('_', ' ')}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Customer Notes */}
+          {order.customer_notes && (
+            <Card className="border-blue-200 bg-blue-50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                  Customer Notes
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-brown-700">{order.customer_notes}</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
 
         <div className="grid md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-6">

@@ -2,11 +2,11 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { 
-  ShoppingBag, 
-  Heart, 
+import {
+  ShoppingBag,
+  Heart,
   PawPrint,
-  Gift, 
+  Gift,
   Settings,
   ChevronRight,
   Trophy,
@@ -20,6 +20,8 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/use-auth';
 import { StoreLogo } from '@/components/ui/store-logo';
 import { createClient } from '@/lib/supabase/client';
+import { generateInvoiceJPEG } from '@/lib/invoice-generator';
+import { useStoreSettingsStore } from '@/store/store-settings-store';
 import type { Order, Pet } from '@/types/database';
 
 const tierThresholds = {
@@ -348,21 +350,136 @@ export default function DashboardPage() {
                       key={order.id}
                       className="flex items-center justify-between p-4 bg-brown-50 rounded-lg"
                     >
-                      <div>
-                        <p className="font-medium text-brown-900">
-                          Order #{order.id.slice(0, 8)}
-                        </p>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-medium text-brown-900">
+                            Order #{order.id.slice(0, 8)}
+                          </p>
+                          <Badge variant="outline" className="capitalize text-xs px-2 py-0 h-6">
+                            {order.status}
+                          </Badge>
+                        </div>
                         <p className="text-sm text-brown-600">
                           {new Date(order.created_at).toLocaleDateString()}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-primary">
-                          {formatPrice(order.total_amount)}
-                        </p>
-                        <Badge variant="outline" className="capitalize">
-                          {order.status}
-                        </Badge>
+                      <div className="flex items-center gap-2">
+                        <div className="text-right mr-4">
+                          <p className="font-bold text-primary">
+                            {formatPrice(order.total_amount)}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 text-xs"
+                          onClick={async () => {
+                            // Generate invoice preview
+                            try {
+                              const supabase = createClient();
+
+                              // Fetch the order with items to generate invoice
+                              const { data: orderWithItems, error } = await supabase
+                                .from('orders')
+                                .select(`
+                                  *,
+                                  order_items (
+                                    *,
+                                    product:products (name, images, sku)
+                                  )
+                                `)
+                                .eq('id', order.id)
+                                .single();
+
+                              if (error) {
+                                throw error;
+                              }
+
+                              // Get store settings for invoice generation
+                              const { allSettings } = useStoreSettingsStore.getState();
+                              const storeSettings = allSettings?.store || {
+                                storeName: 'ShortTail.id',
+                                storeDescription: 'Premium Pet Shop - Your one-stop shop for pet supplies',
+                                storeLogo: '',
+                                storeEmail: 'support@shorttail.id',
+                                storePhone: '+6281234567890',
+                                storeAddress: 'Jl. Pet Lovers No. 123',
+                                storeCity: 'Jakarta',
+                                storeProvince: 'DKI Jakarta',
+                                storePostalCode: '12345',
+                                storeCurrency: 'IDR',
+                                storeTimezone: 'Asia/Jakarta',
+                              };
+
+                              // Format the order data to match the expected structure for the invoice generator
+                              const orderForInvoice = {
+                                id: orderWithItems.id,
+                                user_id: orderWithItems.user_id || undefined,
+                                user_name: '',
+                                user_email: '',
+                                cashier_id: orderWithItems.cashier_id || undefined,
+                                cashier_name: '',
+                                source: orderWithItems.source,
+                                status: orderWithItems.status,
+                                subtotal: orderWithItems.subtotal,
+                                shipping_fee: orderWithItems.shipping_fee,
+                                discount_amount: orderWithItems.discount_amount,
+                                total_amount: orderWithItems.total_amount,
+                                recipient_name: orderWithItems.recipient_name || (orderWithItems.shipping_address_snapshot as any)?.recipient_name || '',
+                                recipient_phone: orderWithItems.recipient_phone || (orderWithItems.shipping_address_snapshot as any)?.phone || '',
+                                recipient_address: orderWithItems.recipient_address || (orderWithItems.shipping_address_snapshot as any)?.address_line1 || '',
+                                recipient_province: orderWithItems.recipient_province || (orderWithItems.shipping_address_snapshot as any)?.province || '',
+                                shipping_courier: orderWithItems.shipping_courier || orderWithItems.shipping_courier_name || '',
+                                shipping_courier_name: orderWithItems.shipping_courier_name || '',
+                                shipping_address_snapshot: orderWithItems.shipping_address_snapshot,
+                                customer_notes: orderWithItems.customer_notes || (orderWithItems as any).customer_notes || '',
+                                invoice_url: orderWithItems.invoice_url || undefined,
+                                packing_list_url: orderWithItems.packing_list_url || undefined,
+                                payment_method: orderWithItems.payment_method || null,
+                                items_count: orderWithItems.order_items?.length || 0,
+                                items: orderWithItems.order_items?.map((item: any) => ({
+                                  product_id: item.product_id,
+                                  product_name: item.product?.name || 'Product',
+                                  product_sku: item.product?.sku || '',
+                                  variant_id: item.variant_id || undefined,
+                                  variant_name: (item as any).variant_name || undefined,
+                                  variant_sku: (item as any).variant_sku || undefined,
+                                  quantity: item.quantity,
+                                  price_at_purchase: item.price_at_purchase,
+                                })) || [],
+                                created_at: orderWithItems.created_at,
+                                updated_at: orderWithItems.updated_at,
+                              };
+
+                              // Generate the invoice
+                              const invoiceBlob = await generateInvoiceJPEG(orderForInvoice, storeSettings);
+
+                              // Create a temporary URL for the preview
+                              const url = URL.createObjectURL(invoiceBlob);
+
+                              // Open the invoice in a new tab
+                              window.open(url, '_blank');
+
+                              // Clean up the object URL after a delay
+                              setTimeout(() => URL.revokeObjectURL(url), 10000);
+                            } catch (error) {
+                              console.error('Error generating invoice:', error);
+                              alert('Error generating invoice. Please try again.');
+                            }
+                          }}
+                        >
+                          Invoice
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 text-xs"
+                          asChild
+                        >
+                          <Link href={`/dashboard/orders/${order.id}`}>
+                            View Details
+                          </Link>
+                        </Button>
                       </div>
                     </div>
                   ))}
