@@ -43,7 +43,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.R
 };
 
 interface OrderWithItems extends Order {
-  order_items: (OrderItemType & { product: { name: string; images: string[]; sku?: string } })[];
+  order_items: (OrderItemType & { product: { id: string; name: string; images: string[]; sku?: string } })[];
 }
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -58,41 +58,170 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     if (!user || !id) return;
     const supabase = createClient();
 
-    const { data, error } = await supabase
+    // Get the order details
+    const { data: orderData, error: orderError } = await supabase
       .from('orders')
       .select(`
-        *,
-        order_items (
-          *,
-          product:products (name, images, sku)
-        )
+        id,
+        user_id,
+        cashier_id,
+        source,
+        status,
+        subtotal,
+        shipping_fee,
+        discount_amount,
+        total_amount,
+        shipping_courier_name,
+        shipping_courier,
+        shipping_address_snapshot,
+        invoice_url,
+        packing_list_url,
+        is_packing_list_downloaded,
+        created_at,
+        updated_at,
+        payment_method,
+        recipient_name,
+        recipient_phone,
+        recipient_address,
+        recipient_province,
+        recipient_province_id,
+        shipping_weight_grams,
+        customer_notes
       `)
       .eq('id', id)
       .eq('user_id', user.id)
       .single();
 
-    if (!error && data) {
-      setOrder(data as OrderWithItems);
+    if (orderError) {
+      console.error('Error fetching order:', orderError);
+      setLoading(false);
+      return;
+    }
 
-      // Try to find the promotion used for this order
-      const { data: promotionUsageData } = await supabase
-        .from('promotion_usage')
-        .select('promotion_id')
-        .eq('order_id', data.id)
-        .single();
+    if (!orderData) {
+      setLoading(false);
+      return;
+    }
 
-      if (promotionUsageData) {
-        const { data: promoData } = await supabase
-          .from('promotions')
-          .select('*')
-          .eq('id', promotionUsageData.promotion_id)
+    // Get the order items separately
+    const { data: itemsData, error: itemsError } = await supabase
+      .from('order_items')
+      .select('product_id, variant_id, quantity, price_at_purchase')
+      .eq('order_id', id);
+
+    if (itemsError) {
+      console.error('Error fetching order items:', itemsError);
+      setLoading(false);
+      return;
+    }
+
+    // Get product and variant details for each item
+    let itemsWithDetails = [];
+    if (itemsData && itemsData.length > 0) {
+      for (const item of itemsData) {
+        // Get product details
+        const { data: productData, error: productError } = await supabase
+          .from('products')
+          .select('name, sku')
+          .eq('id', item.product_id)
           .single();
 
-        if (promoData) {
-          setPromotion(promoData);
+        let productDetails = {
+          id: item.product_id,
+          name: 'Unknown Product',
+          images: [],
+          sku: undefined
+        };
+
+        if (!productError && productData) {
+          productDetails = {
+            id: item.product_id,
+            name: productData.name,
+            images: [],
+            sku: productData.sku
+          };
         }
+
+        // Get variant details if exists
+        let variantDetails = {
+          name: null,
+          sku: null
+        };
+
+        if (item.variant_id) {
+          const { data: variantData, error: variantError } = await supabase
+            .from('product_variants')
+            .select('variant_name, sku')
+            .eq('id', item.variant_id)
+            .single();
+
+          if (!variantError && variantData) {
+            variantDetails = {
+              name: variantData.variant_name,
+              sku: variantData.sku
+            };
+          }
+        }
+
+        itemsWithDetails.push({
+          ...item,
+          product: {
+            id: productDetails.id,
+            name: productDetails.name,
+            images: productDetails.images,
+            sku: productDetails.sku
+          },
+          variant_name: variantDetails.name,
+          variant_sku: variantDetails.sku
+        });
       }
     }
+
+    // Combine the order data with the items
+    const orderWithItems: OrderWithItems = {
+      ...orderData,
+      order_items: itemsWithDetails as (OrderItemType & { product: { id: string; name: string; images: string[]; sku?: string } })[]
+    };
+
+    setOrder(orderWithItems);
+
+    // Try to find the promotion used for this order
+    const { data: promotionUsageData, error: promoUsageError } = await supabase
+      .from('promotion_usage')
+      .select('promotion_id')
+      .eq('order_id', orderData.id)
+      .single();
+
+    if (promotionUsageData && !promoUsageError) {
+      const { data: promoData, error: promoError } = await supabase
+        .from('promotions')
+        .select(`
+          id,
+          code,
+          description,
+          discount_type,
+          discount_value,
+          min_purchase_amount,
+          start_date,
+          end_date,
+          is_active,
+          applies_to,
+          product_ids,
+          category_ids,
+          free_shipping,
+          buy_quantity,
+          get_quantity,
+          max_uses_per_user,
+          total_uses
+        `)
+        .eq('id', promotionUsageData.promotion_id)
+        .single();
+
+      if (promoData && !promoError) {
+        setPromotion(promoData);
+      }
+    }
+
     setLoading(false);
   }, [user, id]);
 
@@ -101,30 +230,36 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
     setGeneratingInvoice(true);
     try {
+      // Get user profile to get the user name
+      let userName = '';
+      if (order.user_id) {
+        const supabase = createClient();
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('user_name')
+          .eq('id', order.user_id)
+          .single();
+
+        if (!profileError && profileData) {
+          userName = profileData.user_name || '';
+        }
+      }
+
       // Get store settings for invoice generation
       const { allSettings } = useStoreSettingsStore.getState();
-      const storeSettings = allSettings?.store || {
-        storeName: 'ShortTail.id',
-        storeDescription: 'Premium Pet Shop - Your one-stop shop for pet supplies',
-        storeLogo: '',
-        storeEmail: 'support@shorttail.id',
-        storePhone: '+6281234567890',
-        storeAddress: 'Jl. Pet Lovers No. 123',
-        storeCity: 'Jakarta',
-        storeProvince: 'DKI Jakarta',
-        storePostalCode: '12345',
-        storeCurrency: 'IDR',
-        storeTimezone: 'Asia/Jakarta',
+      const storeSettings = {
+        store_name: allSettings?.store?.storeName || 'ShortTail.id',
+        store_logo: allSettings?.store?.storeLogo || '',
+        store_address: allSettings?.store?.storeAddress || '',
+        store_phone: allSettings?.store?.storePhone || '',
+        store_email: allSettings?.store?.storeEmail || '',
       };
 
       // Format the order data to match the expected structure for the invoice generator
       const orderForInvoice = {
         id: order.id,
-        user_id: order.user_id || undefined, // Convert null to undefined
-        user_name: '', // This is not part of the database order object
-        user_email: '', // This is not part of the database order object
-        cashier_id: order.cashier_id || undefined, // Convert null to undefined
-        cashier_name: '', // This is not available here
+        user_id: order.user_id,
+        user_name: userName,
         source: order.source,
         status: order.status,
         subtotal: order.subtotal,
@@ -138,18 +273,15 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         shipping_courier: order.shipping_courier || order.shipping_courier_name || '',
         shipping_courier_name: order.shipping_courier_name || '',
         shipping_address_snapshot: order.shipping_address_snapshot,
-        customer_notes: order.customer_notes || (order as any).customer_notes || '',
-        invoice_url: order.invoice_url || undefined, // Convert null to undefined
-        packing_list_url: order.packing_list_url || undefined, // Convert null to undefined
-        payment_method: order.payment_method || null,
+        customer_notes: order.customer_notes || '',
         items_count: order.order_items?.length || 0,
         items: order.order_items?.map(item => ({
           product_id: item.product_id,
           product_name: item.product?.name || 'Product',
           product_sku: item.product?.sku || '',
           variant_id: item.variant_id || undefined,
-          variant_name: (item as any).variant_name || undefined, // variant_name might be an additional field
-          variant_sku: (item as any).variant_sku || undefined, // variant_sku might be an additional field
+          variant_name: (item as any).variant_name || undefined,
+          variant_sku: (item as any).variant_sku || undefined,
           quantity: item.quantity,
           price_at_purchase: item.price_at_purchase,
         })) || [],

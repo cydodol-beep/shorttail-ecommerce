@@ -379,76 +379,127 @@ export default function DashboardPage() {
                               const supabase = createClient();
 
                               // Fetch the order with items to generate invoice
-                              const { data: orderWithItems, error } = await supabase
+                              // First get the order
+                              const { data: orderData, error: orderError } = await supabase
                                 .from('orders')
-                                .select(`
-                                  *,
-                                  order_items (
-                                    *,
-                                    product:products (name, images, sku)
-                                  )
-                                `)
+                                .select('id, user_id, cashier_id, source, status, subtotal, shipping_fee, discount_amount, total_amount, recipient_name, recipient_phone, recipient_address, recipient_province, shipping_courier, shipping_courier_name, shipping_address_snapshot, customer_notes, created_at, updated_at')
                                 .eq('id', order.id)
                                 .single();
 
-                              if (error) {
-                                throw error;
+                              if (orderError) throw orderError;
+
+                              // Then get the order items
+                              const { data: itemsData, error: itemsError } = await supabase
+                                .from('order_items')
+                                .select('product_id, variant_id, quantity, price_at_purchase')
+                                .eq('order_id', order.id);
+
+                              if (itemsError) throw itemsError;
+
+                              // For each item, get product and variant details
+                              let itemsWithDetails = [];
+                              if (itemsData && itemsData.length > 0) {
+                                for (const item of itemsData) {
+                                  // Get product details
+                                  const { data: productData, error: productError } = await supabase
+                                    .from('products')
+                                    .select('name, sku')
+                                    .eq('id', item.product_id)
+                                    .single();
+
+                                  let productDetails = {
+                                    name: 'Unknown Product',
+                                    sku: undefined
+                                  };
+
+                                  if (!productError && productData) {
+                                    productDetails = {
+                                      name: productData.name,
+                                      sku: productData.sku
+                                    };
+                                  }
+
+                                  // Get variant details if exists
+                                  let variantDetails = {
+                                    name: null,
+                                    sku: null
+                                  };
+
+                                  if (item.variant_id) {
+                                    const { data: variantData, error: variantError } = await supabase
+                                      .from('product_variants')
+                                      .select('variant_name, sku')
+                                      .eq('id', item.variant_id)
+                                      .single();
+
+                                    if (!variantError && variantData) {
+                                      variantDetails = {
+                                        name: variantData.variant_name,
+                                        sku: variantData.sku
+                                      };
+                                    }
+                                  }
+
+                                  itemsWithDetails.push({
+                                    product_id: item.product_id,
+                                    product_name: productDetails.name,
+                                    product_sku: productDetails.sku,
+                                    variant_id: item.variant_id,
+                                    variant_name: variantDetails.name,
+                                    variant_sku: variantDetails.sku,
+                                    quantity: item.quantity,
+                                    price_at_purchase: item.price_at_purchase,
+                                  });
+                                }
+                              }
+
+                              // Get user profile to get the user name
+                              let userName = '';
+                              if (orderData.user_id) {
+                                const { data: profileData, error: profileError } = await supabase
+                                  .from('profiles')
+                                  .select('user_name')
+                                  .eq('id', orderData.user_id)
+                                  .single();
+
+                                if (!profileError && profileData) {
+                                  userName = profileData.user_name || '';
+                                }
                               }
 
                               // Get store settings for invoice generation
                               const { allSettings } = useStoreSettingsStore.getState();
-                              const storeSettings = allSettings?.store || {
-                                storeName: 'ShortTail.id',
-                                storeDescription: 'Premium Pet Shop - Your one-stop shop for pet supplies',
-                                storeLogo: '',
-                                storeEmail: 'support@shorttail.id',
-                                storePhone: '+6281234567890',
-                                storeAddress: 'Jl. Pet Lovers No. 123',
-                                storeCity: 'Jakarta',
-                                storeProvince: 'DKI Jakarta',
-                                storePostalCode: '12345',
-                                storeCurrency: 'IDR',
-                                storeTimezone: 'Asia/Jakarta',
+                              const storeSettings = {
+                                store_name: allSettings?.store?.storeName || 'ShortTail.id',
+                                store_logo: allSettings?.store?.storeLogo || '',
+                                store_address: allSettings?.store?.storeAddress || '',
+                                store_phone: allSettings?.store?.storePhone || '',
+                                store_email: allSettings?.store?.storeEmail || '',
                               };
 
                               // Format the order data to match the expected structure for the invoice generator
                               const orderForInvoice = {
-                                id: orderWithItems.id,
-                                user_id: orderWithItems.user_id || undefined,
-                                user_name: '',
-                                user_email: '',
-                                cashier_id: orderWithItems.cashier_id || undefined,
-                                cashier_name: '',
-                                source: orderWithItems.source,
-                                status: orderWithItems.status,
-                                subtotal: orderWithItems.subtotal,
-                                shipping_fee: orderWithItems.shipping_fee,
-                                discount_amount: orderWithItems.discount_amount,
-                                total_amount: orderWithItems.total_amount,
-                                recipient_name: orderWithItems.recipient_name || (orderWithItems.shipping_address_snapshot as any)?.recipient_name || '',
-                                recipient_phone: orderWithItems.recipient_phone || (orderWithItems.shipping_address_snapshot as any)?.phone || '',
-                                recipient_address: orderWithItems.recipient_address || (orderWithItems.shipping_address_snapshot as any)?.address_line1 || '',
-                                recipient_province: orderWithItems.recipient_province || (orderWithItems.shipping_address_snapshot as any)?.province || '',
-                                shipping_courier: orderWithItems.shipping_courier || orderWithItems.shipping_courier_name || '',
-                                shipping_courier_name: orderWithItems.shipping_courier_name || '',
-                                shipping_address_snapshot: orderWithItems.shipping_address_snapshot,
-                                customer_notes: orderWithItems.customer_notes || (orderWithItems as any).customer_notes || '',
-                                invoice_url: orderWithItems.invoice_url || undefined,
-                                packing_list_url: orderWithItems.packing_list_url || undefined,
-                                payment_method: orderWithItems.payment_method || null,
-                                items_count: orderWithItems.order_items?.length || 0,
-                                items: orderWithItems.order_items?.map((item: any) => ({
-                                  product_id: item.product_id,
-                                  product_name: item.product?.name || 'Product',
-                                  product_sku: item.product?.sku || '',
-                                  variant_id: item.variant_id || undefined,
-                                  variant_name: (item as any).variant_name || undefined,
-                                  variant_sku: (item as any).variant_sku || undefined,
-                                  quantity: item.quantity,
-                                  price_at_purchase: item.price_at_purchase,
-                                })) || [],
-                                created_at: orderWithItems.created_at,
-                                updated_at: orderWithItems.updated_at,
+                                id: orderData.id,
+                                user_id: orderData.user_id,
+                                user_name: userName,
+                                source: orderData.source,
+                                status: orderData.status,
+                                subtotal: orderData.subtotal,
+                                shipping_fee: orderData.shipping_fee,
+                                discount_amount: orderData.discount_amount,
+                                total_amount: orderData.total_amount,
+                                recipient_name: orderData.recipient_name || (orderData.shipping_address_snapshot as any)?.recipient_name || '',
+                                recipient_phone: orderData.recipient_phone || (orderData.shipping_address_snapshot as any)?.phone || '',
+                                recipient_address: orderData.recipient_address || (orderData.shipping_address_snapshot as any)?.address_line1 || '',
+                                recipient_province: orderData.recipient_province || (orderData.shipping_address_snapshot as any)?.province || '',
+                                shipping_courier: orderData.shipping_courier || orderData.shipping_courier_name || '',
+                                shipping_courier_name: orderData.shipping_courier_name || '',
+                                shipping_address_snapshot: orderData.shipping_address_snapshot,
+                                customer_notes: orderData.customer_notes || '',
+                                items_count: itemsWithDetails.length,
+                                items: itemsWithDetails,
+                                created_at: orderData.created_at,
+                                updated_at: orderData.updated_at,
                               };
 
                               // Generate the invoice
