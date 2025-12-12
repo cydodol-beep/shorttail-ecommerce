@@ -1683,6 +1683,42 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
+              {/* QRIS Payment Information - Only show when QRIS is selected */}
+              {previewOrderData?.payment_method?.toLowerCase().includes('qris') && storePaymentSettings?.qrisImage && (
+                <div className="mb-6 p-4 border rounded-lg bg-green-50">
+                  <h3 className="font-bold text-lg mb-3 text-green-800">QRIS Payment Information</h3>
+                  <div className="flex flex-col items-center">
+                    <div className="mb-4">
+                      <img
+                        src={storePaymentSettings.qrisImage}
+                        alt="QRIS Code"
+                        className="w-60 h-60 object-contain border border-green-200 rounded-lg bg-white p-2 mx-auto"
+                      />
+                    </div>
+                    {storePaymentSettings.qrisName && (
+                      <div className="text-center mb-2">
+                        <p className="font-medium text-green-700">Merchant Name: {storePaymentSettings.qrisName}</p>
+                      </div>
+                    )}
+                    {storePaymentSettings.qrisNmid && (
+                      <div className="text-center mb-2">
+                        <p className="text-sm text-green-600">NMID: {storePaymentSettings.qrisNmid}</p>
+                      </div>
+                    )}
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-green-800">{formatPrice(previewOrderData.total_amount)}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Alert message */}
+              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-center text-yellow-700 font-medium">
+                  Please make the payment according to the chosen payment method and screenshot the payment proof/transfer receipt.
+                </p>
+              </div>
+
               <div className="flex gap-3">
                 <Button
                   type="button"
