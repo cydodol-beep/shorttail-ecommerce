@@ -480,7 +480,8 @@ export default function DashboardPage() {
                               // Format the order data to match the expected structure for the invoice generator
                               const orderForInvoice = {
                                 id: orderData.id,
-                                user_id: orderData.user_id,
+                                user_id: orderData.user_id || undefined,
+                                cashier_id: orderData.cashier_id || undefined,
                                 user_name: userName,
                                 source: orderData.source,
                                 status: orderData.status,

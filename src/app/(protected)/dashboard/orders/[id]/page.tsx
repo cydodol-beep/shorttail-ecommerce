@@ -258,7 +258,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       // Format the order data to match the expected structure for the invoice generator
       const orderForInvoice = {
         id: order.id,
-        user_id: order.user_id,
+        user_id: order.user_id || undefined, // Convert null to undefined
+        cashier_id: order.cashier_id || undefined,
         user_name: userName,
         source: order.source,
         status: order.status,
