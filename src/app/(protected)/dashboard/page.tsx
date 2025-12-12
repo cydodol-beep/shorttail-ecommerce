@@ -364,9 +364,7 @@ export default function DashboardPage() {
                             year: 'numeric',
                             month: 'short',
                             day: 'numeric',
-                          })}
-                        </p>
-                        <p className="text-xs text-brown-500">
+                          })}{' '}
                           {new Date(order.created_at).toLocaleTimeString('id-ID', {
                             hour: '2-digit',
                             minute: '2-digit',
