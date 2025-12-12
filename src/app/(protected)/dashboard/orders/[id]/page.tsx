@@ -171,8 +171,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             images: productDetails.images,
             sku: productDetails.sku
           },
-          variant_name: variantDetails.name,
-          variant_sku: variantDetails.sku
+          variant_name: variantDetails.name || undefined,
+          variant_sku: variantDetails.sku || undefined
         });
       }
     }
@@ -267,19 +267,19 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         shipping_fee: order.shipping_fee,
         discount_amount: order.discount_amount,
         total_amount: order.total_amount,
-        recipient_name: order.recipient_name || (order.shipping_address_snapshot as any)?.recipient_name || '',
-        recipient_phone: order.recipient_phone || (order.shipping_address_snapshot as any)?.phone || '',
-        recipient_address: order.recipient_address || (order.shipping_address_snapshot as any)?.address_line1 || '',
-        recipient_province: order.recipient_province || (order.shipping_address_snapshot as any)?.province || '',
-        shipping_courier: order.shipping_courier || order.shipping_courier_name || '',
-        shipping_courier_name: order.shipping_courier_name || '',
+        recipient_name: order.recipient_name || (order.shipping_address_snapshot as any)?.recipient_name || undefined,
+        recipient_phone: order.recipient_phone || (order.shipping_address_snapshot as any)?.phone || undefined,
+        recipient_address: order.recipient_address || (order.shipping_address_snapshot as any)?.address_line1 || undefined,
+        recipient_province: order.recipient_province || (order.shipping_address_snapshot as any)?.province || undefined,
+        shipping_courier: order.shipping_courier || order.shipping_courier_name || undefined,
+        shipping_courier_name: order.shipping_courier_name || undefined,
         shipping_address_snapshot: order.shipping_address_snapshot,
-        customer_notes: order.customer_notes || '',
+        customer_notes: order.customer_notes || undefined,
         items_count: order.order_items?.length || 0,
         items: order.order_items?.map(item => ({
           product_id: item.product_id,
           product_name: item.product?.name || 'Product',
-          product_sku: item.product?.sku || '',
+          product_sku: item.product?.sku || undefined,
           variant_id: item.variant_id || undefined,
           variant_name: (item as any).variant_name || undefined,
           variant_sku: (item as any).variant_sku || undefined,
