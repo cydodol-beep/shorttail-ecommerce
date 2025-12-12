@@ -360,7 +360,17 @@ export default function DashboardPage() {
                           </Badge>
                         </div>
                         <p className="text-sm text-brown-600">
-                          {new Date(order.created_at).toLocaleDateString()}
+                          {new Date(order.created_at).toLocaleDateString('id-ID', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </p>
+                        <p className="text-xs text-brown-500">
+                          {new Date(order.created_at).toLocaleTimeString('id-ID', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">

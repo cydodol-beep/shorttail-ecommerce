@@ -14,7 +14,8 @@ import {
   Loader2,
   PawPrint,
   ShieldCheck,
-  Tag
+  Tag,
+  QrCode
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -346,7 +347,7 @@ export default function CheckoutPage() {
     }
   }, [user, authLoading, items.length, router]);
 
-  // Load payment methods when user is authenticated
+  // Load payment methods and store settings when user is authenticated
   useEffect(() => {
     if (!user) return; // Only load payment methods if user is authenticated
 
@@ -354,6 +355,19 @@ export default function CheckoutPage() {
       try {
         const methods = await fetchPaymentMethods();
         setAvailablePaymentMethods(methods);
+
+        // Also fetch the complete store settings to get QRIS info
+        const supabase = createClient();
+        const { data: settings, error: settingsError } = await supabase
+          .from('store_settings')
+          .select('*')
+          .single();
+
+        if (settingsError) {
+          console.error('Error fetching store settings:', settingsError);
+        } else {
+          setStorePaymentSettings(settings);
+        }
       } catch (error) {
         console.error('Error loading payment methods:', error);
         // Don't show error to user, just log it - they can still proceed with order
@@ -1684,29 +1698,36 @@ export default function CheckoutPage() {
               </div>
 
               {/* QRIS Payment Information - Only show when QRIS is selected */}
-              {previewOrderData?.payment_method?.toLowerCase().includes('qris') && storePaymentSettings?.qrisImage && (
-                <div className="mb-6 p-4 border rounded-lg bg-green-50">
-                  <h3 className="font-bold text-lg mb-3 text-green-800">QRIS Payment Information</h3>
+              {previewOrderData?.payment_method?.toLowerCase().includes('qris') && storePaymentSettings?.qris_image && (
+                <div className="mb-6 p-4 border-2 border-green-300 rounded-lg bg-green-50">
+                  <div className="flex items-center gap-2 mb-3">
+                    <QrCode className="h-6 w-6 text-green-600" />
+                    <h3 className="font-bold text-lg text-green-800">QRIS Payment Information</h3>
+                  </div>
                   <div className="flex flex-col items-center">
-                    <div className="mb-4">
+                    <div className="p-4 bg-white border border-green-200 rounded-lg mb-4">
                       <img
-                        src={storePaymentSettings.qrisImage}
+                        src={storePaymentSettings.qris_image}
                         alt="QRIS Code"
-                        className="w-60 h-60 object-contain border border-green-200 rounded-lg bg-white p-2 mx-auto"
+                        className="w-40 h-40 object-contain mx-auto"
                       />
                     </div>
-                    {storePaymentSettings.qrisName && (
-                      <div className="text-center mb-2">
-                        <p className="font-medium text-green-700">Merchant Name: {storePaymentSettings.qrisName}</p>
-                      </div>
-                    )}
-                    {storePaymentSettings.qrisNmid && (
-                      <div className="text-center mb-2">
-                        <p className="text-sm text-green-600">NMID: {storePaymentSettings.qrisNmid}</p>
-                      </div>
-                    )}
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-green-800">{formatPrice(previewOrderData.total_amount)}</p>
+                    <div className="w-full max-w-xs text-center mb-3">
+                      <p className="text-lg font-bold text-green-700 mb-1">Amount to Pay: {formatPrice(previewOrderData.total_amount)}</p>
+                    </div>
+                    <div className="w-full space-y-2">
+                      {storePaymentSettings.qris_name && (
+                        <div className="text-center p-2 bg-white rounded border">
+                          <p className="font-medium text-brown-700">Merchant Name:</p>
+                          <p className="text-brown-900">{storePaymentSettings.qris_name}</p>
+                        </div>
+                      )}
+                      {storePaymentSettings.qris_nmid && (
+                        <div className="text-center p-2 bg-white rounded border">
+                          <p className="font-medium text-brown-700">NMID:</p>
+                          <p className="text-brown-900">{storePaymentSettings.qris_nmid}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
