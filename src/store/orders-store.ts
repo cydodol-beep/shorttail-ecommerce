@@ -123,7 +123,7 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
         }
 
         // Transform the data to match the original structure
-        ordersData = (data || []).map(order => ({
+        ordersData = (data || []).map((order: any) => ({
           ...order,
           user_name: order.user?.user_name,
           user_email: order.user?.email,
