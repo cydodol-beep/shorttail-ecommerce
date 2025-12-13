@@ -8,6 +8,23 @@ import type { Profile } from '@/types/database';
 // Get singleton client instance outside component to prevent re-renders
 const supabase = createClient();
 
+// Create a Zustand store to make the auth state accessible globally
+import { create } from 'zustand';
+
+interface AuthStore {
+  user: any;
+  profile: any;
+  loading: boolean;
+  role: string | null;
+}
+
+const useAuthStore = create<AuthStore>(() => ({
+  user: null,
+  profile: null,
+  loading: true,
+  role: null
+}));
+
 export function useAuth() {
   // Create a timeout function for async operations
   const withTimeout = <T>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
@@ -93,14 +110,19 @@ export function useAuth() {
         if (error) {
           console.error('Error fetching profile:', error.message || error);
           setProfile(null);
+          useAuthStore.setState({ profile: null, role: null });
           return;
         }
 
         setProfile(data);
+
+        // Update the global store
+        useAuthStore.setState({ profile: data, role: data?.role || null });
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         console.error('Exception fetching profile:', errorMessage);
         setProfile(null);
+        useAuthStore.setState({ profile: null, role: null });
       }
     };
 
@@ -125,22 +147,26 @@ export function useAuth() {
           console.error('Error getting session:', sessionError.message);
           setUser(null);
           setProfile(null);
+          useAuthStore.setState({ user: null, profile: null, role: null });
           setLoading(false);
           return;
         }
 
         if (session?.user) {
           setUser(session.user);
+          useAuthStore.setState({ user: session.user });
           await fetchProfile(session.user.id);
         } else {
           setUser(null);
           setProfile(null);
+          useAuthStore.setState({ user: null, profile: null, role: null });
         }
         setLoading(false);
       } catch (error) {
         console.error('Exception getting user:', error);
         setUser(null);
         setProfile(null);
+        useAuthStore.setState({ user: null, profile: null, role: null });
         setLoading(false);
       }
     };
@@ -155,19 +181,24 @@ export function useAuth() {
           // Token was refreshed successfully, update user state
           if (session?.user) {
             setUser(session.user);
+            useAuthStore.setState({ user: session.user });
           }
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
           setProfile(null);
+          useAuthStore.setState({ user: null, profile: null, role: null });
         } else if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
           setUser(session?.user ?? null);
+          useAuthStore.setState({ user: session?.user ?? null });
           if (session?.user) {
             await fetchProfile(session.user.id);
           } else {
             setProfile(null);
+            useAuthStore.setState({ profile: null, role: null });
           }
         } else if (event === 'INITIAL_SESSION') {
           setUser(session?.user ?? null);
+          useAuthStore.setState({ user: session?.user ?? null });
           if (session?.user) {
             await fetchProfile(session.user.id);
           }
@@ -286,32 +317,34 @@ export function useAuth() {
       setLoading(true);
       setUser(null);
       setProfile(null);
-      
+      useAuthStore.setState({ user: null, profile: null, role: null });
+
       // Call server-side signout to clear cookies first
       try {
-        await fetch('/api/auth/signout', { 
+        await fetch('/api/auth/signout', {
           method: 'POST',
           credentials: 'include'
         });
       } catch (e) {
         console.warn('Server signout failed, continuing with client signout:', e);
       }
-      
+
       // Sign out on client side
       const { error } = await supabase.auth.signOut({ scope: 'global' });
-      
+
       if (error) {
         console.error('Supabase signOut error:', error);
       }
-      
+
       setLoading(false);
-      
+
       return { error: null };
     } catch (err) {
       console.error('Sign out error:', err);
       // Still clear local state on error to prevent stuck state
       setUser(null);
       setProfile(null);
+      useAuthStore.setState({ user: null, profile: null, role: null });
       setLoading(false);
       return { error: err as Error };
     }
@@ -364,6 +397,7 @@ export function useAuth() {
       }
 
       setProfile(data);
+      useAuthStore.setState({ profile: data, role: data?.role });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('Exception refetching profile:', errorMessage);
@@ -388,3 +422,12 @@ export function useAuth() {
     refetchProfile,
   };
 }
+
+// Export the auth store state to be accessible globally
+export const useAuthState = () => {
+  return {
+    user: useAuthStore.getState().user,
+    profile: useAuthStore.getState().profile,
+    role: useAuthStore.getState().role,
+  };
+};

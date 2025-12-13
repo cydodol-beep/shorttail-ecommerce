@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
+import { useAuthState } from '@/hooks/use-auth';
 
 export interface OrderItem {
   product_id: string;
@@ -73,24 +74,50 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
     try {
       const supabase = createClient();
 
-      console.log('Fetching orders from Supabase...');
+      // Get current user's role to determine how to fetch orders
+      const { role: userRole } = useAuthState();
 
-      // Fetch orders first
-      const { data: ordersData, error } = await supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
+      let ordersData;
 
-      if (error) {
-        console.error('Error fetching orders:', error);
-        console.error('Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code,
+      // For kasir users, use the API route to fetch all orders they should see
+      // This bypasses any potential RLS issues and ensures they see all orders
+      if (userRole === 'kasir' || userRole === 'super_user') {
+        // Fetch via API route that uses service role to bypass RLS
+        const response = await fetch('/api/orders/kasir', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         });
-        set({ loading: false });
-        return;
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch orders: ${response.status} ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        ordersData = result.orders;
+      } else {
+        // For other users, use the standard method with RLS
+        console.log('Fetching orders from Supabase...');
+
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching orders:', error);
+          console.error('Error details:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code,
+          });
+          set({ loading: false });
+          return;
+        }
+
+        ordersData = data;
       }
 
       console.log('Orders fetch result:', { count: ordersData?.length || 0 });
@@ -101,7 +128,7 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
       const allProfileIds = [...new Set([...userIds, ...cashierIds])];
 
       let profilesMap = new Map();
-      
+
       if (allProfileIds.length > 0) {
         const { data: profilesData } = await supabase
           .from('profiles')
@@ -127,7 +154,7 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
           // Fetch product and variant names separately
           const itemsWithDetails = await Promise.all(
             (itemsData || []).map(async (item: any) => {
-              
+
               // Fetch product name
               const { data: productData, error: productError } = await supabase
                 .from('products')
@@ -148,7 +175,7 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
                   .select('variant_name, sku')
                   .eq('id', item.variant_id)
                   .limit(1);
-                
+
                 if (variantData && variantData.length > 0) {
                   variantName = variantData[0].variant_name;
                   variantSku = variantData[0].sku;
@@ -218,7 +245,7 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
 
       const { error } = await supabase
         .from('orders')
-        .update({ 
+        .update({
           status,
           updated_at: new Date().toISOString(),
         })
