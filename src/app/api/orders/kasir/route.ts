@@ -61,15 +61,10 @@ export async function GET(request: Request) {
     let profilesMap = new Map();
 
     if (allProfileIds.length > 0) {
-      const profilesResponse = await withTimeout(
-        adminClient
-          .from('profiles')
-          .select('id, user_name, email')
-          .in('id', allProfileIds),
-        15000
-      );
-
-      const { data: profilesData } = profilesResponse;
+      const { data: profilesData } = await adminClient
+        .from('profiles')
+        .select('id, user_name, email')
+        .in('id', allProfileIds);
 
       profilesMap = new Map((profilesData || []).map((p: any) => [p.id, p]));
     }
@@ -78,15 +73,10 @@ export async function GET(request: Request) {
     const ordersWithItems = await Promise.all(
       (ordersData || []).map(async (order: any) => {
         // Fetch order items separately
-        const itemsResponse = await withTimeout(
-          adminClient
-            .from('order_items')
-            .select('*')
-            .eq('order_id', order.id),
-          15000
-        );
-
-        const { data: itemsData, error: itemsError } = itemsResponse;
+        const { data: itemsData, error: itemsError } = await adminClient
+          .from('order_items')
+          .select('*')
+          .eq('order_id', order.id);
 
         if (itemsError) {
           console.error(`Error fetching items for order ${order.id}:`, itemsError);
@@ -96,16 +86,11 @@ export async function GET(request: Request) {
         const itemsWithDetails = await Promise.all(
           (itemsData || []).map(async (item: any) => {
             // Fetch product name
-            const productResponse = await withTimeout(
-              adminClient
-                .from('products')
-                .select('name, sku')
-                .eq('id', item.product_id)
-                .single(),
-              15000
-            );
-
-            const { data: productData, error: productError } = productResponse;
+            const { data: productData, error: productError } = await adminClient
+              .from('products')
+              .select('name, sku')
+              .eq('id', item.product_id)
+              .single();
 
             if (productError) {
               console.error('Error fetching product:', productError);
@@ -115,16 +100,11 @@ export async function GET(request: Request) {
             let variantName = null;
             let variantSku = null;
             if (item.variant_id) {
-              const variantResponse = await withTimeout(
-                adminClient
-                  .from('product_variants')
-                  .select('variant_name, sku')
-                  .eq('id', item.variant_id)
-                  .limit(1),
-                15000
-              );
-
-              const { data: variantData } = variantResponse;
+              const { data: variantData } = await adminClient
+                .from('product_variants')
+                .select('variant_name, sku')
+                .eq('id', item.variant_id)
+                .limit(1);
 
               if (variantData && variantData.length > 0) {
                 variantName = variantData[0].variant_name;
