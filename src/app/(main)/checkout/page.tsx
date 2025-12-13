@@ -908,6 +908,8 @@ export default function CheckoutPage() {
           .eq('id', user.id);
       }
 
+      // Notification will be handled by database triggers
+
       // Fetch store settings for invoice generation using the store
       const { allSettings } = useStoreSettingsStore.getState();
       const storeSettings = allSettings?.store || {

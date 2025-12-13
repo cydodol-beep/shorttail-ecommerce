@@ -855,6 +855,8 @@ export default function KasirPOSPage() {
       }
     }
 
+    // Notification will be handled by database triggers
+
     toast.success(`Order #${order.id.slice(0, 8)} completed!`);
     
     // Reset all form data

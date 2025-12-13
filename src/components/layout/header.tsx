@@ -35,18 +35,22 @@ import { useCartItemCount } from '@/store/cart-store';
 import { useNotificationStore } from '@/store/notification-store';
 import { useStoreSettings } from '@/hooks/use-store-settings';
 import { useCategories } from '@/hooks/use-categories';
+import { useNotifications } from '@/hooks/use-notifications';
 
 export function Header() {
   const router = useRouter();
   const { user, profile, signOut, isAdmin, isKasir, isSuperUser, loading } = useAuth();
   const itemCount = useCartItemCount();
-  const unreadCount = useNotificationStore((state) => state.unreadCount);
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotificationStore();
   const { settings: storeSettings } = useStoreSettings();
   const { getActiveCategories } = useCategories();
   const categories = getActiveCategories();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [mounted, setMounted] = useState(false);
+
+  // Initialize the notification system for the header
+  useNotifications();
 
   // Prevent hydration mismatch for Sheet component
   useEffect(() => {
@@ -70,6 +74,16 @@ export function Header() {
       // Still redirect on error
       window.location.href = '/login';
     }
+  };
+
+  const handleMarkAsRead = async (id: string) => {
+    if (!user) return;
+    await markAsRead(id);
+  };
+
+  const handleMarkAllAsRead = async () => {
+    if (!user) return;
+    await markAllAsRead();
   };
 
   const getDashboardLink = () => {
@@ -185,12 +199,67 @@ export function Header() {
                       )}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-80">
+                  <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto">
                     <DropdownMenuLabel>Notifications</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <div className="p-4 text-center text-sm text-muted-foreground">
-                      No new notifications
-                    </div>
+                    {notifications.length > 0 ? (
+                      <div className="divide-y divide-brown-100">
+                        {notifications.map((notification) => (
+                          <div
+                            key={notification.id}
+                            className={`p-3 hover:bg-brown-50 cursor-pointer transition-colors ${
+                              !notification.is_read ? 'bg-brown-50' : ''
+                            }`}
+                            onClick={async () => {
+                              if (!notification.is_read) {
+                                await handleMarkAsRead(notification.id);
+                              }
+                              if (notification.action_link) {
+                                router.push(notification.action_link);
+                              }
+                            }}
+                          >
+                            <div className="flex justify-between items-start">
+                              <h4 className={`text-sm font-medium ${!notification.is_read ? 'font-semibold text-primary' : 'text-brown-900'}`}>
+                                {notification.title}
+                              </h4>
+                              {!notification.is_read && (
+                                <span className="ml-2 flex-shrink-0">
+                                  <span className="h-2 w-2 rounded-full bg-primary block"></span>
+                                </span>
+                              )}
+                            </div>
+                            <p className={`text-xs mt-1 ${!notification.is_read ? 'text-brown-700' : 'text-brown-500'}`}>
+                              {notification.message}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {new Date(notification.created_at).toLocaleString('id-ID', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-4 text-center text-sm text-muted-foreground">
+                        No new notifications
+                      </div>
+                    )}
+                    {notifications.length > 0 && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-center cursor-pointer"
+                          onClick={handleMarkAllAsRead}
+                        >
+                          Mark all as read
+                        </DropdownMenuItem>
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
 
