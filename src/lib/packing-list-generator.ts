@@ -82,22 +82,29 @@ export function generatePackingListPDF(order: Order, storeInfo: any): jsPDF {
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
   doc.text('Ship To:', 105, yPos, { align: 'center' });
-  
+
   yPos += 6;
   doc.text(order.recipient_name || order.user_name || 'Walk-in Customer', 105, yPos, { align: 'center' });
-  
-  if (order.recipient_phone) {
+
+  if (order.recipient_phone || order.user_email) {
     yPos += 5;
-    doc.text(order.recipient_phone, 105, yPos, { align: 'center' });
+    const contactInfo = [order.recipient_phone, order.user_email].filter(Boolean).join(' | ');
+    doc.text(contactInfo, 105, yPos, { align: 'center' });
   }
-  
-  if (order.recipient_address) {
+
+  if (order.recipient_address || order.recipient_city || order.recipient_postal_code) {
     yPos += 5;
-    const addressLines = doc.splitTextToSize(order.recipient_address, 120);
+    const addressParts = [
+      order.recipient_address,
+      order.recipient_city,
+      order.recipient_postal_code
+    ].filter(Boolean);
+    const fullAddress = addressParts.join(', ');
+    const addressLines = doc.splitTextToSize(fullAddress, 120);
     doc.text(addressLines, 105, yPos, { align: 'center' });
     yPos += (addressLines.length - 1) * 5;
   }
-  
+
   if (order.recipient_province) {
     yPos += 5;
     doc.text(order.recipient_province, 105, yPos, { align: 'center' });
