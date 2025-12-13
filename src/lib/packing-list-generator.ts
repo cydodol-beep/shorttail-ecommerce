@@ -49,10 +49,15 @@ export function generatePackingListPDF(order: Order, storeInfo: any): jsPDF {
   let rightYPos = 20;
 
   // Courier Name (30px = ~22pt in PDF)
-  if (order.shipping_courier) {
+  const courierName = order.shipping_courier ||
+    (order.shipping_address_snapshot?.courier ||
+     order.shipping_address_snapshot?.shipping_courier_name ||
+     order.shipping_courier_name);
+
+  if (courierName) {
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
-    doc.text(order.shipping_courier, 190, rightYPos, { align: 'right' });
+    doc.text(courierName, 190, rightYPos, { align: 'right' });
     rightYPos += 10;
   }
 
@@ -84,24 +89,62 @@ export function generatePackingListPDF(order: Order, storeInfo: any): jsPDF {
   doc.text('Ship To:', 105, yPos, { align: 'center' });
 
   yPos += 6;
-  doc.text(order.recipient_name || order.user_name || 'Walk-in Customer', 105, yPos, { align: 'center' });
 
-  if (order.recipient_phone || order.user_email) {
+  // Determine recipient data based on order source
+  const recipientName = order.recipient_name || order.user_name ||
+    (order.shipping_address_snapshot?.recipient_name) ||
+    (order.shipping_address_snapshot?.name) ||
+    'Walk-in Customer';
+
+  doc.text(recipientName, 105, yPos, { align: 'center' });
+
+  // Construct contact information
+  let contactInfoParts = [];
+  if (order.recipient_phone) contactInfoParts.push(order.recipient_phone);
+  if (order.user_email) contactInfoParts.push(order.user_email);
+  if (order.shipping_address_snapshot?.recipient_phone) contactInfoParts.push(order.shipping_address_snapshot.recipient_phone);
+
+  if (contactInfoParts.length > 0) {
     yPos += 5;
-    const contactInfo = [order.recipient_phone, order.user_email].filter(Boolean).join(' | ');
+    const contactInfo = contactInfoParts.join(' | ');
     doc.text(contactInfo, 105, yPos, { align: 'center' });
   }
 
+  // Determine address information based on available data
+  let addressParts = [];
+
   if (order.recipient_address) {
+    addressParts.push(order.recipient_address);
+  } else if (order.shipping_address_snapshot?.address_line1) {
+    addressParts.push(order.shipping_address_snapshot.address_line1);
+  }
+
+  if (order.shipping_address_snapshot?.city) {
+    addressParts.push(order.shipping_address_snapshot.city);
+  }
+  if (order.shipping_address_snapshot?.region || order.shipping_address_snapshot?.province) {
+    const region = order.shipping_address_snapshot.region || order.shipping_address_snapshot.province;
+    addressParts.push(region);
+  }
+  if (order.shipping_address_snapshot?.postal_code) {
+    addressParts.push(order.shipping_address_snapshot.postal_code);
+  }
+
+  if (addressParts.length > 0) {
     yPos += 5;
-    const addressLines = doc.splitTextToSize(order.recipient_address, 120);
+    const fullAddress = addressParts.join(', ');
+    const addressLines = doc.splitTextToSize(fullAddress, 120);
     doc.text(addressLines, 105, yPos, { align: 'center' });
     yPos += (addressLines.length - 1) * 5;
   }
 
-  if (order.recipient_province) {
+  // Check for recipient province in both direct field and shipping snapshot
+  const recipientProvince = order.recipient_province ||
+    (order.shipping_address_snapshot?.region || order.shipping_address_snapshot?.province);
+
+  if (recipientProvince) {
     yPos += 5;
-    doc.text(order.recipient_province, 105, yPos, { align: 'center' });
+    doc.text(recipientProvince, 105, yPos, { align: 'center' });
   }
   
   // Items Table
