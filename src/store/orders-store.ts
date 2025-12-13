@@ -191,7 +191,7 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
           .from('orders')
           .select(`
             *,
-            user:profiles!user_id(user_name, email),
+            user:profiles!user_id(user_name, user_email),
             cashier:profiles!cashier_id(user_name)
           `)
           .order('created_at', { ascending: false });
@@ -271,7 +271,7 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
               id: order.id,
               user_id: order.user_id,
               user_name: order.user?.user_name,
-              user_email: order.user?.email,
+              user_email: order.user?.user_email,
               cashier_id: order.cashier_id,
               cashier_name: order.cashier?.user_name,
               source: order.source,
