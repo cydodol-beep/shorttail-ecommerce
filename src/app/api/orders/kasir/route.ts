@@ -38,15 +38,10 @@ export async function GET(request: Request) {
 
     // Fetch all orders (both POS and marketplace) for kasir users
     // Using admin client to bypass RLS and get all orders
-    const ordersResponse = await withTimeout(
-      adminClient
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false }),
-      15000 // 15 second timeout
-    );
-
-    const { data: ordersData, error: ordersError } = ordersResponse;
+    const { data: ordersData, error: ordersError } = await adminClient
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
 
     if (ordersError) {
       console.error('Error fetching orders in API route:', ordersError);
