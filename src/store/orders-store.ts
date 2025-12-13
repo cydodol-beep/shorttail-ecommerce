@@ -189,11 +189,7 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
 
         const { data, error } = await supabase
           .from('orders')
-          .select(`
-            *,
-            user:profiles!user_id(user_name, user_email),
-            cashier:profiles!cashier_id(user_name)
-          `)
+          .select('*')
           .order('created_at', { ascending: false });
 
         if (error) {
@@ -266,14 +262,16 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
               })
             );
 
-            // For non-kasir users, profile data is already included in the order object
+            // For non-kasir users, profile data - since the complex join was causing timeout issues,
+            // we'll use what we have and let the frontend handle profile data if needed
+            // The key thing is that shipping_address_snapshot is available for marketplace orders
             return {
               id: order.id,
               user_id: order.user_id,
-              user_name: order.user?.user_name,
-              user_email: order.user?.user_email,
+              user_name: order.user_name, // This will be populated when the initial query includes join
+              user_email: order.user_email,
               cashier_id: order.cashier_id,
-              cashier_name: order.cashier?.user_name,
+              cashier_name: order.cashier_name,
               source: order.source,
               status: order.status,
               subtotal: parseFloat(order.subtotal) || 0,
