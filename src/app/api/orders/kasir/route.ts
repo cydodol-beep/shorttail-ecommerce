@@ -24,11 +24,13 @@ export async function GET(request: Request) {
     }
 
     // Verify user is kasir or super_user
-    const { data: profile, error: profileError } = await adminClient
+    const profileResponse = await adminClient
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single();
+
+    const { data: profile, error: profileError } = profileResponse;
 
     if (profileError || !profile || !['kasir', 'super_user'].includes(profile.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -36,13 +38,15 @@ export async function GET(request: Request) {
 
     // Fetch all orders (both POS and marketplace) for kasir users
     // Using admin client to bypass RLS and get all orders
-    const { data: ordersData, error: ordersError } = await withTimeout(
+    const ordersResponse = await withTimeout(
       adminClient
         .from('orders')
         .select('*')
         .order('created_at', { ascending: false }),
       15000 // 15 second timeout
     );
+
+    const { data: ordersData, error: ordersError } = ordersResponse;
 
     if (ordersError) {
       console.error('Error fetching orders in API route:', ordersError);
@@ -57,13 +61,15 @@ export async function GET(request: Request) {
     let profilesMap = new Map();
 
     if (allProfileIds.length > 0) {
-      const { data: profilesData } = await withTimeout(
+      const profilesResponse = await withTimeout(
         adminClient
           .from('profiles')
           .select('id, user_name, email')
           .in('id', allProfileIds),
         15000
       );
+
+      const { data: profilesData } = profilesResponse;
 
       profilesMap = new Map((profilesData || []).map((p: any) => [p.id, p]));
     }
@@ -72,13 +78,15 @@ export async function GET(request: Request) {
     const ordersWithItems = await Promise.all(
       (ordersData || []).map(async (order: any) => {
         // Fetch order items separately
-        const { data: itemsData, error: itemsError } = await withTimeout(
+        const itemsResponse = await withTimeout(
           adminClient
             .from('order_items')
             .select('*')
             .eq('order_id', order.id),
           15000
         );
+
+        const { data: itemsData, error: itemsError } = itemsResponse;
 
         if (itemsError) {
           console.error(`Error fetching items for order ${order.id}:`, itemsError);
@@ -88,7 +96,7 @@ export async function GET(request: Request) {
         const itemsWithDetails = await Promise.all(
           (itemsData || []).map(async (item: any) => {
             // Fetch product name
-            const { data: productData, error: productError } = await withTimeout(
+            const productResponse = await withTimeout(
               adminClient
                 .from('products')
                 .select('name, sku')
@@ -96,6 +104,8 @@ export async function GET(request: Request) {
                 .single(),
               15000
             );
+
+            const { data: productData, error: productError } = productResponse;
 
             if (productError) {
               console.error('Error fetching product:', productError);
@@ -105,7 +115,7 @@ export async function GET(request: Request) {
             let variantName = null;
             let variantSku = null;
             if (item.variant_id) {
-              const { data: variantData } = await withTimeout(
+              const variantResponse = await withTimeout(
                 adminClient
                   .from('product_variants')
                   .select('variant_name, sku')
@@ -113,6 +123,8 @@ export async function GET(request: Request) {
                   .limit(1),
                 15000
               );
+
+              const { data: variantData } = variantResponse;
 
               if (variantData && variantData.length > 0) {
                 variantName = variantData[0].variant_name;
