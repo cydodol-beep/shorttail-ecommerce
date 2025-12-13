@@ -98,11 +98,16 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
         ordersData = result.orders;
       } else {
         // For other users, use the standard method with RLS
+        // Only fetch orders that the current user is authorized to see (their own orders)
         console.log('Fetching orders from Supabase...');
 
         const { data, error } = await supabase
           .from('orders')
-          .select('*')
+          .select(`
+            *,
+            user:profiles!user_id(user_name, email),
+            cashier:profiles!cashier_id(user_name)
+          `)
           .order('created_at', { ascending: false });
 
         if (error) {
@@ -117,28 +122,40 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
           return;
         }
 
-        ordersData = data;
+        // Transform the data to match the original structure
+        ordersData = (data || []).map(order => ({
+          ...order,
+          user_name: order.user?.user_name,
+          user_email: order.user?.email,
+          cashier_name: order.cashier?.user_name,
+        }));
       }
 
       console.log('Orders fetch result:', { count: ordersData?.length || 0 });
 
-      // Fetch user and cashier profiles separately
-      const userIds = [...new Set((ordersData || []).map((o: any) => o.user_id).filter((id: any) => id !== null && id !== undefined))];
-      const cashierIds = [...new Set((ordersData || []).map((o: any) => o.cashier_id).filter((id: any) => id !== null && id !== undefined))];
-      const allProfileIds = [...new Set([...userIds, ...cashierIds])];
-
+      // For non-kasir users, profile data is already included in the order fetch
+      // so we don't need to fetch profiles separately (which would be restricted by RLS)
       let profilesMap = new Map();
 
-      if (allProfileIds.length > 0) {
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, user_name, email')
-          .in('id', allProfileIds);
+      // Only build the profilesMap for kasir users since they use the API route
+      // which doesn't fetch profiles separately in the same query
+      if (userRole === 'kasir' || userRole === 'super_user') {
+        // Fetch user and cashier profiles separately for kasir users (already handled in API)
+        const userIds = [...new Set((ordersData || []).map((o: any) => o.user_id).filter((id: any) => id !== null && id !== undefined))];
+        const cashierIds = [...new Set((ordersData || []).map((o: any) => o.cashier_id).filter((id: any) => id !== null && id !== undefined))];
+        const allProfileIds = [...new Set([...userIds, ...cashierIds])];
 
-        if (profilesError) {
-          console.error('Error fetching profiles:', profilesError);
-        } else {
-          profilesMap = new Map((profilesData || []).map((p: any) => [p.id, p]));
+        if (allProfileIds.length > 0) {
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, user_name, email')
+            .in('id', allProfileIds);
+
+          if (profilesError) {
+            console.error('Error fetching profiles:', profilesError);
+          } else {
+            profilesMap = new Map((profilesData || []).map((p: any) => [p.id, p]));
+          }
         }
       }
 
@@ -146,6 +163,7 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
       const ordersWithItems = await Promise.all(
         (ordersData || []).map(async (order: any) => {
           // Fetch order items separately
+          // For non-kasir users, RLS will ensure they can only access items for their own orders
           const { data: itemsData, error: itemsError } = await supabase
             .from('order_items')
             .select('*')
@@ -160,6 +178,7 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
             (itemsData || []).map(async (item: any) => {
 
               // Fetch product name
+              // For non-kasir users, only fetch products they're authorized to access
               const { data: productData, error: productError } = await supabase
                 .from('products')
                 .select('name, sku')
@@ -199,16 +218,28 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
             })
           );
 
-          const userProfile = profilesMap.get(order.user_id);
-          const cashierProfile = profilesMap.get(order.cashier_id);
+          // For non-kasir users, profile data is included in the order object already
+          // For kasir users, we'll use the profile map
+          let final_user_name = order.user_name;
+          let final_user_email = order.user_email;
+          let final_cashier_name = order.cashier_name;
+
+          if (userRole === 'kasir' || userRole === 'super_user') {
+            const userProfile = profilesMap.get(order.user_id);
+            const cashierProfile = profilesMap.get(order.cashier_id);
+
+            final_user_name = userProfile?.user_name;
+            final_user_email = userProfile?.email;
+            final_cashier_name = cashierProfile?.user_name;
+          }
 
           return {
             id: order.id,
             user_id: order.user_id,
-            user_name: userProfile?.user_name,
-            user_email: userProfile?.email,
+            user_name: final_user_name,
+            user_email: final_user_email,
             cashier_id: order.cashier_id,
-            cashier_name: cashierProfile?.user_name,
+            cashier_name: final_cashier_name,
             source: order.source,
             status: order.status,
             subtotal: parseFloat(order.subtotal) || 0,
