@@ -49,19 +49,23 @@ export async function GET(request: Request) {
     }
 
     // Fetch user and cashier profiles separately
-    const userIds = [...new Set((ordersData || []).map((o: any) => o.user_id).filter(Boolean))];
-    const cashierIds = [...new Set((ordersData || []).map((o: any) => o.cashier_id).filter(Boolean))];
+    const userIds = [...new Set((ordersData || []).map((o: any) => o.user_id).filter((id: any) => id !== null && id !== undefined))];
+    const cashierIds = [...new Set((ordersData || []).map((o: any) => o.cashier_id).filter((id: any) => id !== null && id !== undefined))];
     const allProfileIds = [...new Set([...userIds, ...cashierIds])];
 
     let profilesMap = new Map();
 
     if (allProfileIds.length > 0) {
-      const { data: profilesData } = await adminClient
+      const { data: profilesData, error: profilesError } = await adminClient
         .from('profiles')
         .select('id, user_name, email')
         .in('id', allProfileIds);
 
-      profilesMap = new Map((profilesData || []).map((p: any) => [p.id, p]));
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+      } else {
+        profilesMap = new Map((profilesData || []).map((p: any) => [p.id, p]));
+      }
     }
 
     // Fetch order items for each order
