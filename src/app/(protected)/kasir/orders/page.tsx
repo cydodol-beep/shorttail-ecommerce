@@ -78,18 +78,18 @@ export default function KasirOrdersPage() {
   const [updating, setUpdating] = useState(false);
   const [generating, setGenerating] = useState<string | null>(null);
 
-  // Filter orders - show all POS orders and marketplace orders created by this kasir
+  // Filter orders - show all POS orders and all marketplace orders
   const filteredOrders = orders.filter((order: Order) => {
-    const matchesSearch = 
+    const matchesSearch =
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.user_name?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
     const matchesSource = sourceFilter === 'all' || order.source === sourceFilter;
-    
-    // Kasir can see: all POS orders OR marketplace orders they helped create
-    const canView = order.source === 'pos' || order.cashier_id === user?.id;
-    
+
+    // Kasir can see: all POS orders AND all marketplace orders
+    const canView = order.source === 'pos' || order.source === 'marketplace';
+
     return matchesSearch && matchesStatus && matchesSource && canView;
   });
 
@@ -97,8 +97,8 @@ export default function KasirOrdersPage() {
   const todayOrders = orders.filter(o => {
     const today = new Date();
     const orderDate = new Date(o.created_at);
-    return orderDate.toDateString() === today.toDateString() && 
-           (o.source === 'pos' || o.cashier_id === user?.id);
+    return orderDate.toDateString() === today.toDateString() &&
+           (o.source === 'pos' || o.source === 'marketplace');
   });
 
   const todayRevenue = todayOrders
@@ -275,7 +275,7 @@ export default function KasirOrdersPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-brown-900">
-                  {orders.filter(o => o.status === 'pending' && (o.source === 'pos' || o.cashier_id === user?.id)).length}
+                  {orders.filter(o => o.status === 'pending' && (o.source === 'pos' || o.source === 'marketplace')).length}
                 </p>
                 <p className="text-sm text-brown-600">Pending Orders</p>
               </div>
@@ -371,7 +371,9 @@ export default function KasirOrdersPage() {
                         <TableCell>
                           <div className="flex flex-col">
                             <span className="font-medium text-sm">
-                              {order.recipient_name || order.user_name || 'Walk-in Customer'}
+                              {order.source === 'pos'
+                                ? (order.recipient_name || order.user_name || 'Walk-in Customer')
+                                : (order.recipient_name || order.user_name || 'Online Customer')}
                             </span>
                             {order.user_email && (
                               <span className="text-xs text-brown-500">
@@ -543,7 +545,11 @@ export default function KasirOrdersPage() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-brown-600">Cashier</label>
-                    <p className="text-sm">{selectedOrder.cashier_name || '-'}</p>
+                    <p className="text-sm">
+                      {selectedOrder.source === 'pos'
+                        ? (selectedOrder.cashier_name || 'N/A')
+                        : 'Online Order'}
+                    </p>
                   </div>
                 </div>
 
