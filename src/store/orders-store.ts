@@ -218,19 +218,22 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
             })
           );
 
-          // For non-kasir users, profile data is included in the order object already
-          // For kasir users, we'll use the profile map
+          // For non-kasir users, profile data is already included in the order object
+          // For kasir users, we'll use the profile map that was built conditionally above
           let final_user_name = order.user_name;
           let final_user_email = order.user_email;
           let final_cashier_name = order.cashier_name;
 
           if (userRole === 'kasir' || userRole === 'super_user') {
-            const userProfile = profilesMap.get(order.user_id);
-            const cashierProfile = profilesMap.get(order.cashier_id);
+            // Only try to get profiles from map if it was populated (for kasir users)
+            if (profilesMap.size > 0) {
+              const userProfile = profilesMap.get(order.user_id);
+              const cashierProfile = profilesMap.get(order.cashier_id);
 
-            final_user_name = userProfile?.user_name;
-            final_user_email = userProfile?.email;
-            final_cashier_name = cashierProfile?.user_name;
+              final_user_name = userProfile?.user_name;
+              final_user_email = userProfile?.email;
+              final_cashier_name = cashierProfile?.user_name;
+            }
           }
 
           return {
