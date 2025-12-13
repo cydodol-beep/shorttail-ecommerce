@@ -1,5 +1,6 @@
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 
 // Helper function to implement timeout for async operations
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
@@ -13,18 +14,22 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
 
 export async function GET(request: Request) {
   try {
-    // Check authentication and kasir role
-    const adminClient = createAdminClient();
-    
+    // Get cookies for session management
+    const cookieStore = await cookies();
+
+    // Create a Supabase client that can handle sessions properly in API routes
+    const supabase = await createClient();
+
     // Get the current user to verify role
-    const { data: { user }, error: authError } = await adminClient.auth.getUser();
-    
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
     if (authError || !user) {
+      console.error('Auth error:', authError);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Verify user is kasir or super_user
-    const profileResponse = await adminClient
+    const profileResponse = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -33,8 +38,15 @@ export async function GET(request: Request) {
     const { data: profile, error: profileError } = profileResponse;
 
     if (profileError || !profile || !['kasir', 'super_user'].includes(profile.role)) {
+      console.error('Profile check error:', profileError, 'Role:', profile?.role);
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    // Since we need to bypass RLS policies to fetch all orders,
+    // we need to use the admin client with service role key
+    // for the actual data fetching while keeping authentication check with regular client
+    const { createAdminClient } = await import('@/lib/supabase/admin');
+    const adminClient = createAdminClient();
 
     // Fetch all orders (both POS and marketplace) for kasir users
     // Using admin client to bypass RLS and get all orders
@@ -58,7 +70,7 @@ export async function GET(request: Request) {
     if (allProfileIds.length > 0) {
       const { data: profilesData, error: profilesError } = await adminClient
         .from('profiles')
-        .select('id, user_name, email')
+        .select('id, user_name, user_email')
         .in('id', allProfileIds);
 
       if (profilesError) {
@@ -131,7 +143,7 @@ export async function GET(request: Request) {
           id: order.id,
           user_id: order.user_id,
           user_name: userProfile?.user_name,
-          user_email: userProfile?.email,
+          user_email: userProfile?.user_email,  // Updated to use correct column name
           cashier_id: order.cashier_id,
           cashier_name: cashierProfile?.user_name,
           source: order.source,
