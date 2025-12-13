@@ -92,15 +92,9 @@ export function generatePackingListPDF(order: Order, storeInfo: any): jsPDF {
     doc.text(contactInfo, 105, yPos, { align: 'center' });
   }
 
-  if (order.recipient_address || order.recipient_city || order.recipient_postal_code) {
+  if (order.recipient_address) {
     yPos += 5;
-    const addressParts = [
-      order.recipient_address,
-      order.recipient_city,
-      order.recipient_postal_code
-    ].filter(Boolean);
-    const fullAddress = addressParts.join(', ');
-    const addressLines = doc.splitTextToSize(fullAddress, 120);
+    const addressLines = doc.splitTextToSize(order.recipient_address, 120);
     doc.text(addressLines, 105, yPos, { align: 'center' });
     yPos += (addressLines.length - 1) * 5;
   }
