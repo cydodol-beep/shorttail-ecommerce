@@ -41,6 +41,37 @@ A sophisticated e-commerce platform for pet supplies built with Next.js 16 and S
 
 ---
 
+## Recent Updates (December 13, 2025)
+
+### Fixed Orders Display for Kasir Users 💼
+- **All Orders Now Visible in Kasir Orders Page**:
+  - Fixed Row Level Security (RLS) policies to ensure kasir users can see all orders (both POS and marketplace)
+  - Created database migration `022_fix_orders_rls.sql` to properly configure RLS policies
+  - Updated API route `/api/orders/kasir` to properly authenticate kasir users and bypass RLS for data fetching
+  - Applied correct column names in queries (`user_email` instead of `email`) to prevent "column does not exist" errors
+  - Implemented proper session handling in API routes for reliable authentication
+  - Ensured RLS policies prevent recursion issues that were causing infinite loops
+
+### Enhanced Packing List Generation 📋
+- **Complete Recipient Information for All Order Sources**:
+  - Fixed packing list generator to properly display recipient data from marketplace orders
+  - Updated packing list to read recipient information from `shipping_address_snapshot` for marketplace orders
+  - Added support for multiple data sources for courier name display
+  - Implemented fallback mechanisms to retrieve recipient name, phone, email, address, and province from various fields
+  - Courier name now displays with 30px font size as requested
+  - Proper handling of both direct fields (for POS orders) and snapshot data (for marketplace orders)
+
+### Database Migration & RLS Fixes 🗃️
+- **Created Migration File `022_fix_orders_rls.sql`**:
+  - Properly configured RLS policies for profiles and orders tables
+  - Fixed recursive RLS policy issue that was causing infinite loops
+  - Ensured staff users (admin, kasir) can access all necessary data
+  - Corrected column name references in policies to use proper field names
+- **API Route Improvements**:
+  - Enhanced `/api/orders/kasir` authentication handling
+  - Fixed 401 unauthorized errors in kasir API routes
+  - Improved session management for server-side API requests
+
 ## Recent Updates (December 6, 2025)
 
 ### Performance Optimization 🚀
