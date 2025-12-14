@@ -167,34 +167,34 @@ export function generatePackingListPDF(order: Order, storeInfo: any): jsPDF {
   }
 
   // Right Column - Order Info (Align with recipient info)
-  let rightYPos = 95; // Start at a fixed Y position to maintain alignment
+  let orderInfoYPos = 95; // Start at a fixed Y position to maintain alignment - renamed to avoid conflict
   doc.setFont('helvetica', 'bold');
-  doc.text('Order #:', 140, rightYPos);
+  doc.text('Order #:', 140, orderInfoYPos);
   doc.setFont('helvetica', 'normal');
-  doc.text(order.id.slice(0, 8).toUpperCase(), 160, rightYPos);
+  doc.text(order.id.slice(0, 8).toUpperCase(), 160, orderInfoYPos);
 
-  rightYPos += 5;
+  orderInfoYPos += 5;
   doc.setFont('helvetica', 'bold');
-  doc.text('Date:', 140, rightYPos);
+  doc.text('Date:', 140, orderInfoYPos);
   doc.setFont('helvetica', 'normal');
-  doc.text(formatDate(order.created_at), 160, rightYPos);
+  doc.text(formatDate(order.created_at), 160, orderInfoYPos);
 
-  rightYPos += 5;
+  orderInfoYPos += 5;
   doc.setFont('helvetica', 'bold');
-  doc.text('Status:', 140, rightYPos);
+  doc.text('Status:', 140, orderInfoYPos);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(order.status === 'delivered' ? 0 : order.status === 'cancelled' ? 255 : 0, order.status === 'cancelled' ? 0 : 0, 0); // Red for cancelled, black for others
-  doc.text(order.status.toUpperCase(), 160, rightYPos);
+  doc.text(order.status.toUpperCase(), 160, orderInfoYPos);
   doc.setTextColor(0, 0, 0); // Reset to black
 
-  rightYPos += 5;
+  orderInfoYPos += 5;
   doc.setFont('helvetica', 'bold');
-  doc.text('Source:', 140, rightYPos);
+  doc.text('Source:', 140, orderInfoYPos);
   doc.setFont('helvetica', 'normal');
-  doc.text(order.source.toUpperCase(), 160, rightYPos);
+  doc.text(order.source.toUpperCase(), 160, orderInfoYPos);
 
   // Update yPos to continue with items after both columns
-  yPos = Math.max(yPos, rightYPos) + 5; // Use the lower position for next elements
+  yPos = Math.max(yPos, orderInfoYPos) + 5; // Use the lower position for next elements
   
   // Items Table
   yPos += 12;
