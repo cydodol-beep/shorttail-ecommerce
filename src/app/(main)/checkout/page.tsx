@@ -927,6 +927,7 @@ export default function CheckoutPage() {
       };
 
       // Format order data for invoice (similar to how it's retrieved in the order store)
+      // Use the customer_notes from the previewOrderData to ensure we have the correct value
       const orderForInvoice = {
         id: order.id,
         user_id: order.user_id || undefined, // Convert null to undefined
@@ -947,7 +948,7 @@ export default function CheckoutPage() {
         shipping_courier: order.shipping_courier_name || '',
         shipping_courier_name: order.shipping_courier_name || '',
         shipping_address_snapshot: order.shipping_address_snapshot,
-        customer_notes: (order as any).customer_notes || '', // customer_notes might not be in the main Order type but could be returned by select('*')
+        customer_notes: previewOrderData.customer_notes || '', // Use the customer notes from the preview data which is guaranteed to be correct
         payment_method: order.payment_method || 'Not specified', // Include payment method info
         invoice_url: order.invoice_url || undefined, // Convert null to undefined
         packing_list_url: order.packing_list_url || undefined, // Convert null to undefined
