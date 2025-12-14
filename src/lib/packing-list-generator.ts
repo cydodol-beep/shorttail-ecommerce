@@ -101,7 +101,7 @@ export function generatePackingListPDF(order: Order, storeInfo: any): jsPDF {
     (order.shipping_address_snapshot?.address_line1) ||
     '';
 
-  const recipientCity = order.recipient_city ||
+  const recipientCity =
     (order.shipping_address_snapshot?.city) ||
     '';
 
@@ -109,7 +109,7 @@ export function generatePackingListPDF(order: Order, storeInfo: any): jsPDF {
     (order.shipping_address_snapshot?.region || order.shipping_address_snapshot?.province) ||
     '';
 
-  const recipientPostalCode = order.recipient_postal_code ||
+  const recipientPostalCode =
     (order.shipping_address_snapshot?.postal_code) ||
     '';
 
