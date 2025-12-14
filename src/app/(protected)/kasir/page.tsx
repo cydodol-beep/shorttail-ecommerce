@@ -59,7 +59,7 @@ interface Promotion {
 }
 
 export default function KasirPOSPage() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { categories: dbCategories, loading: categoriesLoading, getActiveCategories } = useCategories();
   const { settings: storeSettings } = useAllSettings();
   const activeCategories = useMemo(() => getActiveCategories(), [getActiveCategories]);
