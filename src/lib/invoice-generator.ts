@@ -71,15 +71,47 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
         <h2 style="margin: 0 0 15px 0; font-size: 24px; color: #8B4513;">ShortTail's INVOICE</h2>
       </div>
 
-      <!-- Two Column Section: Bill To (Left) and Invoice Info (Right) -->
+      <!-- Two Column Section: Recipient Info (Left) and Invoice Info (Right) -->
       <div style="display: flex; justify-content: space-between; margin-bottom: 25px; gap: 40px;">
-        <!-- Left Column: Bill To -->
+        <!-- Left Column: Recipient Info -->
         <div style="flex: 1;">
-          <p style="margin: 5px 0; font-weight: bold; font-size: 14px;">Bill To:</p>
-          <p style="margin: 3px 0; font-size: 13px;">${order.recipient_name || order.user_name || 'Walk-in Customer'}</p>
-          ${order.recipient_phone ? `<p style="margin: 3px 0; font-size: 13px;">${order.recipient_phone}</p>` : ''}
-          ${order.recipient_address ? `<p style="margin: 3px 0; font-size: 13px;">${order.recipient_address}</p>` : ''}
-          ${order.recipient_province ? `<p style="margin: 3px 0; font-size: 13px;">${order.recipient_province}</p>` : ''}
+          <p style="margin: 5px 0; font-weight: bold; font-size: 14px;">Recipient Information:</p>
+          ${(() => {
+            const recipientName = order.recipient_name || order.user_name ||
+              (order.shipping_address_snapshot?.recipient_name) ||
+              (order.shipping_address_snapshot?.name) ||
+              'Walk-in Customer';
+
+            const recipientAddress = order.recipient_address ||
+              (order.shipping_address_snapshot?.address_line1) ||
+              '';
+
+            const recipientCity = order.recipient_city ||
+              (order.shipping_address_snapshot?.city) ||
+              '';
+
+            const recipientProvince = order.recipient_province ||
+              (order.shipping_address_snapshot?.region || order.shipping_address_snapshot?.province) ||
+              '';
+
+            const recipientPostalCode = order.recipient_postal_code ||
+              (order.shipping_address_snapshot?.postal_code) ||
+              '';
+
+            const recipientPhone = order.recipient_phone ||
+              (order.shipping_address_snapshot?.recipient_phone ||
+               order.shipping_address_snapshot?.phone) ||
+              '';
+
+            return `
+              ${recipientName ? `<p style="margin: 3px 0; font-size: 13px;"><strong>Name:</strong> ${recipientName}</p>` : ''}
+              ${recipientAddress ? `<p style="margin: 3px 0; font-size: 13px;"><strong>Address:</strong> ${recipientAddress}</p>` : ''}
+              ${recipientCity ? `<p style="margin: 3px 0; font-size: 13px;"><strong>City:</strong> ${recipientCity}</p>` : ''}
+              ${recipientProvince ? `<p style="margin: 3px 0; font-size: 13px;"><strong>Province:</strong> ${recipientProvince}</p>` : ''}
+              ${recipientPostalCode ? `<p style="margin: 3px 0; font-size: 13px;"><strong>Postal Code:</strong> ${recipientPostalCode}</p>` : ''}
+              ${recipientPhone ? `<p style="margin: 3px 0; font-size: 13px;"><strong>Phone Number:</strong> ${recipientPhone}</p>` : ''}
+            `;
+          })()}
         </div>
 
         <!-- Right Column: Invoice Info -->

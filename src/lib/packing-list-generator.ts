@@ -82,70 +82,119 @@ export function generatePackingListPDF(order: Order, storeInfo: any): jsPDF {
   doc.setFont('helvetica', 'bold');
   doc.text('PACKING LIST', 105, yPos, { align: 'center' });
   
-  // Ship To Section - Centered with 15px (11pt) bold
+  // Two Column Section: Recipient Info (Left) and Order Info (Right)
   yPos += 10;
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.text('Ship To:', 105, yPos, { align: 'center' });
+  doc.text('Recipient Information:', 40, yPos);
 
+  // Left Column - Recipient Info
   yPos += 6;
 
-  // Determine recipient data based on order source
+  // Determine recipient data based on what's available in the order
   const recipientName = order.recipient_name || order.user_name ||
     (order.shipping_address_snapshot?.recipient_name) ||
     (order.shipping_address_snapshot?.name) ||
     'Walk-in Customer';
 
-  doc.text(recipientName, 105, yPos, { align: 'center' });
+  const recipientAddress = order.recipient_address ||
+    (order.shipping_address_snapshot?.address_line1) ||
+    '';
 
-  // Construct contact information
-  let contactInfoParts = [];
-  if (order.recipient_phone) contactInfoParts.push(order.recipient_phone);
-  if (order.user_email) contactInfoParts.push(order.user_email);
-  if (order.shipping_address_snapshot?.recipient_phone) contactInfoParts.push(order.shipping_address_snapshot.recipient_phone);
+  const recipientCity = order.recipient_city ||
+    (order.shipping_address_snapshot?.city) ||
+    '';
 
-  if (contactInfoParts.length > 0) {
-    yPos += 5;
-    const contactInfo = contactInfoParts.join(' | ');
-    doc.text(contactInfo, 105, yPos, { align: 'center' });
-  }
-
-  // Determine address information based on available data
-  let addressParts = [];
-
-  if (order.recipient_address) {
-    addressParts.push(order.recipient_address);
-  } else if (order.shipping_address_snapshot?.address_line1) {
-    addressParts.push(order.shipping_address_snapshot.address_line1);
-  }
-
-  if (order.shipping_address_snapshot?.city) {
-    addressParts.push(order.shipping_address_snapshot.city);
-  }
-  if (order.shipping_address_snapshot?.region || order.shipping_address_snapshot?.province) {
-    const region = order.shipping_address_snapshot.region || order.shipping_address_snapshot.province;
-    addressParts.push(region);
-  }
-  if (order.shipping_address_snapshot?.postal_code) {
-    addressParts.push(order.shipping_address_snapshot.postal_code);
-  }
-
-  if (addressParts.length > 0) {
-    yPos += 5;
-    const fullAddress = addressParts.join(', ');
-    const addressLines = doc.splitTextToSize(fullAddress, 120);
-    doc.text(addressLines, 105, yPos, { align: 'center' });
-    yPos += (addressLines.length - 1) * 5;
-  }
-
-  // Check for recipient province in both direct field and shipping snapshot
   const recipientProvince = order.recipient_province ||
-    (order.shipping_address_snapshot?.region || order.shipping_address_snapshot?.province);
+    (order.shipping_address_snapshot?.region || order.shipping_address_snapshot?.province) ||
+    '';
+
+  const recipientPostalCode = order.recipient_postal_code ||
+    (order.shipping_address_snapshot?.postal_code) ||
+    '';
+
+  const recipientPhone = order.recipient_phone ||
+    (order.shipping_address_snapshot?.recipient_phone) ||
+    (order.shipping_address_snapshot?.phone) ||
+    '';
+
+  if (recipientName) {
+    doc.setFont('helvetica', 'bold');
+    doc.text('Name:', 40, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(recipientName, 70, yPos);
+  }
+
+  if (recipientAddress) {
+    yPos += 5;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Address:', 40, yPos);
+    doc.setFont('helvetica', 'normal');
+    const addressLines = doc.splitTextToSize(recipientAddress, 70);
+    doc.text(addressLines, 70, yPos);
+  }
+
+  if (recipientCity) {
+    yPos += 5;
+    doc.setFont('helvetica', 'bold');
+    doc.text('City:', 40, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(recipientCity, 70, yPos);
+  }
 
   if (recipientProvince) {
     yPos += 5;
-    doc.text(recipientProvince, 105, yPos, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    doc.text('Province:', 40, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(recipientProvince, 70, yPos);
   }
+
+  if (recipientPostalCode) {
+    yPos += 5;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Postal Code:', 40, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(recipientPostalCode, 70, yPos);
+  }
+
+  if (recipientPhone) {
+    yPos += 5;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Phone Number:', 40, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(recipientPhone, 70, yPos);
+  }
+
+  // Right Column - Order Info (Align with recipient info)
+  let rightYPos = 95; // Start at a fixed Y position to maintain alignment
+  doc.setFont('helvetica', 'bold');
+  doc.text('Order #:', 140, rightYPos);
+  doc.setFont('helvetica', 'normal');
+  doc.text(order.id.slice(0, 8).toUpperCase(), 160, rightYPos);
+
+  rightYPos += 5;
+  doc.setFont('helvetica', 'bold');
+  doc.text('Date:', 140, rightYPos);
+  doc.setFont('helvetica', 'normal');
+  doc.text(formatDate(order.created_at), 160, rightYPos);
+
+  rightYPos += 5;
+  doc.setFont('helvetica', 'bold');
+  doc.text('Status:', 140, rightYPos);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(order.status === 'delivered' ? 0 : order.status === 'cancelled' ? 255 : 0, order.status === 'cancelled' ? 0 : 0, 0); // Red for cancelled, black for others
+  doc.text(order.status.toUpperCase(), 160, rightYPos);
+  doc.setTextColor(0, 0, 0); // Reset to black
+
+  rightYPos += 5;
+  doc.setFont('helvetica', 'bold');
+  doc.text('Source:', 140, rightYPos);
+  doc.setFont('helvetica', 'normal');
+  doc.text(order.source.toUpperCase(), 160, rightYPos);
+
+  // Update yPos to continue with items after both columns
+  yPos = Math.max(yPos, rightYPos) + 5; // Use the lower position for next elements
   
   // Items Table
   yPos += 12;
