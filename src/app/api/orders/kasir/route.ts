@@ -159,6 +159,7 @@ export async function GET(request: Request) {
           shipping_courier: order.shipping_courier,
           shipping_courier_name: order.shipping_courier_name,
           shipping_address_snapshot: order.shipping_address_snapshot,
+          customer_notes: order.customer_notes || undefined,
           invoice_url: order.invoice_url,
           packing_list_url: order.packing_list_url,
           items_count: itemsWithDetails.length,
