@@ -86,7 +86,7 @@ export function generatePackingListPDF(order: Order, storeInfo: any): jsPDF {
   yPos = 65; // Reset yPos to a consistent starting position
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.text('Recipient Information:', 40, yPos);
+  doc.text('Recipient Information:', 20, yPos);
   doc.text('Order Information:', 140, yPos); // Add header for right column to align headers
 
   // Initialize both column Y positions
@@ -120,54 +120,54 @@ export function generatePackingListPDF(order: Order, storeInfo: any): jsPDF {
     (order.shipping_address_snapshot?.phone) ||
     '';
 
-  // Left Column - Recipient Info
+  // Left Column - Recipient Info (Wider and positioned closer to left margin)
   if (recipientName) {
     doc.setFont('helvetica', 'bold');
-    doc.text('Name:', 40, recipientYPos);
+    doc.text('Name:', 20, recipientYPos);
     doc.setFont('helvetica', 'normal');
-    doc.text(recipientName, 70, recipientYPos);
+    doc.text(recipientName, 50, recipientYPos);
     recipientYPos += 5;
   }
 
   if (recipientAddress) {
     doc.setFont('helvetica', 'bold');
-    doc.text('Address:', 40, recipientYPos);
+    doc.text('Address:', 20, recipientYPos);
     doc.setFont('helvetica', 'normal');
-    const addressLines = doc.splitTextToSize(recipientAddress, 70);
-    doc.text(addressLines, 70, recipientYPos);
+    const addressLines = doc.splitTextToSize(recipientAddress, 100); // Wider space for address
+    doc.text(addressLines, 50, recipientYPos);
     // Increment recipientYPos by the number of lines for the address
     recipientYPos += (addressLines.length * 5);
   }
 
   if (recipientCity) {
     doc.setFont('helvetica', 'bold');
-    doc.text('City:', 40, recipientYPos);
+    doc.text('City:', 20, recipientYPos);
     doc.setFont('helvetica', 'normal');
-    doc.text(recipientCity, 70, recipientYPos);
+    doc.text(recipientCity, 50, recipientYPos);
     recipientYPos += 5;
   }
 
   if (recipientProvince) {
     doc.setFont('helvetica', 'bold');
-    doc.text('Province:', 40, recipientYPos);
+    doc.text('Province:', 20, recipientYPos);
     doc.setFont('helvetica', 'normal');
-    doc.text(recipientProvince, 70, recipientYPos);
+    doc.text(recipientProvince, 50, recipientYPos);
     recipientYPos += 5;
   }
 
   if (recipientPostalCode) {
     doc.setFont('helvetica', 'bold');
-    doc.text('Postal Code:', 40, recipientYPos);
+    doc.text('Postal Code:', 20, recipientYPos);
     doc.setFont('helvetica', 'normal');
-    doc.text(recipientPostalCode, 70, recipientYPos);
+    doc.text(recipientPostalCode, 50, recipientYPos);
     recipientYPos += 5;
   }
 
   if (recipientPhone) {
     doc.setFont('helvetica', 'bold');
-    doc.text('Phone Number:', 40, recipientYPos);
+    doc.text('Phone Number:', 20, recipientYPos);
     doc.setFont('helvetica', 'normal');
-    doc.text(recipientPhone, 70, recipientYPos);
+    doc.text(recipientPhone, 50, recipientYPos);
     recipientYPos += 5;
   }
 
