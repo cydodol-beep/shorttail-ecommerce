@@ -83,13 +83,15 @@ export function generatePackingListPDF(order: Order, storeInfo: any): jsPDF {
   doc.text('PACKING LIST', 105, yPos, { align: 'center' });
   
   // Two Column Section: Recipient Info (Left) and Order Info (Right)
-  yPos += 10;
+  yPos = 65; // Reset yPos to a consistent starting position
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
   doc.text('Recipient Information:', 40, yPos);
+  doc.text('Order Information:', 140, yPos); // Add header for right column to align headers
 
-  // Left Column - Recipient Info
-  yPos += 6;
+  // Initialize both column Y positions
+  let recipientYPos = yPos + 6; // Start recipient info below the header
+  let orderDetailsYPos = yPos + 6; // Start order info at same height as recipient info - renamed to avoid conflicts
 
   // Determine recipient data based on what's available in the order
   const recipientName = order.recipient_name || order.user_name ||
@@ -118,83 +120,85 @@ export function generatePackingListPDF(order: Order, storeInfo: any): jsPDF {
     (order.shipping_address_snapshot?.phone) ||
     '';
 
+  // Left Column - Recipient Info
   if (recipientName) {
     doc.setFont('helvetica', 'bold');
-    doc.text('Name:', 40, yPos);
+    doc.text('Name:', 40, recipientYPos);
     doc.setFont('helvetica', 'normal');
-    doc.text(recipientName, 70, yPos);
+    doc.text(recipientName, 70, recipientYPos);
+    recipientYPos += 5;
   }
 
   if (recipientAddress) {
-    yPos += 5;
     doc.setFont('helvetica', 'bold');
-    doc.text('Address:', 40, yPos);
+    doc.text('Address:', 40, recipientYPos);
     doc.setFont('helvetica', 'normal');
     const addressLines = doc.splitTextToSize(recipientAddress, 70);
-    doc.text(addressLines, 70, yPos);
+    doc.text(addressLines, 70, recipientYPos);
+    // Increment recipientYPos by the number of lines for the address
+    recipientYPos += (addressLines.length * 5);
   }
 
   if (recipientCity) {
-    yPos += 5;
     doc.setFont('helvetica', 'bold');
-    doc.text('City:', 40, yPos);
+    doc.text('City:', 40, recipientYPos);
     doc.setFont('helvetica', 'normal');
-    doc.text(recipientCity, 70, yPos);
+    doc.text(recipientCity, 70, recipientYPos);
+    recipientYPos += 5;
   }
 
   if (recipientProvince) {
-    yPos += 5;
     doc.setFont('helvetica', 'bold');
-    doc.text('Province:', 40, yPos);
+    doc.text('Province:', 40, recipientYPos);
     doc.setFont('helvetica', 'normal');
-    doc.text(recipientProvince, 70, yPos);
+    doc.text(recipientProvince, 70, recipientYPos);
+    recipientYPos += 5;
   }
 
   if (recipientPostalCode) {
-    yPos += 5;
     doc.setFont('helvetica', 'bold');
-    doc.text('Postal Code:', 40, yPos);
+    doc.text('Postal Code:', 40, recipientYPos);
     doc.setFont('helvetica', 'normal');
-    doc.text(recipientPostalCode, 70, yPos);
+    doc.text(recipientPostalCode, 70, recipientYPos);
+    recipientYPos += 5;
   }
 
   if (recipientPhone) {
-    yPos += 5;
     doc.setFont('helvetica', 'bold');
-    doc.text('Phone Number:', 40, yPos);
+    doc.text('Phone Number:', 40, recipientYPos);
     doc.setFont('helvetica', 'normal');
-    doc.text(recipientPhone, 70, yPos);
+    doc.text(recipientPhone, 70, recipientYPos);
+    recipientYPos += 5;
   }
 
-  // Right Column - Order Info (Align with recipient info)
-  let orderInfoYPos = 95; // Start at a fixed Y position to maintain alignment - renamed to avoid conflict
+  // Right Column - Order Info (Aligned with recipient info)
   doc.setFont('helvetica', 'bold');
-  doc.text('Order #:', 140, orderInfoYPos);
+  doc.text('Order #:', 140, orderDetailsYPos);
   doc.setFont('helvetica', 'normal');
-  doc.text(order.id.slice(0, 8).toUpperCase(), 160, orderInfoYPos);
+  doc.text(order.id.slice(0, 8).toUpperCase(), 160, orderDetailsYPos);
+  orderDetailsYPos += 5;
 
-  orderInfoYPos += 5;
   doc.setFont('helvetica', 'bold');
-  doc.text('Date:', 140, orderInfoYPos);
+  doc.text('Date:', 140, orderDetailsYPos);
   doc.setFont('helvetica', 'normal');
-  doc.text(formatDate(order.created_at), 160, orderInfoYPos);
+  doc.text(formatDate(order.created_at), 160, orderDetailsYPos);
+  orderDetailsYPos += 5;
 
-  orderInfoYPos += 5;
   doc.setFont('helvetica', 'bold');
-  doc.text('Status:', 140, orderInfoYPos);
+  doc.text('Status:', 140, orderDetailsYPos);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(order.status === 'delivered' ? 0 : order.status === 'cancelled' ? 255 : 0, order.status === 'cancelled' ? 0 : 0, 0); // Red for cancelled, black for others
-  doc.text(order.status.toUpperCase(), 160, orderInfoYPos);
+  doc.text(order.status.toUpperCase(), 160, orderDetailsYPos);
   doc.setTextColor(0, 0, 0); // Reset to black
+  orderDetailsYPos += 5;
 
-  orderInfoYPos += 5;
   doc.setFont('helvetica', 'bold');
-  doc.text('Source:', 140, orderInfoYPos);
+  doc.text('Source:', 140, orderDetailsYPos);
   doc.setFont('helvetica', 'normal');
-  doc.text(order.source.toUpperCase(), 160, orderInfoYPos);
+  doc.text(order.source.toUpperCase(), 160, orderDetailsYPos);
 
-  // Update yPos to continue with items after both columns
-  yPos = Math.max(yPos, orderInfoYPos) + 5; // Use the lower position for next elements
+  // Update yPos to continue with items after both columns (use the lower of the two positions)
+  yPos = Math.max(recipientYPos, orderDetailsYPos) + 5; // Use the lower position for next elements
   
   // Items Table
   yPos += 12;
