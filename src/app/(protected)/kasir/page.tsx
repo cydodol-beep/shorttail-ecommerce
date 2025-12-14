@@ -746,7 +746,9 @@ export default function KasirPOSPage() {
       .from('orders')
       .insert({
         user_id: null, // Walk-in customer
+        user_name: null, // Walk-in customer has no user name
         cashier_id: user?.id,
+        cashier_name: profile?.user_name, // Store cashier's name
         source: 'pos',
         status: 'paid',
         subtotal,

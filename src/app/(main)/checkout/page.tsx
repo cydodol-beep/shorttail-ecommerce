@@ -727,6 +727,7 @@ export default function CheckoutPage() {
         .from('orders')
         .insert({
           user_id: previewOrderData.user_id,
+          user_name: profile?.user_name,  // Include the user's real name
           source: previewOrderData.source,
           status: previewOrderData.status,
           subtotal: previewOrderData.subtotal,

@@ -1317,6 +1317,54 @@ Or use any Node.js hosting platform that supports Next.js 16.
 
 ---
 
+## 🆕 Recent Updates (December 14, 2025)
+
+### Enhanced Invoice and Packing List Display 📄
+- **Improved Recipient Information Layout**:
+  - Implemented two-column format for better organization
+  - Left column now contains recipient information with proper labels (Name, Address, City, Province, Postal Code, Phone Number)
+  - Right column contains order information (Order #, Date, Status, Source)
+  - Replaced email address with phone number as requested
+  - Added structured labels for all recipient fields for better clarity
+  - Properly retrieves recipient information from both direct fields and shipping_address_snapshot for marketplace orders
+
+- **Invoice Generator Enhancements** (`src/lib/invoice-generator.ts`):
+  - Changed "Bill To" section to "Recipient Information"
+  - Added proper field labels (Name:, Address:, City:, Province:, Postal Code:, Phone Number:)
+  - Implemented logic to fetch recipient information from shipping_address_snapshot for marketplace orders
+  - Removed direct reference to non-existent recipient fields to fix TypeScript compilation errors
+  - Maintained two-column layout with recipient info on left and invoice details on right
+
+- **Packing List Generator Improvements** (`src/lib/packing-list-generator.ts`):
+  - Completely restructured recipient section into professional two-column layout
+  - Widened left column and positioned it closer to the left margin (X position changed from 40 to 20)
+  - Increased address field width from 70 to 100 units for better readability
+  - Implemented proper alignment between left and right columns
+  - Added headers for both columns ("Recipient Information" and "Order Information")
+  - Used separate Y position counters for each column to ensure proper vertical alignment
+  - Fixed variable naming conflicts that were causing build errors
+  - Added comprehensive logic to fetch recipient information from shipping_address_snapshot
+
+### Technical Fixes 🔧
+- **Fixed TypeScript Compilation Errors**:
+  - Resolved property 'recipient_city' and similar field errors in invoice generator
+  - Updated code to use fields that exist in the Order type definition
+  - Fetched recipient fields from shipping_address_snapshot instead of non-existent direct fields
+
+- **Improved Data Flow**:
+  - Updated API routes and stores to properly include customer_notes in all order retrieval paths
+  - Ensured customer notes are displayed in both generated invoice (JPEG) and packing list (PDF)
+  - Fixed variable names conflicts in packing list generator to prevent build errors
+
+- **Customer Name Display Improvements**:
+  - Added user_name and cashier_name columns to the orders table to store customer names at time of order creation
+  - Updated checkout process to store the real customer name when creating marketplace orders
+  - Updated POS process to store the cashier's name when creating POS orders
+  - Modified the kasir orders table to display real customer names instead of 'Online Customer'
+  - Created database migrations (024 and 025) to add columns and populate existing orders
+
+---
+
 ## License
 
 Private project - All rights reserved.
