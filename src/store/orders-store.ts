@@ -207,7 +207,24 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
 
         console.log('Orders fetch result:', { count: data?.length || 0 });
 
-        // Process the orders for non-kasir users (profile data is already embedded)
+        // Fetch user profiles to get user names
+        const userIds = [...new Set((data || []).map((o: any) => o.user_id).filter((id: any) => id !== null && id !== undefined))];
+        let profilesMap = new Map();
+
+        if (userIds.length > 0) {
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, user_name, user_email')
+            .in('id', userIds);
+
+          if (profilesError) {
+            console.error('Error fetching profiles:', profilesError);
+          } else {
+            profilesMap = new Map((profilesData || []).map((p: any) => [p.id, p]));
+          }
+        }
+
+        // Process the orders for non-kasir users
         ordersWithItems = await Promise.all(
           (data || []).map(async (order: any) => {
             // Fetch order items separately
@@ -263,14 +280,14 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
               })
             );
 
-            // For non-kasir users, profile data - since the complex join was causing timeout issues,
-            // we'll use what we have and let the frontend handle profile data if needed
-            // The key thing is that shipping_address_snapshot is available for marketplace orders
+            // Get user profile data from the map
+            const userProfile = profilesMap.get(order.user_id);
+
             return {
               id: order.id,
               user_id: order.user_id,
-              user_name: order.user_name, // This will be populated when the initial query includes join
-              user_email: order.user_email,
+              user_name: order.user_name || userProfile?.user_name, // Use API fetched name, fallback to profile
+              user_email: order.user_email || userProfile?.user_email, // Use API fetched email, fallback to profile
               cashier_id: order.cashier_id,
               cashier_name: order.cashier_name,
               source: order.source,
