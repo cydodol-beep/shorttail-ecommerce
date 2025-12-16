@@ -461,9 +461,7 @@ export default function AdminOrdersPage() {
                             <User className="h-4 w-4 mt-1 text-brown-500 flex-shrink-0" />
                             <div className="flex flex-col">
                               <span className="font-semibold text-base text-brown-900">
-                                {order.source === 'pos'
-                                  ? (order.recipient_name || order.user_name || 'POS Customer')
-                                  : (order.recipient_name || order.user_name || order.user_email || 'Online Customer')}
+                                {order.user_name || order.recipient_name || 'Customer'}
                               </span>
                               <div className="flex items-center gap-1 mt-1">
                                 {order.user_email && (
