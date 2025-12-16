@@ -2,6 +2,38 @@
 
 A sophisticated e-commerce platform for pet supplies built with Next.js 16 and Supabase, featuring Role-Based Access Control (RBAC), Point of Sale (POS) system, and gamification features.
 
+## 🏗️ Architecture Overview
+
+ShortTail.id is a comprehensive e-commerce solution built using a modern tech stack that includes:
+
+- **Frontend**: Next.js 16 with App Router and Turbopack
+- **Backend**: Supabase (PostgreSQL, Auth, Realtime, Storage)
+- **Styling**: Tailwind CSS 4 with custom "Brownish" theme
+- **UI Components**: shadcn/ui + Radix UI primitives
+- **State Management**: Zustand (with persist middleware)
+- **Forms**: React Hook Form + Zod validation
+- **Animations**: Framer Motion
+- **Icons**: Lucide React
+
+### System Components
+
+The platform consists of four main user interfaces:
+
+1. **Public Storefront**: Product browsing, cart, and checkout
+2. **Admin Dashboard**: Complete store management (products, orders, users, promotions)
+3. **Kasir/POS System**: In-store point of sale with real-time inventory
+4. **User Dashboard**: Customer account management (profile, pets, orders, wishlist)
+
+### Key Technical Features
+
+- **Server Components**: Efficient data fetching and rendering
+- **Client Components**: Interactive UI elements and real-time features
+- **API Routes**: Server-side operations to bypass RLS performance issues
+- **Middleware**: Session management and route protection
+- **Caching**: Smart caching strategy with 5-minute TTLs
+- **Zustand Stores**: Global state management with built-in caching
+- **Real-time**: Supabase Realtime for notifications
+
 ## 🆕 Recent Updates (December 12, 2025)
 
 ### Profile & Province Integration Enhancement 💼
@@ -148,13 +180,46 @@ A sophisticated e-commerce platform for pet supplies built with Next.js 16 and S
   - See `CHECKLIST.md` for deployment tasks
 
 ### Authentication & Authorization
-- Phone/Email authentication via Supabase Auth
-- Role-Based Access Control (RBAC) with 4 roles:
-  - `master_admin` - Full system access
-  - `normal_admin` - Product and order management
-  - `kasir` - POS and order processing
-  - `normal_user` - Customer access
-- Protected routes with middleware
+
+The platform implements a comprehensive authentication and authorization system:
+
+#### Authentication Methods
+- **Phone Number Authentication**: Primary authentication method using Indonesian format (08xx or +62xx)
+- **Email Authentication**: Optional for order notifications
+- **Password-based Login**: With automatic phone number formatting to E.164 format
+- **OTP Support**: Available as an alternative authentication method
+
+#### Role-Based Access Control (RBAC)
+
+The system has 5 distinct roles with different permission levels:
+
+- **`master_admin`**: Full system access including all management functions
+- **`normal_admin`**: Product, order, user, and promotion management
+- **`kasir`**: POS system access and assigned order processing
+- **`super_user`**: Special admin role with additional permissions
+- **`normal_user`**: Customer access to storefront and personal dashboard
+
+#### User Registration Flow
+- New users register with phone number and password
+- **Admin Approval System**: Self-registered users require admin approval before login
+- Admin-created users are auto-approved
+- Profile creation happens automatically after registration
+- Referral system with unique code generation
+
+#### Session Management
+- Next.js middleware handles session refresh on every request
+- Automatic session refresh every 2 minutes in `useAuth` hook
+- Proper handling for `TOKEN_REFRESHED`, `SIGNED_OUT`, `SIGNED_IN` events
+- Session persistence across application lifecycle
+
+#### Protected Routes
+- Middleware-based route protection
+- Role-based access to different sections:
+  - `/admin` - Admin dashboard (master_admin, normal_admin)
+  - `/kasir` - POS system (kasir role)
+  - `/dashboard` - User dashboard (normal_user and others)
+  - `/api/admin` - Admin APIs (master_admin, normal_admin)
+  - `/api/kasir` - POS APIs (kasir role)
 
 ### Storefront (Public)
 - Homepage with hero section, featured products, and categories
@@ -371,15 +436,24 @@ A sophisticated e-commerce platform for pet supplies built with Next.js 16 and S
   - Gender selection and weight tracking
 - Order history
 
-### Gamification System
-- Points accumulation on purchases
-- 5 Membership Tiers:
-  - Newborn (0 points)
-  - Transitional (500+ points)
-  - Juvenile (2,000+ points)
-  - Adolescence (5,000+ points)
-  - Adulthood (10,000+ points)
-- Referral system with unique codes
+### Gamification & Loyalty System
+- **Points Accumulation**: Earn points on purchases (configurable rate: X points per Rp Y spent)
+- **5 Membership Tiers** with progressive benefits:
+  - Newborn (0 points) - Default tier for new users
+  - Transitional (500+ points) - Unlock exclusive offers
+  - Juvenile (2,000+ points) - Priority customer support
+  - Adolescence (5,000+ points) - Early access to sales
+  - Adulthood (10,000+ points) - VIP treatment and special discounts
+- **Tier Visualization**: Visual progress bar with trophy icons showing achievement status
+- **Referral System**: Unique referral codes with bonus points for both referrer and referee
+- **Loyalty Program Configuration**: Admin-configurable settings in store settings:
+  - Points earned per amount spent
+  - Minimum points for redemption
+  - Point value in currency
+  - Referral bonus amounts
+  - Tier thresholds for each membership level
+- **Points Management**: Track points balance in user profiles, use for rewards
+- **Tier Benefits**: Visual indicators and special privileges based on membership tier
 
 ### Real-time Notifications
 - Supabase Realtime subscriptions
@@ -424,9 +498,33 @@ src/
 │   ├── supabase/         # Supabase client (singleton)
 │   ├── excel-utils.ts    # Excel import/export
 │   ├── image-utils.ts    # Image optimization (WebP conversion, resizing)
-│   ├── invoice-generator.ts    # JPEG invoice generation (with logo)
-│   ├── packing-list-generator.ts  # PDF packing list generation (with logo)
+│   ├── invoice-generator.ts    # JPEG invoice generation with recipient info and logo
+│   ├── packing-list-generator.ts  # PDF packing list generation with recipient info and logo
 │   └── utils.ts          # Utility functions
+
+### Invoice & Packing List Generation
+
+- **Invoice Generation** (`src/lib/invoice-generator.ts`):
+  - Generates JPEG invoices with store logo
+  - Includes comprehensive order details
+  - Displays recipient information in two-column format (Name, Address, City, Province, Postal Code, Phone)
+  - Shows order information (Order #, Date, Status, Source)
+  - Includes itemized order breakdown with pricing
+  - Professional layout matching brand colors
+
+- **Packing List Generation** (`src/lib/packing-list-generator.ts`):
+  - Generates PDF packing lists with store logo
+  - Features recipient information in structured format
+  - Two-column layout for recipient info and order details
+  - Properly handles marketplace orders with shipping address snapshot
+  - Includes courier information and shipping details
+  - Optimized for printing with appropriate margins and font sizes
+
+- **Recipient Information Handling**:
+  - Supports both POS and marketplace orders
+  - Retrieves data from direct fields (POS) or shipping_address_snapshot (marketplace)
+  - Two-column layout with proper labels
+  - Handles missing data gracefully
 ├── store/                # Zustand stores (global state with caching)
 │   ├── cart-store.ts                # Shopping cart (persisted)
 │   ├── notifications-admin-store.ts # Admin notification management
@@ -441,30 +539,73 @@ src/
 
 ## Database Schema
 
-Located in `supabase/migrations/`:
+The database schema is located in `supabase/migrations/` and consists of the following core tables:
 
+### User Management Tables
 | Table | Description |
 |-------|-------------|
-| `profiles` | User profiles extending auth.users |
-| `pets` | User pet information |
-| `products` | Product catalog |
-| `product_variants` | Product variants (sizes, flavors) |
-| `categories` | Product categories |
-| `orders` | Order records |
-| `order_items` | Order line items |
-| `notifications` | User/system notifications |
-| `reviews` | Product reviews (with moderation) |
-| `promotions` | Discount codes and promotional campaigns |
-| `promotion_tiers` | Buy More Save More tier configurations |
-| `promotion_usage` | Promotion usage tracking per user |
-| `provinces` | Indonesian provinces for shipping |
-| `shipping_rates` | Province-specific shipping rates |
-| `shipping_couriers` | Shipping courier options |
-| `store_settings` | Global store configuration |
-| `social_media_links` | Footer social links |
-| `landing_page_sections` | Landing page section visibility and settings |
+| `profiles` | User profiles extending auth.users with role, tier, points, referral system |
+| `pets` | User pet information with type, name, birthday, weight, microchip ID |
+| `social_media_links` | Footer social links with platform, URL, and display order |
 
-Row Level Security (RLS) policies enforce data access based on user roles.
+### Product Management Tables
+| Table | Description |
+|-------|-------------|
+| `products` | Product catalog with name, description, pricing, stock, variants, categories |
+| `product_variants` | Product variants with size, flavor, price adjustments, and individual stock |
+| `categories` | Product categories with hierarchical structure support |
+| `wishlists` | User saved products for later purchase |
+
+### Order Management Tables
+| Table | Description |
+|-------|-------------|
+| `orders` | Order records with user, status, amounts, shipping, and payment information |
+| `order_items` | Individual items within orders with product and variant references |
+| `shipping_couriers` | Available shipping options with logos, costs, and delivery times |
+| `shipping_rates` | Province-specific shipping rates for cost calculation |
+| `provinces` | Indonesian provinces for shipping destination management |
+
+### Promotion & Marketing Tables
+| Table | Description |
+|-------|-------------|
+| `promotions` | Discount codes and campaigns with various discount types |
+| `promotion_tiers` | Tiered discount configurations for "Buy More Save More" promotions |
+| `promotion_usage` | Tracking of promotion usage per user and order |
+| `reviews` | Product reviews with rating and approval status |
+| `notifications` | System and user notifications with read/unread status |
+
+### Configuration Tables
+| Table | Description |
+|-------|-------------|
+| `store_settings` | Global store configuration (name, description, logo, shipping, payment, loyalty) |
+| `landing_page_sections` | Configurable homepage sections with settings and visibility flags |
+
+### Enums & Types
+- `app_role`: Values include 'master_admin', 'normal_admin', 'kasir', 'super_user', 'normal_user'
+- `membership_tier`: Values include 'Newborn', 'Transitional', 'Juvenile', 'Adolescence', 'Adulthood'
+- `order_status`: Values include 'pending', 'paid', 'packed', 'shipped', 'delivered', 'cancelled', 'returned'
+- `order_source`: Values include 'marketplace', 'pos'
+
+### Row Level Security (RLS)
+
+The database implements comprehensive Row Level Security policies:
+- **Profiles**: Users can view/update own profile; staff can view all; admins can update all
+- **Products**: Public can view; only admins can manage
+- **Orders**: Users can view own orders; staff can view all
+- **Reviews**: Public can view approved; users can create their own; admins can manage all
+- **Promotions**: Public can view active; only admins can manage
+- **Wishlists**: Users can manage only their own
+- And many more detailed policies per table
+
+### Performance Optimizations
+
+The schema includes numerous performance optimizations:
+- Multiple composite and single-column indexes
+- 5-minute caching strategy for frequently accessed data
+- Database functions for shipping calculations
+- Optimized query patterns with proper index usage
+- Realtime subscriptions for notifications
+- Database triggers for automatically updating timestamps
 
 ## Getting Started
 
@@ -505,13 +646,44 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 ### Database Setup
 
 1. Create a new Supabase project
-2. Run migrations in order from `supabase/migrations/` (001 through 021)
-   - **Latest**: `021_additional_performance_indexes.sql` - Performance optimization indexes
+2. Run migrations in order from `supabase/migrations/` (001 through 025)
+   - **Latest**: `025_populate_user_names_in_orders.sql` - Populate user and cashier names in existing orders
+   - Key migrations include:
+     - `001_initial_schema.sql` - Core database schema
+     - `010_province_based_shipping.sql` - Province-based shipping infrastructure
+     - `012_enhanced_promotions.sql` - Enhanced promotions with tiers and usage tracking
+     - `017_wishlist.sql` - Wishlist functionality
+     - `020_landing_page_settings.sql` - Landing page section configuration
+     - `021_additional_performance_indexes.sql` - Performance optimization indexes
+     - `022_order_notification_triggers.sql` - Order status change notifications
+     - `024_add_user_cashier_names_to_orders.sql` - User and cashier name tracking in orders
 3. Enable Phone Authentication in Supabase Auth settings
 4. Configure RLS policies (included in migrations)
 5. **(Optional)** Run `ANALYZE` on tables after initial data import for optimal query planning
 
-> **Note**: Migration 021 adds critical performance indexes. Run it to improve page load times by 60%.
+> **Note**: Migration 021 adds critical performance indexes. Run all migrations to ensure complete functionality.
+
+### Middleware & Session Management
+
+The application uses Next.js middleware for session management and route protection:
+
+- **Authentication Middleware** (`src/middleware.ts`):
+  - Handles session refresh on every request
+  - Changes `getSession()` to `getUser()` for proper token validation and refresh
+  - Proactive session refresh every 2 minutes to prevent timeout issues
+  - Handles auth events: `TOKEN_REFRESHED`, `SIGNED_OUT`, `SIGNED_IN`, etc.
+  - Protects routes based on user authentication and roles
+
+- **Route Protection**:
+  - Public routes: Accessible to all users
+  - Authenticated routes: Require login (e.g., `/dashboard`, `/cart`, `/checkout`)
+  - Role-based routes: Require specific roles (e.g., `/admin` for admins, `/kasir` for kasir)
+
+- **Session Management Features**:
+  - Session persistence across app lifecycle
+  - Automatic refresh to prevent timeout issues during long browsing sessions
+  - Proper cleanup on sign out
+  - Global scope handling for complete session termination
 
 ### Promotion Validation (Checkout Integration)
 
@@ -539,8 +711,9 @@ This function automatically:
 - Checks date validity (start_date, end_date)
 - Verifies minimum purchase requirements
 - Checks per-user usage limits
-- Validates product applicability
-- Calculates appropriate discount based on type
+- Validates product applicability (all products, specific products, or specific categories)
+- Calculates appropriate discount based on type (percentage, fixed, buy X get Y, etc.)
+- Handles complex "Buy More Save More" tier calculations
 
 ## API Routes
 
@@ -549,16 +722,24 @@ Server-side API routes for complex operations that bypass client-side RLS perfor
 | Route | Method | Purpose |
 |-------|--------|---------|
 | `/api/settings` | POST | Update store settings (handles large data) |
-| `/api/users/create` | POST | Create new user with password |
+| `/api/users/create` | POST | Create new user with password and role assignment |
 | `/api/users/update` | POST | Update user profile and role |
+| `/api/users/approve` | POST | Admin endpoint to approve pending users |
+| `/api/users/delete` | DELETE | Admin endpoint to delete users (auth + profile) |
+| `/api/auth/register` | POST | Server-side registration with auto email confirmation |
+| `/api/auth/lookup-email` | POST | Find auth email by phone number |
 | `/api/products/create` | POST | Create new product with variants |
 | `/api/products/update` | POST | Update product and variants (handles multiple variants efficiently) |
+| `/api/orders/kasir` | GET | Fetch orders for kasir users with proper authentication |
+| `/api/kasir/orders/[id]` | PUT | Update order status for kasir users |
 
 **Why Server-Side APIs?**
-- Bypasses client-side RLS policy evaluation overhead
-- Handles large data payloads without timeout
-- Processes multiple database operations efficiently
-- Better error handling and logging
+- **Bypasses Client-Side RLS Performance Issues**: Avoids complex RLS policy evaluation overhead
+- **Handles Large Data Payloads**: Prevents timeouts when processing large amounts of data
+- **Efficient Multi-Operation Processing**: Performs multiple database operations in single requests
+- **Better Security**: Sensitive operations can be properly validated server-side
+- **Improved Error Handling**: Centralized error handling and logging
+- **Admin Operations**: Certain admin functions require service role access that bypasses RLS
 
 ## Design System
 
@@ -575,41 +756,85 @@ Server-side API routes for complex operations that bypass client-side RLS perfor
 
 ### State Management & Caching
 
-The application uses Zustand stores with built-in caching to optimize performance:
+The application uses a sophisticated Zustand-based state management system with smart caching to optimize performance:
 
 | Store | Purpose | Cache Duration |
 |-------|---------|----------------|
+| `cart-store` | Shopping cart | Persistent (localStorage) |
 | `categories-store` | Product categories | 5 minutes |
-| `store-settings-store` | Store configuration | 0ms (dev) / 5 minutes (prod) |
-| `social-media-store` | Social media links | 5 minutes |
 | `orders-store` | Order management | 5 minutes |
 | `users-store` | User management | 5 minutes |
+| `products-store` | Product data | 5 minutes |
 | `promotions-store` | Discount codes and promotions | 5 minutes |
-| `shipping-couriers-store` | Shipping options | 5 minutes |
 | `reviews-store` | Product reviews moderation | 5 minutes |
-| `cart-store` | Shopping cart | Persistent (localStorage) |
+| `shipping-couriers-store` | Shipping options | 5 minutes |
+| `store-settings-store` | Store configuration | 0ms (dev) / 5 minutes (prod) |
+| `social-media-store` | Social media links | 5 minutes |
+| `pets-store` | User's pets | 5 minutes |
 | `notification-store` | Notifications | Session |
+| `wishlist-store` | User wishlist | 5 minutes |
+
+#### Caching Strategy
 
 **Key features:**
 - **Singleton Supabase client** - Prevents memory leaks from multiple client instances
 - **Request deduplication** - Concurrent requests are merged into one
 - **Smart caching** - Data is cached and only re-fetched when stale
 - **Global state sharing** - All components access the same cached data
+- **Automatic cache invalidation** - After mutations, relevant caches are cleared
+- **Stable selectors** - Prevent unnecessary re-renders with proper memoization
+
+#### Cache Implementation Details
+
+- **In-memory caching** with automatic TTL (Time To Live) expiration
+- **Request deduplication** - Multiple concurrent requests for the same resource are merged into a single request
+- **Conditional fetching** - Data is only fetched when the cache is stale or empty
+- **Cache warming** - Critical data is pre-loaded when the application starts
+- **Cache persistence** - Shopping cart data is persisted in localStorage to survive page reloads
+- **Cache partitioning** - Different resources have separate cache instances
+
+#### Store Architecture
+
+All stores follow the same pattern:
+- **State** - Contains the cached data and loading states
+- **Getters** - Retrieval functions with caching logic
+- **Setters** - Update functions with cache invalidation
+- **Actions** - Business logic functions that coordinate state changes
+
+Example of a typical store implementation pattern:
+```
+// Store structure
+{
+  data: T[] | null,           // Cached data
+  loading: boolean,           // Loading state
+  error: string | null,       // Error state
+  lastFetch: number,          // Timestamp of last fetch
+  fetch: () => Promise<void>, // Fetch function with caching
+  invalidate: () => void,     // Clear cache
+}
+```
 
 ### Hooks Architecture
 
-Hooks in `/src/hooks/` are thin wrappers around Zustand stores:
+Hooks in `/src/hooks/` are thin wrappers around Zustand stores that provide:
 
+- **Type safety** through TypeScript interfaces
+- **Automatic cleanup** and cache invalidation
+- **Consistent API** across all components
+- **Loading state management**
+- **Error handling** and propagation
+
+Example:
 ```typescript
 // Example: useCategories hook
 export function useCategories() {
   const { categories, loading, fetchCategories, getActiveCategories } = useCategoriesStore();
-  
+
   useEffect(() => {
     fetchCategories(); // Only fetches if cache is stale
   }, [fetchCategories]);
 
-  return { categories, loading, getActiveCategories, refresh };
+  return { categories, loading, getActiveCategories };
 }
 ```
 
@@ -635,6 +860,54 @@ vercel
 ```
 
 Or use any Node.js hosting platform that supports Next.js 16.
+
+## Development Workflow & Best Practices
+
+### State Management Guidelines
+
+When working with Zustand stores and caching:
+
+- Always use the existing store pattern with caching and request deduplication
+- Implement proper cache invalidation after mutations
+- Use stable selectors to prevent unnecessary re-renders
+- Follow the store structure pattern with state, getters, setters, and actions
+- Use appropriate cache TTLs (typically 5 minutes for most data, 0ms in dev for store settings)
+
+### Database & Supabase Best Practices
+
+- Use the service role key for administrative operations in API routes
+- Implement Row Level Security for all tables
+- Create proper indexes for frequently queried columns
+- Use stored procedures/functions for complex operations
+- Follow the enum pattern for role/status fields to maintain consistency
+- Implement proper error handling and validation
+
+### Component Architecture
+
+- Use client components (`'use client'`) for interactive UI elements
+- Use server components for data fetching and rendering where possible
+- Implement proper type safety with TypeScript interfaces
+- Follow the pattern of hooks wrapping stores for consistent data access
+- Use shadcn/ui and Radix UI primitives for consistent design
+- Implement responsive design with Tailwind CSS
+
+### Performance Optimization
+
+- Leverage the caching system to avoid unnecessary database queries
+- Use proper image optimization with WebP format
+- Implement virtualization for large lists
+- Optimize database queries with proper indexing
+- Use efficient SVG icons from Lucide React
+- Implement proper loading states and skeleton screens
+
+### Testing & Quality Assurance
+
+- Test all user flows (public, admin, kasir, and user dashboard)
+- Verify role-based access controls
+- Test the caching system and ensure data consistency
+- Validate all form submissions with proper error handling
+- Test the mobile responsiveness of all pages
+- Verify image upload and optimization functionality
 
 ## Recent Updates
 
@@ -712,13 +985,24 @@ Or use any Node.js hosting platform that supports Next.js 16.
   - Reduced bandwidth and storage requirements
   - Better performance and faster page loads
   - Consistent image format across all user-uploaded images
+  - File type validation (image types only) with max 2MB size limit
+  - Real-time image preview before upload/submit
 
-- **Storage Architecture**:
+- **Image Storage Architecture**:
   - Migrated from Supabase Storage to base64 data URLs
   - No bucket configuration required
   - Simplified deployment and maintenance
-  - Direct database storage for all images
+  - Direct database storage for all images (avatars, pet photos)
   - Eliminated external storage dependencies
+  - Automatic WebP conversion using Canvas API
+  - Quality optimization with configurable quality settings (0.8 default)
+
+- **Image Utility Functions**:
+  - Located in `src/lib/image-utils.ts`
+  - Handle image conversion, resizing, and optimization
+  - Preserve aspect ratios during resizing operations
+  - Convert to WebP format for smaller file sizes
+  - Validate file types and sizes before processing
 
 ### December 2, 2025
 
@@ -857,6 +1141,9 @@ Or use any Node.js hosting platform that supports Next.js 16.
 **🎉 Enhanced Promotions System**
 
 - **Advanced Promotion Types** (`/admin/promotions`)
+  - **Percentage Off**: Standard percentage discount (e.g., 20% off)
+  - **Fixed Amount Off**: Fixed discount amount (e.g., IDR 50,000 off)
+  - **Buy X Get Y**: "Buy 2 Get 1 Free" type promotions
   - **Buy More Save More**: Create tiered volume discounts
     - Unlimited discount tiers (e.g., Buy 2+ get 5%, 5+ get 10%, 10+ get 15%)
     - Visual tiers manager with add/remove controls
@@ -866,19 +1153,39 @@ Or use any Node.js hosting platform that supports Next.js 16.
     - Set minimum purchase thresholds
     - Free shipping toggle for all promotion types
   - **Product-Specific Discounts**:
-    - "Applies To" selector: All Products or Specific Products
-    - Multi-select checkbox list for product selection
+    - "Applies To" selector: All Products, Specific Products, or Specific Categories
+    - Multi-select checkbox list for product/category selection
     - Shows product names and SKUs
-    - Selected product count indicator
+    - Selected product/category count indicator
+
+- **Promotion Configuration Options**:
+  - **Validity Periods**: Set start and end dates for promotions
+  - **Minimum Purchase Amounts**: Require minimum spend for discount eligibility
   - **Usage Tracking & Limits**:
     - Max uses per user configuration
     - Automatic usage tracking in `promotion_usage` table
     - Per-user and total usage counters
-  - **Enhanced UI**:
-    - Type-specific form sections (conditional rendering)
-    - Features badges in table view (Free Ship, X Products)
-    - Improved validation for each promotion type
-    - Visual tier configuration interface
+  - **Product Targeting**: Apply to all products, specific products, or specific categories
+
+- **Database Implementation**:
+  - `promotions` table with fields for all promotion types
+  - `promotion_tiers` table for "Buy More Save More" configurations
+  - `promotion_usage` table for tracking usage per user and order
+  - `validate_promotion_code()` RPC function for checkout validation
+
+- **Checkout Integration**:
+  - Use the `validate_promotion_code()` RPC function in checkout flow
+  - Validates code, checks user limits, verifies product applicability
+  - Automatically calculates appropriate discount based on promotion type
+  - Returns discount amount, free shipping status, and validation message
+
+- **Enhanced UI**:
+  - Type-specific form sections (conditional rendering)
+  - Features badges in table view (Free Ship, X Products)
+  - Improved validation for each promotion type
+  - Visual tier configuration interface
+  - Stats dashboard (total, active, currently valid, inactive)
+  - Color-coded status indicators (scheduled, expired, active)
 
 - **Province-Based Shipping Rates** (`/admin/shipping`)
   - **Courier Management**:
@@ -1153,27 +1460,35 @@ Or use any Node.js hosting platform that supports Next.js 16.
 **🔐 Admin Approval System for User Registration**
 
 - **User Registration Workflow**:
-  - New users register with email/password but require admin approval before login
+  - New users register with phone number and password but require admin approval before login
   - Added `is_approved` boolean field to profiles table (defaults to false for self-registered users)
   - Admin-created users are auto-approved (is_approved = true)
   - Login page checks approval status and blocks unapproved users with clear message
   - Server-side registration API bypasses Supabase email verification
 
 - **Admin User Management** (`/admin/users`):
+  - **CRUD Operations**: Full create, read, update, delete functionality for user accounts
+  - **Role Assignment**: Assign roles (master_admin, normal_admin, kasir, normal_user) to users
+  - **Password Management**: Create new users with passwords and reset existing passwords
+  - **Recipient Information**: Manage recipient shipping information fields
   - **Status Column**: Shows "Approved" (green badge) or "Pending" (yellow badge with clock icon)
   - **Approve Button**: CheckCircle icon button for pending users
   - **Delete Button**: Red trash icon with confirmation dialog
-  - Prevents self-deletion with validation
+  - **Prevents Self-Deletion**: Validation prevents users from deleting their own accounts
+  - **User Search**: Search and filter functionality for managing large user bases
 
 - **New API Endpoints**:
   - `POST /api/auth/register` - Server-side registration with auto email confirmation
   - `POST /api/users/approve` - Admin endpoint to approve pending users
   - `DELETE /api/users/delete` - Admin endpoint to delete users (auth + profile)
+  - `POST /api/users/create` - Create new users with role assignment
+  - `POST /api/users/update` - Update user profile and role
 
 - **Admin Client** (`src/lib/supabase/admin.ts`):
   - Singleton admin client using `SUPABASE_SERVICE_ROLE_KEY`
   - Required for admin operations (create, delete, approve users)
   - Bypasses RLS for administrative tasks
+  - Service role access for operations that regular RLS policies would block
 
 **❤️ Wishlist Feature**
 
@@ -1198,24 +1513,34 @@ Or use any Node.js hosting platform that supports Next.js 16.
 
 - **Purchase Verification Logic**:
   - Only users who have purchased the product can submit reviews
-  - Checks orders with status: paid, packed, shipped, or delivered
+  - Checks orders with qualifying statuses: paid, packed, shipped, or delivered
   - Prevents duplicate reviews (one review per user per product)
+  - Verifies purchase history before allowing review submission
 
 - **Product Page Reviews Tab** (`/products/[id]`):
-  - **Dynamic States**:
-    - Not logged in: "Login to Review" button
+  - **Dynamic States Based on User Context**:
+    - Not logged in: "Login to Review" button with redirect to login page
     - Hasn't purchased: "Purchase to Review" message with shopping bag icon
-    - Already reviewed: "Thank you for your review!" message
-    - Can review: Star rating input + comment form
+    - Already reviewed: "Thank you for your review!" message with option to edit
+    - Can review: Star rating input + comment form with validation
   - **Star Rating Display**: Shows actual average rating from approved reviews
-  - **Reviews List**: User avatars, star ratings, comments, timestamps
-  - Reviews require admin approval before appearing publicly
+  - **Reviews List**: Displays user avatars, star ratings, comments, and timestamps
+  - **Admin Moderation**: Reviews require admin approval before appearing publicly
+  - **Review Forms**: User-friendly interface with star rating and comment text area
 
 - **Reviews Store Enhancements** (`src/store/reviews-store.ts`):
-  - `checkUserPurchased(userId, productId)` - Verifies purchase via orders
-  - `checkUserReviewed(userId, productId)` - Checks existing review
-  - `submitReview(userId, productId, data)` - Creates review with is_approved: false
-  - `fetchProductReviews(productId)` - Fetches approved reviews
+  - `checkUserPurchased(userId, productId)` - Verifies purchase via orders with qualifying statuses
+  - `checkUserReviewed(userId, productId)` - Checks if user has already reviewed the product
+  - `submitReview(userId, productId, data)` - Creates review with is_approved: false for admin review
+  - `fetchProductReviews(productId)` - Fetches approved reviews for display
+  - `updateReview(reviewId, data)` - Allows users to edit their submitted reviews
+  - `deleteReview(reviewId)` - Allows users to delete their reviews (with admin permission)
+
+- **Reviews Management** (`/admin/reviews`):
+  - **Moderation Interface**: Review approval/rejection workflow
+  - **Filtering Options**: Filter by rating (1-5 stars), status (approved/pending), and search
+  - **Review Details**: View full review information including user, product, rating, and comment
+  - **Bulk Operations**: Approve/reject multiple reviews at once
 
 **🐾 Pet Profile Editing**
 
