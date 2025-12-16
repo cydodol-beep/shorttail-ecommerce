@@ -17,6 +17,7 @@ import {
   FileText,
   FileDown,
   MapPin,
+  User,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -456,20 +457,28 @@ export default function AdminOrdersPage() {
                           {formatDate(order.created_at)}
                         </TableCell>
                         <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-medium text-sm">
-                              {order.recipient_name || order.user_name || 'Walk-in Customer'}
-                            </span>
-                            {order.user_email && (
-                              <span className="text-xs text-brown-500">
-                                {order.user_email}
+                          <div className="flex items-start gap-2">
+                            <User className="h-4 w-4 mt-1 text-brown-500 flex-shrink-0" />
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-base text-brown-900">
+                                {order.recipient_name || order.user_name || 'Walk-in Customer'}
                               </span>
-                            )}
-                            {order.recipient_phone && (
-                              <span className="text-xs text-brown-500">
-                                {order.recipient_phone}
-                              </span>
-                            )}
+                              <div className="flex items-center gap-1 mt-1">
+                                {order.user_email && (
+                                  <span className="text-xs text-brown-600 flex items-center">
+                                    <span className="font-medium">Email:</span>{' '}
+                                    <span className="ml-1 truncate max-w-[120px]">{order.user_email}</span>
+                                  </span>
+                                )}
+                                {order.user_email && order.recipient_phone && <span className="text-brown-300">•</span>}
+                                {order.recipient_phone && (
+                                  <span className="text-xs text-brown-600 flex items-center">
+                                    <span className="font-medium">Phone:</span>{' '}
+                                    <span className="ml-1">{order.recipient_phone}</span>
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>
