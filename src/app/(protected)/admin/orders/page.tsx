@@ -890,6 +890,181 @@ export default function AdminOrdersPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Order Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Order</DialogTitle>
+            <DialogDescription>
+              Order ID: {selectedOrder?.id}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedOrder && (
+            <div className="space-y-4">
+              {/* Recipient Information */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-sm">Recipient Information</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-sm font-medium">Recipient Name</label>
+                    <Input
+                      value={editForm.recipient_name}
+                      onChange={(e) => setEditForm({ ...editForm, recipient_name: e.target.value })}
+                      placeholder="Enter recipient name"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Phone Number</label>
+                    <Input
+                      value={editForm.recipient_phone}
+                      onChange={(e) => setEditForm({ ...editForm, recipient_phone: e.target.value })}
+                      placeholder="Enter phone number"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Delivery Address</label>
+                  <Textarea
+                    value={editForm.recipient_address}
+                    onChange={(e) => setEditForm({ ...editForm, recipient_address: e.target.value })}
+                    placeholder="Enter full delivery address"
+                    className="mt-1 min-h-[80px]"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Province</label>
+                  <Input
+                    value={editForm.recipient_province}
+                    onChange={(e) => setEditForm({ ...editForm, recipient_province: e.target.value })}
+                    placeholder="Enter province"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              {/* Shipping Information */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-sm">Shipping Information</h3>
+                <div>
+                  <label className="text-sm font-medium">Shipping Courier</label>
+                  <Input
+                    value={editForm.shipping_courier}
+                    onChange={(e) => setEditForm({ ...editForm, shipping_courier: e.target.value })}
+                    placeholder="Enter courier name"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Shipping Fee (Rp)</label>
+                  <Input
+                    type="number"
+                    value={editForm.shipping_fee}
+                    onChange={(e) => setEditForm({ ...editForm, shipping_fee: parseFloat(e.target.value) || 0 })}
+                    placeholder="0"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              {/* Order Status */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-sm">Order Status</h3>
+                <Select
+                  value={editForm.status}
+                  onValueChange={(value) => setEditForm({ ...editForm, status: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="packed">Packed</SelectItem>
+                    <SelectItem value="shipped">Shipped</SelectItem>
+                    <SelectItem value="delivered">Delivered</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="returned">Returned</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Special Requests */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-sm">Special Requests / Notes</h3>
+                <Textarea
+                  value={editForm.customer_notes}
+                  onChange={(e) => setEditForm({ ...editForm, customer_notes: e.target.value })}
+                  placeholder="Enter any special requests or notes"
+                  className="min-h-[80px]"
+                />
+              </div>
+
+              {/* Pricing */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-sm">Pricing Adjustments</h3>
+                <div>
+                  <label className="text-sm font-medium">Discount Amount (Rp)</label>
+                  <Input
+                    type="number"
+                    value={editForm.discount_amount}
+                    onChange={(e) => setEditForm({ ...editForm, discount_amount: parseFloat(e.target.value) || 0 })}
+                    placeholder="0"
+                    className="mt-1"
+                  />
+                </div>
+                <div className="bg-brown-50 p-4 rounded-lg space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Subtotal</span>
+                    <span>{formatCurrency(selectedOrder.subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Shipping Fee</span>
+                    <span>{formatCurrency(editForm.shipping_fee)}</span>
+                  </div>
+                  {editForm.discount_amount > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Discount</span>
+                      <span>-{formatCurrency(editForm.discount_amount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-bold text-lg pt-2 border-t">
+                    <span>New Total</span>
+                    <span>{formatCurrency(selectedOrder.subtotal + editForm.shipping_fee - editForm.discount_amount)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setEditOpen(false)}
+                  disabled={updating}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSaveEdit}
+                  disabled={updating}
+                >
+                  {updating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Changes'
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Invoice and Packing List Functions */}
       {/* Generate Invoice (JPEG) */}
       const handleGenerateInvoice = async (order: Order) => {
