@@ -201,6 +201,67 @@ export default function AdminOrdersPage() {
     });
   };
 
+  {/* Invoice and Packing List Functions */}
+  {/* Generate Invoice (JPEG) */}
+  const handleGenerateInvoice = async (order: Order) => {
+    setGenerating(order.id);
+    try {
+      const storeInfo = {
+        store_name: settings?.storeName || 'shorttail.id',
+        store_logo: settings?.storeLogo || '',
+        store_address: settings?.storeAddress || '',
+        store_phone: settings?.storePhone || '',
+        store_email: settings?.storeEmail || '',
+      };
+
+      const blob = await generateInvoiceJPEG(order, storeInfo);
+      downloadInvoice(blob, order.id);
+      toast.success('Invoice downloaded successfully');
+    } catch (err) {
+      console.error('Error generating invoice:', err);
+      toast.error('Failed to generate invoice');
+    } finally {
+      setGenerating(null);
+    }
+  };
+
+  {/* Generate Packing List (PDF) */}
+  const handleGeneratePackingList = async (order: Order) => {
+    setGenerating(order.id);
+    try {
+      const storeInfo = {
+        store_name: settings?.storeName || 'shorttail.id',
+        store_logo: settings?.storeLogo || '',
+        store_address: settings?.storeAddress || '',
+        store_phone: settings?.storePhone || '',
+        store_email: settings?.storeEmail || '',
+        store_province: settings?.storeProvince || '',
+        store_postal_code: settings?.storePostalCode || '',
+      };
+
+      const pdf = generatePackingListPDF(order, storeInfo);
+      downloadPackingList(pdf, order.id);
+
+      // Automatically update order status to 'packed' if not already packed or beyond
+      if (order.status === 'pending' || order.status === 'paid') {
+        const success = await updateOrderStatus(order.id, 'packed');
+        if (success) {
+          toast.success('Packing list downloaded and order marked as packed');
+          refresh(); // Refresh the orders list to show updated status
+        } else {
+          toast.success('Packing list downloaded successfully');
+        }
+      } else {
+        toast.success('Packing list downloaded successfully');
+      }
+    } catch (err) {
+      console.error('Error generating packing list:', err);
+      toast.error('Failed to generate packing list');
+    } finally {
+      setGenerating(null);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -1064,67 +1125,6 @@ export default function AdminOrdersPage() {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Invoice and Packing List Functions */}
-      {/* Generate Invoice (JPEG) */}
-      const handleGenerateInvoice = async (order: Order) => {
-        setGenerating(order.id);
-        try {
-          const storeInfo = {
-            store_name: settings?.storeName || 'shorttail.id',
-            store_logo: settings?.storeLogo || '',
-            store_address: settings?.storeAddress || '',
-            store_phone: settings?.storePhone || '',
-            store_email: settings?.storeEmail || '',
-          };
-
-          const blob = await generateInvoiceJPEG(order, storeInfo);
-          downloadInvoice(blob, order.id);
-          toast.success('Invoice downloaded successfully');
-        } catch (err) {
-          console.error('Error generating invoice:', err);
-          toast.error('Failed to generate invoice');
-        } finally {
-          setGenerating(null);
-        }
-      };
-
-      {/* Generate Packing List (PDF) */}
-      const handleGeneratePackingList = async (order: Order) => {
-        setGenerating(order.id);
-        try {
-          const storeInfo = {
-            store_name: settings?.storeName || 'shorttail.id',
-            store_logo: settings?.storeLogo || '',
-            store_address: settings?.storeAddress || '',
-            store_phone: settings?.storePhone || '',
-            store_email: settings?.storeEmail || '',
-            store_province: settings?.storeProvince || '',
-            store_postal_code: settings?.storePostalCode || '',
-          };
-
-          const pdf = generatePackingListPDF(order, storeInfo);
-          downloadPackingList(pdf, order.id);
-
-          // Automatically update order status to 'packed' if not already packed or beyond
-          if (order.status === 'pending' || order.status === 'paid') {
-            const success = await updateOrderStatus(order.id, 'packed');
-            if (success) {
-              toast.success('Packing list downloaded and order marked as packed');
-              refresh(); // Refresh the orders list to show updated status
-            } else {
-              toast.success('Packing list downloaded successfully');
-            }
-          } else {
-            toast.success('Packing list downloaded successfully');
-          }
-        } catch (err) {
-          console.error('Error generating packing list:', err);
-          toast.error('Failed to generate packing list');
-        } finally {
-          setGenerating(null);
-        }
-      };
     </div>
   );
 }
