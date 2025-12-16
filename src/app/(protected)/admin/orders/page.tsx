@@ -461,16 +461,20 @@ export default function AdminOrdersPage() {
                             <User className="h-4 w-4 mt-1 text-brown-500 flex-shrink-0" />
                             <div className="flex flex-col">
                               <span className="font-semibold text-base text-brown-900">
-                                {order.user_name || order.recipient_name || 'Customer'}
+                                {order.user_name || order.recipient_name || order.user_email || 'Customer'}
                               </span>
                               <div className="flex items-center gap-1 mt-1">
-                                {order.user_email && (
+                                {order.source && (
+                                  <span className="text-xs px-2 py-0.5 bg-brown-100 text-brown-700 rounded">
+                                    {order.source.toUpperCase()}
+                                  </span>
+                                )}
+                                {order.user_email && order.user_email !== (order.user_name || order.recipient_name) && (
                                   <span className="text-xs text-brown-600 flex items-center">
                                     <span className="font-medium">Email:</span>{' '}
                                     <span className="ml-1 truncate max-w-[120px]">{order.user_email}</span>
                                   </span>
                                 )}
-                                {order.user_email && order.recipient_phone && <span className="text-brown-300">•</span>}
                                 {order.recipient_phone && (
                                   <span className="text-xs text-brown-600 flex items-center">
                                     <span className="font-medium">Phone:</span>{' '}
