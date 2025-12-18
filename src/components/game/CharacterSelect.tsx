@@ -1,115 +1,82 @@
-'use client';
-
-import { motion } from 'framer-motion';
+import React from 'react';
+import { useGameStore } from '@/store/useGameStore';
+import { DOG_BREEDS, COLORS } from '@/constants/game-constants';
+import { Lock, Check, Zap, ArrowUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useGameStore, DogBreed, DogCharacter } from '@/store/useGameStore';
-import { Dog } from 'lucide-react';
 
-interface CharacterSelectProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
-export default function CharacterSelect({ open, onOpenChange }: CharacterSelectProps) {
-  const { availableCharacters, unlockedCharacters, selectedCharacter, setSelectedCharacter } = useGameStore();
-
-  // Function to handle character selection
-  const handleSelectCharacter = (character: DogBreed) => {
-    if (unlockedCharacters.includes(character)) {
-      setSelectedCharacter(character);
-      onOpenChange(false);
-    }
-  };
+export const CharacterSelect: React.FC = () => {
+  const { selectedBreed, setBreed, userProfile, setStatus } = useGameStore();
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-[#E6D5B8] border-[#C08261] dark:bg-[#3D2C1E] dark:border-[#634832]">
-        <DialogHeader>
-          <DialogTitle className="text-center text-[#3D2C1E] dark:text-[#E6D5B8]">
-            Choose Your Dog
-          </DialogTitle>
-        </DialogHeader>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4">
-          {availableCharacters.map((character: DogCharacter) => {
-            const isUnlocked = unlockedCharacters.includes(character.id);
-            const isSelected = selectedCharacter === character.id;
-            
-            return (
-              <motion.div
-                key={character.id}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-                className={`
-                  relative rounded-xl p-4 border-2 flex flex-col items-center justify-center
-                  transition-all duration-200 cursor-pointer
-                  ${isSelected 
-                    ? 'border-[#634832] bg-[#D4B99C] dark:border-[#C08261] dark:bg-[#5A4735]' 
-                    : 'border-[#C08261] bg-[#F0E6D6] hover:bg-[#D4B99C] dark:border-[#634832] dark:bg-[#4D3D2E] dark:hover:bg-[#5A4735]'
-                  }
-                  ${!isUnlocked ? 'opacity-50 grayscale' : ''}
-                `}
-                onClick={() => isUnlocked && handleSelectCharacter(character.id)}
+    <div className="flex flex-col items-center justify-center h-full w-full max-w-4xl mx-auto p-4 animate-in fade-in zoom-in duration-300">
+      <h2 className="text-4xl font-bold mb-2" style={{ color: COLORS.text }}>Choose Your Pup</h2>
+      <p className="mb-8 opacity-80" style={{ color: COLORS.text }}>Each breed has unique abilities!</p>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-8">
+        {Object.values(DOG_BREEDS).map((breed) => {
+          const isUnlocked = userProfile.unlocked_breeds.includes(breed.id);
+          const isSelected = selectedBreed === breed.id;
+
+          return (
+            <div 
+              key={breed.id}
+              onClick={() => isUnlocked && setBreed(breed.id)}
+              className={`
+                relative p-6 rounded-2xl border-4 transition-all duration-200 cursor-pointer
+                flex flex-col items-center text-center group
+                ${isSelected ? 'border-[#C08261] bg-white scale-105 shadow-xl' : 'border-transparent bg-white/50 hover:bg-white/80'}
+                ${!isUnlocked ? 'opacity-70 grayscale' : ''}
+              `}
+            >
+              {!isUnlocked && (
+                <div className="absolute inset-0 bg-black/10 rounded-xl flex flex-col items-center justify-center z-10 backdrop-blur-[1px]">
+                  <Lock className="w-8 h-8 mb-2 text-[#3D2C1E]" />
+                  <span className="font-bold text-sm bg-[#3D2C1E] text-[#F4EBD9] px-2 py-1 rounded">
+                    Unlock at {breed.unlockThreshold} pts
+                  </span>
+                </div>
+              )}
+
+              {isSelected && (
+                <div className="absolute -top-3 -right-3 bg-[#4ADE80] text-white p-1 rounded-full shadow-md z-20">
+                  <Check size={20} />
+                </div>
+              )}
+
+              {/* Dog Placeholder Avatar */}
+              <div 
+                className="w-24 h-24 rounded-full mb-4 shadow-inner flex items-center justify-center text-4xl transform group-hover:scale-110 transition-transform"
+                style={{ backgroundColor: breed.color }}
               >
-                {isUnlocked ? (
-                  <>
-                    <div 
-                      className="w-16 h-16 rounded-full flex items-center justify-center mb-2"
-                      style={{ backgroundColor: character.color }}
-                    >
-                      <Dog className="w-8 h-8 text-white" />
-                    </div>
-                    <h3 className="font-bold text-[#3D2C1E] dark:text-[#E6D5B8]">{character.name}</h3>
-                    <p className="text-xs text-center text-[#6B533D] dark:text-[#B8A090] mt-1">
-                      {character.description}
-                    </p>
-                    <div className="grid grid-cols-3 gap-1 mt-2 w-full">
-                      <div className="text-center">
-                        <span className="block text-[10px] text-[#6B533D] dark:text-[#B8A090]">Speed</span>
-                        <span className="block text-sm font-bold text-[#3D2C1E] dark:text-[#E6D5B8]">{character.speed}</span>
-                      </div>
-                      <div className="text-center">
-                        <span className="block text-[10px] text-[#6B533D] dark:text-[#B8A090]">Jump</span>
-                        <span className="block text-sm font-bold text-[#3D2C1E] dark:text-[#E6D5B8]">{character.jumpHeight}</span>
-                      </div>
-                      <div className="text-center">
-                        <span className="block text-[10px] text-[#6B533D] dark:text-[#B8A090]">Agility</span>
-                        <span className="block text-sm font-bold text-[#3D2C1E] dark:text-[#E6D5B8]">{character.agility}</span>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full py-6">
-                    <div className="w-12 h-12 rounded-full bg-[#C08261] dark:bg-[#634832] flex items-center justify-center mb-2">
-                      <span className="text-white text-2xl">?</span>
-                    </div>
-                    <p className="text-sm text-center text-[#6B533D] dark:text-[#B8A090]">
-                      Unlock at level {character.id === 'corgi' ? '3' : character.id === 'shiba_inu' ? '5' : '1'}
-                    </p>
+                🐕
+              </div>
+
+              <h3 className="text-xl font-bold mb-1" style={{ color: COLORS.text }}>{breed.name}</h3>
+              <p className="text-sm mb-4 h-10 opacity-70 leading-tight">{breed.description}</p>
+
+              {/* Stats */}
+              <div className="w-full space-y-2">
+                <div className="flex items-center text-xs font-bold gap-2">
+                  <Zap size={14} className="text-[#C08261]" />
+                  <div className="w-full bg-[#E6D5B8] rounded-full h-2">
+                    <div className="bg-[#C08261] h-2 rounded-full" style={{ width: `${(breed.speedStat / 10) * 100}%` }}></div>
                   </div>
-                )}
-                
-                {isSelected && (
-                  <div className="absolute top-2 right-2 bg-[#C08261] dark:bg-[#634832] rounded-full p-1">
-                    <div className="w-3 h-3 bg-white rounded-full"></div>
+                </div>
+                <div className="flex items-center text-xs font-bold gap-2">
+                  <ArrowUp size={14} className="text-[#634832]" />
+                  <div className="w-full bg-[#E6D5B8] rounded-full h-2">
+                    <div className="bg-[#634832] h-2 rounded-full" style={{ width: `${(breed.jumpStat / 10) * 100}%` }}></div>
                   </div>
-                )}
-              </motion.div>
-            );
-          })}
-        </div>
-        
-        <div className="flex justify-center">
-          <Button
-            variant="outline"
-            className="border-[#634832] text-[#3D2C1E] hover:bg-[#D4B99C] dark:border-[#C08261] dark:text-[#E6D5B8] dark:hover:bg-[#5A4735]"
-            onClick={() => onOpenChange(false)}
-          >
-            Close
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <Button onClick={() => setStatus('PLAYING')} size="lg" className="w-64">
+        Play with {DOG_BREEDS[selectedBreed].name}
+      </Button>
+    </div>
   );
-}
+};

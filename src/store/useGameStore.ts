@@ -1,195 +1,153 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { GameStatus, DogBreedId, UserProfile } from '@/types/game-types';
+import { DOG_BREEDS } from '@/constants/game-constants';
 
-// Define character types
-export type DogBreed = 'golden_retriever' | 'corgi' | 'shiba_inu';
-
-export interface DogCharacter {
-  id: DogBreed;
-  name: string;
-  description: string;
-  speed: number;
-  jumpHeight: number;
-  agility: number;
-  color: string;
-}
-
-export interface GameState {
-  // Game state
+interface GameState {
+  // Session State
+  status: GameStatus;
   score: number;
   highScore: number;
-  gameSpeed: number;
-  isPlaying: boolean;
-  isGameOver: boolean;
-  level: number;
   combo: number;
-  maxCombo: number;
 
-  // Character selection
-  selectedCharacter: DogBreed;
-  availableCharacters: DogCharacter[];
-  unlockedCharacters: DogBreed[];
+  // User/Meta State
+  selectedBreed: DogBreedId;
+  userProfile: UserProfile;
+  newUnlock: DogBreedId | null;
 
   // Actions
-  setScore: (score: number) => void;
-  incrementScore: (points?: number) => void;
-  resetScore: () => void;
-  setHighScore: (highScore: number) => void;
-  setPlaying: (isPlaying: boolean) => void;
-  setGameOver: (isGameOver: boolean) => void;
+  setStatus: (status: GameStatus) => void;
+  addScore: (points: number) => void;
   resetGame: () => void;
-  setCombo: (combo: number) => void;
-  incrementCombo: () => void;
+  setBreed: (breed: DogBreedId) => void;
+  unlockBreed: (breed: DogBreedId) => void;
+  syncTotalPoints: (sessionPoints: number) => void;
   resetCombo: () => void;
-  setSelectedCharacter: (character: DogBreed) => void;
-  unlockCharacter: (character: DogBreed) => void;
-  updateLevel: () => void;
-  increaseGameSpeed: () => void;
-  syncGameToDatabase: () => Promise<void>;
+  incrementCombo: () => void;
+  clearNewUnlock: () => void;
+  loadUserProfile: () => Promise<void>;
 }
-
-// Predefined dog characters with their attributes
-const dogCharacters: DogCharacter[] = [
-  {
-    id: 'golden_retriever',
-    name: 'Golden Retriever',
-    description: 'Faster movement speed',
-    speed: 1.2,
-    jumpHeight: 1,
-    agility: 1,
-    color: '#F4D160' // Yellow/amber color for golden retriever
-  },
-  {
-    id: 'corgi',
-    name: 'Corgi',
-    description: 'Higher jump ability',
-    speed: 1,
-    jumpHeight: 1.3,
-    agility: 1,
-    color: '#C08261' // Terra cotta color for corgi
-  },
-  {
-    id: 'shiba_inu',
-    name: 'Shiba Inu',
-    description: 'Better agility and dodging',
-    speed: 1,
-    jumpHeight: 1,
-    agility: 1.2,
-    color: '#E6D5B8' // Light brown/tan color for shiba inu
-  }
-];
 
 export const useGameStore = create<GameState>()(
   persist(
     (set, get) => ({
-      // Initial state
+      status: 'MENU',
       score: 0,
       highScore: 0,
-      gameSpeed: 1,
-      isPlaying: false,
-      isGameOver: false,
-      level: 1,
       combo: 0,
-      maxCombo: 0,
-      selectedCharacter: 'golden_retriever',
-      availableCharacters: dogCharacters,
-      unlockedCharacters: ['golden_retriever'], // Initially only golden retriever is unlocked
+      selectedBreed: 'golden',
+      userProfile: {
+        id: 'guest-user',
+        total_points: 0,
+        unlocked_breeds: ['golden'],
+      },
+      newUnlock: null,
 
-      // Actions
-      setScore: (score) => set({ score }),
-      incrementScore: (points = 1) => {
-        const current = get();
-        const newScore = current.score + points;
+      setStatus: (status) => set({ status }),
+
+      addScore: (points) => {
+        const { score, highScore, combo } = get();
+        // Combo multiplier logic: (1 + floor(combo / 5))
+        const multiplier = 1 + Math.floor(combo / 5);
+        const newScore = score + (points * multiplier);
+
         set({
           score: newScore,
-          highScore: Math.max(newScore, current.highScore),
-          combo: current.combo + 1
+          highScore: Math.max(newScore, highScore)
         });
-
-        // Check if level needs to be updated
-        if (Math.floor(newScore / 100) > current.level) {
-          get().updateLevel();
-        }
       },
-      resetScore: () => set({ score: 0 }),
 
-      setHighScore: (highScore) => set({ highScore }),
+      incrementCombo: () => set((state) => ({ combo: state.combo + 1 })),
 
-      setPlaying: (isPlaying) => set({ isPlaying }),
-
-      setGameOver: (isGameOver) => set({ isGameOver }),
-
-      resetGame: () => set({
-        score: 0,
-        isPlaying: false,
-        isGameOver: false,
-        combo: 0,
-        gameSpeed: 1
-      }),
-
-      setCombo: (combo) => set({ combo }),
-      incrementCombo: () => {
-        const current = get();
-        const newCombo = current.combo + 1;
-        return set({ combo: newCombo, maxCombo: Math.max(newCombo, current.maxCombo) });
-      },
       resetCombo: () => set({ combo: 0 }),
 
-      setSelectedCharacter: (character) => set({ selectedCharacter: character }),
+      resetGame: () => set({ score: 0, combo: 0, status: 'PLAYING' }),
 
-      unlockCharacter: (character) => {
-        const current = get();
-        if (!current.unlockedCharacters.includes(character)) {
-          set({
-            unlockedCharacters: [...current.unlockedCharacters, character]
-          });
+      setBreed: (breed) => set({ selectedBreed: breed }),
+
+      unlockBreed: (breed) => set((state) => ({
+        userProfile: {
+          ...state.userProfile,
+          unlocked_breeds: [...state.userProfile.unlocked_breeds, breed]
         }
-      },
+      })),
 
-      updateLevel: () => {
-        const current = get();
-        const newLevel = Math.floor(current.score / 100) + 1;
-        set({ level: newLevel });
+      syncTotalPoints: (sessionPoints) => set((state) => {
+        const newTotal = state.userProfile.total_points + sessionPoints;
 
-        // Increase game speed as level increases
-        get().increaseGameSpeed();
-      },
+        // Simple local check for unlocks based on new total
+        const currentUnlocks = new Set(state.userProfile.unlocked_breeds);
+        let newlyUnlocked: DogBreedId | null = null;
 
-      increaseGameSpeed: () => {
-        const current = get();
-        // Increase game speed gradually based on level
-        set({ gameSpeed: 1 + (current.level * 0.1) });
-      },
+        Object.values(DOG_BREEDS).forEach(breed => {
+          if (newTotal >= breed.unlockThreshold && !currentUnlocks.has(breed.id)) {
+            currentUnlocks.add(breed.id);
+            newlyUnlocked = breed.id as DogBreedId;
+          }
+        });
 
-      syncGameToDatabase: async () => {
-        const current = get();
-
-        // Import the sync function dynamically to avoid SSR issues
-        const { syncGameResult } = await import('@/lib/game/supabase-game-sync');
-
-        const gameResult = {
-          score: current.score,
-          level: current.level,
+        return {
+          userProfile: {
+            ...state.userProfile,
+            total_points: newTotal,
+            unlocked_breeds: Array.from(currentUnlocks)
+          },
+          newUnlock: newlyUnlocked
         };
+      }),
 
-        const updatedProfile = await syncGameResult(gameResult);
+      clearNewUnlock: () => set({ newUnlock: null }),
 
-        if (updatedProfile) {
-          // Update the unlocked characters based on the database
+      // Load user profile from the database
+      loadUserProfile: async () => {
+        try {
+          // Dynamically import the supabase client to avoid SSR issues
+          const { createClient } = await import('@/lib/supabase/client');
+          const supabase = createClient();
+
+          // Get current user
+          const { data: { user }, error: authError } = await supabase.auth.getUser();
+          if (authError || !user) {
+            console.error('Error getting user:', authError);
+            return;
+          }
+
+          // Fetch user profile
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('id, points_balance, unlocked_breeds')
+            .eq('id', user.id)
+            .single();
+
+          if (error) {
+            console.error('Error fetching user profile:', error);
+            // User might not have a profile yet, initialize with defaults
+            set({
+              userProfile: {
+                id: user.id,
+                total_points: 0,
+                unlocked_breeds: ['golden'],
+              }
+            });
+            return;
+          }
+
+          // Update the store with the fetched profile
           set({
-            unlockedCharacters: updatedProfile.unlocked_breeds as DogBreed[],
-            level: updatedProfile.level,
+            userProfile: {
+              id: user.id,
+              total_points: data.points_balance,
+              unlocked_breeds: data.unlocked_breeds || ['golden'],
+            }
           });
+        } catch (error) {
+          console.error('Unexpected error in loadUserProfile:', error);
         }
       }
     }),
     {
-      name: 'game-storage', // Name of the item in localStorage
-      partialize: (state) => ({
-        highScore: state.highScore,
-        selectedCharacter: state.selectedCharacter,
-        unlockedCharacters: state.unlockedCharacters
-      }), // Persist only these values
+      name: 'paws-paths-storage',
+      storage: createJSONStorage(() => localStorage),
     }
   )
 );
