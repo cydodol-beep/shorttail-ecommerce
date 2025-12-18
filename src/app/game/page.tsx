@@ -47,7 +47,7 @@ export default function GamePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-brown-50">
-      <div className="sticky top-0 z-50 bg-brown-50">
+      <div className="sticky top-0 z-[100] bg-brown-50">
         <Header />
       </div>
       <div className="container mx-auto py-2 px-2 max-w-7xl flex-1">
