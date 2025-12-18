@@ -48,8 +48,8 @@ export default function GamePage() {
   return (
     <div className="min-h-screen flex flex-col bg-brown-50">
       <Header />
-      <div className="container mx-auto py-4 px-4 max-w-6xl flex-1">
-        <div className="w-full rounded-2xl overflow-hidden flex flex-col bg-[#E6D5B8] border-4 border-[#634832] shadow-lg">
+      <div className="container mx-auto py-2 px-2 max-w-7xl flex-1">
+        <div className="w-full h-[75vh] min-h-[600px] max-h-[750px] rounded-2xl overflow-hidden flex flex-col bg-[#E6D5B8] border-4 border-[#634832] shadow-lg">
           <GameApp />
         </div>
       </div>
