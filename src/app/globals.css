@@ -45,85 +45,91 @@
 
 :root {
   --radius: 0.75rem;
-  /* Orange Brownish Theme - Light Mode */
-  --background: #fef7f0;
-  --foreground: #4a3728;
+  /* Brownish Theme - Light Mode */
+  --background: #E6D5B8; /* Soft Sand */
+  --foreground: #3D2C1E; /* Deep Espresso */
   --card: #ffffff;
-  --card-foreground: #4a3728;
+  --card-foreground: #3D2C1E;
   --popover: #ffffff;
-  --popover-foreground: #4a3728;
-  --primary: #c87941;
+  --popover-foreground: #3D2C1E;
+  --primary: #C08261; /* Terra Cotta */
   --primary-foreground: #ffffff;
-  --secondary: #faeee5;
-  --secondary-foreground: #6b4423;
-  --muted: #f5e6da;
-  --muted-foreground: #8b6914;
-  --accent: #ecd5c3;
-  --accent-foreground: #4a3728;
+  --secondary: #D4B99C;
+  --secondary-foreground: #3D2C1E;
+  --muted: #F0E6D6;
+  --muted-foreground: #8B6C4F;
+  --accent: #C08261;
+  --accent-foreground: #ffffff;
   --destructive: #dc2626;
-  --border: #e0c4a8;
-  --input: #f0dfd0;
-  --ring: #c87941;
-  --chart-1: #c87941;
-  --chart-2: #e09f6e;
-  --chart-3: #a65e2e;
-  --chart-4: #d4a574;
-  --chart-5: #8b5a2b;
-  --sidebar: #fef7f0;
-  --sidebar-foreground: #4a3728;
-  --sidebar-primary: #c87941;
+  --border: #C08261;
+  --input: #E6D5B8;
+  --ring: #634832; /* Dark Wood */
+  --chart-1: #634832;
+  --chart-2: #8B6C4F;
+  --chart-3: #C08261;
+  --chart-4: #D4B99C;
+  --chart-5: #E6D5B8;
+  --sidebar: #E6D5B8;
+  --sidebar-foreground: #3D2C1E;
+  --sidebar-primary: #634832;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #faeee5;
-  --sidebar-accent-foreground: #6b4423;
-  --sidebar-border: #e0c4a8;
-  --sidebar-ring: #c87941;
-  
-  /* Custom orange-brown shades */
-  --brown-50: #fef7f0;
-  --brown-100: #faeee5;
-  --brown-200: #f5e6da;
-  --brown-300: #ecd5c3;
-  --brown-400: #e0c4a8;
-  --brown-500: #c87941;
-  --brown-600: #a65e2e;
-  --brown-700: #8b5a2b;
-  --brown-800: #6b4423;
-  --brown-900: #4a3728;
+  --sidebar-accent: #C08261;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #C08261;
+  --sidebar-ring: #634832;
+
+  /* Custom brownish shades */
+  --brown-50: #F9F5F0;
+  --brown-100: #F0E6D6;
+  --brown-200: #E6D5B8; /* Soft Sand */
+  --brown-300: #D4B99C;
+  --brown-400: #C08261; /* Terra Cotta */
+  --brown-500: #A66A4E;
+  --brown-600: #8B6C4F;
+  --brown-700: #6B533D;
+  --brown-800: #634832; /* Dark Wood */
+  --brown-900: #3D2C1E; /* Deep Espresso */
+
+  /* Additional game-specific colors */
+  --game-platform: #634832; /* Dark Wood */
+  --game-accent: #C08261; /* Terra Cotta */
+  --game-background: #E6D5B8; /* Soft Sand */
+  --game-text: #3D2C1E; /* Deep Espresso */
 }
 
 .dark {
-  /* Orange Brownish Theme - Dark Mode */
-  --background: #1a1310;
-  --foreground: #f5ebe4;
-  --card: #261d17;
-  --card-foreground: #f5ebe4;
-  --popover: #261d17;
-  --popover-foreground: #f5ebe4;
-  --primary: #e09f6e;
-  --primary-foreground: #1a1310;
-  --secondary: #3d2e24;
-  --secondary-foreground: #f5ebe4;
-  --muted: #3d2e24;
-  --muted-foreground: #b8a090;
-  --accent: #4a3728;
-  --accent-foreground: #f5ebe4;
+  /* Brownish Theme - Dark Mode */
+  --background: #3D2C1E; /* Deep Espresso */
+  --foreground: #E6D5B8; /* Soft Sand */
+  --card: #2C2117;
+  --card-foreground: #E6D5B8;
+  --popover: #3D2C1E;
+  --popover-foreground: #E6D5B8;
+  --primary: #C08261; /* Terra Cotta */
+  --primary-foreground: #1A1310;
+  --secondary: #5A4735;
+  --secondary-foreground: #E6D5B8;
+  --muted: #4D3D2E;
+  --muted-foreground: #B8A090;
+  --accent: #634832; /* Dark Wood */
+  --accent-foreground: #E6D5B8;
   --destructive: #ef4444;
-  --border: #4a3728;
-  --input: #3d2e24;
-  --ring: #e09f6e;
-  --chart-1: #e09f6e;
-  --chart-2: #c87941;
-  --chart-3: #d4a574;
-  --chart-4: #a65e2e;
-  --chart-5: #8b5a2b;
-  --sidebar: #1a1310;
-  --sidebar-foreground: #f5ebe4;
-  --sidebar-primary: #e09f6e;
-  --sidebar-primary-foreground: #1a1310;
-  --sidebar-accent: #3d2e24;
-  --sidebar-accent-foreground: #f5ebe4;
-  --sidebar-border: #4a3728;
-  --sidebar-ring: #e09f6e;
+  --border: #634832;
+  --input: #4D3D2E;
+  --ring: #C08261;
+  --chart-1: #C08261;
+  --chart-2: #D4B99C;
+  --chart-3: #8B6C4F;
+  --chart-4: #634832;
+  --chart-5: #3D2C1E;
+  --sidebar: #3D2C1E;
+  --sidebar-foreground: #E6D5B8;
+  --sidebar-primary: #C08261;
+  --sidebar-primary-foreground: #1A1310;
+  --sidebar-accent: #634832;
+  --sidebar-accent-foreground: #E6D5B8;
+  --sidebar-border: #634832;
+  --sidebar-ring: #C08261;
 }
 
 @layer base {

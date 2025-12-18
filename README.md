@@ -6,7 +6,7 @@ A sophisticated e-commerce platform for pet supplies built with Next.js 16 and S
 
 ShortTail.id is a comprehensive e-commerce solution built using a modern tech stack that includes:
 
-- **Frontend**: Next.js 16 with App Router and Turbopack
+- **Frontend**:  16 with App Router and TurbopackNext.js
 - **Backend**: Supabase (PostgreSQL, Auth, Realtime, Storage)
 - **Styling**: Tailwind CSS 4 with custom "Brownish" theme
 - **UI Components**: shadcn/ui + Radix UI primitives
@@ -1687,6 +1687,23 @@ When working with Zustand stores and caching:
   - Updated POS process to store the cashier's name when creating POS orders
   - Modified the kasir orders table to display real customer names instead of 'Online Customer'
   - Created database migrations (024 and 025) to add columns and populate existing orders
+
+---
+
+## 🆕 Recent Updates (December 16, 2025)
+
+### Customer Name Display Enhancement 🧑‍💼
+- **Fixed User Name Visibility in Admin Orders Table**:
+  - **Issue**: Admin users previously saw "Customer" placeholder instead of actual user names for marketplace orders
+  - **Root Cause**: The orders store was not fetching user names from profiles table for admin users, only for kasir users
+  - **Solution**: Updated `src/store/orders-store.ts` to fetch user profile data (user_name, user_email) for all orders when accessed by admin users
+  - **Implementation Details**:
+    - Added profile lookup for all user IDs in the fetched orders
+    - Created a map of user ID to profile information for efficient access
+    - Modified order processing to populate user_name field from profile data
+    - Maintained backward compatibility with existing order data
+  - **Result**: Admin users now see actual customer names in the orders table instead of generic "Customer" placeholder
+  - **Impact**: Improved order management with clear visibility of which users made each order
 
 ---
 
