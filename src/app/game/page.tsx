@@ -81,12 +81,57 @@ export default function GamePage() {
           </div>
         </div>
 
-        <GameBoard />
+        {/* Game Instructions */}
+        <div className="bg-[#F0E6D6] dark:bg-[#5A4735] rounded-lg p-6 mb-6 border-2 border-[#C08261] dark:border-[#634832]">
+          <h2 className="text-2xl font-bold text-[#3D2C1E] dark:text-[#E6D5B8] mb-4 text-center">How to Play</h2>
 
-        <div className="mt-8 text-center text-[#6B533D] dark:text-[#B8A090]">
-          <p>Controls: Press SPACE or UP ARROW to jump | Tap on mobile to jump</p>
-          <p className="mt-2">Collect treats to increase your score and unlock new dogs!</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="text-lg font-semibold text-[#3D2C1E] dark:text-[#E6D5B8] mb-2 flex items-center">
+                <span className="mr-2">🎮</span> Objective
+              </h3>
+              <ul className="list-disc pl-5 space-y-1 text-[#6B533D] dark:text-[#B8A090]">
+                <li>Avoid obstacles (cats, puddles, mailmen) by jumping</li>
+                <li>Collect treats (bones, cookies, meat) for points</li>
+                <li>Reach higher levels to unlock new dog breeds</li>
+                <li>Try to achieve high scores and unlock achievements</li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-[#3D2C1E] dark:text-[#E6D5B8] mb-2 flex items-center">
+                <span className="mr-2">🕹️</span> Controls
+              </h3>
+              <ul className="list-disc pl-5 space-y-1 text-[#6B533D] dark:text-[#B8A090]">
+                <li><strong>Desktop:</strong> Press SPACE or UP ARROW to jump</li>
+                <li><strong>Mobile:</strong> Tap anywhere on the screen or the JUMP button to jump</li>
+                <li><strong>Character Selection:</strong> Click "Choose Character" to switch dogs</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold text-[#3D2C1E] dark:text-[#E6D5B8] mb-2 flex items-center">
+              <span className="mr-2">🐶</span> Dog Breeds & Abilities
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-[#E6D5B8] dark:bg-[#4D3D2E] p-3 rounded-lg">
+                <h4 className="font-bold text-[#3D2C1E] dark:text-[#E6D5B8]">Golden Retriever</h4>
+                <p className="text-sm text-[#6B533D] dark:text-[#B8A090]">Faster movement speed</p>
+              </div>
+              <div className="bg-[#E6D5B8] dark:bg-[#4D3D2E] p-3 rounded-lg">
+                <h4 className="font-bold text-[#3D2C1E] dark:text-[#E6D5B8]">Corgi</h4>
+                <p className="text-sm text-[#6B533D] dark:text-[#B8A090]">Higher jump ability</p>
+              </div>
+              <div className="bg-[#E6D5B8] dark:bg-[#4D3D2E] p-3 rounded-lg">
+                <h4 className="font-bold text-[#3D2C1E] dark:text-[#E6D5B8]">Shiba Inu</h4>
+                <p className="text-sm text-[#6B533D] dark:text-[#B8A090]">Better agility and dodging</p>
+              </div>
+            </div>
+          </div>
         </div>
+
+        <GameBoard />
       </div>
 
       <CharacterSelect
