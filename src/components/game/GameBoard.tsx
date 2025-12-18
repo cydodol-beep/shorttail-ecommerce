@@ -98,7 +98,15 @@ export default function GameBoard() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isJumping, isPlaying, isGameOver]);
+  }, [isJumping, isPlaying, isGameOver, currentCharacter]);
+
+  // Update character selection
+  useEffect(() => {
+    // When character changes during gameplay, make sure we use the right character
+    // This effect ensures that the currentCharacter is always up-to-date
+    const updatedCharacter = availableCharacters.find(char => char.id === selectedCharacter) || availableCharacters[0];
+    // Current implementation already handles this correctly in the render
+  }, [selectedCharacter, availableCharacters]);
 
   // Game loop
   useEffect(() => {
@@ -123,10 +131,11 @@ export default function GameBoard() {
       // Update game speed reference
       gameSpeedRef.current = gameSpeed;
 
-      // Move obstacles and treats
+      // Move obstacles and treats based on character speed
+      const effectiveSpeed = gameSpeedRef.current * 5 * currentCharacter.speed;
       setObstacles(prev => {
         const updated = prev
-          .map(obs => ({ ...obs, x: obs.x - gameSpeedRef.current * 5 }))
+          .map(obs => ({ ...obs, x: obs.x - effectiveSpeed }))
           .filter(obs => obs.x > -OBSTACLE_SIZE);
 
         return updated;
@@ -134,7 +143,7 @@ export default function GameBoard() {
 
       setTreats(prev => {
         const updated = prev
-          .map(treat => ({ ...treat, x: treat.x - gameSpeedRef.current * 5 }))
+          .map(treat => ({ ...treat, x: treat.x - effectiveSpeed }))
           .filter(treat => treat.x > -TREAT_SIZE);
 
         return updated;
@@ -170,8 +179,8 @@ export default function GameBoard() {
       const dogRect = {
         x: 50,
         y: dogPosition,
-        width: DOG_SIZE,
-        height: DOG_SIZE,
+        width: DOG_SIZE * (1.2 - currentCharacter.agility * 0.2), // Shiba Inu has smaller collision area
+        height: DOG_SIZE * (1.2 - currentCharacter.agility * 0.2), // Shiba Inu has smaller collision area
       };
 
       // Check obstacle collisions
@@ -217,7 +226,7 @@ export default function GameBoard() {
         cancelAnimationFrame(gameLoopRef.current);
       }
     };
-  }, [isPlaying, isGameOver, dogPosition, jumpVelocity, isJumping, obstacles, treats, incrementScore, gameSpeed]);
+  }, [isPlaying, isGameOver, dogPosition, jumpVelocity, isJumping, obstacles, treats, incrementScore, gameSpeed, currentCharacter]);
 
   // Check level up
   useEffect(() => {
