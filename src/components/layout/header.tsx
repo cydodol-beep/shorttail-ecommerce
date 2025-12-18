@@ -289,6 +289,10 @@ export function Header() {
                       <LayoutDashboard className="mr-2 h-4 w-4" />
                       Dashboard
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/game')}>
+                      <PawPrint className="mr-2 h-4 w-4" />
+                      Play Game
+                    </DropdownMenuItem>
                     {isSuperUser && (
                       <DropdownMenuItem onClick={() => router.push('/kasir')}>
                         <ShoppingBag className="mr-2 h-4 w-4" />
@@ -363,6 +367,54 @@ export function Header() {
                       ))}
                     </nav>
 
+                    {!loading && user && (
+                      <div className="flex flex-col gap-2 mt-4">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            router.push('/game');
+                            setMobileMenuOpen(false);
+                          }}
+                        >
+                          Play Game
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            router.push(getDashboardLink());
+                            setMobileMenuOpen(false);
+                          }}
+                        >
+                          Dashboard
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            router.push('/dashboard/settings');
+                            setMobileMenuOpen(false);
+                          }}
+                        >
+                          Settings
+                        </Button>
+                        {isSuperUser && (
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              router.push('/kasir');
+                              setMobileMenuOpen(false);
+                            }}
+                          >
+                            POS System
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          onClick={handleSignOut}
+                        >
+                          Sign out
+                        </Button>
+                      </div>
+                    )}
                     {!loading && !user && (
                       <div className="flex flex-col gap-2 mt-4">
                         <Button variant="outline" onClick={() => router.push('/login')}>

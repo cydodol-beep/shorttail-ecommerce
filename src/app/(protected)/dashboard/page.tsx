@@ -318,6 +318,14 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
             </Link>
+            <Link href="/game">
+              <Card className="border-brown-200 hover:shadow-md transition-shadow cursor-pointer">
+                <CardContent className="pt-6 text-center">
+                  <Trophy className="h-8 w-8 text-primary mx-auto mb-2" />
+                  <p className="font-medium text-brown-900">Game</p>
+                </CardContent>
+              </Card>
+            </Link>
           </div>
 
           {/* Recent Orders */}
