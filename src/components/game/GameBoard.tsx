@@ -5,7 +5,7 @@ import { DOG_BREEDS, GAME_CONFIG, COLORS } from '@/constants/game-constants';
 import { Obstacle, Treat, Particle } from '@/types/game-types';
 import { updateUserProfile } from '@/lib/supabase';
 import { Bone, Skull, Pause, Play, RotateCcw, Home, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { GameButton as Button } from '@/components/game/GameButton';
 
 // Helper to interpolate colors
 const lerpColor = (a: string, b: string, amount: number) => {
@@ -74,8 +74,8 @@ const DogSprite: React.FC<{
 
     // Animation Variants
     const bodyVariants = {
-        RUN: { y: [0, -2, 0], transition: { repeat: Infinity, duration: 0.3, ease: "linear" } },
-        IDLE: { y: [0, 1, 0], transition: { repeat: Infinity, duration: 2.0, ease: "easeInOut" } },
+        RUN: { y: [0, -2, 0], transition: { repeat: Infinity, duration: 0.3, ease: "linear" as const } },
+        IDLE: { y: [0, 1, 0], transition: { repeat: Infinity, duration: 2.0, ease: "easeInOut" as const } },
         JUMP: { y: -5, rotate: -15, transition: { duration: 0.2 } },
         DEAD: { rotate: 180, y: 10, transition: { duration: 0.5 } }
     };
@@ -88,21 +88,21 @@ const DogSprite: React.FC<{
     };
 
     const tailVariants = {
-        RUN: { rotate: [10, -5, 10], transition: { repeat: Infinity, duration: 0.2, ease: "linear" } },
-        IDLE: { rotate: [5, -5, 5], transition: { repeat: Infinity, duration: 1.5, ease: "easeInOut" } },
+        RUN: { rotate: [10, -5, 10], transition: { repeat: Infinity, duration: 0.2, ease: "linear" as const } },
+        IDLE: { rotate: [5, -5, 5], transition: { repeat: Infinity, duration: 1.5, ease: "easeInOut" as const } },
         JUMP: { rotate: -20 },
         DEAD: { rotate: 0 }
     };
 
     const legA_Variants = { // Front-Right, Back-Right (The "Far" legs visually if we alternate)
-        RUN: { rotate: [25, -25, 25], transition: { repeat: Infinity, duration: 0.4, ease: "linear" } },
+        RUN: { rotate: [25, -25, 25], transition: { repeat: Infinity, duration: 0.4, ease: "linear" as const } },
         IDLE: { rotate: 0 },
         JUMP: { rotate: 30 }, // Tucked
         DEAD: { rotate: -30 }
     };
 
     const legB_Variants = { // Front-Left, Back-Left
-        RUN: { rotate: [-25, 25, -25], transition: { repeat: Infinity, duration: 0.4, ease: "linear" } },
+        RUN: { rotate: [-25, 25, -25], transition: { repeat: Infinity, duration: 0.4, ease: "linear" as const } },
         IDLE: { rotate: 0 },
         JUMP: { rotate: 30 },
         DEAD: { rotate: -30 }

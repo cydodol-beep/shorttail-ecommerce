@@ -3,7 +3,17 @@ import { useGameStore } from '@/store/useGameStore';
 import { CharacterSelect } from '@/components/game/CharacterSelect';
 import { GameBoard } from '@/components/game/GameBoard';
 import { Trophy, Dog } from 'lucide-react';
-import { COLORS } from '@/constants/game-constants';
+
+// Define the colors directly in the component to avoid import issues
+const COLORS = {
+  background: '#E6D5B8', // Soft Sand
+  ground: '#634832',     // Dark Wood
+  accent: '#C08261',     // Terra Cotta
+  text: '#3D2C1E',       // Deep Espresso
+  cream: '#F4EBD9',      // Cream
+  success: '#4ADE80',
+  danger: '#EF4444',
+};
 
 const GameApp: React.FC = () => {
   const { status, userProfile } = useGameStore();

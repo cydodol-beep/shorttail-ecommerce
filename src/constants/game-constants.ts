@@ -1,4 +1,4 @@
-import { DogBreed } from './types';
+import { DogBreed } from '@/types/game-types';
 
 // Theme Palette
 export const COLORS = {

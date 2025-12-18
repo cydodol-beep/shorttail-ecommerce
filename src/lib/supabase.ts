@@ -53,7 +53,7 @@ export const fetchLeaderboard = async () => {
       return [];
     }
 
-    return data.map(profile => ({
+    return data.map((profile: any) => ({
       name: profile.user_name || 'Anonymous',
       points: profile.points_balance
     }));

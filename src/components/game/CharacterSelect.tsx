@@ -2,7 +2,7 @@ import React from 'react';
 import { useGameStore } from '@/store/useGameStore';
 import { DOG_BREEDS, COLORS } from '@/constants/game-constants';
 import { Lock, Check, Zap, ArrowUp } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { GameButton as Button } from '@/components/game/GameButton';
 
 export const CharacterSelect: React.FC = () => {
   const { selectedBreed, setBreed, userProfile, setStatus } = useGameStore();
