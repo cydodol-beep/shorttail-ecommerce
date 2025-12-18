@@ -30,7 +30,7 @@ export const DOG_BREEDS: Record<string, DogBreed> = {
     speedStat: 5,
     jumpStat: 5,
     color: '#E3C059',
-    unlockThreshold: 0,
+    unlockThreshold: 0, // Unlocked from the start
   },
   corgi: {
     id: 'corgi',

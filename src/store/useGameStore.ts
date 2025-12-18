@@ -39,7 +39,7 @@ export const useGameStore = create<GameState>()(
       userProfile: {
         id: 'guest-user',
         total_points: 0,
-        unlocked_breeds: ['golden'],
+        unlocked_breeds: ['golden'], // Golden Retriever is unlocked by default
       },
       newUnlock: null,
 
@@ -126,18 +126,24 @@ export const useGameStore = create<GameState>()(
               userProfile: {
                 id: user.id,
                 total_points: 0,
-                unlocked_breeds: ['golden'],
+                unlocked_breeds: ['golden'], // Golden Retriever is unlocked for all users
               }
             });
             return;
           }
 
           // Update the store with the fetched profile
+          // Ensure Golden Retriever is always unlocked by default
+          const unlockedBreeds = data.unlocked_breeds || ['golden'];
+          if (!unlockedBreeds.includes('golden')) {
+            unlockedBreeds.push('golden');
+          }
+
           set({
             userProfile: {
               id: user.id,
               total_points: data.points_balance,
-              unlocked_breeds: data.unlocked_breeds || ['golden'],
+              unlocked_breeds: unlockedBreeds,
             }
           });
         } catch (error) {
