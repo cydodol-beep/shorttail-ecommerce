@@ -650,8 +650,14 @@ export const GameBoard: React.FC = () => {
 
       <AnimatePresence>
         {status === 'PAUSED' && (
-             <div className="absolute inset-0 z-40 flex items-center justify-center bg-white/20 backdrop-blur-sm">
-                <h2 className="text-6xl font-black text-[#3D2C1E] tracking-wider drop-shadow-lg">PAUSED</h2>
+             <div
+               className="absolute inset-0 z-40 flex items-center justify-center bg-white/20 backdrop-blur-sm cursor-pointer"
+               onClick={() => setStatus('PLAYING')}
+             >
+                <div className="text-center">
+                  <h2 className="text-6xl font-black text-[#3D2C1E] tracking-wider drop-shadow-lg mb-4">PAUSED</h2>
+                  <p className="text-xl font-bold text-[#3D2C1E]">Click to Resume</p>
+                </div>
              </div>
         )}
       </AnimatePresence>
