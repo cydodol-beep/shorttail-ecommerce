@@ -45,8 +45,8 @@ export default function GamePage() {
   }
 
   return (
-    <div className="container mx-auto py-4 px-4 max-w-6xl">
-      <div className="w-full h-[90vh] min-h-[600px] max-h-[800px] rounded-2xl overflow-hidden flex flex-col bg-[#E6D5B8] border-4 border-[#634832] shadow-lg">
+    <div className="container mx-auto py-2 px-2 max-w-7xl">
+      <div className="w-full h-[92vh] min-h-[650px] max-h-[850px] rounded-2xl overflow-hidden flex flex-col bg-[#E6D5B8] border-4 border-[#634832] shadow-lg">
         <GameApp />
       </div>
     </div>
