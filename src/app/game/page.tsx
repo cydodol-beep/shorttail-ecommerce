@@ -45,8 +45,10 @@ export default function GamePage() {
   }
 
   return (
-    <div className="w-full h-screen overflow-hidden flex flex-col bg-[#E6D5B8]">
-      <GameApp />
+    <div className="container mx-auto py-4 px-4 max-w-6xl">
+      <div className="w-full h-[80vh] min-h-[500px] max-h-[700px] rounded-2xl overflow-hidden flex flex-col bg-[#E6D5B8] border-4 border-[#634832] shadow-lg">
+        <GameApp />
+      </div>
     </div>
   );
 }

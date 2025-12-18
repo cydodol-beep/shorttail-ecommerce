@@ -26,11 +26,11 @@ const GameApp: React.FC = () => {
   }, []);
 
   return (
-    <div className="w-full h-screen overflow-hidden flex flex-col bg-[#E6D5B8]">
+    <div className="w-full h-full overflow-hidden flex flex-col bg-[#E6D5B8]">
 
       {/* Conditional Header - Only show in Menu */}
       {status === 'MENU' && (
-        <header className="p-4 flex justify-between items-center max-w-6xl mx-auto w-full">
+        <header className="p-4 flex justify-between items-center">
             <div className="flex items-center gap-2">
                 <div className="bg-[#C08261] p-2 rounded-lg text-white">
                     <Dog size={24} />
