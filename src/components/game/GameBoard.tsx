@@ -552,27 +552,29 @@ export const GameBoard: React.FC = () => {
         </div>
       </div>
 
-      <canvas 
-        ref={canvasRef} 
-        className="w-full h-full touch-none"
-        onPointerDown={() => {
-            if (status === 'PLAYING') {
-                const state = gameState.current;
-                if (!state.isJumping) {
-                    playSynthSound('jump');
-                    state.dy = GAME_CONFIG.jumpForce - (breedStats.jumpStat * 0.4);
-                    state.isJumping = true;
-                }
-            }
-        }}
-      />
-      
-      {/* Dog Player Overlay */}
-      <div 
-        ref={playerRef} 
-        className="absolute top-0 left-0 pointer-events-none will-change-transform z-10"
-      >
-          <DogSprite breed={selectedBreed} animState={animState} />
+      <div className="w-full h-full flex items-center justify-center relative">
+        <canvas
+          ref={canvasRef}
+          className="w-full h-full max-w-full max-h-full touch-none"
+          onPointerDown={() => {
+              if (status === 'PLAYING') {
+                  const state = gameState.current;
+                  if (!state.isJumping) {
+                      playSynthSound('jump');
+                      state.dy = GAME_CONFIG.jumpForce - (breedStats.jumpStat * 0.4);
+                      state.isJumping = true;
+                  }
+              }
+          }}
+        />
+
+        {/* Dog Player Overlay */}
+        <div
+          ref={playerRef}
+          className="absolute top-0 left-0 pointer-events-none will-change-transform z-10"
+        >
+            <DogSprite breed={selectedBreed} animState={animState} />
+        </div>
       </div>
 
       <AnimatePresence>
