@@ -12,7 +12,7 @@ export const GameButton: React.FC<GameButtonProps> = ({
   className = '',
   ...props
 }) => {
-  let baseStyle = "font-bold rounded-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-2 shadow-[0_4px_0px_0px_rgba(0,0,0,0.2)] active:shadow-none active:translate-y-[4px]";
+  const baseStyle = "font-bold rounded-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-2 shadow-[0_4px_0px_0px_rgba(0,0,0,0.2)] active:shadow-none active:translate-y-[4px]";
 
   const variants = {
     primary: `text-[#F4EBD9] hover:brightness-110`,

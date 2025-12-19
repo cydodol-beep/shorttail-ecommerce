@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { redirect } from 'next/navigation';
 import { useGameStore } from '@/store/useGameStore';
 import GameApp from '@/components/game/App';
-import { Header } from '@/components/layout/header';
 
 export default function GamePage() {
   const { loadUserProfile } = useGameStore();
@@ -46,15 +45,8 @@ export default function GamePage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-brown-50">
-      <div className="sticky top-0 z-[100] bg-brown-50">
-        <Header />
-      </div>
-      <div className="container mx-auto py-2 px-2 max-w-7xl flex-1">
-        <div className="w-full h-[75vh] min-h-[600px] max-h-[750px] rounded-2xl overflow-hidden flex flex-col bg-[#E6D5B8] border-4 border-[#634832] shadow-lg">
-          <GameApp />
-        </div>
-      </div>
+    <div className="w-full h-[calc(100vh-100px)] min-h-[600px] max-h-[750px] rounded-2xl overflow-hidden flex flex-col bg-[#E6D5B8] border-4 border-[#634832] shadow-lg">
+      <GameApp />
     </div>
   );
 }
