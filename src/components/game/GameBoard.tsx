@@ -197,15 +197,16 @@ export const GameBoard: React.FC = () => {
     playerX: 50,
     isJumping: false,
     blinkTimer: 0,
+    treatsCollected: 0, // Track total treats collected in this game session
     obstacles: [] as Obstacle[],
     treats: [] as Treat[],
     particles: [] as Particle[],
     floatingTexts: [] as { x: number, y: number, text: string, life: number, color: string, scale: number }[],
     layerOffsets: { far: 0, mid: 0, near: 0 },
     clouds: [] as { x: number, y: number, scale: number, speed: number }[],
-    midGroundItems: [] as { x: number, y: number, type: number, scale: number }[], 
-    nearScenery: [] as { 
-        x: number, y: number, type: 'tree' | 'bush' | 'lamp', scale: number, variant: number, sway: number, flicker: number 
+    midGroundItems: [] as { x: number, y: number, type: number, scale: number }[],
+    nearScenery: [] as {
+        x: number, y: number, type: 'tree' | 'bush' | 'lamp', scale: number, variant: number, sway: number, flicker: number
     }[],
   });
 
@@ -243,6 +244,10 @@ export const GameBoard: React.FC = () => {
 
   // Status Effects
   useEffect(() => {
+    if (status === 'PLAYING') {
+      // Reset treats collected counter when starting a new game
+      gameState.current.treatsCollected = 0;
+    }
     if (status === 'GAME_OVER') {
       playSynthSound('gameover');
       syncTotalPoints(score);
@@ -358,9 +363,23 @@ export const GameBoard: React.FC = () => {
         for (let t of state.treats) {
             if (!t.collected && pRect.x < t.x + t.width && pRect.x + pRect.w > t.x && pRect.y < t.y + t.height && pRect.y + pRect.h > t.y) {
                t.collected = true; playSynthSound('collect');
-               const mult = 1 + Math.floor(useGameStore.getState().combo / 5);
-               addScore(t.value); incrementCombo();
-               state.floatingTexts.push({ x: t.x, y: t.y, text: mult > 1 ? `+${t.value*mult} (x${mult}!)` : `+${t.value*mult}`, life: 1.0, color: mult > 1 ? '#EF4444' : '#3D2C1E', scale: mult > 1 ? 1.5 : 1.0 });
+               state.treatsCollected++; // Increment treats collected in this session
+
+               // Calculate score: base 3 points + bonus based on total treats collected in this session
+               const baseScore = 3; // Each treat is worth 3 points
+
+               // Add bonus based on total treats collected in this game session
+               let bonus = 0;
+               if (state.treatsCollected >= 10) {
+                 bonus = 3; // +3 points bonus for 10+ treats collected in session
+               } else if (state.treatsCollected >= 5) {
+                 bonus = 1; // +1 point bonus for 5+ treats collected in session
+               }
+
+               const totalScore = baseScore + bonus;
+               addScore(totalScore);
+               incrementCombo();
+               state.floatingTexts.push({ x: t.x, y: t.y, text: `+${totalScore}`, life: 1.0, color: bonus > 0 ? '#EF4444' : '#3D2C1E', scale: bonus > 0 ? 1.5 : 1.0 });
            }
        }
        state.floatingTexts.forEach(ft => { ft.y -= 1.5; ft.life -= 0.02; });
@@ -636,6 +655,7 @@ export const GameBoard: React.FC = () => {
                                 gameState.current.treats = [];
                                 gameState.current.floatingTexts = [];
                                 gameState.current.playerY = 0;
+                                gameState.current.treatsCollected = 0; // Reset treats collected count
                             }} 
                             size="lg" 
                             className="w-full"

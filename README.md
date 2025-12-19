@@ -1707,6 +1707,49 @@ When working with Zustand stores and caching:
 
 ---
 
+## 🆕 Recent Updates (December 20, 2025)
+
+### Enhanced Session Management & Timeout Handling 🔄
+- **Fixed Session Timeout Issues During Long Browsing Sessions**:
+  - **Issue**: Users experienced hanging or disconnection after browsing for extended periods (3+ minutes)
+  - **Root Cause**: Session tokens expiring during long browsing sessions without proper refresh mechanism
+  - **Solution**: Enhanced session management with proactive refresh and proper sign-out handling
+  - **Key Improvements**:
+    - Implemented proactive session refresh every 2 minutes to keep sessions alive
+    - Added automatic refresh when tokens approach expiration (within 5 minutes)
+    - Improved error handling for session refresh failures
+    - Added proper user sign-out when session becomes invalid/expired
+    - Enhanced timeout protection (increased to 15 seconds) to prevent hanging requests
+  - **Implementation Details**:
+    - Updated `src/hooks/use-auth.ts` with enhanced session refresh logic
+    - Added `checkAndRefreshSession` function that runs every 2 minutes
+    - Implemented proper sign-out when session refresh fails or token expires
+    - Added additional checks for already expired tokens to enforce proper logout
+    - Improved error handling to catch and handle session-related exceptions
+  - **Result**: Users can now browse for extended periods without experiencing session timeouts
+  - **Impact**: Improved user experience with seamless session continuation during long browsing sessions
+
+### Database Migration for Tier Updates with RLS Bypass 🗃️
+- **Fixed Membership Tier Display Issues Despite Sufficient Points**:
+  - **Issue**: Users with sufficient points for higher tiers were not seeing their tiers updated in the UI
+  - **Root Cause**: Row Level Security (RLS) policies restricting tier updates to admin users only, preventing automatic tier updates
+  - **Solution**: Updated database trigger functions with SECURITY DEFINER to bypass RLS for tier updates
+  - **Key Improvements**:
+    - Added `SECURITY DEFINER` to `update_membership_tier()` function in `supabase/migrations/022_order_notification_triggers.sql`
+    - Changed trigger from BEFORE UPDATE to AFTER UPDATE for proper execution flow
+    - Implemented direct UPDATE statements within the function to bypass RLS restrictions
+    - Added batch update process to fix all existing incorrect user tiers
+    - Maintained tier calculation logic based on store settings thresholds
+  - **Implementation Details**:
+    - Function now runs with service role privileges to update tier column
+    - Direct UPDATE to profiles table bypasses RLS policies
+    - Batch update process retroactively fixes all users with incorrect tiers
+    - Automatic tier updates continue to work for future point increases
+  - **Result**: User tiers now properly update when they reach required point thresholds
+  - **Impact**: Accurate membership tier display reflecting actual user point balances
+
+---
+
 ## License
 
 Private project - All rights reserved.
