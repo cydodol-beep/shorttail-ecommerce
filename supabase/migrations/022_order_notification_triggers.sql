@@ -83,11 +83,12 @@ CREATE TRIGGER update_user_points_on_delivery
   WHEN (NEW.status = 'delivered' AND OLD.status != 'delivered')
   EXECUTE FUNCTION update_user_points_after_delivery();
 
--- Function to update membership tier based on points
+-- Function to update membership tier based on points with security definer to bypass RLS
 CREATE OR REPLACE FUNCTION update_membership_tier()
 RETURNS TRIGGER AS $$
 DECLARE
   settings_row RECORD;
+  new_tier membership_tier;
 BEGIN
   -- Get the latest store settings
   SELECT
@@ -103,25 +104,31 @@ BEGIN
 
   -- Determine the new tier based on points and store settings
   IF NEW.points_balance >= COALESCE(settings_row.tier_adulthood_threshold, 10000) THEN
-    NEW.tier := 'Adulthood';
+    new_tier := 'Adulthood';
   ELSIF NEW.points_balance >= COALESCE(settings_row.tier_adolescence_threshold, 5000) THEN
-    NEW.tier := 'Adolescence';
+    new_tier := 'Adolescence';
   ELSIF NEW.points_balance >= COALESCE(settings_row.tier_juvenile_threshold, 2000) THEN
-    NEW.tier := 'Juvenile';
+    new_tier := 'Juvenile';
   ELSIF NEW.points_balance >= COALESCE(settings_row.tier_transitional_threshold, 500) THEN
-    NEW.tier := 'Transitional';
+    new_tier := 'Transitional';
   ELSE
-    NEW.tier := 'Newborn';
+    new_tier := 'Newborn';
   END IF;
+
+  -- Update the tier separately using service role since RLS restricts tier updates to admins only
+  -- The BEFORE trigger sets NEW.tier, but with RLS this doesn't work, so we update directly
+  UPDATE profiles
+  SET tier = new_tier
+  WHERE id = NEW.id;
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Create trigger to automatically update membership tier when points are changed
 DROP TRIGGER IF EXISTS update_membership_tier_trigger ON profiles;
 CREATE TRIGGER update_membership_tier_trigger
-  BEFORE UPDATE OF points_balance ON profiles
+  AFTER UPDATE OF points_balance ON profiles
   FOR EACH ROW
   WHEN (OLD.points_balance IS DISTINCT FROM NEW.points_balance)
   EXECUTE FUNCTION update_membership_tier();

@@ -207,9 +207,8 @@ export function useAuth() {
       }
     );
 
-    // Periodically check and refresh session to prevent expiry during long browsing
-    // This runs every 2 minutes to keep the session alive
-    sessionCheckInterval.current = setInterval(async () => {
+    // Function to check and refresh session to prevent expiry during long browsing
+    const checkAndRefreshSession = async () => {
       try {
         const getSessionPromise = supabase.auth.getSession();
         type SessionResult = {
@@ -225,6 +224,8 @@ export function useAuth() {
         const { data: { session }, error } = sessionResult;
 
         if (error || !session) {
+          // If session retrieval fails, user might be logged out, so sign out properly
+          await signOut();
           return;
         }
 
@@ -245,16 +246,31 @@ export function useAuth() {
               15000  // Increase to 15000 to prevent timeout error
             ) as RefreshResult;
 
-            const { error: refreshError } = refreshResult;
+            const { error: refreshError, data: refreshData } = refreshResult;
             if (refreshError) {
               console.error('Failed to refresh session:', refreshError.message);
+              // If refresh fails, force logout as session may be invalid
+              await signOut();
+            } else if (refreshData.session) {
+              // Update session in the UI after refresh
+              setUser(refreshData.session.user);
+              useAuthStore.setState({ user: refreshData.session.user });
             }
+          } else if (expiresIn < 0) {
+            // If already expired, sign out
+            await signOut();
           }
         }
       } catch (error) {
         console.error('Session check failed:', error);
+        // If the check completely fails, sign out the user as session may be invalid
+        await signOut();
       }
-    }, 2 * 60 * 1000); // Every 2 minutes
+    };
+
+    // Periodically check and refresh session to prevent expiry during long browsing
+    // This runs every 2 minutes to keep the session alive
+    sessionCheckInterval.current = setInterval(checkAndRefreshSession, 2 * 60 * 1000); // Every 2 minutes
 
     return () => {
       subscription.unsubscribe();
