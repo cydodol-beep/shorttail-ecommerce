@@ -37,7 +37,6 @@ export default function GameDescription() {
                 <li>• Each treat = 3 base points</li>
                 <li>• +1 bonus point per treat after 5 total treats collected</li>
                 <li>• +3 bonus points per treat after 10 total treats collected</li>
-                <li>• No more combo multipliers</li>
               </ul>
             </div>
           </div>
@@ -46,9 +45,9 @@ export default function GameDescription() {
         <div className="md:w-1/3 flex flex-col items-center justify-center">
           <div className="bg-[#F4EBD9] p-4 rounded-xl border-4 border-[#C08261] text-center">
             <BookOpen className="mx-auto text-[#C08261]" size={48} />
-            <h3 className="font-bold text-[#3D2C1E] mt-2">Compete with Others</h3>
+            <h3 className="font-bold text-[#3D2C1E] mt-2">Enjoy the Adventure!</h3>
             <p className="text-sm text-[#634832] mt-1">
-              Check the leaderboard to see how your score compares to other players!
+              Jump, collect treats, and achieve high scores in this fun adventure!
             </p>
           </div>
         </div>
