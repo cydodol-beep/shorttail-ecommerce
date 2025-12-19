@@ -473,8 +473,14 @@ export const GameBoard: React.FC = () => {
     };
     
     const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.code === 'Space' || e.code === 'ArrowUp') handleJump();
-        if (e.code === 'Escape') setStatus(status === 'PAUSED' ? 'PLAYING' : 'PAUSED');
+        if (e.code === 'Space' || e.code === 'ArrowUp') {
+            e.preventDefault(); // Prevent default browser behavior (scrolling)
+            handleJump();
+        }
+        if (e.code === 'Escape') {
+            e.preventDefault();
+            setStatus(status === 'PAUSED' ? 'PLAYING' : 'PAUSED');
+        }
     };
     window.addEventListener('keydown', handleKeyDown);
     
