@@ -55,15 +55,15 @@ export default function GamePage() {
       </div>
 
       {/* Main game area with leaderboard */}
-      <div className="w-full h-[720px] rounded-2xl overflow-hidden bg-[#E6D5B8] border-4 border-[#634832] shadow-lg mb-6 flex">
-        <div className="w-2/3 h-full flex flex-col border-r-4 border-[#634832]">
+      <div className="w-full h-[500px] sm:h-[720px] rounded-2xl overflow-hidden bg-[#E6D5B8] border-4 border-[#634832] shadow-lg mb-6 flex flex-col md:flex-row">
+        <div className="w-full md:w-2/3 h-2/3 md:h-full flex flex-col border-b-4 md:border-b-0 md:border-r-4 border-[#634832]">
           <div className="h-full flex-1">
             <GameApp />
           </div>
         </div>
 
-        {/* Leaderboard Section - Right Column */}
-        <div className="w-1/3 h-full flex flex-col">
+        {/* Leaderboard Section - Right Column (Stacked on mobile) */}
+        <div className="w-full md:w-1/3 h-1/3 md:h-full flex flex-col">
           <div className="h-full">
             <Leaderboard />
           </div>
@@ -72,8 +72,8 @@ export default function GamePage() {
 
       {/* Related Products Section at the bottom */}
       <div className="p-4">
-        <div className="bg-white/80 backdrop-blur-sm border-4 border-[#634832] rounded-2xl p-6 shadow-lg">
-          <GameRelatedProducts title="Pet Supplies & Toys" limit={6} />
+        <div className="bg-white/80 backdrop-blur-sm border-4 border-[#634832] rounded-2xl p-4 sm:p-6 shadow-lg">
+          <GameRelatedProducts title="Pet Supplies & Toys" limit={4} />
         </div>
       </div>
     </div>
