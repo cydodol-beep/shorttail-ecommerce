@@ -48,12 +48,14 @@ export default function GamePage() {
   }
 
   return (
-    <div className="w-full min-h-screen max-w-7xl mx-auto bg-[#E6D5B8] py-4">
+    <div className="w-full max-w-7xl mx-auto bg-[#E6D5B8]">
       {/* Game Description at the top */}
-      <GameDescription />
+      <div className="p-4">
+        <GameDescription />
+      </div>
 
       {/* Main game area with leaderboard */}
-      <div className="w-full min-h-[600px] max-h-[750px] rounded-2xl overflow-hidden bg-[#E6D5B8] border-4 border-[#634832] shadow-lg mb-6 flex flex-col">
+      <div className="w-full min-h-[600px] rounded-2xl overflow-hidden bg-[#E6D5B8] border-4 border-[#634832] shadow-lg mb-6 flex flex-col">
         <div className="flex h-full w-full">
           {/* Game Section - Left Column */}
           <div className="w-2/3 h-full flex flex-col border-r-4 border-[#634832]">
@@ -72,8 +74,10 @@ export default function GamePage() {
       </div>
 
       {/* Related Products Section at the bottom */}
-      <div className="bg-white/80 backdrop-blur-sm border-4 border-[#634832] rounded-2xl p-6 shadow-lg">
-        <GameRelatedProducts title="Pet Supplies & Toys" limit={6} />
+      <div className="p-4">
+        <div className="bg-white/80 backdrop-blur-sm border-4 border-[#634832] rounded-2xl p-6 shadow-lg">
+          <GameRelatedProducts title="Pet Supplies & Toys" limit={6} />
+        </div>
       </div>
     </div>
   );

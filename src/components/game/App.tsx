@@ -49,7 +49,7 @@ const GameApp: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 relative overflow-hidden flex items-center justify-center">
-        <div className="w-full max-w-4xl h-full flex flex-col">
+        <div className="w-full h-full flex flex-col">
           {status === 'MENU' ? (
             <CharacterSelect />
           ) : (
