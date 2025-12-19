@@ -552,10 +552,10 @@ export const GameBoard: React.FC = () => {
         </div>
       </div>
 
-      <div className="w-full h-full flex items-center justify-center relative">
+      <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
         <canvas
           ref={canvasRef}
-          className="w-full h-full max-w-full max-h-full touch-none"
+          className="w-full h-full max-w-full max-h-full object-contain touch-none"
           onPointerDown={() => {
               if (status === 'PLAYING') {
                   const state = gameState.current;

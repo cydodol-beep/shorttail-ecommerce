@@ -55,20 +55,17 @@ export default function GamePage() {
       </div>
 
       {/* Main game area with leaderboard */}
-      <div className="w-full min-h-[600px] rounded-2xl overflow-hidden bg-[#E6D5B8] border-4 border-[#634832] shadow-lg mb-6 flex flex-col">
-        <div className="flex h-full w-full">
-          {/* Game Section - Left Column */}
-          <div className="w-2/3 h-full flex flex-col border-r-4 border-[#634832]">
-            <div className="h-full flex-1">
-              <GameApp />
-            </div>
+      <div className="w-full h-[600px] rounded-2xl overflow-hidden bg-[#E6D5B8] border-4 border-[#634832] shadow-lg mb-6 flex">
+        <div className="w-2/3 h-full flex flex-col border-r-4 border-[#634832]">
+          <div className="h-full flex-1">
+            <GameApp />
           </div>
+        </div>
 
-          {/* Leaderboard Section - Right Column */}
-          <div className="w-1/3 h-full flex flex-col">
-            <div className="h-full">
-              <Leaderboard />
-            </div>
+        {/* Leaderboard Section - Right Column */}
+        <div className="w-1/3 h-full flex flex-col">
+          <div className="h-full">
+            <Leaderboard />
           </div>
         </div>
       </div>
