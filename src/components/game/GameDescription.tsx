@@ -22,8 +22,9 @@ export default function GameDescription() {
               <ul className="text-sm text-[#634832] space-y-1">
                 <li>• Press <strong>SPACE</strong> or <strong>UP ARROW</strong> to jump</li>
                 <li>• Avoid obstacles (cats, mailmen, puddles)</li>
-                <li>• Collect bone treats for points</li>
-                <li>• Build combos to multiply your points!</li>
+                <li>• Collect bone treats for points (3 points each)</li>
+                <li>• Earn bonus points after collecting 5+ treats (+1 each)</li>
+                <li>• Earn bigger bonus after collecting 10+ treats (+3 each)</li>
               </ul>
             </div>
             
@@ -33,10 +34,10 @@ export default function GameDescription() {
                 <h3 className="font-bold text-[#3D2C1E]">Scoring</h3>
               </div>
               <ul className="text-sm text-[#634832] space-y-1">
-                <li>• Each treat = 10 points</li>
-                <li>• Combos multiply your score</li>
-                <li>• 5+ treats = 2x points</li>
-                <li>• 10+ treats = 3x points and more!</li>
+                <li>• Each treat = 3 base points</li>
+                <li>• +1 bonus point per treat after 5 total treats collected</li>
+                <li>• +3 bonus points per treat after 10 total treats collected</li>
+                <li>• No more combo multipliers</li>
               </ul>
             </div>
           </div>
