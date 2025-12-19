@@ -55,15 +55,15 @@ export default function GamePage() {
       </div>
 
       {/* Main game area with leaderboard */}
-      <div className="w-full h-[500px] sm:h-[720px] rounded-2xl overflow-hidden bg-[#E6D5B8] border-4 border-[#634832] shadow-lg mb-6 flex flex-col md:flex-row">
-        <div className="w-full md:w-2/3 h-2/3 md:h-full flex flex-col border-b-4 md:border-b-0 md:border-r-4 border-[#634832]">
+      <div className="w-full h-[700px] sm:h-[800px] md:h-[720px] rounded-2xl overflow-hidden bg-[#E6D5B8] border-4 border-[#634832] shadow-lg mb-6 flex flex-col md:flex-row">
+        <div className="w-full md:w-2/3 h-3/4 md:h-full flex flex-col border-b-4 md:border-b-0 md:border-r-4 border-[#634832]">
           <div className="h-full flex-1">
             <GameApp />
           </div>
         </div>
 
         {/* Leaderboard Section - Right Column (Stacked on mobile) */}
-        <div className="w-full md:w-1/3 h-1/3 md:h-full flex flex-col">
+        <div className="w-full md:w-1/3 h-1/4 md:h-full flex flex-col">
           <div className="h-full">
             <Leaderboard />
           </div>
