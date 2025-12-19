@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation';
 import { useGameStore } from '@/store/useGameStore';
 import GameApp from '@/components/game/App';
 import Leaderboard from '@/components/game/Leaderboard';
+import GameDescription from '@/components/game/GameDescription';
+import { GameRelatedProducts } from '@/components/game/GameRelatedProducts';
 
 export default function GamePage() {
   const { loadUserProfile } = useGameStore();
@@ -46,17 +48,28 @@ export default function GamePage() {
   }
 
   return (
-    <div className="w-full h-[calc(100vh-100px)] min-h-[600px] max-h-[750px] rounded-2xl overflow-hidden flex flex-col bg-[#E6D5B8] border-4 border-[#634832] shadow-lg">
-      <div className="flex h-full w-full">
-        {/* Game Section - Left Column */}
-        <div className="w-2/3 h-full flex flex-col">
-          <GameApp />
-        </div>
+    <div className="w-full min-h-screen max-w-7xl mx-auto bg-[#E6D5B8] py-4">
+      {/* Game Description at the top */}
+      <GameDescription />
 
-        {/* Leaderboard Section - Right Column */}
-        <div className="w-1/3 h-full p-4">
-          <Leaderboard />
+      {/* Main game area with leaderboard */}
+      <div className="w-full min-h-[600px] max-h-[750px] rounded-2xl overflow-hidden flex flex-col bg-[#E6D5B8] border-4 border-[#634832] shadow-lg mb-6">
+        <div className="flex h-full w-full">
+          {/* Game Section - Left Column */}
+          <div className="w-2/3 h-full flex flex-col">
+            <GameApp />
+          </div>
+
+          {/* Leaderboard Section - Right Column */}
+          <div className="w-1/3 h-full p-4">
+            <Leaderboard />
+          </div>
         </div>
+      </div>
+
+      {/* Related Products Section at the bottom */}
+      <div className="bg-white/80 backdrop-blur-sm border-4 border-[#634832] rounded-2xl p-6 shadow-lg">
+        <GameRelatedProducts title="Pet Supplies & Toys" limit={6} />
       </div>
     </div>
   );
