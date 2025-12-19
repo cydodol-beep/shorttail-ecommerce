@@ -385,7 +385,31 @@ export function useAuth() {
       const { data, error } = await withTimeoutSupabaseInner<Profile>(
         supabase
           .from('profiles')
-          .select('id, user_name, user_phoneno, role, is_approved, tier, points_balance, referral_code, created_at')
+          .select(`
+            id,
+            user_name,
+            user_phoneno,
+            user_email,
+            user_avatar_url,
+            role,
+            is_approved,
+            tier,
+            points_balance,
+            referral_code,
+            created_at,
+            address_line1,
+            city,
+            province_id,
+            postal_code,
+            recipient_name,
+            recipient_address_line1,
+            recipient_city,
+            recipient_province_id,
+            recipient_postal_code,
+            recipient_phoneno,
+            level,
+            unlocked_breeds
+          `)
           .eq('id', user.id)
           .single() as Promise<{ data: Profile | null; error: any }>,
         15000 // 15 second timeout - increasing to prevent timeout error
