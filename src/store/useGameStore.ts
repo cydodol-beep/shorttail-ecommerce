@@ -72,7 +72,8 @@ export const useGameStore = create<GameState>()(
         }
       })),
 
-      syncTotalPoints: (sessionPoints) => set((state) => {
+      syncTotalPoints: async (sessionPoints) => {
+        const state = get();
         const newTotal = state.userProfile.total_points + sessionPoints;
 
         // Simple local check for unlocks based on new total
@@ -86,7 +87,8 @@ export const useGameStore = create<GameState>()(
           }
         });
 
-        return {
+        // Update the local state
+        const newState = {
           userProfile: {
             ...state.userProfile,
             total_points: newTotal,
@@ -94,7 +96,30 @@ export const useGameStore = create<GameState>()(
           },
           newUnlock: newlyUnlocked
         };
-      }),
+
+        // Update the database with the new points
+        try {
+          const { createClient } = await import('@/lib/supabase/client');
+          const supabase = createClient();
+
+          // Update points in the database
+          const { error } = await supabase
+            .from('profiles')
+            .update({
+              points_balance: newTotal,
+              unlocked_breeds: Array.from(currentUnlocks)
+            })
+            .eq('id', state.userProfile.id);
+
+          if (error) {
+            console.error('Error updating user profile in database:', error);
+          }
+        } catch (error) {
+          console.error('Unexpected error updating user profile:', error);
+        }
+
+        set(newState);
+      },
 
       clearNewUnlock: () => set({ newUnlock: null }),
 
