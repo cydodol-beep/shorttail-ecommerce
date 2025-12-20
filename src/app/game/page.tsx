@@ -48,23 +48,23 @@ export default function GamePage() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto bg-[#E6D5B8]">
+    <div className="w-full max-w-7xl mx-auto bg-[#E6D5B8] pb-4">
       {/* Game Description at the top */}
       <div className="p-4">
         <GameDescription />
       </div>
 
       {/* Main game area with leaderboard */}
-      <div className="w-full max-w-full h-[500px] sm:h-[600px] md:h-[720px] lg:h-[700px] overflow-hidden bg-[#E6D5B8] border-4 border-[#634832] shadow-lg mb-6 rounded-2xl flex flex-col md:flex-row">
-        <div className="w-full md:w-2/3 h-[70%] md:h-full flex flex-col border-b-4 md:border-b-0 md:border-r-4 border-[#634832]">
-          <div className="h-full w-full flex-1">
+      <div className="w-full max-w-full min-h-[500px] sm:min-h-[600px] md:min-h-[720px] overflow-x-hidden bg-[#E6D5B8] border-4 border-[#634832] shadow-lg mb-6 rounded-2xl flex flex-col md:flex-row">
+        <div className="w-full md:w-2/3 h-full min-h-[350px] flex flex-col border-b-4 md:border-b-0 md:border-r-4 border-[#634832]">
+          <div className="h-full w-full flex-1 min-h-[300px]">
             <GameApp />
           </div>
         </div>
 
         {/* Leaderboard Section - Right Column (Stacked on mobile) */}
-        <div className="w-full md:w-1/3 h-[30%] md:h-full flex flex-col">
-          <div className="h-full w-full">
+        <div className="w-full md:w-1/3 h-64 md:h-full flex flex-col">
+          <div className="h-full w-full overflow-y-auto max-h-64 md:max-h-none">
             <Leaderboard />
           </div>
         </div>

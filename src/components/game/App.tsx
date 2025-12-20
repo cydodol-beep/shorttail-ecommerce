@@ -26,7 +26,7 @@ const GameApp: React.FC = () => {
   }, []);
 
   return (
-    <div className="w-full h-full overflow-hidden flex flex-col bg-[#E6D5B8]">
+    <div className="w-full h-full overflow-hidden flex flex-col bg-[#E6D5B8] max-w-full">
 
       {/* Conditional Header - Only show in Menu */}
       {status === 'MENU' && (
