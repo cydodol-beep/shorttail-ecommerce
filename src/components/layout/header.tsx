@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingCart, Search, Menu, X, Heart, ArrowRight, User } from 'lucide-react';
+import { ShoppingCart, Search, Menu, X, Heart, ArrowRight, User, Percent, Tag, Calendar, Gift, Sparkles, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { Button } from '@/components/ui/button';
@@ -158,27 +158,74 @@ export function Header() {
           <div className="text-xs py-1.5 font-medium tracking-wide relative z-40 overflow-hidden" style={{ backgroundColor: '#006d77', color: '#fdf6ec' }}>
             <div className="whitespace-nowrap hover:[animation-play-state:paused] w-max marquee-slow">
               {promotions.length > 0 ? (
-                <>
-                  {promotions.map((promo, index, arr) => (
-                    <React.Fragment key={promo.id}>
-                      <span className="mx-8">
-                        {promo.description || `${promo.code} - ${promo.discount_type}: ${promo.discount_value}% OFF`}
-                      </span>
-                      {index < arr.length - 1 && <span className="mx-8">•</span>}
-                    </React.Fragment>
-                  ))}
-                </>
+                promotions.map((promo, index, arr) => (
+                  <React.Fragment key={promo.id}>
+                    <span className="mx-8 flex items-center gap-2">
+                      {/* Icon based on promotion type */}
+                      {promo.discount_type === 'percentage' ? (
+                        <Percent className="w-4 h-4 inline" />
+                      ) : promo.discount_type === 'fixed' ? (
+                        <Tag className="w-4 h-4 inline" />
+                      ) : (
+                        <Gift className="w-4 h-4 inline" />
+                      )}
+
+                      {/* Promotion details */}
+                      <span className="font-bold">{promo.code}</span>
+                      <span>-</span>
+                      <span>{promo.formattedDiscount}</span>
+                      {promo.min_purchase_amount && (
+                        <span>(Min. {new Intl.NumberFormat('id-ID', {
+                          style: 'currency',
+                          currency: 'IDR',
+                          minimumFractionDigits: 0
+                        }).format(promo.min_purchase_amount)})</span>
+                      )}
+                      <span>until</span>
+                      <span className="font-medium">{new Date(promo.end_date!).toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'short'
+                      })}</span>
+                      {promo.description && (
+                        <>
+                          <span>-</span>
+                          <span>{promo.description}</span>
+                        </>
+                      )}
+                    </span>
+
+                    {/* Separator between promotions - only if not the last one */}
+                    {index < arr.length - 1 && (
+                      <span className="mx-1">•</span>
+                    )}
+                  </React.Fragment>
+                ))
               ) : (
                 <>
-                  <span className="mx-8">FREE SHIPPING ON ORDERS OVER $50 🚚</span>
-                  <span className="mx-8">•</span>
-                  <span className="mx-8">GET 10% OFF YOUR FIRST ORDER WITH CODE: PAWS10</span>
-                  <span className="mx-8">•</span>
-                  <span className="mx-8">NEW SEASONAL TOYS JUST ARRIVED! 🎾</span>
-                  <span className="mx-8">•</span>
-                  <span className="mx-8">FREE RETURNS WITHIN 30 DAYS 📦</span>
-                  <span className="mx-8">•</span>
-                  <span className="mx-8">24/7 VET SUPPORT AVAILABLE 🏥</span>
+                  <span className="mx-8 flex items-center gap-2">
+                    <Gift className="w-4 h-4 inline" />
+                    FREE SHIPPING ON ORDERS OVER $50 🚚
+                  </span>
+                  <span className="mx-1">•</span>
+                  <span className="mx-8 flex items-center gap-2">
+                    <Tag className="w-4 h-4 inline" />
+                    GET 10% OFF YOUR FIRST ORDER WITH CODE: PAWS10
+                  </span>
+                  <span className="mx-1">•</span>
+                  <span className="mx-8 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 inline" />
+                    NEW SEASONAL TOYS JUST ARRIVED! 🎾
+                  </span>
+                  <span className="mx-1">•</span>
+                  <span className="mx-8 flex items-center gap-2">
+                    <Star className="w-4 h-4 inline" />
+                    FREE RETURNS WITHIN 30 DAYS 📦
+                  </span>
+                  <span className="mx-1">•</span>
+                  <span className="mx-8 flex items-center gap-2">
+                    <Calendar className="w-4 h-4 inline" />
+                    24/7 VET SUPPORT AVAILABLE 🏥
+                  </span>
                 </>
               )}
             </div>
