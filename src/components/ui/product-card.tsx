@@ -186,3 +186,5 @@ export function ProductCard({ product, onAddToCart, rank, showQuickActions = tru
     </Card>
   );
 }
+
+export { ProductCard };
