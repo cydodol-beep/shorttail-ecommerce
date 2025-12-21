@@ -1,441 +1,310 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { 
-  PawPrint, 
-  ShoppingBag, 
-  Bell, 
-  Menu, 
-  X, 
-  Search,
-  LogOut,
-  Settings,
-  LayoutDashboard
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ShoppingCart, Search, Menu, X, Heart, ArrowRight, User } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { useAuth } from '@/hooks/use-auth';
 import { useCartItemCount } from '@/store/cart-store';
-import { useNotificationStore } from '@/store/notification-store';
-import { useStoreSettings } from '@/hooks/use-store-settings';
-import { useCategories } from '@/hooks/use-categories';
-import { useNotifications } from '@/hooks/use-notifications';
+import { useAuth } from '@/hooks/use-auth';
+
+// Navigation items
+const NAV_ITEMS = [
+  { label: 'Home', href: '/' },
+  { label: 'Shop', href: '/products' },
+  { label: 'Sale', href: '/products?on_sale=true' },
+  { label: 'New', href: '/products?new=true' },
+  { label: 'Contact', href: '/#footer' },
+];
 
 export function Header() {
   const router = useRouter();
-  const { user, profile, signOut, isAdmin, isKasir, isSuperUser, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const itemCount = useCartItemCount();
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotificationStore();
-  const { settings: storeSettings } = useStoreSettings();
-  const { getActiveCategories } = useCategories();
-  const categories = getActiveCategories();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [mounted, setMounted] = useState(false);
+  const desktopInputRef = useRef<HTMLInputElement>(null);
+  const mobileInputRef = useRef<HTMLInputElement>(null);
+  const searchTriggerRef = useRef<HTMLButtonElement>(null);
 
-  // Initialize the notification system for the header
-  useNotifications();
-
-  // Prevent hydration mismatch for Sheet component
   useEffect(() => {
-    setMounted(true);
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleSearch = (e: React.FormEvent) => {
+  // Manage focus when search state changes
+  useEffect(() => {
+    if (isSearchOpen) {
+      if (window.innerWidth >= 768 && desktopInputRef.current) {
+        // Desktop focus
+        setTimeout(() => desktopInputRef.current?.focus(), 100);
+      } else if (window.innerWidth < 768 && mobileInputRef.current) {
+        // Mobile focus
+        setTimeout(() => mobileInputRef.current?.focus(), 100);
+      }
+    }
+  }, [isSearchOpen]);
+
+  // Handle Escape key to close search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isSearchOpen) {
+        e.preventDefault();
+        setIsSearchOpen(false);
+        searchTriggerRef.current?.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSearchOpen]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       router.push(`/products?search=${encodeURIComponent(searchQuery)}`);
     }
+    setIsSearchOpen(false);
+    setIsMobileMenuOpen(false);
+    searchTriggerRef.current?.focus();
   };
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      // Force a full page refresh to clear all state
-      window.location.href = '/login';
-    } catch (err) {
-      console.error('Sign out failed:', err);
-      // Still redirect on error
-      window.location.href = '/login';
+  const toggleSearch = () => {
+    const newState = !isSearchOpen;
+    setIsSearchOpen(newState);
+    if (newState) {
+      setIsMobileMenuOpen(false);
     }
   };
 
-  const handleMarkAsRead = async (id: string) => {
-    if (!user) return;
-    await markAsRead(id);
-  };
-
-  const handleMarkAllAsRead = async () => {
-    if (!user) return;
-    await markAllAsRead();
-  };
-
-  const getDashboardLink = () => {
-    if (isAdmin) return '/admin';
-    if (isKasir) return '/kasir';
-    return '/dashboard';
+  const toggleMobileMenu = () => {
+    const newState = !isMobileMenuOpen;
+    setIsMobileMenuOpen(newState);
+    if (newState) {
+      setIsSearchOpen(false);
+    }
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-brown-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            {storeSettings?.storeLogo ? (
-              <div className="relative w-8 h-8">
-                {storeSettings.storeLogo.startsWith('data:') ? (
-                  <img
-                    src={storeSettings.storeLogo}
-                    alt={storeSettings.storeName || 'Store Logo'}
-                    className="w-full h-full object-contain"
-                  />
-                ) : (
-                  <Image
-                    src={storeSettings.storeLogo}
-                    alt={storeSettings.storeName || 'Store Logo'}
-                    fill
-                    className="object-contain"
-                  />
-                )}
-              </div>
-            ) : (
-              <div className="p-1.5 bg-primary rounded-lg">
-                <PawPrint className="h-6 w-6 text-white" />
-              </div>
-            )}
-            <span className="font-bold text-xl text-brown-900 hidden sm:block">
-              {storeSettings?.storeName || 'ShortTail.id'}
-            </span>
-          </Link>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-6">
-            <Link
-              href="/products"
-              className="text-sm font-medium text-brown-700 hover:text-primary transition-colors"
-            >
-              All Products
+    <>
+      {/* Mobile Search Overlay (Full Screen) */}
+      <div
+        className={`fixed inset-0 bg-cream/95 backdrop-blur-2xl z-50 p-6 flex flex-col md:hidden transition-all duration-300 ${
+          isSearchOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-4 pointer-events-none'
+        }`}
+      >
+        <div className="flex justify-between items-center mb-8">
+            <Link href="/" className="text-2xl font-bold text-teal tracking-tighter">
+              ShortTail<span className="text-accent">.id</span>
             </Link>
-            {categories.slice(0, 4).map((cat) => (
-              <Link
-                key={cat.slug}
-                href={`/products?category=${cat.slug}`}
-                className="text-sm font-medium text-brown-700 hover:text-primary transition-colors"
-              >
-                {cat.name}
-              </Link>
-            ))}
-          </nav>
+            <button
+              onClick={() => setIsSearchOpen(false)}
+              className="p-2 bg-white/50 rounded-full text-teal hover:bg-white transition-colors shadow-sm"
+              aria-label="Close search"
+            >
+                <X size={24} />
+            </button>
+        </div>
 
-          {/* Search Bar */}
-          <form onSubmit={handleSearch} className="hidden lg:flex flex-1 max-w-sm mx-6">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search products..."
+        <form onSubmit={handleSearchSubmit} className="relative w-full mb-8">
+             <input
+                ref={mobileInputRef}
+                type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-brown-50 border-brown-200"
-              />
-            </div>
-          </form>
+                placeholder="What are you looking for?"
+                className="w-full bg-transparent border-b-2 border-teal/20 py-4 pr-12 text-2xl text-teal placeholder:text-teal/30 focus:outline-none focus:border-teal transition-colors"
+             />
+             <button type="submit" className="absolute right-0 top-1/2 -translate-y-1/2 p-3 bg-accent text-white rounded-full hover:bg-accent-hover transition-colors shadow-lg">
+                <ArrowRight size={20} />
+             </button>
+        </form>
 
-          {/* Right Actions */}
-          <div className="flex items-center gap-2">
-            {/* Cart */}
-            <Link href="/cart">
-              <Button variant="ghost" size="icon" className="relative">
-                <ShoppingBag className="h-5 w-5" />
-                <AnimatePresence>
-                  {itemCount > 0 && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
+        <div className="flex-1 overflow-y-auto">
+            <p className="text-sm font-bold text-teal/50 uppercase tracking-wider mb-4">Popular Searches</p>
+            <div className="flex flex-wrap gap-2">
+                {['Premium Dog Food', 'Cat Toys', 'Bird Cage', 'Aquarium Filters', 'Dog Bed', 'Catnip'].map(term => (
+                    <button
+                      key={term}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setSearchQuery(term);
+                        // In real app, submit here
+                      }}
+                      className="px-4 py-2 bg-white rounded-full text-sm text-teal hover:bg-teal hover:text-white transition-colors border border-teal/10 shadow-sm"
                     >
-                      <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                        {itemCount}
-                      </Badge>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </Button>
-            </Link>
-
-            {/* Show nothing while loading to prevent flash */}
-            {loading ? (
-              <div className="hidden sm:flex items-center gap-2">
-                <div className="h-8 w-8 rounded-full bg-brown-100 animate-pulse" />
-              </div>
-            ) : user ? (
-              <>
-                {/* Notifications */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative">
-                      <Bell className="h-5 w-5" />
-                      {unreadCount > 0 && (
-                        <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs bg-destructive">
-                          {unreadCount}
-                        </Badge>
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto">
-                    <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {notifications.length > 0 ? (
-                      <div className="divide-y divide-brown-100">
-                        {notifications.map((notification) => (
-                          <div
-                            key={notification.id}
-                            className={`p-3 hover:bg-brown-50 cursor-pointer transition-colors ${
-                              !notification.is_read ? 'bg-brown-50' : ''
-                            }`}
-                            onClick={async () => {
-                              if (!notification.is_read) {
-                                await handleMarkAsRead(notification.id);
-                              }
-                              if (notification.action_link) {
-                                router.push(notification.action_link);
-                              }
-                            }}
-                          >
-                            <div className="flex justify-between items-start">
-                              <h4 className={`text-sm font-medium ${!notification.is_read ? 'font-semibold text-primary' : 'text-brown-900'}`}>
-                                {notification.title}
-                              </h4>
-                              {!notification.is_read && (
-                                <span className="ml-2 flex-shrink-0">
-                                  <span className="h-2 w-2 rounded-full bg-primary block"></span>
-                                </span>
-                              )}
-                            </div>
-                            <p className={`text-xs mt-1 ${!notification.is_read ? 'text-brown-700' : 'text-brown-500'}`}>
-                              {notification.message}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {new Date(notification.created_at).toLocaleString('id-ID', {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="p-4 text-center text-sm text-muted-foreground">
-                        No new notifications
-                      </div>
-                    )}
-                    {notifications.length > 0 && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-center cursor-pointer"
-                          onClick={handleMarkAllAsRead}
-                        >
-                          Mark all as read
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                {/* User Menu */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={profile?.user_avatar_url || undefined} />
-                        <AvatarFallback className="bg-primary text-white">
-                          {profile?.user_name?.charAt(0).toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel>
-                      <div className="flex flex-col">
-                        <span>{profile?.user_name || 'User'}</span>
-                        <span className="text-xs font-normal text-muted-foreground">
-                          {profile?.tier} • {profile?.points_balance || 0} pts
-                        </span>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => router.push(getDashboardLink())}>
-                      <LayoutDashboard className="mr-2 h-4 w-4" />
-                      Dashboard
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push('/game')}>
-                      <PawPrint className="mr-2 h-4 w-4" />
-                      Play Game
-                    </DropdownMenuItem>
-                    {isSuperUser && (
-                      <DropdownMenuItem onClick={() => router.push('/kasir')}>
-                        <ShoppingBag className="mr-2 h-4 w-4" />
-                        POS System
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
-                      <Settings className="mr-2 h-4 w-4" />
-                      Settings
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Sign out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
-            ) : (
-              <div className="hidden sm:flex items-center gap-2">
-                <Button variant="ghost" onClick={() => router.push('/login')}>
-                  Sign in
-                </Button>
-                <Button onClick={() => router.push('/register')}>
-                  Sign up
-                </Button>
-              </div>
-            )}
-
-            {/* Mobile Menu - Only render after mount to prevent hydration mismatch */}
-            {mounted ? (
-              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-                <SheetTrigger asChild className="md:hidden">
-                  <Button variant="ghost" size="icon">
-                    {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-[300px]">
-                  <div className="flex flex-col gap-6 mt-6">
-                    {/* Mobile Search */}
-                    <form onSubmit={handleSearch}>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          type="search"
-                          placeholder="Search products..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="pl-10"
-                        />
-                      </div>
-                    </form>
-
-                    {/* Mobile Nav Links */}
-                    <nav className="flex flex-col gap-4">
-                      <Link
-                        href="/products"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="text-lg font-medium text-brown-700 hover:text-primary transition-colors"
-                      >
-                        All Products
-                      </Link>
-                      {categories.map((cat) => (
-                        <Link
-                          key={cat.slug}
-                          href={`/products?category=${cat.slug}`}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="text-lg font-medium text-brown-700 hover:text-primary transition-colors"
-                        >
-                          {cat.name}
-                        </Link>
-                      ))}
-                    </nav>
-
-                    {!loading && user && (
-                      <div className="flex flex-col gap-2 mt-4">
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            router.push('/game');
-                            setMobileMenuOpen(false);
-                          }}
-                        >
-                          Play Game
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            router.push(getDashboardLink());
-                            setMobileMenuOpen(false);
-                          }}
-                        >
-                          Dashboard
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            router.push('/dashboard/settings');
-                            setMobileMenuOpen(false);
-                          }}
-                        >
-                          Settings
-                        </Button>
-                        {isSuperUser && (
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              router.push('/kasir');
-                              setMobileMenuOpen(false);
-                            }}
-                          >
-                            POS System
-                          </Button>
-                        )}
-                        <Button
-                          variant="outline"
-                          onClick={handleSignOut}
-                        >
-                          Sign out
-                        </Button>
-                      </div>
-                    )}
-                    {!loading && !user && (
-                      <div className="flex flex-col gap-2 mt-4">
-                        <Button variant="outline" onClick={() => router.push('/login')}>
-                          Sign in
-                        </Button>
-                        <Button onClick={() => router.push('/register')}>
-                          Sign up
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </SheetContent>
-              </Sheet>
-            ) : (
-              <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
-              </Button>
-            )}
-          </div>
+                        {term}
+                    </button>
+                ))}
+            </div>
         </div>
       </div>
-    </header>
+
+      {/* Top Banner (News Ticker) */}
+      <div className="bg-teal text-cream text-xs py-2 font-medium tracking-wide relative z-40 overflow-hidden">
+        <div className="animate-marquee whitespace-nowrap hover:[animation-play-state:paused] w-max">
+          <span className="mx-8">FREE SHIPPING ON ORDERS OVER $50 🚚</span>
+          <span className="mx-8">•</span>
+          <span className="mx-8">GET 10% OFF YOUR FIRST ORDER WITH CODE: PAWS10</span>
+          <span className="mx-8">•</span>
+          <span className="mx-8">NEW SEASONAL TOYS JUST ARRIVED! 🎾</span>
+          <span className="mx-8">•</span>
+          <span className="mx-8">FREE RETURNS WITHIN 30 DAYS 📦</span>
+          <span className="mx-8">•</span>
+          <span className="mx-8">24/7 VET SUPPORT AVAILABLE 🏥</span>
+        </div>
+      </div>
+
+      {/* Sticky Header Container */}
+      <div className="sticky top-4 z-40 px-4 flex justify-center w-full transition-all duration-300 pointer-events-none">
+        <header
+          className={`w-full max-w-7xl pointer-events-auto transition-all duration-500 rounded-full border ${
+            isScrolled
+              ? 'bg-white/70 backdrop-blur-xl shadow-lg border-white/40 py-2'
+              : 'bg-white/40 backdrop-blur-md border-white/20 py-3 shadow-sm'
+          }`}
+        >
+          <div className="px-6 sm:px-8">
+            <div className="flex items-center justify-between h-10">
+              {/* Logo */}
+              <div className={`flex-shrink-0 flex items-center gap-2 cursor-pointer group transition-all duration-300 ${isSearchOpen ? 'md:w-0 md:opacity-0 md:overflow-hidden' : 'opacity-100'}`}>
+                <Link href="/" className="text-2xl font-bold text-teal tracking-tighter group-hover:scale-105 transition-transform whitespace-nowrap">
+                  ShortTail<span className="text-accent">.id</span>
+                </Link>
+              </div>
+
+              {/* Desktop Nav - Hides when search is open */}
+              {!isSearchOpen && (
+                <nav className="hidden md:flex items-center gap-8" aria-label="Main Navigation">
+                  {NAV_ITEMS.map((item) => (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      className="text-teal font-medium hover:text-accent transition-colors text-sm uppercase tracking-wide relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-accent after:transition-all after:duration-300 hover:after:w-full focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 rounded-sm"
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </nav>
+              )}
+
+              {/* Desktop Search Input (Expandable) */}
+              {isSearchOpen && (
+                <form onSubmit={handleSearchSubmit} className="hidden md:flex flex-1 max-w-3xl mx-4 relative animate-in fade-in slide-in-from-top-1 duration-200">
+                  <input
+                    ref={desktopInputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search for products, categories, or brands..."
+                    className="w-full bg-white/50 border border-teal/20 rounded-full py-2 pl-10 pr-12 text-teal placeholder:text-teal/50 focus:outline-none focus:ring-2 focus:ring-teal/50 focus:bg-white/80 transition-all text-sm"
+                  />
+                  <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-teal/50" />
+                  <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 p-1 bg-accent rounded-full text-white hover:bg-accent-hover transition-colors">
+                    <ArrowRight size={14} />
+                  </button>
+                </form>
+              )}
+
+              {/* Actions */}
+              <div className="flex items-center gap-3">
+                <button
+                  ref={searchTriggerRef}
+                  onClick={toggleSearch}
+                  className={`p-2 text-teal hover:text-accent hover:bg-teal/5 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-teal ${isSearchOpen ? 'bg-teal/10 text-accent' : ''}`}
+                  aria-label={isSearchOpen ? "Close Search" : "Open Search"}
+                  aria-expanded={isSearchOpen}
+                >
+                  {isSearchOpen ? <X size={20} /> : <Search size={20} />}
+                </button>
+
+                {/* Hide Wishlist when search is open to reduce clutter on desktop */}
+                {!isSearchOpen && (
+                  <button
+                    className="hidden sm:block p-2 text-teal hover:text-accent hover:bg-teal/5 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-teal"
+                    aria-label="Wishlist"
+                  >
+                    <Heart size={20} />
+                  </button>
+                )}
+
+                <Link
+                  href="/cart"
+                  className="relative p-2 text-teal hover:text-accent hover:bg-teal/5 rounded-full transition-all cursor-pointer focus-within:ring-2 focus-within:ring-teal"
+                  aria-label={`Shopping Cart, ${itemCount} items`}
+                >
+                  <ShoppingCart size={20} />
+                  {itemCount > 0 && (
+                    <span className="absolute top-0 right-0 h-4 w-4 bg-accent text-white text-[10px] flex items-center justify-center rounded-full font-bold animate-pulse ring-2 ring-white">
+                      {itemCount}
+                    </span>
+                  )}
+                </Link>
+
+                {/* User Profile - Hides when search is open */}
+                {!isSearchOpen && (
+                  <Link href={user ? "/dashboard" : "/login"} className="hidden sm:block p-2 text-teal hover:text-accent hover:bg-teal/5 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-teal">
+                    <User size={20} />
+                  </Link>
+                )}
+
+                {/* Mobile Menu Button */}
+                <button
+                  className={`md:hidden p-2 text-teal hover:bg-teal/5 rounded-full focus:outline-none focus:ring-2 focus:ring-teal ${isSearchOpen ? 'hidden' : 'block'}`}
+                  onClick={toggleMobileMenu}
+                  aria-expanded={isMobileMenuOpen}
+                  aria-controls="mobile-menu"
+                  aria-label={isMobileMenuOpen ? "Close menu" : "Open mobile menu"}
+                >
+                  {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Menu Dropdown */}
+          <div
+            id="mobile-menu"
+            className={`
+              absolute top-full left-0 right-0 mt-2 mx-2
+              bg-white/95 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50
+              overflow-hidden transition-all duration-300 origin-top
+              ${isMobileMenuOpen ? 'max-h-96 opacity-100 py-6 visible' : 'max-h-0 opacity-0 py-0 invisible'}
+            `}
+            aria-hidden={!isMobileMenuOpen}
+          >
+               <div className="flex flex-col gap-2 px-6">
+                {NAV_ITEMS.map((item) => (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      className="text-teal font-bold text-lg hover:text-accent hover:pl-2 transition-all focus:outline-none focus:text-accent focus:pl-2"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      tabIndex={isMobileMenuOpen ? 0 : -1}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                  <div className="h-px bg-teal/10 my-2"></div>
+                  <div className="flex gap-4">
+                    <Button variant="outline" size="sm" className="flex-1 justify-center" asChild tabIndex={isMobileMenuOpen ? 0 : -1}>
+                      <Link href="/login">Log In</Link>
+                    </Button>
+                    <Button variant="default" size="sm" className="flex-1 justify-center" asChild tabIndex={isMobileMenuOpen ? 0 : -1}>
+                      <Link href="/register">Sign Up</Link>
+                    </Button>
+                  </div>
+               </div>
+          </div>
+        </header>
+      </div>
+    </>
   );
 }

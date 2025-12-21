@@ -45,91 +45,103 @@
 
 :root {
   --radius: 0.75rem;
-  /* Brownish Theme - Light Mode */
-  --background: #E6D5B8; /* Soft Sand */
-  --foreground: #3D2C1E; /* Deep Espresso */
+  /* New Theme - Light Mode */
+  --background: #fdf6ec; /* Cream */
+  --foreground: #006d77; /* Teal */
   --card: #ffffff;
-  --card-foreground: #3D2C1E;
+  --card-foreground: #006d77;
   --popover: #ffffff;
-  --popover-foreground: #3D2C1E;
-  --primary: #C08261; /* Terra Cotta */
+  --popover-foreground: #006d77;
+  --primary: #006d77; /* Teal */
   --primary-foreground: #ffffff;
-  --secondary: #D4B99C;
-  --secondary-foreground: #3D2C1E;
-  --muted: #F0E6D6;
-  --muted-foreground: #8B6C4F;
-  --accent: #C08261;
+  --secondary: #ff911d; /* Accent */
+  --secondary-foreground: #006d77;
+  --muted: #fdf6ec;
+  --muted-foreground: #006d77;
+  --accent: #ff911d; /* Accent */
   --accent-foreground: #ffffff;
   --destructive: #dc2626;
-  --border: #C08261;
-  --input: #E6D5B8;
-  --ring: #634832; /* Dark Wood */
-  --chart-1: #634832;
-  --chart-2: #8B6C4F;
-  --chart-3: #C08261;
-  --chart-4: #D4B99C;
-  --chart-5: #E6D5B8;
-  --sidebar: #E6D5B8;
-  --sidebar-foreground: #3D2C1E;
-  --sidebar-primary: #634832;
+  --border: #006d77;
+  --input: #fdf6ec;
+  --ring: #006d77;
+  --chart-1: #006d77;
+  --chart-2: #ff911d;
+  --chart-3: #008c99;
+  --chart-4: #004e56;
+  --chart-5: #fdf6ec;
+  --sidebar: #fdf6ec;
+  --sidebar-foreground: #006d77;
+  --sidebar-primary: #006d77;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #C08261;
+  --sidebar-accent: #ff911d;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #C08261;
-  --sidebar-ring: #634832;
+  --sidebar-border: #006d77;
+  --sidebar-ring: #006d77;
 
-  /* Custom brownish shades */
-  --brown-50: #F9F5F0;
-  --brown-100: #F0E6D6;
-  --brown-200: #E6D5B8; /* Soft Sand */
-  --brown-300: #D4B99C;
-  --brown-400: #C08261; /* Terra Cotta */
-  --brown-500: #A66A4E;
-  --brown-600: #8B6C4F;
-  --brown-700: #6B533D;
-  --brown-800: #634832; /* Dark Wood */
-  --brown-900: #3D2C1E; /* Deep Espresso */
-
-  /* Additional game-specific colors */
-  --game-platform: #634832; /* Dark Wood */
-  --game-accent: #C08261; /* Terra Cotta */
-  --game-background: #E6D5B8; /* Soft Sand */
-  --game-text: #3D2C1E; /* Deep Espresso */
+  /* New theme colors */
+  --cream: #fdf6ec;
+  --teal: #006d77;
+  --teal-dark: #004e56;
+  --teal-light: #008c99;
+  --accent: #ff911d;
+  --accent-hover: #e6821a;
 }
 
 .dark {
-  /* Brownish Theme - Dark Mode */
-  --background: #3D2C1E; /* Deep Espresso */
-  --foreground: #E6D5B8; /* Soft Sand */
-  --card: #2C2117;
-  --card-foreground: #E6D5B8;
-  --popover: #3D2C1E;
-  --popover-foreground: #E6D5B8;
-  --primary: #C08261; /* Terra Cotta */
-  --primary-foreground: #1A1310;
-  --secondary: #5A4735;
-  --secondary-foreground: #E6D5B8;
-  --muted: #4D3D2E;
-  --muted-foreground: #B8A090;
-  --accent: #634832; /* Dark Wood */
-  --accent-foreground: #E6D5B8;
+  /* New Theme - Dark Mode */
+  --background: #004e56; /* Dark Teal */
+  --foreground: #fdf6ec; /* Cream */
+  --card: #003b45;
+  --card-foreground: #fdf6ec;
+  --popover: #004e56;
+  --popover-foreground: #fdf6ec;
+  --primary: #ff911d; /* Accent */
+  --primary-foreground: #003b45;
+  --secondary: #006d77; /* Teal */
+  --secondary-foreground: #fdf6ec;
+  --muted: #005a65;
+  --muted-foreground: #d8c9b8;
+  --accent: #ff911d; /* Accent */
+  --accent-foreground: #004e56;
   --destructive: #ef4444;
-  --border: #634832;
-  --input: #4D3D2E;
-  --ring: #C08261;
-  --chart-1: #C08261;
-  --chart-2: #D4B99C;
-  --chart-3: #8B6C4F;
-  --chart-4: #634832;
-  --chart-5: #3D2C1E;
-  --sidebar: #3D2C1E;
-  --sidebar-foreground: #E6D5B8;
-  --sidebar-primary: #C08261;
-  --sidebar-primary-foreground: #1A1310;
-  --sidebar-accent: #634832;
-  --sidebar-accent-foreground: #E6D5B8;
-  --sidebar-border: #634832;
-  --sidebar-ring: #C08261;
+  --border: #008c99;
+  --input: #005a65;
+  --ring: #ff911d;
+  --chart-1: #ff911d;
+  --chart-2: #008c99;
+  --chart-3: #006d77;
+  --chart-4: #ff911d;
+  --chart-5: #003b45;
+  --sidebar: #004e56;
+  --sidebar-foreground: #fdf6ec;
+  --sidebar-primary: #ff911d;
+  --sidebar-primary-foreground: #003b45;
+  --sidebar-accent: #008c99;
+  --sidebar-accent-foreground: #fdf6ec;
+  --sidebar-border: #008c99;
+  --sidebar-ring: #ff911d;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #fdf6ec; /* cream */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #006d77; /* teal */
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #004e56; /* dark teal */
+}
+
+.clip-path-slant {
+  clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
 }
 
 @layer base {
