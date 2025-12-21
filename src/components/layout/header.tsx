@@ -294,12 +294,16 @@ export function Header() {
                   ))}
                   <div className="h-px bg-teal/10 my-2"></div>
                   <div className="flex gap-4">
-                    <Button variant="outline" size="sm" className="flex-1 justify-center" asChild tabIndex={isMobileMenuOpen ? 0 : -1}>
-                      <Link href="/login">Log In</Link>
-                    </Button>
-                    <Button variant="default" size="sm" className="flex-1 justify-center" asChild tabIndex={isMobileMenuOpen ? 0 : -1}>
-                      <Link href="/register">Sign Up</Link>
-                    </Button>
+                    <Link href="/login">
+                      <Button variant="outline" size="sm" className="flex-1 justify-center" tabIndex={isMobileMenuOpen ? 0 : -1}>
+                        Log In
+                      </Button>
+                    </Link>
+                    <Link href="/register">
+                      <Button variant="default" size="sm" className="flex-1 justify-center" tabIndex={isMobileMenuOpen ? 0 : -1}>
+                        Sign Up
+                      </Button>
+                    </Link>
                   </div>
                </div>
           </div>
