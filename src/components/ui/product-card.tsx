@@ -24,7 +24,7 @@ function formatPrice(price: number): string {
   }).format(price);
 }
 
-export function ProductCard({ product, onAddToCart, rank, showQuickActions = true, className }: ProductCardProps) {
+function ProductCard({ product, onAddToCart, rank, showQuickActions = true, className }: ProductCardProps) {
   const getProductPrice = () => {
     if (product.has_variants && product.product_variants && product.product_variants.length > 0) {
       const prices = product.product_variants.map(v => v.price_adjustment || 0);
