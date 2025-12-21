@@ -55,12 +55,12 @@ export default function AdminLayout({
           
           <div className="flex items-center gap-3">
             {/* View Store Link */}
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/" target="_blank">
+            <Link href="/" target="_blank">
+              <Button variant="outline" size="sm">
                 <Store className="h-4 w-4 mr-2" />
                 View Store
-              </Link>
-            </Button>
+              </Button>
+            </Link>
 
             {mounted && (
               <>
