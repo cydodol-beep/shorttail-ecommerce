@@ -3,12 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
-import { PRODUCTS, TESTIMONIALS } from '@/constants/products';
+import { TESTIMONIALS } from '@/constants/products';
 import Script from 'next/script';
 import { ArrowRight, ChevronLeft, ChevronRight, Quote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLandingSections } from '@/hooks/use-landing-sections';
+import { useProductData } from '@/hooks/use-product-data';
 
 // Import the section components from the components directory
 import { CategorySection } from '@/components/home/category-section';
@@ -184,8 +185,14 @@ const NewsletterSection = () => (
 );
 
 export default function HomePage() {
+  const {
+    products,
+    loading: productsLoading,
+    getBestSellingProducts,
+    getNewArrivalProducts,
+    error
+  } = useProductData();
   const [loading, setLoading] = useState(true);
-  const [products, setProducts] = useState<Product[]>([]);
   const { isSectionVisible } = useLandingSections(); // Hook for admin section visibility
 
   // Pagination State
@@ -197,14 +204,12 @@ export default function HomePage() {
   const [currentTestimonialIndex, setCurrentTestimonialIndex] = useState(0);
   const [testimonialDirection, setTestimonialDirection] = useState(0);
 
+  // Handle loading states
   useEffect(() => {
-    // Simulate data fetching
-    const timer = setTimeout(() => {
-      setProducts(PRODUCTS);
+    if (!productsLoading && products && products.length > 0) {
       setLoading(false);
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, []);
+    }
+  }, [products, productsLoading]);
 
   // Auto-play Testimonials
   useEffect(() => {
@@ -214,8 +219,8 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, [currentTestimonialIndex]);
 
-  const bestSellers = products.filter(p => p.isBestSeller);
-  const newArrivals = products.filter(p => p.isNew);
+  const bestSellers = products && products.length > 0 ? getBestSellingProducts() : [];  // Get best-selling products from database
+  const newArrivals = products && products.length > 0 ? getNewArrivalProducts() : [];   // Get new arrival products from database
 
   // Pagination Logic
   const totalBestSellersPages = Math.ceil(bestSellers.length / ITEMS_PER_PAGE);
@@ -274,8 +279,8 @@ export default function HomePage() {
     setTestimonialDirection(newDirection);
     setCurrentTestimonialIndex((prev) => {
       let nextIndex = prev + newDirection;
-      if (nextIndex < 0) nextIndex = TESTIMONIALS.length - 1;
-      if (nextIndex >= TESTIMONIALS.length) nextIndex = 0;
+      if (nextIndex < 0) nextIndex = (TESTIMONIALS && TESTIMONIALS.length > 0) ? TESTIMONIALS.length - 1 : 0;
+      if (TESTIMONIALS && TESTIMONIALS.length > 0 && nextIndex >= TESTIMONIALS.length) nextIndex = 0;
       return nextIndex;
     });
   };
@@ -647,18 +652,18 @@ export default function HomePage() {
                           </div>
 
                           <p className="text-xl md:text-2xl text-teal/80 italic mb-8 pt-6 leading-relaxed">
-                            "{TESTIMONIALS[currentTestimonialIndex].content}"
+                            "{TESTIMONIALS && TESTIMONIALS[currentTestimonialIndex]?.content || 'Great products and excellent service!'}"
                           </p>
 
                           <div className="flex flex-col items-center gap-3">
                             <img
-                              src={TESTIMONIALS[currentTestimonialIndex].avatar}
-                              alt={TESTIMONIALS[currentTestimonialIndex].name}
+                              src={TESTIMONIALS && TESTIMONIALS[currentTestimonialIndex]?.avatar || 'https://picsum.photos/100/100'}
+                              alt={TESTIMONIALS && TESTIMONIALS[currentTestimonialIndex]?.name || 'Customer'}
                               className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-md"
                             />
                             <div>
-                              <h4 className="font-bold text-teal text-lg">{TESTIMONIALS[currentTestimonialIndex].name}</h4>
-                              <p className="text-sm text-accent font-medium uppercase tracking-wide">{TESTIMONIALS[currentTestimonialIndex].role}</p>
+                              <h4 className="font-bold text-teal text-lg">{TESTIMONIALS && TESTIMONIALS[currentTestimonialIndex]?.name || 'Happy Customer'}</h4>
+                              <p className="text-sm text-accent font-medium uppercase tracking-wide">{TESTIMONIALS && TESTIMONIALS[currentTestimonialIndex]?.role || 'Pet Owner'}</p>
                             </div>
                           </div>
                         </div>
@@ -678,7 +683,7 @@ export default function HomePage() {
 
                     {/* Dots */}
                     <div className="flex gap-2">
-                      {TESTIMONIALS.map((_, idx) => (
+                      {TESTIMONIALS && TESTIMONIALS.length > 0 ? TESTIMONIALS.map((_, idx) => (
                         <button
                           key={idx}
                           onClick={() => {
@@ -691,7 +696,7 @@ export default function HomePage() {
                           }`}
                           aria-label={`Go to testimonial ${idx + 1}`}
                         />
-                      ))}
+                      )) : null}
                     </div>
 
                     <button
