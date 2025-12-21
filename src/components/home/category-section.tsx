@@ -79,12 +79,12 @@ export function CategorySection() {
               <p className="text-brown-600 text-xs sm:text-sm">{settings.subtitle}</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" asChild className="hidden sm:flex">
-            <Link href="/products">
+          <Link href="/products">
+            <Button variant="outline" size="sm" className="hidden sm:flex">
               View All
               <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+            </Button>
+          </Link>
         </div>
 
         {/* Categories Grid - Modern Card Design */}
@@ -128,12 +128,12 @@ export function CategorySection() {
 
         {/* Mobile View All Button */}
         <div className="text-center mt-6 sm:mt-8 sm:hidden">
-          <Button variant="outline" className="w-full sm:w-auto" asChild>
-            <Link href="/products">
+          <Link href="/products">
+            <Button variant="outline" className="w-full sm:w-auto">
               Browse All Categories
               <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+            </Button>
+          </Link>
         </div>
       </div>
     </section>

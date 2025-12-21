@@ -129,12 +129,12 @@ export function NewArrivals() {
               <p className="text-brown-600 text-sm">{settings.subtitle}</p>
             </div>
           </div>
-          <Button variant="outline" asChild className="hidden sm:flex">
-            <Link href="/products?sort=newest">
+          <Link href="/products?sort=newest">
+            <Button variant="outline" className="hidden sm:flex">
               View All
               <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+            </Button>
+          </Link>
         </div>
 
         {/* Products Grid */}
@@ -235,12 +235,12 @@ export function NewArrivals() {
 
         {/* Mobile View All Button */}
         <div className="text-center mt-8 sm:hidden">
-          <Button variant="outline" asChild>
-            <Link href="/products?sort=newest">
+          <Link href="/products?sort=newest">
+            <Button variant="outline">
               View All New Arrivals
               <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+            </Button>
+          </Link>
         </div>
       </div>
     </section>

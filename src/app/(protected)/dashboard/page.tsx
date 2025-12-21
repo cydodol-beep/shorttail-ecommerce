@@ -335,21 +335,21 @@ export default function DashboardPage() {
                 <CardTitle>Recent Orders</CardTitle>
                 <CardDescription>Your latest purchases</CardDescription>
               </div>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/dashboard/orders">
+              <Link href="/dashboard/orders">
+                <Button variant="ghost" size="sm">
                   View All
                   <ChevronRight className="ml-1 h-4 w-4" />
-                </Link>
-              </Button>
+                </Button>
+              </Link>
             </CardHeader>
             <CardContent>
               {orders.length === 0 ? (
                 <div className="text-center py-8">
                   <ShoppingBag className="h-12 w-12 text-brown-300 mx-auto mb-3" />
                   <p className="text-brown-600">No orders yet</p>
-                  <Button className="mt-4" asChild>
-                    <Link href="/products">Start Shopping</Link>
-                  </Button>
+                  <Link href="/products">
+                    <Button className="mt-4">Start Shopping</Button>
+                  </Link>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -538,16 +538,15 @@ export default function DashboardPage() {
                         >
                           Invoice
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 text-xs"
-                          asChild
-                        >
-                          <Link href={`/dashboard/orders/${order.id}`}>
-                            View Details
+                        <Link href={`/dashboard/orders/${order.id}`}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 text-xs"
+                            >
+                              View Details
+                            </Button>
                           </Link>
-                        </Button>
                       </div>
                     </div>
                   ))}
@@ -563,21 +562,21 @@ export default function DashboardPage() {
                 <CardTitle>My Pets</CardTitle>
                 <CardDescription>Your registered companions</CardDescription>
               </div>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/dashboard/pets">
+              <Link href="/dashboard/pets">
+                <Button variant="ghost" size="sm">
                   Manage
                   <ChevronRight className="ml-1 h-4 w-4" />
-                </Link>
-              </Button>
+                </Button>
+              </Link>
             </CardHeader>
             <CardContent>
               {pets.length === 0 ? (
                 <div className="text-center py-8">
                   <PawPrint className="h-12 w-12 text-brown-300 mx-auto mb-3" />
                   <p className="text-brown-600">No pets registered yet</p>
-                  <Button className="mt-4" asChild>
-                    <Link href="/dashboard/pets/new">Add Your Pet</Link>
-                  </Button>
+                  <Link href="/dashboard/pets/new">
+                    <Button className="mt-4">Add Your Pet</Button>
+                  </Link>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-4">

@@ -159,13 +159,14 @@ export function PromoBanner() {
                 <p className="text-white text-xs uppercase tracking-wide">Code</p>
                 <p className="text-white font-bold text-lg">{currentPromo.code}</p>
               </div>
-              <Button 
-                variant="secondary" 
-                className="bg-white text-brown-900 hover:bg-white/90"
-                asChild
-              >
-                <Link href="/products">Shop Now</Link>
-              </Button>
+              <Link href="/products">
+                <Button
+                  variant="secondary"
+                  className="bg-white text-brown-900 hover:bg-white/90"
+                >
+                  Shop Now
+                </Button>
+              </Link>
             </div>
 
             {/* Navigation Arrows */}

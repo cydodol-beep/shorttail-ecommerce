@@ -120,17 +120,17 @@ export function HeroSection() {
             
             {/* CTA Buttons - Mobile Optimized */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start pt-2">
-              <Button size="lg" className="text-base shadow-lg hover:shadow-xl transition-shadow w-full sm:w-auto" asChild>
-                <Link href="/products">
+              <Link href="/products">
+                <Button size="lg" className="text-base shadow-lg hover:shadow-xl transition-shadow w-full sm:w-auto">
                   Shop Now
                   <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" className="text-base w-full sm:w-auto border-2" asChild>
-                <Link href="/products?category=new-arrivals">
+                </Button>
+              </Link>
+              <Link href="/products?category=new-arrivals">
+                <Button size="lg" variant="outline" className="text-base w-full sm:w-auto border-2">
                   New Arrivals
-                </Link>
-              </Button>
+                </Button>
+              </Link>
             </div>
 
             {/* Trust Badges - Mobile Optimized */}
