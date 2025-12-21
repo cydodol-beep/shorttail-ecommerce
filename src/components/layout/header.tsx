@@ -148,7 +148,7 @@ export function Header() {
       </div>
 
       {/* Top Banner (News Ticker) */}
-      <div className="bg-teal text-cream text-xs py-2 font-medium tracking-wide relative z-40 overflow-hidden">
+      <div className="text-xs py-2 font-medium tracking-wide relative z-40 overflow-hidden" style={{ backgroundColor: '#006d77', color: '#fdf6ec' }}>
         <div className="whitespace-nowrap hover:[animation-play-state:paused] w-max marquee-slow">
           <span className="mx-8">FREE SHIPPING ON ORDERS OVER $50 🚚</span>
           <span className="mx-8">•</span>
