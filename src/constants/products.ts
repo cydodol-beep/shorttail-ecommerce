@@ -1,6 +1,3 @@
-import React from 'react';
-import { Dog, Cat, Fish, Bird, Rabbit } from 'lucide-react';
-
 export interface Product {
   id: string;
   name: string;
@@ -12,13 +9,6 @@ export interface Product {
   category: string;
   isNew?: boolean;
   isBestSeller?: boolean;
-}
-
-export interface Category {
-  id: string;
-  name: string;
-  icon: React.ReactNode;
-  image: string;
 }
 
 export interface Testimonial {
@@ -33,13 +23,6 @@ export interface NavItem {
   label: string;
   href: string;
 }
-
-export const CATEGORIES: Category[] = [
-  { id: '1', name: 'Dogs', icon: <Dog className="w-6 h-6" />, image: 'https://picsum.photos/id/237/400/400' },
-  { id: '2', name: 'Cats', icon: <Cat className="w-6 h-6" />, image: 'https://picsum.photos/id/40/400/400' },
-  { id: '3', name: 'Fish', icon: <Fish className="w-6 h-6" />, image: 'https://picsum.photos/id/200/400/400' },
-  { id: '4', name: 'Birds', icon: <Bird className="w-6 h-6" />, image: 'https://picsum.photos/id/1025/400/400' },
-];
 
 export const PRODUCTS: Product[] = [
   {
@@ -234,7 +217,7 @@ export const TESTIMONIALS: Testimonial[] = [
 ];
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: 'Home', href: '#' },
+  { label: 'Home', href: '/' },
   { label: 'Shop', href: '#categories' },
   { label: 'Sale', href: '#flash-sale' },
   { label: 'New', href: '#new-arrivals' },

@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
-import { PRODUCTS, TESTIMONIALS, CATEGORIES } from '@/constants';
+import { PRODUCTS, TESTIMONIALS, NavItem } from '@/constants/products';
+import { CATEGORIES, type Category } from '@/constants/categories';
 import Script from 'next/script';
 import { ArrowRight, ChevronLeft, ChevronRight, Quote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -119,23 +120,37 @@ const BenefitsSection = () => (
   </section>
 );
 
-const CategoriesSection = () => (
-  <section className="py-20 bg-white">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <SectionHeader title="Shop by Category" subtitle="Pet Categories" centered />
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        {CATEGORIES.map((category) => (
-          <div key={category.id} className="bg-cream rounded-2xl p-6 text-center cursor-pointer hover:bg-accent/10 transition-colors group">
-            <div className="mx-auto w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm group-hover:shadow-md transition-shadow">
-              {category.icon}
+const CategoriesSection = () => {
+  // Map iconType to actual icons
+  const getIcon = (iconType: 'Dog' | 'Cat' | 'Fish' | 'Bird' | 'Rabbit') => {
+    switch(iconType) {
+      case 'Dog': return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+      case 'Cat': return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+      case 'Fish': return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" /></svg>;
+      case 'Bird': return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>;
+      case 'Rabbit': return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>;
+      default: return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>;
+    }
+  };
+
+  return (
+    <section className="py-20 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <SectionHeader title="Shop by Category" subtitle="Pet Categories" centered />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {CATEGORIES.map((category) => (
+            <div key={category.id} className="bg-cream rounded-2xl p-6 text-center cursor-pointer hover:bg-accent/10 transition-colors group">
+              <div className="mx-auto w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm group-hover:shadow-md transition-shadow">
+                {getIcon(category.iconType)}
+              </div>
+              <h3 className="font-bold text-teal group-hover:text-accent">{category.name}</h3>
             </div>
-            <h3 className="font-bold text-teal group-hover:text-accent">{category.name}</h3>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 const FlashSale = () => (
   <section className="py-20 bg-gradient-to-r from-accent to-orange-500 text-white relative overflow-hidden">
