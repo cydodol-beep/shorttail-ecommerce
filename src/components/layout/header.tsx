@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useCartItemCount } from '@/store/cart-store';
 import { useAuth } from '@/hooks/use-auth';
+import { useActivePromotions } from '@/hooks/use-active-promotions';
 
 // Navigation items
 const NAV_ITEMS = [
@@ -30,6 +31,9 @@ export function Header() {
   const desktopInputRef = useRef<HTMLInputElement>(null);
   const mobileInputRef = useRef<HTMLInputElement>(null);
   const searchTriggerRef = useRef<HTMLButtonElement>(null);
+
+  // Get active promotions to display in the news ticker
+  const { promotions, loading: promotionsLoading, error: promotionsError } = useActivePromotions();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -150,18 +154,33 @@ export function Header() {
       {/* Sticky Header Container with News Ticker */}
       <div className="sticky top-0 z-40 px-4 flex justify-center w-full transition-all duration-300 pointer-events-none">
         <div className="w-full max-w-7xl">
-          {/* News Ticker */}
+          {/* News Ticker with Active Promotions */}
           <div className="text-xs py-1.5 font-medium tracking-wide relative z-40 overflow-hidden" style={{ backgroundColor: '#006d77', color: '#fdf6ec' }}>
             <div className="whitespace-nowrap hover:[animation-play-state:paused] w-max marquee-slow">
-              <span className="mx-8">FREE SHIPPING ON ORDERS OVER $50 🚚</span>
-              <span className="mx-8">•</span>
-              <span className="mx-8">GET 10% OFF YOUR FIRST ORDER WITH CODE: PAWS10</span>
-              <span className="mx-8">•</span>
-              <span className="mx-8">NEW SEASONAL TOYS JUST ARRIVED! 🎾</span>
-              <span className="mx-8">•</span>
-              <span className="mx-8">FREE RETURNS WITHIN 30 DAYS 📦</span>
-              <span className="mx-8">•</span>
-              <span className="mx-8">24/7 VET SUPPORT AVAILABLE 🏥</span>
+              {promotions.length > 0 ? (
+                <>
+                  {promotions.map((promo, index, arr) => (
+                    <React.Fragment key={promo.id}>
+                      <span className="mx-8">
+                        {promo.description || `${promo.code} - ${promo.discount_type}: ${promo.discount_value}% OFF`}
+                      </span>
+                      {index < arr.length - 1 && <span className="mx-8">•</span>}
+                    </React.Fragment>
+                  ))}
+                </>
+              ) : (
+                <>
+                  <span className="mx-8">FREE SHIPPING ON ORDERS OVER $50 🚚</span>
+                  <span className="mx-8">•</span>
+                  <span className="mx-8">GET 10% OFF YOUR FIRST ORDER WITH CODE: PAWS10</span>
+                  <span className="mx-8">•</span>
+                  <span className="mx-8">NEW SEASONAL TOYS JUST ARRIVED! 🎾</span>
+                  <span className="mx-8">•</span>
+                  <span className="mx-8">FREE RETURNS WITHIN 30 DAYS 📦</span>
+                  <span className="mx-8">•</span>
+                  <span className="mx-8">24/7 VET SUPPORT AVAILABLE 🏥</span>
+                </>
+              )}
             </div>
           </div>
 
