@@ -147,32 +147,33 @@ export function Header() {
         </div>
       </div>
 
-      {/* Top Banner (News Ticker) */}
-      <div className="text-xs py-2 font-medium tracking-wide relative z-40 overflow-hidden" style={{ backgroundColor: '#006d77', color: '#fdf6ec' }}>
-        <div className="whitespace-nowrap hover:[animation-play-state:paused] w-max marquee-slow">
-          <span className="mx-8">FREE SHIPPING ON ORDERS OVER $50 🚚</span>
-          <span className="mx-8">•</span>
-          <span className="mx-8">GET 10% OFF YOUR FIRST ORDER WITH CODE: PAWS10</span>
-          <span className="mx-8">•</span>
-          <span className="mx-8">NEW SEASONAL TOYS JUST ARRIVED! 🎾</span>
-          <span className="mx-8">•</span>
-          <span className="mx-8">FREE RETURNS WITHIN 30 DAYS 📦</span>
-          <span className="mx-8">•</span>
-          <span className="mx-8">24/7 VET SUPPORT AVAILABLE 🏥</span>
-        </div>
-      </div>
+      {/* Sticky Header Container with News Ticker */}
+      <div className="sticky top-0 z-40 px-4 flex justify-center w-full transition-all duration-300 pointer-events-none">
+        <div className="w-full max-w-7xl">
+          {/* News Ticker */}
+          <div className="text-xs py-1.5 font-medium tracking-wide relative z-40 overflow-hidden" style={{ backgroundColor: '#006d77', color: '#fdf6ec' }}>
+            <div className="whitespace-nowrap hover:[animation-play-state:paused] w-max marquee-slow">
+              <span className="mx-8">FREE SHIPPING ON ORDERS OVER $50 🚚</span>
+              <span className="mx-8">•</span>
+              <span className="mx-8">GET 10% OFF YOUR FIRST ORDER WITH CODE: PAWS10</span>
+              <span className="mx-8">•</span>
+              <span className="mx-8">NEW SEASONAL TOYS JUST ARRIVED! 🎾</span>
+              <span className="mx-8">•</span>
+              <span className="mx-8">FREE RETURNS WITHIN 30 DAYS 📦</span>
+              <span className="mx-8">•</span>
+              <span className="mx-8">24/7 VET SUPPORT AVAILABLE 🏥</span>
+            </div>
+          </div>
 
-      {/* Sticky Header Container */}
-      <div className="sticky top-4 z-40 px-4 flex justify-center w-full transition-all duration-300 pointer-events-none">
-        <header
-          className={`w-full max-w-7xl pointer-events-auto transition-all duration-500 rounded-full border ${
-            isScrolled
-              ? 'bg-white/70 backdrop-blur-xl shadow-lg border-white/40 py-2'
-              : 'bg-white/40 backdrop-blur-md border-white/20 py-3 shadow-sm'
-          }`}
-        >
-          <div className="px-6 sm:px-8">
-            <div className="flex items-center justify-between h-10">
+          <header
+            className={`w-full pointer-events-auto transition-all duration-500 rounded-full border -mt-0.5 ${
+              isScrolled
+                ? 'bg-white/70 backdrop-blur-xl shadow-lg border-white/40 py-2'
+                : 'bg-white/40 backdrop-blur-md border-white/20 py-3 shadow-sm'
+            }`}
+          >
+            <div className="px-6 sm:px-8">
+              <div className="flex items-center justify-between h-10">
               {/* Logo */}
               <div className={`flex-shrink-0 flex items-center gap-2 cursor-pointer group transition-all duration-300 ${isSearchOpen ? 'md:w-0 md:opacity-0 md:overflow-hidden' : 'opacity-100'}`}>
                 <Link href="/" className="text-2xl font-bold text-teal tracking-tighter group-hover:scale-105 transition-transform whitespace-nowrap">
@@ -309,6 +310,7 @@ export function Header() {
           </div>
         </header>
       </div>
+    </div>
     </>
   );
 }
