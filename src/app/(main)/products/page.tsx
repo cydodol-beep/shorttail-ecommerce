@@ -337,14 +337,13 @@ function ProductsPageContent() {
                                 Contact Admin
                               </Button>
                             ) : product.has_variants ? (
-                              <Button
-                                className="w-full"
-                                asChild
-                              >
-                                <Link href={`/products/${product.id}`}>
+                              <Link href={`/products/${product.id}`}>
+                                <Button
+                                  className="w-full"
+                                >
                                   View Options
-                                </Link>
-                              </Button>
+                                </Button>
+                              </Link>
                             ) : (
                               <Button
                                 className="w-full"
