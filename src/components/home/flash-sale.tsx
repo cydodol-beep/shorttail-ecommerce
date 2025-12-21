@@ -310,14 +310,15 @@ export function FlashSale() {
 
         {/* View All Button */}
         <div className="text-center mt-8">
-          <Button 
-            variant="secondary" 
+          <Link href="/products">
+          <Button
+            variant="secondary"
             size="lg"
             className="bg-white text-red-500 hover:bg-white/90"
-            asChild
           >
-            <Link href="/products">View All Deals</Link>
+            View All Deals
           </Button>
+        </Link>
         </div>
       </div>
     </section>
