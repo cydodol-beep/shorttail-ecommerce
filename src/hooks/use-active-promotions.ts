@@ -4,6 +4,8 @@ import { Promotion } from '@/types/database';
 
 // Extended promotion type with formatted data
 interface ActivePromotion extends Promotion {
+  buy_quantity?: number;
+  get_quantity?: number;
   formattedDiscount: string;
   formattedPeriod: string;
 }
@@ -46,6 +48,10 @@ export function useActivePromotions() {
               currency: 'IDR',
               minimumFractionDigits: 0
             }).format(Number(promo.discount_value))} OFF`;
+          } else if (promo.discount_type === 'buy_x_get_y') {
+            // For buy_x_get_y promotions, try to use the specific buy_quantity and get_quantity fields if they exist
+            const typedPromo = promo as any; // Type assertion to access additional fields
+            formattedDiscount = `BUY ${typedPromo.buy_quantity || 1} GET ${typedPromo.get_quantity || 1} FREE`;
           } else {
             formattedDiscount = `${promo.discount_value} OFF`;
           }

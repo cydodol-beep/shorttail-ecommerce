@@ -49,7 +49,7 @@
 }
 
 .marquee-slow {
-  animation: marquee-slow 60s linear infinite;
+  animation: marquee-slow 20s linear infinite; /* Changed from 60s to 20s for faster animation */
 }
 
 :root {
