@@ -45,91 +45,91 @@
 
 :root {
   --radius: 0.75rem;
-  /* Brownish Theme - Light Mode */
-  --background: #E6D5B8; /* Soft Sand */
-  --foreground: #3D2C1E; /* Deep Espresso */
-  --card: #ffffff;
-  --card-foreground: #3D2C1E;
-  --popover: #ffffff;
-  --popover-foreground: #3D2C1E;
-  --primary: #C08261; /* Terra Cotta */
-  --primary-foreground: #ffffff;
-  --secondary: #D4B99C;
-  --secondary-foreground: #3D2C1E;
-  --muted: #F0E6D6;
-  --muted-foreground: #8B6C4F;
-  --accent: #C08261;
-  --accent-foreground: #ffffff;
+  /* Enhanced Brownish Theme - Light Mode */
+  --background: #F5F0E6; /* Softer, cleaner background */
+  --foreground: #2C1E12; /* Richer, deeper brown text */
+  --card: #FFFFFF; /* White cards for better contrast */
+  --card-foreground: #2C1E12;
+  --popover: #FFFFFF;
+  --popover-foreground: #2C1E12;
+  --primary: #A87C56; /* Muted terracotta with better accessibility */
+  --primary-foreground: #FFFFFF;
+  --secondary: #D7C3A9;
+  --secondary-foreground: #2C1E12;
+  --muted: #F0EBE3; /* Softer muted tone */
+  --muted-foreground: #7C674F;
+  --accent: #8C6A48; /* Deeper brown accent */
+  --accent-foreground: #FFFFFF;
   --destructive: #dc2626;
-  --border: #C08261;
-  --input: #E6D5B8;
-  --ring: #634832; /* Dark Wood */
-  --chart-1: #634832;
-  --chart-2: #8B6C4F;
-  --chart-3: #C08261;
-  --chart-4: #D4B99C;
-  --chart-5: #E6D5B8;
-  --sidebar: #E6D5B8;
-  --sidebar-foreground: #3D2C1E;
-  --sidebar-primary: #634832;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #C08261;
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #C08261;
-  --sidebar-ring: #634832;
+  --border: #D7C3A9; /* Softer border color */
+  --input: #F0EBE3; /* Softer input backgrounds */
+  --ring: #8C6A48; /* Match accent color */
+  --chart-1: #8C6A48;
+  --chart-2: #A87C56;
+  --chart-3: #C4A385;
+  --chart-4: #D7C3A9;
+  --chart-5: #F0EBE3;
+  --sidebar: #F5F0E6;
+  --sidebar-foreground: #2C1E12;
+  --sidebar-primary: #8C6A48;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #A87C56;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #D7C3A9;
+  --sidebar-ring: #8C6A48;
 
-  /* Custom brownish shades */
-  --brown-50: #F9F5F0;
-  --brown-100: #F0E6D6;
-  --brown-200: #E6D5B8; /* Soft Sand */
-  --brown-300: #D4B99C;
-  --brown-400: #C08261; /* Terra Cotta */
-  --brown-500: #A66A4E;
-  --brown-600: #8B6C4F;
-  --brown-700: #6B533D;
-  --brown-800: #634832; /* Dark Wood */
-  --brown-900: #3D2C1E; /* Deep Espresso */
+  /* Updated brownish shades */
+  --brown-50: #FBF9F5;
+  --brown-100: #F5F0E6;
+  --brown-200: #F0EBE3;
+  --brown-300: #D7C3A9;
+  --brown-400: #C4A385;
+  --brown-500: #A87C56; /* Better accessibility brown */
+  --brown-600: #8C6A48;
+  --brown-700: #70553A;
+  --brown-800: #543F2A;
+  --brown-900: #2C1E12; /* Richer dark brown */
 
   /* Additional game-specific colors */
-  --game-platform: #634832; /* Dark Wood */
-  --game-accent: #C08261; /* Terra Cotta */
-  --game-background: #E6D5B8; /* Soft Sand */
-  --game-text: #3D2C1E; /* Deep Espresso */
+  --game-platform: #543F2A; /* Richer dark brown */
+  --game-accent: #A87C56; /* Better accessible terracotta */
+  --game-background: #F5F0E6; /* Softer background */
+  --game-text: #2C1E12; /* Deeper brown text */
 }
 
 .dark {
-  /* Brownish Theme - Dark Mode */
-  --background: #3D2C1E; /* Deep Espresso */
-  --foreground: #E6D5B8; /* Soft Sand */
-  --card: #2C2117;
-  --card-foreground: #E6D5B8;
-  --popover: #3D2C1E;
-  --popover-foreground: #E6D5B8;
-  --primary: #C08261; /* Terra Cotta */
+  /* Enhanced Brownish Theme - Dark Mode */
+  --background: #1A1310; /* Deeper, richer background */
+  --foreground: #F0E6D6; /* Lighter text for contrast */
+  --card: #2C2117; /* Deep brown card */
+  --card-foreground: #F0E6D6;
+  --popover: #1A1310;
+  --popover-foreground: #F0E6D6;
+  --primary: #C4A385; /* Lighter terracotta in dark mode */
   --primary-foreground: #1A1310;
   --secondary: #5A4735;
-  --secondary-foreground: #E6D5B8;
-  --muted: #4D3D2E;
+  --secondary-foreground: #F0E6D6;
+  --muted: #3D3025; /* Richer muted tone */
   --muted-foreground: #B8A090;
-  --accent: #634832; /* Dark Wood */
-  --accent-foreground: #E6D5B8;
+  --accent: #A87C56; /* Consistent accent color */
+  --accent-foreground: #F0E6D6;
   --destructive: #ef4444;
-  --border: #634832;
-  --input: #4D3D2E;
-  --ring: #C08261;
-  --chart-1: #C08261;
-  --chart-2: #D4B99C;
-  --chart-3: #8B6C4F;
+  --border: #5A4735; /* Darker border */
+  --input: #2C2117; /* Dark input backgrounds */
+  --ring: #C4A385; /* Match primary in dark mode */
+  --chart-1: #C4A385;
+  --chart-2: #A87C56;
+  --chart-3: #8C6A48;
   --chart-4: #634832;
-  --chart-5: #3D2C1E;
-  --sidebar: #3D2C1E;
-  --sidebar-foreground: #E6D5B8;
-  --sidebar-primary: #C08261;
+  --chart-5: #2C2117;
+  --sidebar: #1A1310;
+  --sidebar-foreground: #F0E6D6;
+  --sidebar-primary: #C4A385;
   --sidebar-primary-foreground: #1A1310;
-  --sidebar-accent: #634832;
-  --sidebar-accent-foreground: #E6D5B8;
-  --sidebar-border: #634832;
-  --sidebar-ring: #C08261;
+  --sidebar-accent: #A87C56;
+  --sidebar-accent-foreground: #F0E6D6;
+  --sidebar-border: #5A4735;
+  --sidebar-ring: #C4A385;
 }
 
 @layer base {

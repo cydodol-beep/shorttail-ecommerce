@@ -99,28 +99,28 @@ export function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             {storeSettings?.storeLogo ? (
-              <div className="relative w-8 h-8">
+              <div className="relative w-10 h-10">
                 {storeSettings.storeLogo.startsWith('data:') ? (
                   <img
                     src={storeSettings.storeLogo}
                     alt={storeSettings.storeName || 'Store Logo'}
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-contain rounded-lg"
                   />
                 ) : (
                   <Image
                     src={storeSettings.storeLogo}
                     alt={storeSettings.storeName || 'Store Logo'}
                     fill
-                    className="object-contain"
+                    className="object-contain rounded-lg"
                   />
                 )}
               </div>
             ) : (
-              <div className="p-1.5 bg-primary rounded-lg">
-                <PawPrint className="h-6 w-6 text-white" />
+              <div className="p-2 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-sm">
+                <PawPrint className="h-6 w-6 text-primary-foreground" />
               </div>
             )}
-            <span className="font-bold text-xl text-brown-900 hidden sm:block">
+            <span className="font-bold text-2xl text-brown-900 hidden sm:block bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               {storeSettings?.storeName || 'ShortTail.id'}
             </span>
           </Link>
@@ -129,7 +129,7 @@ export function Header() {
           <nav className="hidden md:flex items-center gap-6">
             <Link
               href="/products"
-              className="text-sm font-medium text-brown-700 hover:text-primary transition-colors"
+              className="text-sm font-semibold text-brown-700 hover:text-primary transition-colors px-3 py-1.5 rounded-lg hover:bg-brown-50"
             >
               All Products
             </Link>
@@ -137,7 +137,7 @@ export function Header() {
               <Link
                 key={cat.slug}
                 href={`/products?category=${cat.slug}`}
-                className="text-sm font-medium text-brown-700 hover:text-primary transition-colors"
+                className="text-sm font-semibold text-brown-700 hover:text-primary transition-colors px-3 py-1.5 rounded-lg hover:bg-brown-50"
               >
                 {cat.name}
               </Link>
@@ -153,7 +153,7 @@ export function Header() {
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-brown-50 border-brown-200"
+                className="pl-10 bg-brown-50 border-brown-200 focus:ring-2 focus:ring-primary/30"
               />
             </div>
           </form>
@@ -162,8 +162,8 @@ export function Header() {
           <div className="flex items-center gap-2">
             {/* Cart */}
             <Link href="/cart">
-              <Button variant="ghost" size="icon" className="relative">
-                <ShoppingBag className="h-5 w-5" />
+              <Button variant="ghost" size="icon" className="relative rounded-lg hover:bg-brown-50">
+                <ShoppingBag className="h-5 w-5 text-brown-700" />
                 <AnimatePresence>
                   {itemCount > 0 && (
                     <motion.div
@@ -171,7 +171,7 @@ export function Header() {
                       animate={{ scale: 1 }}
                       exit={{ scale: 0 }}
                     >
-                      <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                      <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs bg-destructive text-destructive-foreground">
                         {itemCount}
                       </Badge>
                     </motion.div>
@@ -190,24 +190,24 @@ export function Header() {
                 {/* Notifications */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative">
-                      <Bell className="h-5 w-5" />
+                    <Button variant="ghost" size="icon" className="relative rounded-lg hover:bg-brown-50">
+                      <Bell className="h-5 w-5 text-brown-700" />
                       {unreadCount > 0 && (
-                        <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs bg-destructive">
+                        <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs bg-destructive text-destructive-foreground">
                           {unreadCount}
                         </Badge>
                       )}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto">
-                    <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
+                  <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto border-brown-200 bg-popover">
+                    <DropdownMenuLabel className="text-brown-900">Notifications</DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-brown-200" />
                     {notifications.length > 0 ? (
                       <div className="divide-y divide-brown-100">
                         {notifications.map((notification) => (
                           <div
                             key={notification.id}
-                            className={`p-3 hover:bg-brown-50 cursor-pointer transition-colors ${
+                            className={`p-3 hover:bg-brown-50 cursor-pointer transition-colors rounded-lg mx-1 ${
                               !notification.is_read ? 'bg-brown-50' : ''
                             }`}
                             onClick={async () => {
@@ -251,9 +251,9 @@ export function Header() {
                     )}
                     {notifications.length > 0 && (
                       <>
-                        <DropdownMenuSeparator />
+                        <DropdownMenuSeparator className="bg-brown-200" />
                         <DropdownMenuItem
-                          className="text-center cursor-pointer"
+                          className="text-center cursor-pointer text-brown-700 hover:bg-brown-50 hover:text-primary"
                           onClick={handleMarkAllAsRead}
                         >
                           Mark all as read
@@ -266,45 +266,60 @@ export function Header() {
                 {/* User Menu */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full">
-                      <Avatar className="h-8 w-8">
+                    <Button variant="ghost" size="icon" className="rounded-full p-0.5 hover:bg-brown-50">
+                      <Avatar className="h-9 w-9">
                         <AvatarImage src={profile?.user_avatar_url || undefined} />
-                        <AvatarFallback className="bg-primary text-white">
+                        <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground">
                           {profile?.user_name?.charAt(0).toUpperCase() || 'U'}
                         </AvatarFallback>
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel>
+                  <DropdownMenuContent align="end" className="w-56 border-brown-200 bg-popover">
+                    <DropdownMenuLabel className="text-brown-900">
                       <div className="flex flex-col">
-                        <span>{profile?.user_name || 'User'}</span>
+                        <span className="font-semibold">{profile?.user_name || 'User'}</span>
                         <span className="text-xs font-normal text-muted-foreground">
                           {profile?.tier} • {profile?.points_balance || 0} pts
                         </span>
                       </div>
                     </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => router.push(getDashboardLink())}>
+                    <DropdownMenuSeparator className="bg-brown-200" />
+                    <DropdownMenuItem
+                      className="cursor-pointer text-brown-700 hover:bg-brown-50 hover:text-primary"
+                      onClick={() => router.push(getDashboardLink())}
+                    >
                       <LayoutDashboard className="mr-2 h-4 w-4" />
                       Dashboard
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push('/game')}>
+                    <DropdownMenuItem
+                      className="cursor-pointer text-brown-700 hover:bg-brown-50 hover:text-primary"
+                      onClick={() => router.push('/game')}
+                    >
                       <PawPrint className="mr-2 h-4 w-4" />
                       Play Game
                     </DropdownMenuItem>
                     {isSuperUser && (
-                      <DropdownMenuItem onClick={() => router.push('/kasir')}>
+                      <DropdownMenuItem
+                        className="cursor-pointer text-brown-700 hover:bg-brown-50 hover:text-primary"
+                        onClick={() => router.push('/kasir')}
+                      >
                         <ShoppingBag className="mr-2 h-4 w-4" />
                         POS System
                       </DropdownMenuItem>
                     )}
-                    <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
+                    <DropdownMenuItem
+                      className="cursor-pointer text-brown-700 hover:bg-brown-50 hover:text-primary"
+                      onClick={() => router.push('/dashboard/settings')}
+                    >
                       <Settings className="mr-2 h-4 w-4" />
                       Settings
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut}>
+                    <DropdownMenuSeparator className="bg-brown-200" />
+                    <DropdownMenuItem
+                      className="cursor-pointer text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      onClick={handleSignOut}
+                    >
                       <LogOut className="mr-2 h-4 w-4" />
                       Sign out
                     </DropdownMenuItem>
@@ -347,11 +362,11 @@ export function Header() {
                     </form>
 
                     {/* Mobile Nav Links */}
-                    <nav className="flex flex-col gap-4">
+                    <nav className="flex flex-col gap-2">
                       <Link
                         href="/products"
                         onClick={() => setMobileMenuOpen(false)}
-                        className="text-lg font-medium text-brown-700 hover:text-primary transition-colors"
+                        className="text-base font-medium text-brown-700 hover:text-primary transition-colors p-3 rounded-lg hover:bg-brown-50"
                       >
                         All Products
                       </Link>
@@ -360,7 +375,7 @@ export function Header() {
                           key={cat.slug}
                           href={`/products?category=${cat.slug}`}
                           onClick={() => setMobileMenuOpen(false)}
-                          className="text-lg font-medium text-brown-700 hover:text-primary transition-colors"
+                          className="text-base font-medium text-brown-700 hover:text-primary transition-colors p-3 rounded-lg hover:bg-brown-50"
                         >
                           {cat.name}
                         </Link>
@@ -371,6 +386,7 @@ export function Header() {
                       <div className="flex flex-col gap-2 mt-4">
                         <Button
                           variant="outline"
+                          className="border-brown-200 text-brown-700 hover:bg-brown-50 hover:text-primary"
                           onClick={() => {
                             router.push('/game');
                             setMobileMenuOpen(false);
@@ -380,6 +396,7 @@ export function Header() {
                         </Button>
                         <Button
                           variant="outline"
+                          className="border-brown-200 text-brown-700 hover:bg-brown-50 hover:text-primary"
                           onClick={() => {
                             router.push(getDashboardLink());
                             setMobileMenuOpen(false);
@@ -389,6 +406,7 @@ export function Header() {
                         </Button>
                         <Button
                           variant="outline"
+                          className="border-brown-200 text-brown-700 hover:bg-brown-50 hover:text-primary"
                           onClick={() => {
                             router.push('/dashboard/settings');
                             setMobileMenuOpen(false);
@@ -399,6 +417,7 @@ export function Header() {
                         {isSuperUser && (
                           <Button
                             variant="outline"
+                            className="border-brown-200 text-brown-700 hover:bg-brown-50 hover:text-primary"
                             onClick={() => {
                               router.push('/kasir');
                               setMobileMenuOpen(false);
@@ -409,6 +428,7 @@ export function Header() {
                         )}
                         <Button
                           variant="outline"
+                          className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
                           onClick={handleSignOut}
                         >
                           Sign out
@@ -417,10 +437,17 @@ export function Header() {
                     )}
                     {!loading && !user && (
                       <div className="flex flex-col gap-2 mt-4">
-                        <Button variant="outline" onClick={() => router.push('/login')}>
+                        <Button
+                          variant="outline"
+                          className="border-brown-200 text-brown-700 hover:bg-brown-50 hover:text-primary"
+                          onClick={() => router.push('/login')}
+                        >
                           Sign in
                         </Button>
-                        <Button onClick={() => router.push('/register')}>
+                        <Button
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                          onClick={() => router.push('/register')}
+                        >
                           Sign up
                         </Button>
                       </div>
