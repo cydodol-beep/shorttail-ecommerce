@@ -372,12 +372,12 @@ export default function AdminProductsPage() {
               <PawPrint className="h-12 w-12 text-brown-300 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-brown-900 mb-2">No products found</h3>
               <p className="text-brown-600 mb-4">Get started by adding your first product</p>
-              <Button asChild>
-                <Link href="/admin/products/new">
+              <Link href="/admin/products/new">
+                <Button>
                   <Plus className="mr-2 h-4 w-4" />
                   Add Product
-                </Link>
-              </Button>
+                </Button>
+              </Link>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -561,12 +561,12 @@ export default function AdminProductsPage() {
                 <FileDown className="mr-2 h-4 w-4" />
                 Download Excel Template
               </Button>
-              <Button variant="outline" size="sm" asChild>
-                <a href="/templates/products_import_template.csv" download>
+              <a href="/templates/products_import_template.csv" download>
+                <Button variant="outline" size="sm">
                   <FileDown className="mr-2 h-4 w-4" />
                   Download CSV Template
-                </a>
-              </Button>
+                </Button>
+              </a>
             </div>
           </div>
 
