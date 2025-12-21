@@ -508,7 +508,6 @@ export default function HomePage() {
                         <ProductCard
                           key={product.id}
                           product={product}
-                          className="h-full flex flex-col"
                         />
                       ))
                     )}
@@ -546,7 +545,6 @@ export default function HomePage() {
                         <ProductCard
                           key={product.id}
                           product={product}
-                          className="h-full flex flex-col"
                         />
                       ))
                     )}

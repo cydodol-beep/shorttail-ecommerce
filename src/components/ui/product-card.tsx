@@ -12,6 +12,7 @@ interface ProductCardProps {
   onAddToCart?: (product: Product) => void;
   rank?: number;
   showQuickActions?: boolean;
+  className?: string;
 }
 
 function formatPrice(price: number): string {
@@ -23,7 +24,7 @@ function formatPrice(price: number): string {
   }).format(price);
 }
 
-export function ProductCard({ product, onAddToCart, rank, showQuickActions = true }: ProductCardProps) {
+export function ProductCard({ product, onAddToCart, rank, showQuickActions = true, className }: ProductCardProps) {
   const getProductPrice = () => {
     if (product.has_variants && product.product_variants && product.product_variants.length > 0) {
       const prices = product.product_variants.map(v => v.price_adjustment || 0);
@@ -47,7 +48,7 @@ export function ProductCard({ product, onAddToCart, rank, showQuickActions = tru
   const isOutOfStock = stock === 0;
 
   return (
-    <Card className="group hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-primary overflow-hidden h-full flex flex-col">
+    <Card className={`group hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-primary overflow-hidden h-full flex flex-col ${className || ''}`}>
       <CardContent className="p-0 flex flex-col h-full">
         {/* Product Image */}
         <div className="relative aspect-square bg-gradient-to-br from-brown-50 to-brown-100 overflow-hidden">
