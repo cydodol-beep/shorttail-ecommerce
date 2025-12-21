@@ -1,231 +1,158 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
-import {
-  ArrowRight,
-  Truck,
-  Shield,
-  Gift,
-  Clock,
-  Award,
-  Heart,
-  Star,
-  Check,
-  Zap,
-  Package,
-  Phone,
-  Mail,
-  Headphones,
-  LucideIcon
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useAllSettings } from '@/hooks/use-store-settings';
 import { useLandingSections } from '@/hooks/use-landing-sections';
-import { motion } from 'framer-motion';
-
-// Icon mapping for trust badges
-const iconMap: Record<string, LucideIcon> = {
-  truck: Truck,
-  shield: Shield,
-  clock: Clock,
-  gift: Gift,
-  award: Award,
-  heart: Heart,
-  star: Star,
-  check: Check,
-  zap: Zap,
-  package: Package,
-  phone: Phone,
-  mail: Mail,
-  headphones: Headphones,
-};
-
-// Auto-detect icon based on text keywords
-function getIconFromText(text: string): LucideIcon {
-  const lowerText = text.toLowerCase();
-
-  if (lowerText.includes('delivery') || lowerText.includes('shipping') || lowerText.includes('kirim')) return Truck;
-  if (lowerText.includes('secure') || lowerText.includes('safe') || lowerText.includes('aman')) return Shield;
-  if (lowerText.includes('support') || lowerText.includes('help') || lowerText.includes('bantuan')) return Headphones;
-  if (lowerText.includes('24/7') || lowerText.includes('time') || lowerText.includes('hours')) return Clock;
-  if (lowerText.includes('gift') || lowerText.includes('bonus') || lowerText.includes('hadiah')) return Gift;
-  if (lowerText.includes('quality') || lowerText.includes('premium') || lowerText.includes('berkualitas')) return Award;
-  if (lowerText.includes('guarantee') || lowerText.includes('warranty') || lowerText.includes('garansi')) return Check;
-  if (lowerText.includes('fast') || lowerText.includes('quick') || lowerText.includes('cepat')) return Zap;
-  if (lowerText.includes('phone') || lowerText.includes('call') || lowerText.includes('telepon')) return Phone;
-  if (lowerText.includes('email') || lowerText.includes('mail')) return Mail;
-  if (lowerText.includes('love') || lowerText.includes('care') || lowerText.includes('cinta')) return Heart;
-  if (lowerText.includes('star') || lowerText.includes('rating') || lowerText.includes('review')) return Star;
-  if (lowerText.includes('package') || lowerText.includes('box') || lowerText.includes('paket')) return Package;
-
-  return Shield; // Default icon
-}
 
 export function HeroSection() {
-  const { settings: allSettings } = useAllSettings();
-  const store = allSettings?.store;
-  const shipping = allSettings?.shipping;
-
   const { sections, fetched, getSectionSettings } = useLandingSections();
 
   // Get hero settings with proper defaults that will be overridden by DB settings
   const heroSettings = getSectionSettings('hero', {
-    title: 'Everything Your Pet Needs & Loves',
-    subtitle: '',
+    title: 'Spoil them with Nature\'s Best',
+    subtitle: 'Premium organic treats, durable toys, and cozy beds',
     showTrustBadges: true,
     trustBadges: [
-      { text: 'Fast Delivery', icon: 'truck' },
-      { text: 'Secure Payment', icon: 'shield' },
-      { text: '24/7 Support', icon: 'clock' },
+      { text: '24/7 Vet Support', icon: 'hospital' },
+      { text: '100% Natural', icon: 'leaf' },
+      { text: 'Free Returns', icon: 'return' },
     ],
   });
 
   return (
-    <section className="relative bg-gradient-to-br from-cream via-white to-teal/10 overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-5 pointer-events-none">
-        <div className="absolute top-10 left-10 w-32 h-32 bg-teal rounded-full blur-3xl" />
-        <div className="absolute bottom-10 right-10 w-48 h-48 bg-accent rounded-full blur-3xl" />
-      </div>
+    <section className="relative min-h-[90vh] flex items-center bg-cream overflow-hidden py-12 lg:py-0">
+      {/* Texture Background - Animated Pulse */}
+      <div className="absolute inset-0 bg-[radial-gradient(#006d77_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
 
-      <div className="container mx-auto px-4 py-8 sm:py-12 lg:py-20 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center">
-          {/* Left Content */}
-          <div className="space-y-4 sm:space-y-6 text-center lg:text-left order-2 lg:order-1">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 bg-teal/10 text-teal px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium shadow-sm">
-              <Gift className="h-3 w-3 sm:h-4 sm:w-4" />
-              {shipping?.freeShippingEnabled
-                ? `Free Shipping over ${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(shipping.freeShippingThreshold)}`
-                : 'Premium Pet Products'
-              }
+      {/* Background blobs - Organic Movement */}
+      <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-teal/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 z-0" />
+      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-accent/5 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4 z-0" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+          {/* Text Content */}
+          <div className="order-2 lg:order-1 relative">
+            <div className="flex items-center gap-3 mb-6">
+              <span className="inline-flex items-center py-1 px-3 rounded-full bg-accent/10 text-accent text-xs font-bold tracking-wider uppercase border border-accent/20">
+                <span className="w-3 h-3 bg-accent rounded-full mr-1"></span>
+                #1 Vet Recommended
+              </span>
+              <span className="inline-block py-1 px-3 rounded-full bg-teal/5 text-teal text-xs font-bold tracking-wider uppercase border border-teal/10">
+                New Collection 2024
+              </span>
             </div>
 
-            {/* Main Heading - Mobile Optimized */}
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-teal leading-tight">
-              {heroSettings.title.includes(' ') ? (
-                <>
-                  {heroSettings.title.split(' ').slice(0, -2).join(' ')}{' '}
-                  <span className="text-accent">{heroSettings.title.split(' ').slice(-2).join(' ')}</span>
-                </>
-              ) : (
-                heroSettings.title
-              )}
+            <h1 className="text-5xl md:text-7xl font-bold text-teal leading-[1.05] mb-6 tracking-tight">
+              Spoil them with <br />
+              <span className="relative inline-block">
+                <span className="relative z-10">Nature's Best</span>
+                <div className="absolute w-[105%] h-4 -bottom-1 -left-1 text-accent opacity-40 -z-10">
+                  <svg viewBox="0 0 100 10" preserveAspectRatio="none" className="w-full h-full">
+                    <path d="M0 5 Q 50 15 100 5" stroke="currentColor" strokeWidth="12" fill="none" />
+                  </svg>
+                </div>
+              </span>
             </h1>
 
-            {/* Subtitle */}
-            <p className="text-base sm:text-lg text-teal/70 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              {heroSettings.subtitle || store?.storeDescription || 'Discover premium quality food, toys, accessories, and more for your beloved pets. Shop now and give them the best!'}
+            <p className="text-lg md:text-xl text-teal/70 mb-8 max-w-lg leading-relaxed font-medium">
+              Premium organic treats, durable toys, and cozy beds.
+              Everything your <span className="text-accent font-bold">Anabul</span> needs for a happier, healthier life.
             </p>
 
-            {/* CTA Buttons - Mobile Optimized */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start pt-2">
+            <div className="flex flex-col sm:flex-row gap-4 mb-10">
               <Link href="/products">
-                <Button size="lg" className="text-base shadow-lg hover:shadow-xl transition-shadow w-full sm:w-auto bg-accent hover:bg-accent-hover">
-                  Shop Now
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
+                <button className="bg-accent hover:bg-accent-hover shadow-xl shadow-teal/20 hover:shadow-teal/30 group py-3 px-6 rounded-full text-white font-medium">
+                  Start Shopping
+                  <span className="ml-2 group-hover:translate-x-1 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 inline">
+                      <path d="m9 18 6-6-6-6"></path>
+                    </svg>
+                  </span>
+                </button>
               </Link>
-              <Link href="/products?category=new-arrivals">
-                <Button size="lg" variant="outline" className="text-base w-full sm:w-auto border-teal text-teal hover:bg-teal hover:text-white">
-                  New Arrivals
-                </Button>
-              </Link>
+              <button className="border border-teal text-teal hover:bg-teal hover:text-white group py-3 px-6 rounded-full font-medium">
+                <span className="mr-2 group-hover:scale-110 transition-transform">▶</span>
+                Watch Video
+              </button>
             </div>
 
-            {/* Trust Badges - Mobile Optimized */}
-            {heroSettings.showTrustBadges && heroSettings.trustBadges && (
-              <div className="grid grid-cols-3 sm:flex sm:flex-wrap gap-3 sm:gap-6 justify-center lg:justify-start pt-2 sm:pt-4">
-                {heroSettings.trustBadges.map((badge: { text: string; icon?: string }, index: number) => {
-                  // Get icon from mapping or auto-detect from text
-                  const IconComponent = badge.icon && iconMap[badge.icon]
-                    ? iconMap[badge.icon]
-                    : getIconFromText(badge.text);
-
-                  // Color variations for badges
-                  const colors = [
-                    { bg: 'bg-green-100', text: 'text-green-600' },
-                    { bg: 'bg-blue-100', text: 'text-blue-600' },
-                    { bg: 'bg-orange-100', text: 'text-orange-600' },
-                    { bg: 'bg-purple-100', text: 'text-purple-600' },
-                    { bg: 'bg-pink-100', text: 'text-pink-600' },
-                    { bg: 'bg-yellow-100', text: 'text-yellow-600' },
-                  ];
-                  const color = colors[index % colors.length];
-
-                  return (
-                    <div key={index} className="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-teal/70">
-                      <div className={`p-1.5 sm:p-2 ${color.bg} rounded-full shrink-0`}>
-                        <IconComponent className={`h-3 w-3 sm:h-4 sm:w-4 ${color.text}`} />
-                      </div>
-                      <span className="text-center sm:text-left">{badge.text}</span>
-                    </div>
-                  );
-                })}
+            <div className="flex items-center gap-4">
+              <div className="flex -space-x-4">
+                {[1, 2, 3, 4].map(i => (
+                  <img key={i} src={`https://picsum.photos/id/${i + 60}/50/50`} alt="User" className="w-12 h-12 rounded-full border-[3px] border-cream object-cover shadow-sm" />
+                ))}
+                <div className="w-12 h-12 rounded-full border-[3px] border-cream bg-teal text-white flex items-center justify-center text-xs font-bold">
+                  +12k
+                </div>
               </div>
-            )}
+              <div className="text-sm">
+                <p className="font-bold text-teal">Happy Parents</p>
+                <div className="flex text-accent text-xs mt-0.5">
+                  {[1,2,3,4,5].map(s => <span key={s} className="text-lg">★</span>)}
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Right Content - Hero Image - Mobile Optimized */}
-          <div className="relative order-1 lg:order-2">
-            <div className="relative aspect-square max-w-[280px] sm:max-w-md lg:max-w-lg mx-auto">
-              {/* Main Image Container */}
-              <div className="absolute inset-0 bg-gradient-to-br from-teal/20 to-accent/5 rounded-2xl sm:rounded-3xl transform rotate-3" />
-              <div className="relative bg-white rounded-2xl sm:rounded-3xl shadow-xl sm:shadow-2xl overflow-hidden">
-                {store?.storeLogo ? (
-                  <div className="w-full h-full flex items-center justify-center p-8 sm:p-12">
-                    {store.storeLogo.startsWith('data:') ? (
-                      <img
-                        src={store.storeLogo}
-                        alt={store.storeName || 'Store'}
-                        className="w-full h-full object-contain"
-                        loading="eager"
-                      />
-                    ) : (
-                      <Image
-                        src={store.storeLogo}
-                        alt={store.storeName || 'Store'}
-                        fill
-                        className="object-contain p-8 sm:p-12"
-                        priority
-                      />
-                    )}
-                  </div>
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-cream/50 to-cream flex items-center justify-center">
-                    <div className="text-center p-6 sm:p-8">
-                      <div className="w-20 h-20 sm:w-32 sm:h-32 mx-auto mb-3 sm:mb-4 bg-teal/10 rounded-full flex items-center justify-center">
-                        <Gift className="h-10 w-10 sm:h-16 sm:w-16 text-teal" />
-                      </div>
-                      <p className="text-teal font-medium text-sm sm:text-base">Premium Pet Shop</p>
-                    </div>
-                  </div>
-                )}
-              </div>
+          {/* Image Content - Immersive Scene */}
+          <div className="order-1 lg:order-2 relative mt-8 lg:mt-0 flex justify-center lg:justify-end">
+            <div className="relative w-[340px] md:w-[450px] aspect-square">
+              {/* Rotating Circle Background */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-teal/5 to-accent/5 rounded-full blur-xl animate-pulse" />
+              <div className="absolute inset-0 border border-dashed border-teal/20 rounded-full animate-spin" style={{ animationDuration: '50s' }}></div>
 
-              {/* Floating Elements - Hidden on small mobile */}
-              <div className="hidden sm:block absolute -top-4 -right-4 bg-white rounded-xl sm:rounded-2xl shadow-lg p-3 sm:p-4 animate-bounce">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-yellow-100 rounded-full flex items-center justify-center">
-                    <span className="text-base sm:text-xl">⭐</span>
-                  </div>
-                  <div>
-                    <p className="text-xs sm:text-sm font-bold text-teal">4.9/5</p>
-                    <p className="text-[10px] sm:text-xs text-teal/600">Rating</p>
-                  </div>
+              {/* Main Image (Dog) - Floats gently */}
+              <div className="absolute inset-4 z-10 animate-bounce" style={{ animationDuration: '6s' }}>
+                <div className="w-full h-full rounded-full overflow-hidden border-[8px] border-white shadow-2xl shadow-teal/10 relative">
+                  <img
+                    src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=800&auto=format&fit=crop"
+                    alt="Happy Dog"
+                    className="w-full h-full object-cover scale-110"
+                  />
                 </div>
               </div>
 
-              <div className="hidden sm:block absolute -bottom-4 -left-4 bg-white rounded-xl sm:rounded-2xl shadow-lg p-3 sm:p-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <span className="text-base sm:text-xl">🐾</span>
+              {/* Secondary Image (Cat) - Floats with offset */}
+              <div className="absolute -bottom-4 -left-8 z-20 w-40 h-40 md:w-48 md:h-48 animate-bounce" style={{ animationDuration: '7s', animationDelay: '0.5s' }}>
+                <div className="w-full h-full rounded-full overflow-hidden border-[6px] border-white shadow-xl shadow-teal/15 bg-white relative">
+                  <img
+                    src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=500&auto=format&fit=crop"
+                    alt="Curious Cat"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+
+              {/* Floating Product Teaser Card (Conversion Driver) */}
+              <div className="absolute top-10 -right-4 md:-right-10 z-30 bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white max-w-[160px] animate-pulse" style={{ animationDuration: '5s' }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="bg-cream rounded-lg p-1">
+                    <img src="https://picsum.photos/id/1062/100/100" className="w-10 h-10 rounded-md object-cover" alt="Food" />
                   </div>
                   <div>
-                    <p className="text-xs sm:text-sm font-bold text-teal">1000+</p>
-                    <p className="text-[10px] sm:text-xs text-teal/600">Products</p>
+                    <p className="text-xs font-bold text-teal line-clamp-1">Premium Kibble</p>
+                    <p className="text-[10px] text-gray-500">$24.99</p>
                   </div>
+                </div>
+                <div className="w-full bg-teal text-white text-[10px] font-bold py-1.5 px-3 rounded-lg text-center cursor-pointer hover:bg-teal-dark transition-colors flex items-center justify-center gap-1">
+                  Add to Cart <span>🛒</span>
+                </div>
+              </div>
+
+              {/* 100% Natural Badge */}
+              <div className="absolute top-0 left-0 z-20 transform -rotate-12">
+                <div className="bg-accent text-white w-20 h-20 rounded-full flex flex-col items-center justify-center shadow-lg border-4 border-white animate-pulse" style={{ animationDuration: '4s' }}>
+                  <span className="text-xl font-bold leading-none">50%</span>
+                  <span className="text-[10px] uppercase font-bold tracking-wider">OFF</span>
+                </div>
+              </div>
+
+              {/* Quality Check Badge */}
+              <div className="absolute bottom-12 -right-2 md:-right-8 z-20">
+                <div className="bg-white px-4 py-2 rounded-xl shadow-lg border border-teal/10 flex items-center gap-2">
+                  <div className="bg-green-100 text-green-600 p-1 rounded-full">
+                    <span className="text-lg">✓</span>
+                  </div>
+                  <span className="text-xs font-bold text-teal">Vet Approved</span>
                 </div>
               </div>
             </div>
