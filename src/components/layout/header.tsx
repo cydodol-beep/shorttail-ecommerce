@@ -149,7 +149,7 @@ export function Header() {
 
       {/* Top Banner (News Ticker) */}
       <div className="bg-teal text-cream text-xs py-2 font-medium tracking-wide relative z-40 overflow-hidden">
-        <div className="whitespace-nowrap hover:[animation-play-state:paused] w-max animate-marquee-slow">
+        <div className="whitespace-nowrap hover:[animation-play-state:paused] w-max marquee-slow">
           <span className="mx-8">FREE SHIPPING ON ORDERS OVER $50 🚚</span>
           <span className="mx-8">•</span>
           <span className="mx-8">GET 10% OFF YOUR FIRST ORDER WITH CODE: PAWS10</span>
