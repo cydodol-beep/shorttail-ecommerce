@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
-import { PRODUCTS, TESTIMONIALS, CATEGORIES } from '@/constants/products';
+import { PRODUCTS, TESTIMONIALS } from '@/constants/products';
+import { CATEGORIES } from '@/constants/categories';
 import Script from 'next/script';
 import { ArrowRight, ChevronLeft, ChevronRight, Quote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
