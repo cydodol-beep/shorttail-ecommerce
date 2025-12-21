@@ -325,9 +325,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-2xl font-bold text-brown-900 mb-4">Order not found</h1>
-          <Button asChild>
-            <Link href="/dashboard/orders">Back to Orders</Link>
-          </Button>
+          <Link href="/dashboard/orders">
+            <Button>Back to Orders</Button>
+          </Link>
         </div>
       </div>
     );
@@ -340,12 +340,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
-        <Button variant="ghost" asChild className="mb-6">
-          <Link href="/dashboard/orders">
+        <Link href="/dashboard/orders">
+          <Button variant="ghost" className="mb-6">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Orders
-          </Link>
-        </Button>
+          </Button>
+        </Link>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
           <div>

@@ -81,9 +81,9 @@ export default function WishlistPage() {
             <p className="text-brown-600 mb-6">
               Save products you like by clicking the heart icon
             </p>
-            <Button asChild>
-              <Link href="/products">Browse Products</Link>
-            </Button>
+            <Link href="/products">
+              <Button>Browse Products</Button>
+            </Link>
           </CardContent>
         </Card>
       ) : (

@@ -92,12 +92,12 @@ export default function PetsPage() {
           <h1 className="text-3xl font-bold text-brown-900">My Pets</h1>
           <p className="text-brown-600">Manage your pet profiles</p>
         </div>
-        <Button asChild>
-          <Link href="/dashboard/pets/new">
+        <Link href="/dashboard/pets/new">
+          <Button>
             <Plus className="mr-2 h-4 w-4" />
             Add Pet
-          </Link>
-        </Button>
+          </Button>
+        </Link>
       </div>
 
       {loading ? (
@@ -120,12 +120,12 @@ export default function PetsPage() {
             <p className="text-brown-600 mb-6">
               Add your furry friends to get personalized recommendations
             </p>
-            <Button asChild>
-              <Link href="/dashboard/pets/new">
+            <Link href="/dashboard/pets/new">
+              <Button>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Your First Pet
-              </Link>
-            </Button>
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       ) : (

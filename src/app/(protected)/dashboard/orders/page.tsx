@@ -214,9 +214,9 @@ export default function OrdersPage() {
               <ShoppingBag className="h-16 w-16 mx-auto text-brown-300 mb-4" />
               <h3 className="text-lg font-semibold text-brown-900 mb-2">No orders yet</h3>
               <p className="text-brown-600 mb-4">Start shopping to see your orders here!</p>
-              <Button asChild>
-                <Link href="/products">Browse Products</Link>
-              </Button>
+              <Link href="/products">
+                <Button>Browse Products</Button>
+              </Link>
             </CardContent>
           </Card>
         ) : (
@@ -261,12 +261,12 @@ export default function OrdersPage() {
                             </>
                           )}
                         </Button>
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/dashboard/orders/${order.id}`}>
-                            View Details
-                            <ChevronRight className="ml-1 h-4 w-4" />
+                        <Link href={`/dashboard/orders/${order.id}`}>
+                            <Button variant="ghost" size="sm">
+                              View Details
+                              <ChevronRight className="ml-1 h-4 w-4" />
+                            </Button>
                           </Link>
-                        </Button>
                       </div>
                     </div>
                   </CardContent>
