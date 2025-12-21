@@ -312,12 +312,12 @@ export default function AdminProductsPage() {
             <Upload className="mr-2 h-4 w-4" />
             Import
           </Button>
-          <Button asChild>
-            <Link href="/admin/products/new">
+          <Link href="/admin/products/new">
+            <Button>
               <Plus className="mr-2 h-4 w-4" />
               Add Product
-            </Link>
-          </Button>
+            </Button>
+          </Link>
         </div>
       </div>
 
