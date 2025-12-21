@@ -8,38 +8,13 @@ import Script from 'next/script';
 import { ArrowRight, ChevronLeft, ChevronRight, Quote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ProductCard } from '@/components/ui/product-card';
 import { useLandingSections } from '@/hooks/use-landing-sections';
 import { useProductData } from '@/hooks/use-product-data';
 
 // Import the section components from the components directory
 import { CategorySection } from '@/components/home/category-section';
 
-// Define Product type
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  originalPrice?: number;
-  rating: number;
-  reviews: number;
-  image: string;
-  category: string;
-  isNew?: boolean;
-  isBestSeller?: boolean;
-}
-
-// Define Testimonial type
-interface Testimonial {
-  id: string;
-  name: string;
-  role: string;
-  content: string;
-  avatar: string;
-}
-
-interface ProductCardProps {
-  product: Product;
-}
 
 
 const ProductCardSkeleton = () => (
