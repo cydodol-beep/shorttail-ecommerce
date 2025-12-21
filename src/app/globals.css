@@ -43,6 +43,15 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+@keyframes marquee-slow {
+  from { transform: translateX(100%); }
+  to { transform: translateX(-100%); }
+}
+
+.marquee-slow {
+  animation: marquee-slow 60s linear infinite;
+}
+
 :root {
   --radius: 0.75rem;
   /* New Theme - Light Mode */
