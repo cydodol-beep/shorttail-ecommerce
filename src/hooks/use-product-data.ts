@@ -41,31 +41,18 @@ export function useProductData() {
     }
   };
 
-  // Get best selling products based on order count
+  // Get best selling products based on sales count
   const getBestSellingProducts = (): ProductWithVariants[] => {
-    // Sort products by sales count or best seller flag
+    // Sort products by sales count (assuming sales_count is a field in the products table)
     return [...products]
-      .filter(p => p.is_best_seller || (p as any).sales_count > 0)
-      .sort((a, b) => {
-        const aSales = (a as any).sales_count || 0;
-        const bSales = (b as any).sales_count || 0;
-        // If both have best seller flag, use sales count for tiebreaker
-        if (a.is_best_seller && b.is_best_seller) {
-          return bSales - aSales;
-        }
-        // Best seller flag takes precedence
-        if (a.is_best_seller && !b.is_best_seller) return -1;
-        if (!a.is_best_seller && b.is_best_seller) return 1;
-        // Otherwise, sort by sales count
-        return bSales - aSales;
-      })
+      .filter(p => p.sales_count && p.sales_count > 0)
+      .sort((a, b) => (b.sales_count || 0) - (a.sales_count || 0))
       .slice(0, 8); // Return top 8 bestsellers
   };
 
   // Get new arrival products (most recently created)
   const getNewArrivalProducts = (): ProductWithVariants[] => {
     return [...products]
-      .filter(p => p.is_new || new Date(p.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) // Last 30 days
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, 8); // Return the 8 newest products
   };

@@ -41,50 +41,6 @@ interface ProductCardProps {
   product: Product;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 group">
-      <div className="relative">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-        {product.isBestSeller && (
-          <span className="absolute top-3 left-3 bg-accent text-white px-2 py-1 rounded-full text-xs font-bold">
-            Best Seller
-          </span>
-        )}
-        {product.isNew && (
-          <span className="absolute top-3 left-3 bg-teal text-white px-2 py-1 rounded-full text-xs font-bold">
-            New
-          </span>
-        )}
-        {product.originalPrice && (
-          <div className="absolute top-3 right-3 flex flex-col items-end">
-            <span className="text-sm text-gray-500 line-through">${product.originalPrice}</span>
-            <span className="text-lg font-bold text-teal">${product.price}</span>
-          </div>
-        )}
-        {!product.originalPrice && (
-          <div className="absolute bottom-3 right-3">
-            <span className="text-lg font-bold text-teal">${product.price}</span>
-          </div>
-        )}
-      </div>
-      <div className="p-4">
-        <h3 className="font-bold text-teal mb-1">{product.name}</h3>
-        <div className="flex items-center text-sm text-accent mb-2">
-          <span className="mr-2">★ {product.rating}</span>
-          <span>({product.reviews})</span>
-        </div>
-        <button className="w-full mt-2 py-2 bg-teal text-white rounded-lg hover:bg-teal-dark transition-colors text-sm font-medium">
-          Add to Cart
-        </button>
-      </div>
-    </div>
-  );
-};
 
 const ProductCardSkeleton = () => (
   <div className="bg-white rounded-2xl overflow-hidden shadow-md animate-pulse">
@@ -574,7 +530,11 @@ export default function HomePage() {
                       ))
                     ) : (
                       currentBestSellers.map((product, i) => (
-                        <ProductCard key={product.id} product={product} />
+                        <ProductCard
+                          key={product.id}
+                          product={product}
+                          className="h-full flex flex-col"
+                        />
                       ))
                     )}
                   </div>
@@ -608,7 +568,11 @@ export default function HomePage() {
                       ))
                     ) : (
                       currentNewArrivals.map((product, i) => (
-                        <ProductCard key={product.id} product={product} />
+                        <ProductCard
+                          key={product.id}
+                          product={product}
+                          className="h-full flex flex-col"
+                        />
                       ))
                     )}
                   </div>
