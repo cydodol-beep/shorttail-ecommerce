@@ -18,8 +18,8 @@ export const Button: React.FC<ButtonProps> = ({
   const variants = {
     // Primary is now Teal (Brand Color)
     primary: "bg-teal-700 text-white hover:bg-teal-800 shadow-lg shadow-teal-700/20",
-    // Secondary is now Orange (Accent Color)
-    secondary: "bg-orange text-white hover:bg-orange-hover shadow-lg shadow-orange/20",
+    // Secondary is now Accent Color (#ff911d)
+    secondary: "bg-[#ff911d] text-white hover:bg-[#e58117] shadow-lg shadow-[#ff911d]/20",
     // Outline matches Teal theme
     outline: "border-2 border-teal-700 text-teal-700 hover:bg-teal-50",
   };
