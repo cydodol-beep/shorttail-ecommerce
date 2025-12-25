@@ -230,17 +230,19 @@ export const TreatCatcher: React.FC = () => {
   const handleToggleMute = () => setIsMuted(toggleMute());
 
   const startGame = () => {
-    initAudio(); playSound('click'); 
+    // Initialize audio context - this might be needed due to browser autoplay policies
+    initAudio();
+    playSound('click');
     setItems([]); setAmbientEffects([]); setScore(0); scoreRef.current = 0; keysPressed.current.clear();
     const duration = 30; setTimeLeft(duration); lastSecondsRemaining.current = duration;
     gameEndTimeRef.current = Date.now() + (duration * 1000);
     dogX.set(50); smoothDogX.set(50); setDogStatus('idle'); poopComboRef.current = 0;
     setFloatingTexts([]);
-    
+
     // Scale intensity relative to Level 100 max
     const startIntensity = Math.min(1, level / 100);
-    setMusicIntensity(startIntensity); 
-    
+    setMusicIntensity(startIntensity);
+
     sessionStatsRef.current = { caught: 0, missed: 0, poopAvoided: 0, poopHit: 0 };
     setFinalStats(null);
     setIsPlaying(true);
