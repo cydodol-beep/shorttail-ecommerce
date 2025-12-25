@@ -1773,6 +1773,25 @@ When working with Zustand stores and caching:
 
 ---
 
+## 🔄 Recent Updates (December 21, 2025)
+
+### News Ticker Animation Enhancement 🎢
+- **Increased Animation Speed for Better User Experience**:
+  - **Issue**: News ticker animation was moving too slowly at 60 seconds per cycle
+  - **Solution**: Reduced animation duration from 60s to 20s for faster movement
+  - **Implementation**: Updated `marquee-slow` animation in `src/app/globals.css` from 60s to 20s
+  - **Improvement**: News ticker now cycles 3x faster, making it more engaging and readable
+
+### Enhanced Buy-X-Get-Y Promotion Display 🛍️
+- **Improved Buy-X-Get-Y Promotion Information in News Ticker**:
+  - **Issue**: Buy-x-get-y promotions weren't displaying clear details about quantities
+  - **Solution**: Enhanced display to show both buy quantity and get quantity explicitly
+  - **Implementation**: Updated `useActivePromotions` hook to format buy_x_get_y promotions as "BUY [X] GET [Y] FREE"
+  - **Key Improvement**: Now clearly shows how many items to buy and how many to get free
+  - **Result**: Users can now easily understand buy-x-get-y promotions at a glance
+
+---
+
 ## License
 
 Private project - All rights reserved.
