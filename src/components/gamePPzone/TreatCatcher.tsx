@@ -141,9 +141,9 @@ export const TreatCatcher: React.FC = () => {
   const dogXPercent = useTransform(smoothDogX, x => `${x}%`);
   
   const containerRef = useRef<HTMLDivElement>(null);
-  const requestRef = useRef<number>();
+  const requestRef = useRef<number | null>(null);
   const lastSpawnTime = useRef<number>(0);
-  const dogStatusTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const dogStatusTimeout = useRef<NodeJS.Timeout | null>(null);
   const poopComboRef = useRef<number>(0); 
   
   const { addPoints, stats, updateQuestProgress } = useGameStore();
@@ -252,7 +252,7 @@ export const TreatCatcher: React.FC = () => {
     addPoints(finalScore);
     updateQuestProgress('accumulate_score', finalScore);
     setDogStatus('idle');
-    if (requestRef.current) cancelAnimationFrame(requestRef.current);
+    if (requestRef.current !== null) cancelAnimationFrame(requestRef.current);
     playSound('levelUp'); 
     const { caught, missed, poopAvoided } = sessionStatsRef.current;
     const totalGoodItems = caught + missed;
@@ -273,8 +273,8 @@ export const TreatCatcher: React.FC = () => {
 
   const triggerDogReaction = (status: 'catching' | 'hit') => {
     setDogStatus(status);
-    if (dogStatusTimeout.current) clearTimeout(dogStatusTimeout.current);
-    dogStatusTimeout.current = setTimeout(() => { setDogStatus('idle'); }, 500);
+    if (dogStatusTimeout.current !== null) clearTimeout(dogStatusTimeout.current);
+    dogStatusTimeout.current = setTimeout(() => { setDogStatus('idle'); }, 500) as NodeJS.Timeout;
   };
 
   const gameLoop = useCallback((time: number) => {
@@ -366,7 +366,7 @@ export const TreatCatcher: React.FC = () => {
     requestRef.current = requestAnimationFrame(gameLoop);
   }, [currentConfig, smoothDogX, dogX, level, updateQuestProgress, endGame]); 
 
-  useEffect(() => { if (isPlaying) requestRef.current = requestAnimationFrame(gameLoop); return () => { if (requestRef.current) cancelAnimationFrame(requestRef.current); }; }, [isPlaying, gameLoop]);
+  useEffect(() => { if (isPlaying) requestRef.current = requestAnimationFrame(gameLoop); return () => { if (requestRef.current !== null) cancelAnimationFrame(requestRef.current); }; }, [isPlaying, gameLoop]);
 
   // --- DYNAMIC STYLES ---
   const getBackgroundStyles = () => {
