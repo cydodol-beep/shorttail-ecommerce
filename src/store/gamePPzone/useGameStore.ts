@@ -144,7 +144,7 @@ export const useGameStore = create<GameState>()(
       addExp: (amount) => {
         set((state) => {
           let { level, currentExp, maxExp, points, petName, lastLoginDate, lastQuestResetDate } = state.stats;
-          
+
           // If max level, just accumulate points, no EXP gain
           if (level >= 100) {
             return { state };
@@ -153,7 +153,10 @@ export const useGameStore = create<GameState>()(
           let newExp = currentExp + amount;
           let newLevel = level;
           let newMaxExp = maxExp;
-          
+
+          // Track whether we crossed a 5-level threshold
+          let levelsGained = 0;
+
           // Level Up Logic
           // Loop handles multiple levels at once if huge EXP is granted
           while (newExp >= newMaxExp && newLevel < 100) {
@@ -161,10 +164,60 @@ export const useGameStore = create<GameState>()(
             newLevel += 1;
             newMaxExp = newLevel * 100; // Curve: Lvl * 100
             // Bonus points for leveling up
-            points += 50; 
+            points += 50;
+            levelsGained++;
             playSound('levelUp');
           }
-          
+
+          // Check if the new level crosses a 5-level threshold and add bonus points
+          const oldLevelThreshold = Math.floor(level / 5);
+          const newLevelThreshold = Math.floor(newLevel / 5);
+          const thresholdCrossed = newLevelThreshold > oldLevelThreshold;
+
+          if (thresholdCrossed) {
+            points += 20; // Add 20 bonus points for crossing a 5-level threshold
+
+            // Add the bonus points to the user's profile in the database
+            setTimeout(async () => {
+              try {
+                const supabase = createClient();
+                const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+                if (authError || !user) {
+                  console.error('Auth error when adding bonus points:', authError);
+                  return;
+                }
+
+                // First, get the current profile to get the current points_balance
+                const { data: profileData, error: selectError } = await supabase
+                  .from('profiles')
+                  .select('points_balance')
+                  .eq('id', user.id)
+                  .single();
+
+                if (selectError) {
+                  console.error('Error getting current points balance:', selectError);
+                  return;
+                }
+
+                // Update the user's points_balance by adding 20 bonus points
+                const newPointsBalance = (profileData.points_balance || 0) + 20;
+                const { error: updateError } = await supabase
+                  .from('profiles')
+                  .update({ points_balance: newPointsBalance })
+                  .eq('id', user.id);
+
+                if (updateError) {
+                  console.error('Error adding bonus points to profile:', updateError);
+                } else {
+                  console.log('Successfully added 20 bonus points to user profile');
+                }
+              } catch (err) {
+                console.error('Error adding bonus points to profile:', err);
+              }
+            }, 0); // Run after state update
+          }
+
           // Cap at level 100
           if (newLevel === 100) {
              newExp = 0;
@@ -294,18 +347,72 @@ export const useGameStore = create<GameState>()(
                 
                 let { level, currentExp, maxExp, points } = get().stats; // Get FRESH stats after points update
                 let newExp = currentExp + quest.rewardExp;
-                
-                 while (newExp >= maxExp && level < 100) {
+                let newLevel = level;
+                let newMaxExp = maxExp;
+                let newPoints = points;
+
+                // Track whether we crossed a 5-level threshold
+                let oldLevelThreshold = Math.floor(level / 5);
+
+                while (newExp >= maxExp && newLevel < 100) {
                     newExp -= maxExp;
-                    level += 1;
-                    maxExp = level * 100;
-                    points += 50; 
+                    newLevel += 1;
+                    newMaxExp = newLevel * 100;
+                    newPoints += 50;
                 }
-                
-                if (level === 100) { newExp = 0; maxExp = 0; }
+
+                // Check if the new level crosses a 5-level threshold and add bonus points to profile
+                const newLevelThreshold = Math.floor(newLevel / 5);
+                const thresholdCrossed = newLevelThreshold > oldLevelThreshold;
+
+                if (thresholdCrossed) {
+                  newPoints += 20; // Add 20 bonus points for crossing a 5-level threshold
+
+                  // Add the bonus points to the user's profile in the database
+                  setTimeout(async () => {
+                    try {
+                      const supabase = createClient();
+                      const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+                      if (authError || !user) {
+                        console.error('Auth error when adding bonus points from quest:', authError);
+                        return;
+                      }
+
+                      // First, get the current profile to get the current points_balance
+                      const { data: profileData, error: selectError } = await supabase
+                        .from('profiles')
+                        .select('points_balance')
+                        .eq('id', user.id)
+                        .single();
+
+                      if (selectError) {
+                        console.error('Error getting current points balance for quest:', selectError);
+                        return;
+                      }
+
+                      // Update the user's points_balance by adding 20 bonus points
+                      const newPointsBalance = (profileData.points_balance || 0) + 20;
+                      const { error: updateError } = await supabase
+                        .from('profiles')
+                        .update({ points_balance: newPointsBalance })
+                        .eq('id', user.id);
+
+                      if (updateError) {
+                        console.error('Error adding bonus points to profile from quest:', updateError);
+                      } else {
+                        console.log('Successfully added 20 bonus points to user profile from quest');
+                      }
+                    } catch (err) {
+                      console.error('Error adding bonus points to profile from quest:', err);
+                    }
+                  }, 0); // Run after state update
+                }
+
+                if (newLevel === 100) { newExp = 0; newMaxExp = 0; }
 
                 return {
-                    stats: { ...state.stats, points, level, currentExp: newExp, maxExp },
+                    stats: { ...state.stats, points: newPoints, level: newLevel, currentExp: newExp, maxExp: newMaxExp },
                     quests: updatedQuests
                 };
             }
