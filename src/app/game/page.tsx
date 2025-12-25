@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { redirect } from 'next/navigation';
+import GamePPZoneApp from '@/components/gamePPzone/App';
 import { GameRelatedProducts } from '@/components/game/GameRelatedProducts';
 
 export default function GamePage() {
@@ -42,7 +43,12 @@ export default function GamePage() {
 
   return (
     <div className="w-full max-w-7xl mx-auto bg-[#E6D5B8]">
-      {/* Related Products Section at the bottom */}
+      {/* Game Section */}
+      <div className="p-4">
+        <GamePPZoneApp />
+      </div>
+
+      {/* Related Products Section */}
       <div className="p-4">
         <div className="bg-white/80 backdrop-blur-sm border-4 border-[#634832] rounded-2xl p-4 sm:p-6 shadow-lg">
           <GameRelatedProducts title="Pet Supplies & Toys" limit={4} />
