@@ -158,10 +158,10 @@ export function Header() {
           <div className="text-xs py-1.5 font-medium tracking-wide relative z-40 overflow-hidden" style={{ backgroundColor: '#006d77', color: '#fdf6ec' }}>
             <div className="whitespace-nowrap hover:[animation-play-state:paused] w-max marquee-slow">
               {promotions.length > 0 ? (
-                <>
+                <span className="flex items-center gap-2">
                   {promotions.map((promo, index) => (
                     <React.Fragment key={promo.id}>
-                      <span className="mx-4 flex items-center gap-2">
+                      <span className="flex items-center gap-2">
                         {/* Icon based on promotion type */}
                         {promo.discount_type === 'percentage' ? (
                           <Percent className="w-4 h-4 inline" />
@@ -195,18 +195,18 @@ export function Header() {
                         )}
                       </span>
                       {index < promotions.length - 1 ? (
-                        <span className="mx-1">⭐</span>
+                        <span>⭐</span>
                       ) : null}
                     </React.Fragment>
                   ))}
-                  <span className="mx-1">⭐</span>
-                  <span className="flex items-center gap-2">
+                  <span>⭐</span>
+                  <span>
                     <Sparkles className="w-4 h-4 inline" />
                     Welcome to ShortTail.id - Your Premium Pet Shop Experience! ✨
                   </span>
-                </>
+                </span>
               ) : (
-                <span className="mx-4 flex items-center gap-2">
+                <span className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 inline" />
                   Welcome to ShortTail.id - Your Premium Pet Shop Experience! ✨
                 </span>
