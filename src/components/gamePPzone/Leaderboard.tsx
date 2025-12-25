@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { createClient } from '@/lib/supabase/client';
 import { Trophy, Medal, Crown } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -15,6 +15,7 @@ export const Leaderboard: React.FC = () => {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
+        const supabase = createClient();
         const { data, error } = await supabase
           .from('player_stats')
           .select('pet_name, level')
@@ -23,7 +24,7 @@ export const Leaderboard: React.FC = () => {
           .limit(10);
 
         if (error) throw error;
-        
+
         if (data && data.length > 0) {
             setEntries(data);
         } else {

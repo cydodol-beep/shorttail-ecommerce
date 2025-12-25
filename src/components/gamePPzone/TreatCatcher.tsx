@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring, useVelocity } from 'framer-motion';
 import { Play, RotateCcw, Gauge, Cloud, Target, XCircle, Moon, Volume2, VolumeX, Bone, Sun, Keyboard as KeyboardIcon, Music, Trees, Waves, Building2, Rocket, Star as StarIcon, Bird } from 'lucide-react';
-import { useGameStore } from '../store/useGameStore';
-import { GameItem } from '../types';
+import { useGameStore } from '@/store/gamePPzone/useGameStore';
+import { GameItem } from '@/types/gamePPzone/types';
 import { Button } from './ui/Button';
-import { playSound, startMusic, stopMusic, setMusicIntensity, toggleMute, getMuteState, initAudio } from '../lib/sound';
+import { playSound, startMusic, stopMusic, setMusicIntensity, toggleMute, getMuteState, initAudio } from '@/lib/gamePPzone/sound';
 import { DogAvatar, TreatBone, ToyBall, HazardPoop } from './GameAssets';
 
 const DOG_SIZE = 12; // Percentage width

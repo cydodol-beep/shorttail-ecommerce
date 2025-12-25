@@ -41,6 +41,7 @@ export interface GameState {
   checkDailyQuestsReset: () => void;
   updateQuestProgress: (type: Quest['type'], amount: number) => void;
   claimQuestReward: (questId: string) => void;
+  init: () => Promise<void>;
 }
 
 export interface GameConfig {

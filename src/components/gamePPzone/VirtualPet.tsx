@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Utensils, Trophy, Sparkles, Pencil, Check, X } from 'lucide-react';
-import { useGameStore } from '../store/useGameStore';
+import { useGameStore } from '@/store/gamePPzone/useGameStore';
 import { Button } from './ui/Button';
-import { playSound } from '../lib/sound';
+import { playSound } from '@/lib/gamePPzone/sound';
 import { DogAvatar } from './GameAssets';
 
 interface Particle {
