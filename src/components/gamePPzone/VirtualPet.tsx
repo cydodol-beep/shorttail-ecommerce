@@ -221,13 +221,19 @@ export const VirtualPet: React.FC = () => {
           <span className="text-teal-600 font-bold text-xs uppercase tracking-wider">Experience</span>
           <span className="text-teal-900 font-bold text-[10px]">{Math.floor(stats.currentExp)} / {stats.maxExp} XP</span>
         </div>
-        <div className="w-full h-2.5 bg-white rounded-full overflow-hidden border border-teal-100">
-          <motion.div 
-            className="h-full bg-orange"
+        <div className="w-full h-3 bg-white rounded-full overflow-hidden border border-teal-100 relative">
+          <motion.div
+            className="h-full bg-[#ff911d]"
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ type: "spring", stiffness: 50 }}
           />
+          {/* Progress text overlay */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-xs font-bold text-white drop-shadow">
+              {Math.floor(stats.currentExp)} / {stats.maxExp} XP
+            </span>
+          </div>
         </div>
         
         <div className="mt-3 flex justify-between items-center bg-white p-2 rounded-xl border border-teal-100">
