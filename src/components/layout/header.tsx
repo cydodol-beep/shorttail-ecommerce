@@ -202,13 +202,13 @@ export function Header() {
                   <span>⭐</span>
                   <span>
                     <Sparkles className="w-4 h-4 inline" />
-                    Welcome to ShortTail.id - Your Premium Pet Shop Experience! ✨
+                    ✨ Welcome to ShortTail.id - Healthy Treats for every Anabul! ✨
                   </span>
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 inline" />
-                  Welcome to ShortTail.id - Your Premium Pet Shop Experience! ✨
+                  ✨ Welcome to ShortTail.id - Healthy Treats for every Anabul! ✨
                 </span>
               )}
             </div>
