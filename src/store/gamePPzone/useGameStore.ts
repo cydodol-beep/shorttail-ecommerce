@@ -81,7 +81,7 @@ export const useGameStore = create<GameState>()(
               points: data.points || 0,
               level: data.level || 1,
               currentExp: data.current_exp || 0,
-              maxExp: data.max_exp || 100,
+              maxExp: data.max_exp !== null && data.max_exp !== undefined ? data.max_exp : 100,
               petName: data.pet_name || 'Doggo',
               lastLoginDate: data.last_login_date || '',
               lastQuestResetDate: data.last_quest_reset_date || '',

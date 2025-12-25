@@ -22,7 +22,7 @@ export const VirtualPet: React.FC = () => {
   const nextParticleId = useRef(0);
 
   // Calculate Level Progress Percentage
-  const progress = Math.min(100, (stats.currentExp / stats.maxExp) * 100);
+  const progress = stats.maxExp > 0 ? Math.min(100, (stats.currentExp / stats.maxExp) * 100) : 100;
 
   const spawnParticles = (count: number) => {
     const newParticles: Particle[] = [];
