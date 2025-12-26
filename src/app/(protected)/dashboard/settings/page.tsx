@@ -283,15 +283,21 @@ export default function UserSettingsPage() {
             return;
           }
 
-          // Update profile with WebP data URL
-          const supabase = createClient();
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ user_avatar_url: webpDataUrl })
-            .eq('id', user.id);
+          // Update profile with WebP data URL using API route to bypass potential RLS issues
+          const response = await fetch('/api/avatar/update', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: user.id,
+              avatarDataUrl: webpDataUrl,
+            }),
+          });
 
-          if (updateError) {
-            console.error('Error updating profile avatar:', updateError);
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Error updating profile avatar:', errorData.error);
             toast.error('Failed to update avatar');
           } else {
             toast.success('Avatar updated successfully');
