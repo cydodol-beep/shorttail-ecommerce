@@ -1,6 +1,6 @@
 'use client';
 
-import { HeroSection } from '@/components/home/hero-section';
+import HeroSection from '@/components/home/hero-section';
 import { PromoBanner } from '@/components/home/promo-banner';
 import { BenefitsSection } from '@/components/home/benefits-section';
 import { CategorySection } from '@/components/home/category-section';
