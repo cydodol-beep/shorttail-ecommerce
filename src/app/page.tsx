@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
@@ -14,7 +14,6 @@ import { ProductCard } from '@/components/ui/product-card';
 import { useLandingSections } from '@/hooks/use-landing-sections';
 import { useProductData } from '@/hooks/use-product-data';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import type { ExtendedProduct } from '@/hooks/use-product-data';
 
 // Import the section components from the components directory
