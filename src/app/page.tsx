@@ -350,7 +350,7 @@ export default function HomePage() {
         <main>
           {/* Hero Section - Always visible */}
           {(isSectionVisible('hero') || true) && ( // Hero section is always visible
-            <section className="relative min-h-[90vh] flex items-center bg-cream overflow-hidden py-12 lg:py-0">
+            <section className="relative min-h-[90vh] flex items-center bg-cream overflow-hidden py-11 lg:py-0">
               {/* Texture Background - Animated Pulse */}
               <motion.div
                 animate={{ opacity: [0.03, 0.05, 0.03] }}
@@ -390,7 +390,7 @@ export default function HomePage() {
               />
 
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-11 lg:gap-18 items-center">
                   {/* Text Content */}
                   <div className="order-2 lg:order-1 relative">
                     {/* Dynamic hashtags from admin settings */}
@@ -413,7 +413,7 @@ export default function HomePage() {
 
                       return (
                         <>
-                          <div className="flex items-center gap-3 mb-6">
+                          <div className="flex items-center gap-2.5 mb-5.5">
                             {(heroSettings.topTags && heroSettings.topTags.length > 0) ? (
                               heroSettings.topTags.map((tag, index) => (
                                 <span key={index} className="inline-flex items-center py-1 px-3 rounded-full bg-accent/10 text-accent text-xs font-bold tracking-wider uppercase border border-accent/20">
@@ -434,7 +434,7 @@ export default function HomePage() {
                             )}
                           </div>
 
-                          <h1 className="text-5xl md:text-7xl font-bold text-teal leading-[1.05] mb-6 tracking-tight">
+                          <h1 className="text-4xl md:text-6xl font-bold text-teal leading-[1.05] mb-5.5 tracking-tight">
                             {(heroSettings.title && heroSettings.title !== "") ? heroSettings.title : "Spoil them with"}
                             <br />
                             <span className="relative inline-block">
@@ -454,7 +454,7 @@ export default function HomePage() {
                             </span>
                           </h1>
 
-                          <p className="text-lg md:text-xl text-teal/70 mb-8 max-w-lg leading-relaxed font-medium"
+                          <p className="text-base md:text-lg text-teal/70 mb-7 max-w-lg leading-relaxed font-medium"
                              dangerouslySetInnerHTML={{
                                __html: (heroSettings.description && heroSettings.description !== "")
                                  ? heroSettings.description
@@ -465,9 +465,9 @@ export default function HomePage() {
                       );
                     })()}
 
-                    <div className="flex flex-col sm:flex-row gap-4 mb-10">
+                    <div className="flex flex-col sm:flex-row gap-3.5 mb-9">
                       <Link href="/products">
-                        <Button variant="default" size="lg" className="bg-accent hover:bg-accent-hover shadow-xl shadow-teal/20 hover:shadow-teal/30 group">
+                        <Button variant="default" size="lg" className="bg-accent hover:bg-accent-hover shadow-xl shadow-teal/20 hover:shadow-teal/30 group text-sm">
                           {(() => {
                             const heroSettings: HeroSectionSettings = getSectionSettings('hero', {
                               title: "Everything Your Pet Needs & Loves",
@@ -498,7 +498,7 @@ export default function HomePage() {
                         </Button>
                       </Link>
                       <Link href="/about">
-                      <Button variant="outline" size="lg" className="border-teal text-teal hover:bg-teal hover:text-white group">
+                      <Button variant="outline" size="lg" className="border-teal text-teal hover:bg-teal hover:text-white group text-sm">
                         <span className="mr-2 group-hover:scale-110 transition-transform">▶</span>
                         {(() => {
                           const heroSettings: HeroSectionSettings = getSectionSettings('hero', {
@@ -522,19 +522,19 @@ export default function HomePage() {
                     </Link>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                      <div className="flex -space-x-4">
+                    <div className="flex items-center gap-3.5">
+                      <div className="flex -space-x-3.5">
                         {[1, 2, 3, 4].map(i => (
-                          <img key={i} src={`https://picsum.photos/id/${i + 60}/50/50`} alt="User" className="w-12 h-12 rounded-full border-[3px] border-cream object-cover shadow-sm" />
+                          <img key={i} src={`https://picsum.photos/id/${i + 60}/50/50`} alt="User" className="w-10.5 h-10.5 rounded-full border-2.5 border-cream object-cover shadow-sm" />
                         ))}
-                        <div className="w-12 h-12 rounded-full border-[3px] border-cream bg-teal text-white flex items-center justify-center text-xs font-bold">
+                        <div className="w-10.5 h-10.5 rounded-full border-2.5 border-cream bg-teal text-white flex items-center justify-center text-[10px] font-bold">
                           +12k
                         </div>
                       </div>
-                      <div className="text-sm">
+                      <div className="text-xs">
                         <p className="font-bold text-teal">Happy Parents</p>
-                        <div className="flex text-accent text-xs mt-0.5">
-                          {[1,2,3,4,5].map(s => <span key={s} className="text-lg">★</span>)}
+                        <div className="flex text-accent text-[9px] mt-0.5">
+                          {[1,2,3,4,5].map(s => <span key={s} className="text-base">★</span>)}
                         </div>
                       </div>
                     </div>
@@ -571,7 +571,7 @@ export default function HomePage() {
 
                     return (
                       <div className="order-1 lg:order-2 relative mt-8 lg:mt-0 flex justify-center lg:justify-end">
-                        <div className="relative w-[340px] md:w-[450px] aspect-square">
+                        <div className="relative w-[306px] md:w-[405px] aspect-square">
                           {/* Rotating Circle Background */}
                           <div className="absolute inset-0 bg-gradient-to-tr from-teal/5 to-accent/5 rounded-full blur-xl animate-pulse" />
                           <motion.div
@@ -586,7 +586,7 @@ export default function HomePage() {
                             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
                             className="absolute inset-4 z-10"
                           >
-                            <div className="w-full h-full rounded-full overflow-hidden border-[8px] border-white shadow-2xl shadow-teal/10 relative">
+                            <div className="w-full h-full rounded-full overflow-hidden border-[7px] border-white shadow-2xl shadow-teal/10 relative">
                                 <img
                                   src={images[0]}
                                   alt="Happy Pet"
@@ -599,9 +599,9 @@ export default function HomePage() {
                           <motion.div
                             animate={{ y: [0, 15, 0] }}
                             transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                            className="absolute -bottom-4 -left-8 z-20 w-40 h-40 md:w-48 md:h-48"
+                            className="absolute -bottom-4 -left-8 z-20 w-36 h-36 md:w-43 md:h-43"
                           >
-                            <div className="w-full h-full rounded-full overflow-hidden border-[6px] border-white shadow-xl shadow-teal/15 bg-white relative">
+                            <div className="w-full h-full rounded-full overflow-hidden border-[5px] border-white shadow-xl shadow-teal/15 bg-white relative">
                               <img
                                 src={images[1]}
                                 alt="Curious Pet"
@@ -615,18 +615,18 @@ export default function HomePage() {
                             initial={{ opacity: 0, x: 50 }}
                             animate={{ opacity: 1, x: 0, y: [0, -10, 0] }}
                             transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                            className="absolute top-10 -right-4 md:-right-10 z-30 bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white max-w-[160px]"
+                            className="absolute top-9 -right-4 md:-right-9 z-30 bg-white/90 backdrop-blur-md p-2.5 rounded-2xl shadow-xl border border-white max-w-[144px]"
                           >
-                            <div className="flex items-center gap-3 mb-2">
-                              <div className="bg-cream rounded-lg p-1">
-                                <img src="https://picsum.photos/id/1062/100/100" className="w-10 h-10 rounded-md object-cover" alt="Food" />
+                            <div className="flex items-center gap-2.5 mb-1.5">
+                              <div className="bg-cream rounded-lg p-0.5">
+                                <img src="https://picsum.photos/id/1062/100/100" className="w-9 h-9 rounded-md object-cover" alt="Food" />
                               </div>
                               <div>
-                                <p className="text-xs font-bold text-teal line-clamp-1">Premium Kibble</p>
-                                <p className="text-[10px] text-gray-500">$24.99</p>
+                                <p className="text-[9px] font-bold text-teal line-clamp-1">Premium Kibble</p>
+                                <p className="text-[9px] text-gray-500">$24.99</p>
                               </div>
                             </div>
-                            <div className="w-full bg-teal text-white text-[10px] font-bold py-1.5 px-3 rounded-lg text-center cursor-pointer hover:bg-teal-dark transition-colors flex items-center justify-center gap-1">
+                            <div className="w-full bg-teal text-white text-[9px] font-bold py-1.25 px-2.5 rounded-lg text-center cursor-pointer hover:bg-teal-dark transition-colors flex items-center justify-center gap-1">
                               Add to Cart <span>🛒</span>
                             </div>
                           </motion.div>
@@ -636,24 +636,24 @@ export default function HomePage() {
                             <motion.div
                               animate={{ rotate: [-12, -8, -12] }}
                               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                              className="bg-accent text-white w-20 h-20 rounded-full flex flex-col items-center justify-center shadow-lg border-4 border-white"
+                              className="bg-accent text-white w-18 h-18 rounded-full flex flex-col items-center justify-center shadow-lg border-3.5 border-white"
                             >
-                              <span className="text-xl font-bold leading-none">
+                              <span className="text-lg font-bold leading-none">
                                 {(heroSettings.discountValue && heroSettings.discountValue !== "") ? heroSettings.discountValue : "50%"}
                               </span>
-                              <span className="text-[10px] uppercase font-bold tracking-wider">
+                              <span className="text-[9px] uppercase font-bold tracking-wider">
                                 {(heroSettings.discountLabel && heroSettings.discountLabel !== "") ? heroSettings.discountLabel : "OFF"}
                               </span>
                             </motion.div>
                           </div>
 
                           {/* Quality Check Badge */}
-                          <div className="absolute bottom-12 -right-2 md:-right-8 z-20">
-                            <div className="bg-white px-4 py-2 rounded-xl shadow-lg border border-teal/10 flex items-center gap-2">
-                              <div className="bg-green-100 text-green-600 p-1 rounded-full">
-                                <span className="text-lg">✓</span>
+                          <div className="absolute bottom-10.5 -right-1.5 md:-right-7 z-20">
+                            <div className="bg-white px-3.5 py-1.5 rounded-xl shadow-lg border border-teal/10 flex items-center gap-1.5">
+                              <div className="bg-green-100 text-green-600 p-0.5 rounded-full">
+                                <span className="text-base">✓</span>
                               </div>
-                              <span className="text-xs font-bold text-teal">
+                              <span className="text-[9px] font-bold text-teal">
                                 {(heroSettings.vetApprovedText && heroSettings.vetApprovedText !== "") ? heroSettings.vetApprovedText : "Vet Approved"}
                               </span>
                             </div>
