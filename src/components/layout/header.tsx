@@ -463,13 +463,15 @@ export function Header() {
                         </Link>
                       </>
                     )}
-                  </div>
-               </div>
-          </div>
-        </header>
-      </div>
-    </div>
-  </div>
+                  </div> {/* Close the flex flex-col gap-2 px-6 div inside mobile menu */}
+               </div> {/* Close the mobile menu dropdown container (id="mobile-menu") */}
+          </div> {/* Close the flex items-center justify-between h-10 div */}
+        </div> {/* Close the px-6 sm:px-8 div inside header */}
+      </header> {/* Close the header element */}
+    </div> {/* Close the max-w-7xl div */}
+  </div> {/* Close the main header content container (sticky top-0 z-40 px-4 ...) */}
+</div> {/* Close the news ticker content div */}
+</div> {/* Close the full-width news ticker container */}
     </>
   );
 }
