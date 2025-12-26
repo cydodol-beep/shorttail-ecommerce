@@ -36,25 +36,66 @@ const SectionHeader: React.FC<{ title: string; subtitle: string; centered?: bool
   </div>
 );
 
-const BenefitsSection = () => (
-  <section className="py-20 bg-cream">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {[
-          { title: "Free Shipping", desc: "On orders over $50", icon: "🚚" },
-          { title: "Quality Guarantee", desc: "100% natural products", icon: "⭐" },
-          { title: "24/7 Support", desc: "Expert pet care advice", icon: "🏥" }
-        ].map((benefit, idx) => (
-          <div key={idx} className="bg-white p-8 rounded-2xl shadow-sm text-center hover:shadow-md transition-shadow">
-            <div className="text-4xl mb-4">{benefit.icon}</div>
-            <h3 className="text-xl font-bold text-teal mb-2">{benefit.title}</h3>
-            <p className="text-teal/70">{benefit.desc}</p>
-          </div>
-        ))}
+// TypeScript interface for benefit settings
+interface BenefitSetting {
+  icon: string;
+  title: string;
+  description: string;
+  color?: string;
+}
+
+interface BenefitsSectionSettings {
+  benefits: BenefitSetting[];
+}
+
+const BenefitsSection = () => {
+  const { getSectionSettings } = useLandingSections();
+
+  // Get benefits section settings from the database, with defaults
+  const sectionSettings: BenefitsSectionSettings = getSectionSettings('benefits', {
+    benefits: [
+      { icon: "truck", title: "Free Shipping", description: "On orders over $50", color: "bg-teal-100 text-teal-600" },
+      { icon: "award", title: "Quality Guarantee", description: "100% natural products", color: "bg-teal-100 text-teal-600" },
+      { icon: "headphones", title: "24/7 Support", description: "Expert pet care advice", color: "bg-teal-100 text-teal-600" }
+    ]
+  });
+
+  // Map icon names to actual icons
+  const getIconComponent = (iconName: string) => {
+    switch(iconName) {
+      case 'truck': return "🚚";
+      case 'award': return "🏆";
+      case 'headphones': return "🎧";
+      case 'shield': return "🛡️";
+      case 'clock': return "⏱️";
+      case 'card': return "💳";
+      case 'rotate': return "🔄";
+      case 'star': return "⭐";
+      default: return "🌟";
+    }
+  };
+
+  return (
+    <section className="py-20 bg-cream">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {sectionSettings.benefits.map((benefit, idx) => (
+            <div
+              key={idx}
+              className="bg-white p-8 rounded-2xl shadow-sm text-center hover:shadow-md transition-shadow"
+            >
+              <div className={`w-16 h-16 ${benefit.color || 'bg-teal-100 text-teal-600'} rounded-full flex items-center justify-center text-2xl mx-auto mb-4`}>
+                {getIconComponent(benefit.icon)}
+              </div>
+              <h3 className="text-xl font-bold text-teal mb-2">{benefit.title}</h3>
+              <p className="text-teal/70">{benefit.description}</p>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 
 const FlashSale = () => (
