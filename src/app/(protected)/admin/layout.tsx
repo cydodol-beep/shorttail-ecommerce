@@ -90,7 +90,15 @@ export default function AdminLayout({
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="flex items-center gap-2 px-2">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={profile?.user_avatar_url || undefined} />
+                        {profile?.user_avatar_url ? (
+                          <AvatarImage
+                            src={profile.user_avatar_url}
+                            onError={(e) => {
+                              console.error('Admin avatar image failed to load:', profile.user_avatar_url);
+                            }}
+                            className="object-cover"
+                          />
+                        ) : null}
                         <AvatarFallback className="bg-primary text-white">
                           {profile?.user_name?.charAt(0).toUpperCase() || 'A'}
                         </AvatarFallback>

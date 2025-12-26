@@ -365,7 +365,15 @@ export default function UserSettingsPage() {
               <div className="flex flex-col items-center text-center">
                 <div className="relative">
                   <Avatar className="h-24 w-24 mb-4">
-                    <AvatarImage src={profile?.user_avatar_url || undefined} />
+                    {profile?.user_avatar_url ? (
+                      <AvatarImage
+                        src={profile.user_avatar_url}
+                        onError={(e) => {
+                          console.error('Settings avatar image failed to load:', profile.user_avatar_url);
+                        }}
+                        className="object-cover"
+                      />
+                    ) : null}
                     <AvatarFallback className="bg-primary text-white text-2xl">
                       {profile?.user_name?.charAt(0).toUpperCase() || 'U'}
                     </AvatarFallback>

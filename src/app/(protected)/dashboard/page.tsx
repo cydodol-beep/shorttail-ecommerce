@@ -151,7 +151,15 @@ export default function DashboardPage() {
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
                 <Avatar className="h-20 w-20 mb-4">
-                  <AvatarImage src={profile?.user_avatar_url || undefined} />
+                  {profile?.user_avatar_url ? (
+                    <AvatarImage
+                      src={profile.user_avatar_url}
+                      onError={(e) => {
+                        console.error('Avatar image failed to load:', profile.user_avatar_url);
+                      }}
+                      className="object-cover"
+                    />
+                  ) : null}
                   <AvatarFallback className="bg-primary text-white text-xl">
                     {profile?.user_name?.charAt(0).toUpperCase() || 'U'}
                   </AvatarFallback>
