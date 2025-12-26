@@ -161,11 +161,11 @@ export function Header() {
         </div>
       </div>
 
-      {/* Sticky Header Container with News Ticker */}
-      <div className="sticky top-0 z-40 px-4 flex justify-center w-full transition-all duration-300 pointer-events-none">
-        <div className="w-full max-w-7xl">
-          {/* News Ticker with Active Promotions */}
-          <div className="text-xs py-1.5 font-medium tracking-wide relative z-40 overflow-hidden" style={{ backgroundColor: '#006d77', color: '#fdf6ec' }}>
+      {/* Full-width News Ticker - moved outside the max-w-7xl container */}
+      <div className="sticky top-0 z-40 w-full transition-all duration-300 pointer-events-none">
+        <div className="w-full" style={{ backgroundColor: '#006d77', color: '#fdf6ec' }}>
+          {/* News Ticker with Active Promotions - Full width */}
+          <div className="text-xs py-1.5 font-medium tracking-wide relative z-40 overflow-hidden">
             <div className="whitespace-nowrap hover:[animation-play-state:paused] w-max marquee-slow">
               {promotions.length > 0 ? (
                 <span className="flex items-center gap-2">
@@ -223,7 +223,12 @@ export function Header() {
               )}
             </div>
           </div>
+        </div>
+      </div>
 
+      {/* Main Header Content - still constrained to max-w-7xl */}
+      <div className="sticky top-0 z-40 px-4 flex justify-center w-full transition-all duration-300 pointer-events-none">
+        <div className="w-full max-w-7xl">
           <header
             className={`w-full pointer-events-auto transition-all duration-500 rounded-full border -mt-0.5 ${
               isScrolled
@@ -461,9 +466,12 @@ export function Header() {
                   </div>
                </div>
           </div>
-        </header>
-      </div>
-    </div>
+        </div> {/* Close max-w-7xl div */}
+      </header>
+    </div> {/* Close px-4 flex justify-center w-full div */}
+  </div> {/* Close sticky top-0 z-40 w-full div */}
+</div> {/* Close the original div that was at the beginning */}
+</div> {/* Close the original sticky div that contains everything */}
     </>
   );
 }

@@ -1835,6 +1835,48 @@ When working with Zustand stores and caching:
 
 ---
 
+## Recent Updates (December 26, 2025)
+
+### Enhanced User Navigation & Logout Functionality 🚪
+- **Implemented Clear Logout Interface**:
+  - **Issue**: Users were confused about how to logout from the application
+  - **Solution**: Added a dropdown menu to the user profile in the desktop header
+  - **Implementation Details**:
+    - When logged in, user icon shows avatar and name with dropdown arrow
+    - Dropdown contains: Dashboard, Settings, and Logout options
+    - Logout button clearly marked with red color and logout icon
+    - Mobile menu also updated to show "Dashboard" and "Logout" for logged-in users
+    - Uses same signOut function as existing authentication system
+  - **Result**: Users now have a clear, intuitive way to logout from the application
+
+### Avatar Display Improvements 🖼️
+- **Enhanced Avatar Validation & Display**:
+  - **Issue**: User avatars were not displaying properly after page refresh
+  - **Solution**: Added comprehensive validation and error handling for avatar data URLs
+  - **Implementation Details**:
+    - Added specific WebP data URL validation function (`isValidWebPDataUrl`)
+    - Implemented size validation to prevent excessively large data URLs (8MB limit)
+    - Added detailed debugging logs to identify avatar loading issues
+    - Updated avatar display across all pages (dashboard, admin, kasir, settings)
+    - Added onLoad and onError handlers for comprehensive error tracking
+    - Created new API route (`/api/avatar/update`) using service role to bypass RLS policies
+    - Enhanced profile fetch operations to ensure avatar URL is properly retrieved
+  - **Result**: Avatars now display consistently and reliably across all application pages
+
+### Comprehensive Debugging Implementation 🔧
+- **Added Detailed Error Logging**:
+  - **Issue**: Difficult to diagnose avatar-related issues
+  - **Solution**: Implemented comprehensive logging for avatar operations
+  - **Implementation Details**:
+    - Added logging for avatar URL validation with length and prefix information
+    - Added logging when profiles are fetched and refetched
+    - Added logging for avatar image load and error events
+    - Added verification steps in the avatar update API route
+    - Enhanced error messages with detailed information about the failure point
+  - **Result**: Developers can now easily identify where avatar issues occur in the process
+
+---
+
 ## License
 
 Private project - All rights reserved.
