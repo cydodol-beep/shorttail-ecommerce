@@ -79,7 +79,7 @@ export function useAuth() {
     const fetchProfile = async (userId: string) => {
       try {
         // Add timeout to prevent hanging on profile fetch
-        // Include all profile fields including province fields needed for the UI
+        // Include all profile fields including avatar URL needed for the UI
         const { data, error } = await withTimeoutSupabase<Profile>(
           supabase
             .from('profiles')
@@ -88,6 +88,7 @@ export function useAuth() {
               user_name,
               user_phoneno,
               user_email,
+              user_avatar_url,
               role,
               is_approved,
               tier,
@@ -103,7 +104,9 @@ export function useAuth() {
               recipient_city,
               recipient_province_id,
               recipient_postal_code,
-              recipient_phoneno
+              recipient_phoneno,
+              level,
+              unlocked_breeds
             `)
             .eq('id', userId)
             .single() as Promise<{ data: Profile | null; error: any }>,
@@ -116,6 +119,14 @@ export function useAuth() {
           useAuthStore.setState({ profile: null, role: null });
           return;
         }
+
+        // Log avatar data for debugging
+        console.debug('Profile fetched successfully:', {
+          hasAvatar: !!data?.user_avatar_url,
+          avatarLength: data?.user_avatar_url?.length,
+          avatarPrefix: data?.user_avatar_url?.substring(0, 50),
+          userId: userId
+        });
 
         setProfile(data);
 
@@ -438,6 +449,14 @@ export function useAuth() {
         console.error('Error refetching profile:', error.message || error);
         return;
       }
+
+      // Log avatar data for debugging
+      console.debug('Profile refetched successfully:', {
+        hasAvatar: !!data?.user_avatar_url,
+        avatarLength: data?.user_avatar_url?.length,
+        avatarPrefix: data?.user_avatar_url?.substring(0, 50),
+        userId: user.id
+      });
 
       setProfile(data);
       useAuthStore.setState({ profile: data, role: data?.role });

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { PawPrint, ShoppingCart, Package, Clock, LogOut, Loader2, Bell, PanelRightClose, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { isValidWebPDataUrl } from '@/lib/utils';
+import { isValidWebPDataUrl, getAvatarDataInfo } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -208,16 +208,36 @@ export default function KasirLayout({
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-3 h-auto px-3 py-2">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage
-                      src={profile?.user_avatar_url && isValidWebPDataUrl(profile.user_avatar_url) ? profile.user_avatar_url : undefined}
-                      onError={(e) => {
-                        console.error('Kasir avatar image failed to load:', profile?.user_avatar_url);
-                      }}
-                      className="object-cover"
-                    />
-                    <AvatarFallback className="bg-primary text-white">
-                      {profile?.user_name?.charAt(0).toUpperCase() || 'K'}
-                    </AvatarFallback>
+                    {(() => {
+                      const avatarUrl = profile?.user_avatar_url;
+                      const avatarInfo = getAvatarDataInfo(avatarUrl);
+
+                      console.debug('Kasir Avatar Info:', {
+                        urlExists: !!avatarUrl,
+                        isValid: avatarInfo.isValid,
+                        length: avatarInfo.length,
+                        prefix: avatarInfo.prefix
+                      });
+
+                      return (
+                        <>
+                          <AvatarImage
+                            src={avatarUrl && isValidWebPDataUrl(avatarUrl) ? avatarUrl : undefined}
+                            onError={(e) => {
+                              console.error('Kasir Avatar image failed to load:', avatarUrl);
+                              console.error('Error object:', e);
+                            }}
+                            className="object-cover"
+                            onLoad={() => {
+                              console.debug('Kasir Avatar image loaded successfully');
+                            }}
+                          />
+                          <AvatarFallback className="bg-primary text-white">
+                            {profile?.user_name?.charAt(0).toUpperCase() || 'K'}
+                          </AvatarFallback>
+                        </>
+                      );
+                    })()}
                   </Avatar>
                   <div className="text-sm text-left">
                     <p className="font-medium text-brown-900">{profile?.user_name || 'Kasir'}</p>

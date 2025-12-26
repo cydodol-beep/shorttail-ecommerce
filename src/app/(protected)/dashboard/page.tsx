@@ -19,7 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/use-auth';
 import { StoreLogo } from '@/components/ui/store-logo';
-import { isValidWebPDataUrl } from '@/lib/utils';
+import { isValidWebPDataUrl, getAvatarDataInfo } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import { generateInvoiceJPEG } from '@/lib/invoice-generator';
 import { useStoreSettingsStore } from '@/store/store-settings-store';
@@ -152,16 +152,36 @@ export default function DashboardPage() {
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
                 <Avatar className="h-20 w-20 mb-4">
-                  <AvatarImage
-                    src={profile?.user_avatar_url && isValidWebPDataUrl(profile.user_avatar_url) ? profile.user_avatar_url : undefined}
-                    onError={(e) => {
-                      console.error('Avatar image failed to load:', profile?.user_avatar_url);
-                    }}
-                    className="object-cover"
-                  />
-                  <AvatarFallback className="bg-primary text-white text-xl">
-                    {profile?.user_name?.charAt(0).toUpperCase() || 'U'}
-                  </AvatarFallback>
+                  {(() => {
+                    const avatarUrl = profile?.user_avatar_url;
+                    const avatarInfo = getAvatarDataInfo(avatarUrl);
+
+                    console.debug('Dashboard Avatar Info:', {
+                      urlExists: !!avatarUrl,
+                      isValid: avatarInfo.isValid,
+                      length: avatarInfo.length,
+                      prefix: avatarInfo.prefix
+                    });
+
+                    return (
+                      <>
+                        <AvatarImage
+                          src={avatarUrl && isValidWebPDataUrl(avatarUrl) ? avatarUrl : undefined}
+                          onError={(e) => {
+                            console.error('Dashboard Avatar image failed to load:', avatarUrl);
+                            console.error('Error object:', e);
+                          }}
+                          className="object-cover"
+                          onLoad={() => {
+                            console.debug('Dashboard Avatar image loaded successfully');
+                          }}
+                        />
+                        <AvatarFallback className="bg-primary text-white text-xl">
+                          {profile?.user_name?.charAt(0).toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </>
+                    );
+                  })()}
                 </Avatar>
                 <h2 className="text-xl font-bold text-brown-900">
                   {profile?.user_name || 'User'}

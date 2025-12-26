@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { isValidWebPDataUrl } from '@/lib/utils';
+import { isValidWebPDataUrl, getAvatarDataInfo } from '@/lib/utils';
 import {
   User,
   MapPin,
@@ -275,6 +275,12 @@ export default function UserSettingsPage() {
           // Convert to WebP with quality 0.8
           let webpDataUrl = canvas.toDataURL('image/webp', 0.8);
 
+          console.debug('Generated WebP data URL:', {
+            length: webpDataUrl.length,
+            startsWith: webpDataUrl.substring(0, 50),
+            isValid: isValidWebPDataUrl(webpDataUrl)
+          });
+
           // Validate the data URL before storing
           if (!isValidWebPDataUrl(webpDataUrl)) {
             console.error('Generated WebP data URL is invalid:', webpDataUrl.substring(0, 100) + '...');
@@ -300,6 +306,8 @@ export default function UserSettingsPage() {
             console.error('Error updating profile avatar:', errorData.error);
             toast.error('Failed to update avatar');
           } else {
+            const result = await response.json();
+            console.debug('Avatar update response:', result);
             toast.success('Avatar updated successfully');
             // Update the auth context to reflect the new avatar immediately
             refetchProfile();
@@ -380,16 +388,36 @@ export default function UserSettingsPage() {
               <div className="flex flex-col items-center text-center">
                 <div className="relative">
                   <Avatar className="h-24 w-24 mb-4">
-                    <AvatarImage
-                      src={profile?.user_avatar_url && isValidWebPDataUrl(profile.user_avatar_url) ? profile.user_avatar_url : undefined}
-                      onError={(e) => {
-                        console.error('Settings avatar image failed to load:', profile?.user_avatar_url);
-                      }}
-                      className="object-cover"
-                    />
-                    <AvatarFallback className="bg-primary text-white text-2xl">
-                      {profile?.user_name?.charAt(0).toUpperCase() || 'U'}
-                    </AvatarFallback>
+                    {(() => {
+                      const avatarUrl = profile?.user_avatar_url;
+                      const avatarInfo = getAvatarDataInfo(avatarUrl);
+
+                      console.debug('Settings Avatar Info:', {
+                        urlExists: !!avatarUrl,
+                        isValid: avatarInfo.isValid,
+                        length: avatarInfo.length,
+                        prefix: avatarInfo.prefix
+                      });
+
+                      return (
+                        <>
+                          <AvatarImage
+                            src={avatarUrl && isValidWebPDataUrl(avatarUrl) ? avatarUrl : undefined}
+                            onError={(e) => {
+                              console.error('Settings Avatar image failed to load:', avatarUrl);
+                              console.error('Error object:', e);
+                            }}
+                            className="object-cover"
+                            onLoad={() => {
+                              console.debug('Settings Avatar image loaded successfully');
+                            }}
+                          />
+                          <AvatarFallback className="bg-primary text-white text-2xl">
+                            {profile?.user_name?.charAt(0).toUpperCase() || 'U'}
+                          </AvatarFallback>
+                        </>
+                      );
+                    })()}
                   </Avatar>
                   <label
                     htmlFor="avatar-upload"

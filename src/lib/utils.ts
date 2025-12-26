@@ -19,24 +19,48 @@ export function isValidDataUrl(url: string | undefined | null): boolean {
 
 // Specifically validate WebP data URL format
 export function isValidWebPDataUrl(url: string | undefined | null): boolean {
-  if (!url) return false;
+  if (!url) {
+    console.debug('Avatar URL validation failed: URL is null/undefined');
+    return false;
+  }
+
   try {
+    // Log the first 50 characters to help with debugging
+    console.debug('Validating WebP URL:', url.substring(0, 50) + '...');
+
     // Check if it's a well-formed WebP data URL
     const webpDataUrlPattern = /^data:image\/webp;base64,[A-Za-z0-9+/=]+$/i;
 
     if (!webpDataUrlPattern.test(url)) {
+      console.error('Avatar URL validation failed: Does not match WebP pattern');
+      console.error('Pattern:', webpDataUrlPattern);
+      console.error('URL starts with:', url.substring(0, 100));
       return false;
     }
 
     // Additional check: make sure it's not extremely large, which could cause issues
-    // Base64 encoded images are about 4/3 larger than the original, so 4MB original would be ~5.3MB in base64
-    if (url.length > 8 * 1024 * 1024) { // 8MB limit (base64 would be ~6MB for ~4.5MB image)
+    if (url.length > 8 * 1024 * 1024) { // 8MB limit
       console.warn('Avatar data URL is too large:', url.length, 'characters');
       return false;
     }
 
+    console.debug('Avatar URL validation passed');
     return true;
-  } catch {
+  } catch (error) {
+    console.error('Avatar URL validation error:', error);
     return false;
   }
+}
+
+// Function to extract info from data URL for debugging
+export function getAvatarDataInfo(url: string | undefined | null): { isValid: boolean; length: number; prefix: string } {
+  if (!url) {
+    return { isValid: false, length: 0, prefix: 'null' };
+  }
+
+  return {
+    isValid: isValidWebPDataUrl(url),
+    length: url.length,
+    prefix: url.substring(0, 30)
+  };
 }
