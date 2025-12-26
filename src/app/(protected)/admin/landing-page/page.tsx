@@ -268,7 +268,7 @@ export default function LandingPageSettingsPage() {
                   <input
                     type="file"
                     id="hero-image-upload"
-                    accept=".webp,image/webp"
+                    accept=".jpg,.jpeg,.png,.tif,.tiff,.webp,image/jpeg,image/png,image/tiff,image/webp"
                     className="hidden"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
@@ -278,7 +278,20 @@ export default function LandingPageSettingsPage() {
                           return;
                         }
 
-                        // If the image is not in WebP format, convert it to WebP
+                        // Check file size
+                        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                          alert('File size exceeds 5MB limit');
+                          return;
+                        }
+
+                        // Check if it's a supported format but not WebP, then convert to WebP
+                        const supportedFormats = ['image/jpeg', 'image/png', 'image/tiff', 'image/webp'];
+                        if (!supportedFormats.includes(file.type)) {
+                          alert('Unsupported file format. Please upload JPEG, PNG, TIFF, or WebP files.');
+                          return;
+                        }
+
+                        // Convert to WebP if not WebP already
                         if (!file.type.includes('webp')) {
                           // Use WebP conversion utility
                           convertImageToWebP(file, 0.8, 1920, 1080)
@@ -297,12 +310,7 @@ export default function LandingPageSettingsPage() {
                               alert('Failed to convert image to WebP format');
                             });
                         } else {
-                          // If it's already WebP, verify it's a valid WebP data URL and check size
-                          if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                            alert('File size exceeds 5MB limit');
-                            return;
-                          }
-
+                          // If it's already WebP, verify it's a valid WebP data URL
                           // Convert WebP file to data URL
                           const reader = new FileReader();
                           reader.onload = (event) => {
@@ -328,9 +336,9 @@ export default function LandingPageSettingsPage() {
                       className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
                     >
                       <Upload className="w-4 h-4" />
-                      Upload WebP Image
+                      Upload Hero Image
                     </label>
-                    <p className="text-xs text-brown-500 mt-2">Max file size: 5MB. Format: WebP only</p>
+                    <p className="text-xs text-brown-500 mt-2">Max file size: 5MB. Formats: JPEG, PNG, TIFF, WebP</p>
                   </div>
                 </div>
               </div>
