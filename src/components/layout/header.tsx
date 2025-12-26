@@ -226,7 +226,7 @@ export function Header() {
         </div>
       </div>
 
-      {/* Main Header Content - constrained to max-w-7xl */}
+      {/* Main Header Content */}
       <div className="sticky top-0 z-40 px-4 flex justify-center w-full transition-all duration-300 pointer-events-none">
         <div className="w-full max-w-7xl">
           <header
@@ -463,15 +463,13 @@ export function Header() {
                         </Link>
                       </>
                     )}
-                  </div> {/* Close the flex flex-col gap-2 px-6 div inside mobile menu */}
-               </div> {/* Close the mobile menu dropdown container */}
-          </div> {/* Close the flex items-center justify-between h-10 div */}
-        </div> {/* Close the px-6 sm:px-8 div */}
-      </header> {/* Close the header element */}
-    </div> {/* Close the max-w-7xl div */}
-  </div> {/* Close the main header content container (px-4 flex justify-center w-full) */}
-</div> {/* Close the news ticker content div */}
-</div> {/* Close the full-width news ticker container */}
+                  </div>
+               </div>
+          </div>
+        </header>
+      </div>
+    </div>
+  </div>
     </>
   );
 }
