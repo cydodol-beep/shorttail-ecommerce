@@ -7,9 +7,19 @@ import { ShoppingCart, Search, Menu, X, Heart, ArrowRight, User, Percent, Tag, C
 import { motion } from 'framer-motion';
 
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useCartItemCount } from '@/store/cart-store';
 import { useAuth } from '@/hooks/use-auth';
 import { useActivePromotions } from '@/hooks/use-active-promotions';
+import { getAvatarDataInfo } from '@/lib/utils';
 
 // Navigation items
 const NAV_ITEMS = [
@@ -303,20 +313,65 @@ export function Header() {
                 {!isSearchOpen && (
                   <>
                     {user ? (
-                      <button
-                        onClick={async () => {
-                          try {
-                            await signOut();
-                            // The middleware will handle redirecting to login
-                          } catch (error) {
-                            console.error('Error during logout:', error);
-                          }
-                        }}
-                        className="hidden sm:block p-2 text-teal hover:text-accent hover:bg-teal/5 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-teal"
-                        aria-label="Logout"
-                      >
-                        <User size={20} />
-                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="flex items-center gap-2 px-2">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage
+                                src={profile?.user_avatar_url && getAvatarDataInfo(profile.user_avatar_url).isValid ? profile.user_avatar_url : undefined}
+                                onError={(e) => {
+                                  console.error('Header avatar image failed to load:', profile?.user_avatar_url);
+                                }}
+                                className="object-cover"
+                              />
+                              <AvatarFallback className="bg-primary text-white text-sm">
+                                {profile?.user_name?.charAt(0).toUpperCase() || 'U'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="hidden md:block text-left">
+                              <p className="text-sm font-medium text-gray-900">
+                                {profile?.user_name || 'My Account'}
+                              </p>
+                            </div>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem asChild>
+                            <Link href="/dashboard">
+                              <User className="mr-2 h-4 w-4" />
+                              <span>Dashboard</span>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href="/dashboard/settings">
+                              <User className="mr-2 h-4 w-4" />
+                              <span>Settings</span>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={async () => {
+                              try {
+                                await signOut();
+                              } catch (error) {
+                                console.error('Error during logout:', error);
+                              }
+                            }}
+                            className="text-red-600 focus:text-red-700"
+                          >
+                            <span className="flex items-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-log-out mr-2">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" x2="9" y1="12" y2="12"></line>
+                              </svg>
+                              Logout
+                            </span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     ) : (
                       <Link href="/login" className="hidden sm:block p-2 text-teal hover:text-accent hover:bg-teal/5 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-teal">
                         <User size={20} />
