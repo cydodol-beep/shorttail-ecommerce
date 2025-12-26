@@ -10,12 +10,6 @@ export function HeroSection() {
   const heroSettings = getSectionSettings('hero', {
     title: 'Spoil them with Nature\'s Best',
     subtitle: 'Premium organic treats, durable toys, and cozy beds',
-    showTrustBadges: true,
-    trustBadges: [
-      { text: '24/7 Vet Support', icon: 'hospital' },
-      { text: '100% Natural', icon: 'leaf' },
-      { text: 'Free Returns', icon: 'return' },
-    ],
   });
 
   return (

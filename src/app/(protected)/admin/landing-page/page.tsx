@@ -169,7 +169,7 @@ export default function LandingPageSettingsPage() {
                 id={`${section.id}-title`}
                 value={settings.title || ''}
                 onChange={(e) => updateLocalSetting(section.id, 'title', e.target.value)}
-                placeholder="Hero title"
+                placeholder="Main hero title"
               />
             </div>
             <div>
@@ -178,32 +178,52 @@ export default function LandingPageSettingsPage() {
                 id={`${section.id}-subtitle`}
                 value={settings.subtitle || ''}
                 onChange={(e) => updateLocalSetting(section.id, 'subtitle', e.target.value)}
-                placeholder="Hero subtitle"
+                placeholder="Highlighted text under title (e.g., Nature's Best)"
               />
             </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={settings.showTrustBadges !== false}
-                onCheckedChange={(v) => updateLocalSetting(section.id, 'showTrustBadges', v)}
+            <div>
+              <Label htmlFor={`${section.id}-description`}>Description</Label>
+              <Input
+                id={`${section.id}-description`}
+                value={settings.description || ''}
+                onChange={(e) => updateLocalSetting(section.id, 'description', e.target.value)}
+                placeholder="Hero section description"
               />
-              <Label>Show Trust Badges</Label>
             </div>
-            
-            {/* Trust Badges Editor */}
+            <div>
+              <Label htmlFor={`${section.id}-ctaText`}>Primary Button Text</Label>
+              <Input
+                id={`${section.id}-ctaText`}
+                value={settings.ctaText || ''}
+                onChange={(e) => updateLocalSetting(section.id, 'ctaText', e.target.value)}
+                placeholder="Text for primary button (e.g., Start Shopping)"
+              />
+            </div>
+            <div>
+              <Label htmlFor={`${section.id}-buttonText`}>Secondary Button Text</Label>
+              <Input
+                id={`${section.id}-buttonText`}
+                value={settings.buttonText || ''}
+                onChange={(e) => updateLocalSetting(section.id, 'buttonText', e.target.value)}
+                placeholder="Text for secondary button (e.g., Watch Video)"
+              />
+            </div>
+
+            {/* Top Tags Editor */}
             <div className="space-y-3">
-              <Label className="text-sm font-semibold">Trust Badges</Label>
-              <p className="text-xs text-brown-500">Add up to 6 trust badges. Icons are auto-detected from text (e.g., "Fast Delivery" = truck icon)</p>
-              
-              {(settings.trustBadges || []).map((badge: any, index: number) => (
+              <Label className="text-sm font-semibold">Top Tags</Label>
+              <p className="text-xs text-brown-500">Add top tags like '#1 Vet Recommended', 'New Collection 2024'</p>
+
+              {(settings.topTags || []).map((tag: string, index: number) => (
                 <div key={index} className="flex gap-2 items-center">
                   <Input
-                    value={badge.text}
+                    value={tag}
                     onChange={(e) => {
-                      const newBadges = [...(settings.trustBadges || [])];
-                      newBadges[index] = { ...newBadges[index], text: e.target.value };
-                      updateLocalSetting(section.id, 'trustBadges', newBadges);
+                      const newTags = [...(settings.topTags || [])];
+                      newTags[index] = e.target.value;
+                      updateLocalSetting(section.id, 'topTags', newTags);
                     }}
-                    placeholder="e.g., Fast Delivery"
+                    placeholder="e.g., #1 Vet Recommended"
                     className="flex-1"
                   />
                   <Button
@@ -211,29 +231,76 @@ export default function LandingPageSettingsPage() {
                     size="sm"
                     variant="ghost"
                     onClick={() => {
-                      const newBadges = (settings.trustBadges || []).filter((_: any, i: number) => i !== index);
-                      updateLocalSetting(section.id, 'trustBadges', newBadges);
+                      const newTags = (settings.topTags || []).filter((_: string, i: number) => i !== index);
+                      updateLocalSetting(section.id, 'topTags', newTags);
                     }}
                   >
                     Remove
                   </Button>
                 </div>
               ))}
-              
-              {(!settings.trustBadges || settings.trustBadges.length < 6) && (
+
+              {(!settings.topTags || settings.topTags.length < 4) && (
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
                   onClick={() => {
-                    const newBadges = [...(settings.trustBadges || []), { text: '', icon: '' }];
-                    updateLocalSetting(section.id, 'trustBadges', newBadges);
+                    const newTags = [...(settings.topTags || []), ''];
+                    updateLocalSetting(section.id, 'topTags', newTags);
                   }}
                 >
-                  + Add Trust Badge
+                  + Add Top Tag
                 </Button>
               )}
             </div>
+
+            {/* Image URLs Editor */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">Hero Images</Label>
+              <p className="text-xs text-brown-500">Add URLs for hero images (main and secondary)</p>
+
+              {(settings.imageUrls || []).map((url: string, index: number) => (
+                <div key={index} className="flex gap-2 items-center">
+                  <Input
+                    value={url}
+                    onChange={(e) => {
+                      const newUrls = [...(settings.imageUrls || [])];
+                      newUrls[index] = e.target.value;
+                      updateLocalSetting(section.id, 'imageUrls', newUrls);
+                    }}
+                    placeholder={`Image URL ${index + 1}`}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      const newUrls = (settings.imageUrls || []).filter((_: string, i: number) => i !== index);
+                      updateLocalSetting(section.id, 'imageUrls', newUrls);
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ))}
+
+              {(!settings.imageUrls || settings.imageUrls.length < 2) && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const newUrls = [...(settings.imageUrls || []), ''];
+                    updateLocalSetting(section.id, 'imageUrls', newUrls);
+                  }}
+                >
+                  + Add Image URL
+                </Button>
+              )}
+            </div>
+
           </div>
         );
 

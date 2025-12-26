@@ -52,11 +52,6 @@ interface BenefitsSectionSettings {
 interface HeroSectionSettings {
   title?: string;
   subtitle?: string;
-  showTrustBadges?: boolean;
-  trustBadges?: {
-    text: string;
-    icon: string;
-  }[];
   topTags?: string[];
   description?: string;
   ctaText?: string;
@@ -399,12 +394,6 @@ export default function HomePage() {
                       const heroSettings = getSectionSettings('hero', {
                         title: "Everything Your Pet Needs & Loves",
                         subtitle: "",
-                        showTrustBadges: true,
-                        trustBadges: [
-                          {text: "Fast Delivery", icon: "truck"},
-                          {text: "Secure Payment", icon: "shield"},
-                          {text: "24/7 Support", icon: "clock"}
-                        ],
                         topTags: [
                           "#1 Vet Recommended",
                           "New Collection 2024"
@@ -508,12 +497,6 @@ export default function HomePage() {
                           const heroSettings: HeroSectionSettings = getSectionSettings('hero', {
                             title: "Everything Your Pet Needs & Loves",
                             subtitle: "",
-                            showTrustBadges: true,
-                            trustBadges: [
-                              {text: "Fast Delivery", icon: "truck"},
-                              {text: "Secure Payment", icon: "shield"},
-                              {text: "24/7 Support", icon: "clock"}
-                            ],
                             topTags: [
                               "#1 Vet Recommended",
                               "New Collection 2024"
