@@ -260,14 +260,14 @@ export default function LandingPageSettingsPage() {
             {/* Image URLs Editor */}
             <div className="space-y-3">
               <Label className="text-sm font-semibold">Hero Images</Label>
-              <p className="text-xs text-brown-500">Add URLs for hero images or upload WebP files</p>
+              <p className="text-xs text-brown-500">Add URLs for hero images or upload image files</p>
 
-              {/* Image Upload Section */}
+              {/* Primary Image Upload Section */}
               <div className="border border-dashed border-brown-200 rounded-lg p-4 bg-brown-50">
                 <div className="flex flex-col items-center justify-center gap-3">
                   <input
                     type="file"
-                    id="hero-image-upload"
+                    id="primary-hero-image-upload"
                     accept=".jpg,.jpeg,.png,.tif,.tiff,.webp,image/jpeg,image/png,image/tiff,image/webp"
                     className="hidden"
                     onChange={(e) => {
@@ -332,11 +332,96 @@ export default function LandingPageSettingsPage() {
                   />
                   <div className="text-center">
                     <label
-                      htmlFor="hero-image-upload"
+                      htmlFor="primary-hero-image-upload"
                       className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
                     >
                       <Upload className="w-4 h-4" />
-                      Upload Hero Image
+                      Upload Primary Hero Image
+                    </label>
+                    <p className="text-xs text-brown-500 mt-2">Max file size: 5MB. Formats: JPEG, PNG, TIFF, WebP</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Secondary Image Upload Section */}
+              <div className="border border-dashed border-brown-200 rounded-lg p-4 bg-brown-50">
+                <div className="flex flex-col items-center justify-center gap-3">
+                  <input
+                    type="file"
+                    id="secondary-hero-image-upload"
+                    accept=".jpg,.jpeg,.png,.tif,.tiff,.webp,image/jpeg,image/png,image/tiff,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        if (!file.type.startsWith('image/')) {
+                          alert('Please select an image file');
+                          return;
+                        }
+
+                        // Check file size
+                        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                          alert('File size exceeds 5MB limit');
+                          return;
+                        }
+
+                        // Check if it's a supported format but not WebP, then convert to WebP
+                        const supportedFormats = ['image/jpeg', 'image/png', 'image/tiff', 'image/webp'];
+                        if (!supportedFormats.includes(file.type)) {
+                          alert('Unsupported file format. Please upload JPEG, PNG, TIFF, or WebP files.');
+                          return;
+                        }
+
+                        // Convert to WebP if not WebP already
+                        if (!file.type.includes('webp')) {
+                          // Use WebP conversion utility
+                          convertImageToWebP(file, 0.8, 1920, 1080)
+                            .then(webpDataUrl => {
+                              // Update the second image URL with the converted WebP data URL
+                              const currentUrls = [...(settings.imageUrls || [])];
+                              if (currentUrls.length > 1) {
+                                currentUrls[1] = webpDataUrl;
+                              } else if (currentUrls.length === 1) {
+                                currentUrls.push(webpDataUrl);
+                              } else {
+                                currentUrls.push('', webpDataUrl); // Add empty first URL if needed
+                              }
+                              updateLocalSetting(section.id, 'imageUrls', currentUrls);
+                            })
+                            .catch(error => {
+                              console.error('Error converting image to WebP:', error);
+                              alert('Failed to convert image to WebP format');
+                            });
+                        } else {
+                          // If it's already WebP, verify it's a valid WebP data URL
+                          // Convert WebP file to data URL
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            const dataUrl = event.target?.result as string;
+
+                            // Update the second image URL with the new data URL
+                            const currentUrls = [...(settings.imageUrls || [])];
+                            if (currentUrls.length > 1) {
+                              currentUrls[1] = dataUrl;
+                            } else if (currentUrls.length === 1) {
+                              currentUrls.push(dataUrl);
+                            } else {
+                              currentUrls.push('', dataUrl); // Add empty first URL if needed
+                            }
+                            updateLocalSetting(section.id, 'imageUrls', currentUrls);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }
+                    }}
+                  />
+                  <div className="text-center">
+                    <label
+                      htmlFor="secondary-hero-image-upload"
+                      className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
+                    >
+                      <Upload className="w-4 h-4" />
+                      Upload Secondary Hero Image
                     </label>
                     <p className="text-xs text-brown-500 mt-2">Max file size: 5MB. Formats: JPEG, PNG, TIFF, WebP</p>
                   </div>
