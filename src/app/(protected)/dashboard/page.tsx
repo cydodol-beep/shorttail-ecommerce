@@ -19,7 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/use-auth';
 import { StoreLogo } from '@/components/ui/store-logo';
-import { isValidDataUrl } from '@/lib/utils';
+import { isValidWebPDataUrl } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import { generateInvoiceJPEG } from '@/lib/invoice-generator';
 import { useStoreSettingsStore } from '@/store/store-settings-store';
@@ -153,7 +153,7 @@ export default function DashboardPage() {
               <div className="flex flex-col items-center text-center">
                 <Avatar className="h-20 w-20 mb-4">
                   <AvatarImage
-                    src={profile?.user_avatar_url && isValidDataUrl(profile.user_avatar_url) ? profile.user_avatar_url : undefined}
+                    src={profile?.user_avatar_url && isValidWebPDataUrl(profile.user_avatar_url) ? profile.user_avatar_url : undefined}
                     onError={(e) => {
                       console.error('Avatar image failed to load:', profile?.user_avatar_url);
                     }}

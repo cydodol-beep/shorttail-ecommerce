@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { isValidDataUrl } from '@/lib/utils';
+import { isValidWebPDataUrl } from '@/lib/utils';
 import {
   User,
   MapPin,
@@ -273,7 +273,15 @@ export default function UserSettingsPage() {
           ctx.drawImage(img, 0, 0, width, height);
 
           // Convert to WebP with quality 0.8
-          const webpDataUrl = canvas.toDataURL('image/webp', 0.8);
+          let webpDataUrl = canvas.toDataURL('image/webp', 0.8);
+
+          // Validate the data URL before storing
+          if (!isValidWebPDataUrl(webpDataUrl)) {
+            console.error('Generated WebP data URL is invalid:', webpDataUrl.substring(0, 100) + '...');
+            toast.error('Failed to process image - invalid format');
+            setUploadingAvatar(false);
+            return;
+          }
 
           // Update profile with WebP data URL
           const supabase = createClient();
@@ -367,7 +375,7 @@ export default function UserSettingsPage() {
                 <div className="relative">
                   <Avatar className="h-24 w-24 mb-4">
                     <AvatarImage
-                      src={profile?.user_avatar_url && isValidDataUrl(profile.user_avatar_url) ? profile.user_avatar_url : undefined}
+                      src={profile?.user_avatar_url && isValidWebPDataUrl(profile.user_avatar_url) ? profile.user_avatar_url : undefined}
                       onError={(e) => {
                         console.error('Settings avatar image failed to load:', profile?.user_avatar_url);
                       }}

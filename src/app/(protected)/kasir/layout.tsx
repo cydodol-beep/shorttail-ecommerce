@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { PawPrint, ShoppingCart, Package, Clock, LogOut, Loader2, Bell, PanelRightClose, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { isValidDataUrl } from '@/lib/utils';
+import { isValidWebPDataUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -209,7 +209,7 @@ export default function KasirLayout({
                 <Button variant="ghost" className="flex items-center gap-3 h-auto px-3 py-2">
                   <Avatar className="h-8 w-8">
                     <AvatarImage
-                      src={profile?.user_avatar_url && isValidDataUrl(profile.user_avatar_url) ? profile.user_avatar_url : undefined}
+                      src={profile?.user_avatar_url && isValidWebPDataUrl(profile.user_avatar_url) ? profile.user_avatar_url : undefined}
                       onError={(e) => {
                         console.error('Kasir avatar image failed to load:', profile?.user_avatar_url);
                       }}
