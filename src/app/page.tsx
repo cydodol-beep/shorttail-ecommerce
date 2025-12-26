@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { PRODUCTS, TESTIMONIALS, NAV_ITEMS } from '@/constants/products';
@@ -462,35 +463,38 @@ export default function HomePage() {
                     })()}
 
                     <div className="flex flex-col sm:flex-row gap-4 mb-10">
-                      <Button variant="default" size="lg" className="bg-accent hover:bg-accent-hover shadow-xl shadow-teal/20 hover:shadow-teal/30 group">
-                        {(() => {
-                          const heroSettings: HeroSectionSettings = getSectionSettings('hero', {
-                            title: "Everything Your Pet Needs & Loves",
-                            subtitle: "",
-                            showTrustBadges: true,
-                            trustBadges: [
-                              {text: "Fast Delivery", icon: "truck"},
-                              {text: "Secure Payment", icon: "shield"},
-                              {text: "24/7 Support", icon: "clock"}
-                            ],
-                            topTags: [
-                              "#1 Vet Recommended",
-                              "New Collection 2024"
-                            ],
-                            description: "Premium organic treats, durable toys, and cozy beds. Everything your Anabul needs for a happier, healthier life.",
-                            ctaText: "Start Shopping",
-                            buttonText: "Watch Video",
-                            imageUrls: [
-                              "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=800&auto=format&fit=crop",
-                              "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=500&auto=format&fit=crop"
-                            ]
-                          });
-                          return heroSettings.ctaText || "Start Shopping";
-                        })()}
-                        <span className="ml-2 group-hover:translate-x-1 transition-transform">
-                          <ArrowRight className="w-5 h-5" />
-                        </span>
-                      </Button>
+                      <Link href="/products">
+                        <Button variant="default" size="lg" className="bg-accent hover:bg-accent-hover shadow-xl shadow-teal/20 hover:shadow-teal/30 group">
+                          {(() => {
+                            const heroSettings: HeroSectionSettings = getSectionSettings('hero', {
+                              title: "Everything Your Pet Needs & Loves",
+                              subtitle: "",
+                              showTrustBadges: true,
+                              trustBadges: [
+                                {text: "Fast Delivery", icon: "truck"},
+                                {text: "Secure Payment", icon: "shield"},
+                                {text: "24/7 Support", icon: "clock"}
+                              ],
+                              topTags: [
+                                "#1 Vet Recommended",
+                                "New Collection 2024"
+                              ],
+                              description: "Premium organic treats, durable toys, and cozy beds. Everything your Anabul needs for a happier, healthier life.",
+                              ctaText: "Shop Products",
+                              buttonText: "About Us",
+                              imageUrls: [
+                                "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=800&auto=format&fit=crop",
+                                "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=500&auto=format&fit=crop"
+                              ]
+                            });
+                            return heroSettings.ctaText || "Shop Products";
+                          })()}
+                          <span className="ml-2 group-hover:translate-x-1 transition-transform">
+                            <ArrowRight className="w-5 h-5" />
+                          </span>
+                        </Button>
+                      </Link>
+                      <Link href="/about">
                       <Button variant="outline" size="lg" className="border-teal text-teal hover:bg-teal hover:text-white group">
                         <span className="mr-2 group-hover:scale-110 transition-transform">▶</span>
                         {(() => {
@@ -503,15 +507,16 @@ export default function HomePage() {
                             ],
                             description: "Premium organic treats, durable toys, and cozy beds. Everything your Anabul needs for a happier, healthier life.",
                             ctaText: "Start Shopping",
-                            buttonText: "Watch Video",
+                            buttonText: "About Us",
                             imageUrls: [
                               "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=800&auto=format&fit=crop",
                               "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=500&auto=format&fit=crop"
                             ]
                           });
-                          return heroSettings.buttonText || "Watch Video";
+                          return heroSettings.buttonText || "About Us";
                         })()}
                       </Button>
+                    </Link>
                     </div>
 
                     <div className="flex items-center gap-4">
