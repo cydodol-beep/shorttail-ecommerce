@@ -13,6 +13,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ProductCard } from '@/components/ui/product-card';
 import { useLandingSections } from '@/hooks/use-landing-sections';
 import { useProductData } from '@/hooks/use-product-data';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import type { ExtendedProduct } from '@/hooks/use-product-data';
 
 // Import the section components from the components directory
 import { CategorySection } from '@/components/home/category-section';
@@ -611,25 +614,98 @@ export default function HomePage() {
                           </motion.div>
 
                           {/* Floating Product Teaser Card (Conversion Driver) */}
-                          <motion.div
-                            initial={{ opacity: 0, x: 50 }}
-                            animate={{ opacity: 1, x: 0, y: [0, -10, 0] }}
-                            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                            className="absolute top-9 -right-4 md:-right-9 z-30 bg-white/90 backdrop-blur-md p-2.5 rounded-2xl shadow-xl border border-white max-w-[144px]"
-                          >
-                            <div className="flex items-center gap-2.5 mb-1.5">
-                              <div className="bg-cream rounded-lg p-0.5">
-                                <img src="https://picsum.photos/id/1062/100/100" className="w-9 h-9 rounded-md object-cover" alt="Food" />
-                              </div>
-                              <div>
-                                <p className="text-[9px] font-bold text-teal line-clamp-1">Premium Kibble</p>
-                                <p className="text-[9px] text-gray-500">$24.99</p>
-                              </div>
-                            </div>
-                            <div className="w-full bg-teal text-white text-[9px] font-bold py-1.25 px-2.5 rounded-lg text-center cursor-pointer hover:bg-teal-dark transition-colors flex items-center justify-center gap-1">
-                              Add to Cart <span>🛒</span>
-                            </div>
-                          </motion.div>
+                          {(() => {
+                            const { products, loading: productsLoading } = useProductData();
+
+                            const [currentProduct, setCurrentProduct] = useState<ExtendedProduct | null>(null);
+                            const [loadingProduct, setLoadingProduct] = useState(true);
+
+                            useEffect(() => {
+                              if (products && products.length > 0) {
+                                // Filter active products that have images
+                                const activeProducts = products.filter(p => p.is_active && p.main_image_url);
+                                if (activeProducts.length > 0) {
+                                  // Select a random product
+                                  const randomIndex = Math.floor(Math.random() * activeProducts.length);
+                                  setCurrentProduct(activeProducts[randomIndex]);
+                                  setLoadingProduct(false);
+                                }
+                              }
+                            }, [products]);
+
+                            // Set up auto-rotation every 10 seconds
+                            useEffect(() => {
+                              if (products && products.length > 0) {
+                                const interval = setInterval(() => {
+                                  const activeProducts = products.filter(p => p.is_active && p.main_image_url);
+                                  if (activeProducts.length > 0) {
+                                    const randomIndex = Math.floor(Math.random() * activeProducts.length);
+                                    setCurrentProduct(activeProducts[randomIndex]);
+                                  }
+                                }, 10000); // Rotate every 10 seconds
+
+                                return () => clearInterval(interval);
+                              }
+                            }, [products]);
+
+                            if (loadingProduct || !currentProduct) {
+                              return (
+                                <motion.div
+                                  initial={{ opacity: 0, x: 50 }}
+                                  animate={{ opacity: 1, x: 0, y: [0, -10, 0] }}
+                                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                                  className="absolute top-9 -right-4 md:-right-9 z-30 bg-white/90 backdrop-blur-md p-2.5 rounded-2xl shadow-xl border border-white max-w-[144px]"
+                                >
+                                  <div className="flex items-center gap-2.5 mb-1.5">
+                                    <div className="bg-cream rounded-lg p-0.5">
+                                      <div className="w-9 h-9 rounded-md bg-gray-200 animate-pulse" />
+                                    </div>
+                                    <div>
+                                      <div className="h-3 bg-gray-200 rounded w-16 mb-1" />
+                                      <div className="h-2 bg-gray-200 rounded w-12" />
+                                    </div>
+                                  </div>
+                                  <div className="w-full bg-teal text-white text-[9px] font-bold py-1.25 px-2.5 rounded-lg text-center">
+                                    <div className="h-2 bg-gray-200 rounded animate-pulse" />
+                                  </div>
+                                </motion.div>
+                              );
+                            }
+
+                            return (
+                              <motion.div
+                                initial={{ opacity: 0, x: 50 }}
+                                animate={{ opacity: 1, x: 0, y: [0, -10, 0] }}
+                                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                                className="absolute top-9 -right-4 md:-right-9 z-30 bg-white/90 backdrop-blur-md p-2.5 rounded-2xl shadow-xl border border-white max-w-[144px]"
+                              >
+                                <Link href={`/products/${currentProduct.id}`} className="block">
+                                  <div className="flex items-center gap-2.5 mb-1.5">
+                                    <div className="bg-cream rounded-lg p-0.5">
+                                      <img
+                                        src={currentProduct.main_image_url || "https://placehold.co/100x100?text=No+Image"}
+                                        className="w-9 h-9 rounded-md object-cover"
+                                        alt={currentProduct.name}
+                                        onError={(e) => {
+                                          const target = e.target as HTMLImageElement;
+                                          target.src = "https://placehold.co/100x100?text=No+Image";
+                                        }}
+                                      />
+                                    </div>
+                                    <div>
+                                      <p className="text-[9px] font-bold text-teal line-clamp-1">{currentProduct.name}</p>
+                                      <p className="text-[9px] text-gray-500">Rp {currentProduct.base_price.toLocaleString()}</p>
+                                    </div>
+                                  </div>
+                                </Link>
+                                <Link href={`/cart?add=${currentProduct.id}`} className="block">
+                                  <div className="w-full bg-teal text-white text-[9px] font-bold py-1.25 px-2.5 rounded-lg text-center cursor-pointer hover:bg-teal-dark transition-colors flex items-center justify-center gap-1">
+                                    Add to Cart <span>🛒</span>
+                                  </div>
+                                </Link>
+                              </motion.div>
+                            );
+                          })()}
 
                           {/* 100% Natural Badge */}
                           <div className="absolute top-0 left-0 z-20 transform -rotate-12">
