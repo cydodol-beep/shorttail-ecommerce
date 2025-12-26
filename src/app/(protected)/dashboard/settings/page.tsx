@@ -12,12 +12,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  User, 
-  MapPin, 
-  Package, 
-  Key, 
-  Save, 
+import { isValidDataUrl } from '@/lib/utils';
+import {
+  User,
+  MapPin,
+  Package,
+  Key,
+  Save,
   Loader2,
   Upload,
   Trophy,
@@ -365,15 +366,13 @@ export default function UserSettingsPage() {
               <div className="flex flex-col items-center text-center">
                 <div className="relative">
                   <Avatar className="h-24 w-24 mb-4">
-                    {profile?.user_avatar_url ? (
-                      <AvatarImage
-                        src={profile.user_avatar_url}
-                        onError={(e) => {
-                          console.error('Settings avatar image failed to load:', profile.user_avatar_url);
-                        }}
-                        className="object-cover"
-                      />
-                    ) : null}
+                    <AvatarImage
+                      src={profile?.user_avatar_url && isValidDataUrl(profile.user_avatar_url) ? profile.user_avatar_url : undefined}
+                      onError={(e) => {
+                        console.error('Settings avatar image failed to load:', profile?.user_avatar_url);
+                      }}
+                      className="object-cover"
+                    />
                     <AvatarFallback className="bg-primary text-white text-2xl">
                       {profile?.user_name?.charAt(0).toUpperCase() || 'U'}
                     </AvatarFallback>

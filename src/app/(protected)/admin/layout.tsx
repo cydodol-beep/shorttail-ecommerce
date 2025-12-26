@@ -6,6 +6,7 @@ import { AdminSidebar } from '@/components/admin/sidebar';
 import { useAuth } from '@/hooks/use-auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { isValidDataUrl } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -90,15 +91,13 @@ export default function AdminLayout({
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="flex items-center gap-2 px-2">
                       <Avatar className="h-8 w-8">
-                        {profile?.user_avatar_url ? (
-                          <AvatarImage
-                            src={profile.user_avatar_url}
-                            onError={(e) => {
-                              console.error('Admin avatar image failed to load:', profile.user_avatar_url);
-                            }}
-                            className="object-cover"
-                          />
-                        ) : null}
+                        <AvatarImage
+                          src={profile?.user_avatar_url && isValidDataUrl(profile.user_avatar_url) ? profile.user_avatar_url : undefined}
+                          onError={(e) => {
+                            console.error('Admin avatar image failed to load:', profile?.user_avatar_url);
+                          }}
+                          className="object-cover"
+                        />
                         <AvatarFallback className="bg-primary text-white">
                           {profile?.user_name?.charAt(0).toUpperCase() || 'A'}
                         </AvatarFallback>
