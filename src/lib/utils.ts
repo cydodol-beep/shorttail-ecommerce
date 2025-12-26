@@ -64,3 +64,60 @@ export function getAvatarDataInfo(url: string | undefined | null): { isValid: bo
     prefix: url.substring(0, 30)
   };
 }
+
+// Convert an image file to WebP format with specified quality
+export function convertImageToWebP(
+  file: File,
+  quality: number = 0.8,
+  maxWidth: number = 1920,
+  maxHeight: number = 1080
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      reject(new Error('Could not get canvas context'));
+      return;
+    }
+
+    img.onload = () => {
+      // Calculate new dimensions while maintaining aspect ratio
+      let { width, height } = img;
+
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width;
+        width = maxWidth;
+      }
+
+      if (height > maxHeight) {
+        width = (width * maxHeight) / height;
+        height = maxHeight;
+      }
+
+      // Set canvas dimensions
+      canvas.width = width;
+      canvas.height = height;
+
+      // Draw image on canvas
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Convert to WebP
+      const webpDataUrl = canvas.toDataURL('image/webp', quality);
+
+      // Clean up
+      URL.revokeObjectURL(img.src);
+
+      resolve(webpDataUrl);
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(img.src);
+      reject(new Error('Failed to load image'));
+    };
+
+    // Create object URL from file and load it
+    img.src = URL.createObjectURL(file);
+  });
+}

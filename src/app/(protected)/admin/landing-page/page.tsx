@@ -1,21 +1,23 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { 
-  Eye, 
-  EyeOff, 
-  Save, 
-  Layout, 
+import {
+  Eye,
+  EyeOff,
+  Save,
+  Layout,
   GripVertical,
   Settings,
   ChevronDown,
   ChevronUp,
   RotateCcw,
-  ExternalLink
+  ExternalLink,
+  Upload
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import { convertImageToWebP } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
@@ -258,8 +260,82 @@ export default function LandingPageSettingsPage() {
             {/* Image URLs Editor */}
             <div className="space-y-3">
               <Label className="text-sm font-semibold">Hero Images</Label>
-              <p className="text-xs text-brown-500">Add URLs for hero images (main and secondary)</p>
+              <p className="text-xs text-brown-500">Add URLs for hero images or upload WebP files</p>
 
+              {/* Image Upload Section */}
+              <div className="border border-dashed border-brown-200 rounded-lg p-4 bg-brown-50">
+                <div className="flex flex-col items-center justify-center gap-3">
+                  <input
+                    type="file"
+                    id="hero-image-upload"
+                    accept=".webp,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        if (!file.type.startsWith('image/')) {
+                          alert('Please select an image file');
+                          return;
+                        }
+
+                        // If the image is not in WebP format, convert it to WebP
+                        if (!file.type.includes('webp')) {
+                          // Use WebP conversion utility
+                          convertImageToWebP(file, 0.8, 1920, 1080)
+                            .then(webpDataUrl => {
+                              // Update the first image URL with the converted WebP data URL
+                              const currentUrls = [...(settings.imageUrls || [])];
+                              if (currentUrls.length > 0) {
+                                currentUrls[0] = webpDataUrl;
+                              } else {
+                                currentUrls.push(webpDataUrl);
+                              }
+                              updateLocalSetting(section.id, 'imageUrls', currentUrls);
+                            })
+                            .catch(error => {
+                              console.error('Error converting image to WebP:', error);
+                              alert('Failed to convert image to WebP format');
+                            });
+                        } else {
+                          // If it's already WebP, verify it's a valid WebP data URL and check size
+                          if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                            alert('File size exceeds 5MB limit');
+                            return;
+                          }
+
+                          // Convert WebP file to data URL
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            const dataUrl = event.target?.result as string;
+
+                            // Update the first image URL with the new data URL
+                            const currentUrls = [...(settings.imageUrls || [])];
+                            if (currentUrls.length > 0) {
+                              currentUrls[0] = dataUrl;
+                            } else {
+                              currentUrls.push(dataUrl);
+                            }
+                            updateLocalSetting(section.id, 'imageUrls', currentUrls);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }
+                    }}
+                  />
+                  <div className="text-center">
+                    <label
+                      htmlFor="hero-image-upload"
+                      className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
+                    >
+                      <Upload className="w-4 h-4" />
+                      Upload WebP Image
+                    </label>
+                    <p className="text-xs text-brown-500 mt-2">Max file size: 5MB. Format: WebP only</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Existing URL Inputs */}
               {(settings.imageUrls || []).map((url: string, index: number) => (
                 <div key={index} className="flex gap-2 items-center">
                   <Input
