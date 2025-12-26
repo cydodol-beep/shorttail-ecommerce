@@ -26,6 +26,9 @@ const useAuthStore = create<AuthStore>(() => ({
 }));
 
 export function useAuth() {
+  // Track idle timeout state
+  const [idleTimeoutActive, setIdleTimeoutActive] = useState(true);
+
   // Create a timeout function for async operations
   const withTimeout = <T>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
     return Promise.race([
@@ -460,6 +463,8 @@ export function useAuth() {
     isSuperUser,
     isUser,
     refetchProfile,
+    setIdleTimeoutActive,
+    idleTimeoutActive,
   };
 }
 
