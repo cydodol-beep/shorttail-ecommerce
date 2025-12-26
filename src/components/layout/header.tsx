@@ -276,13 +276,14 @@ export function Header() {
                 </button>
 
                 {/* Hide Wishlist when search is open to reduce clutter on desktop */}
-                {!isSearchOpen && (
-                  <button
+                {!isSearchOpen && user && (
+                  <Link
+                    href="/dashboard/wishlist"
                     className="hidden sm:block p-2 text-teal hover:text-accent hover:bg-teal/5 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-teal"
                     aria-label="Wishlist"
                   >
                     <Heart size={20} />
-                  </button>
+                  </Link>
                 )}
 
                 <Link
