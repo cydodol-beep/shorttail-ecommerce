@@ -470,6 +470,47 @@ export default function LandingPageSettingsPage() {
               )}
             </div>
 
+            {/* Discount Badge Editor */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">Discount Badge</Label>
+              <p className="text-xs text-brown-500">Configure the discount badge that appears on the hero image</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor={`${section.id}-discount-value`}>Discount Value</Label>
+                  <Input
+                    id={`${section.id}-discount-value`}
+                    value={settings.discountValue || '50%'}
+                    onChange={(e) => updateLocalSetting(section.id, 'discountValue', e.target.value)}
+                    placeholder="e.g., 50%"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor={`${section.id}-discount-label`}>Discount Label</Label>
+                  <Input
+                    id={`${section.id}-discount-label`}
+                    value={settings.discountLabel || 'OFF'}
+                    onChange={(e) => updateLocalSetting(section.id, 'discountLabel', e.target.value)}
+                    placeholder="e.g., OFF"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Vet Approved Badge Editor */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">Vet Approved Badge</Label>
+              <p className="text-xs text-brown-500">Configure the vet approved badge that appears on the hero image</p>
+              <div>
+                <Label htmlFor={`${section.id}-vet-approved-text`}>Badge Text</Label>
+                <Input
+                  id={`${section.id}-vet-approved-text`}
+                  value={settings.vetApprovedText || 'Vet Approved'}
+                  onChange={(e) => updateLocalSetting(section.id, 'vetApprovedText', e.target.value)}
+                  placeholder="e.g., Vet Approved"
+                />
+              </div>
+            </div>
+
           </div>
         );
 

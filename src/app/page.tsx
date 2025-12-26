@@ -635,8 +635,12 @@ export default function HomePage() {
                               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                               className="bg-accent text-white w-20 h-20 rounded-full flex flex-col items-center justify-center shadow-lg border-4 border-white"
                             >
-                              <span className="text-xl font-bold leading-none">50%</span>
-                              <span className="text-[10px] uppercase font-bold tracking-wider">OFF</span>
+                              <span className="text-xl font-bold leading-none">
+                                {(heroSettings.discountValue && heroSettings.discountValue !== "") ? heroSettings.discountValue : "50%"}
+                              </span>
+                              <span className="text-[10px] uppercase font-bold tracking-wider">
+                                {(heroSettings.discountLabel && heroSettings.discountLabel !== "") ? heroSettings.discountLabel : "OFF"}
+                              </span>
                             </motion.div>
                           </div>
 
@@ -646,7 +650,9 @@ export default function HomePage() {
                               <div className="bg-green-100 text-green-600 p-1 rounded-full">
                                 <span className="text-lg">✓</span>
                               </div>
-                              <span className="text-xs font-bold text-teal">Vet Approved</span>
+                              <span className="text-xs font-bold text-teal">
+                                {(heroSettings.vetApprovedText && heroSettings.vetApprovedText !== "") ? heroSettings.vetApprovedText : "Vet Approved"}
+                              </span>
                             </div>
                           </div>
                         </div>
