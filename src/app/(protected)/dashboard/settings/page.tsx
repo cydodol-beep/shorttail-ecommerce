@@ -44,7 +44,7 @@ const tierThresholds = {
 };
 
 export default function UserSettingsPage() {
-  const { profile, user, loading: authLoading } = useAuth();
+  const { profile, user, loading: authLoading, refetchProfile } = useAuth();
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -286,8 +286,8 @@ export default function UserSettingsPage() {
             toast.error('Failed to update avatar');
           } else {
             toast.success('Avatar updated successfully');
-            // Refresh the page to show new avatar
-            window.location.reload();
+            // Update the auth context to reflect the new avatar immediately
+            refetchProfile();
           }
         } catch (err) {
           console.error('Exception processing avatar:', err);
