@@ -186,6 +186,10 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const { isSectionVisible, getSectionSettings } = useLandingSections(); // Hook for admin section visibility and settings
 
+  // For the floating product teaser
+  const [currentProduct, setCurrentProduct] = useState<ExtendedProduct | null>(null);
+  const [loadingProduct, setLoadingProduct] = useState(true);
+
   // Pagination State
   const [bestSellersPage, setBestSellersPage] = useState(1);
   const [newArrivalsPage, setNewArrivalsPage] = useState(1);
@@ -194,6 +198,35 @@ export default function HomePage() {
   // Testimonial Carousel State
   const [currentTestimonialIndex, setCurrentTestimonialIndex] = useState(0);
   const [testimonialDirection, setTestimonialDirection] = useState(0);
+
+  // Initialize the floating product teaser with a random product
+  useEffect(() => {
+    if (products && products.length > 0) {
+      // Filter active products that have images
+      const activeProducts = products.filter(p => p.is_active && p.main_image_url);
+      if (activeProducts.length > 0) {
+        // Select a random product
+        const randomIndex = Math.floor(Math.random() * activeProducts.length);
+        setCurrentProduct(activeProducts[randomIndex]);
+        setLoadingProduct(false);
+      }
+    }
+  }, [products]);
+
+  // Set up auto-rotation every 10 seconds
+  useEffect(() => {
+    if (products && products.length > 0) {
+      const interval = setInterval(() => {
+        const activeProducts = products.filter(p => p.is_active && p.main_image_url);
+        if (activeProducts.length > 0) {
+          const randomIndex = Math.floor(Math.random() * activeProducts.length);
+          setCurrentProduct(activeProducts[randomIndex]);
+        }
+      }, 10000); // Rotate every 10 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [products]);
 
   // Handle loading states
   useEffect(() => {
@@ -614,98 +647,59 @@ export default function HomePage() {
                           </motion.div>
 
                           {/* Floating Product Teaser Card (Conversion Driver) */}
-                          {(() => {
-                            const { products, loading: productsLoading } = useProductData();
-
-                            const [currentProduct, setCurrentProduct] = useState<ExtendedProduct | null>(null);
-                            const [loadingProduct, setLoadingProduct] = useState(true);
-
-                            useEffect(() => {
-                              if (products && products.length > 0) {
-                                // Filter active products that have images
-                                const activeProducts = products.filter(p => p.is_active && p.main_image_url);
-                                if (activeProducts.length > 0) {
-                                  // Select a random product
-                                  const randomIndex = Math.floor(Math.random() * activeProducts.length);
-                                  setCurrentProduct(activeProducts[randomIndex]);
-                                  setLoadingProduct(false);
-                                }
-                              }
-                            }, [products]);
-
-                            // Set up auto-rotation every 10 seconds
-                            useEffect(() => {
-                              if (products && products.length > 0) {
-                                const interval = setInterval(() => {
-                                  const activeProducts = products.filter(p => p.is_active && p.main_image_url);
-                                  if (activeProducts.length > 0) {
-                                    const randomIndex = Math.floor(Math.random() * activeProducts.length);
-                                    setCurrentProduct(activeProducts[randomIndex]);
-                                  }
-                                }, 10000); // Rotate every 10 seconds
-
-                                return () => clearInterval(interval);
-                              }
-                            }, [products]);
-
-                            if (loadingProduct || !currentProduct) {
-                              return (
-                                <motion.div
-                                  initial={{ opacity: 0, x: 50 }}
-                                  animate={{ opacity: 1, x: 0, y: [0, -10, 0] }}
-                                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                                  className="absolute top-9 -right-4 md:-right-9 z-30 bg-white/90 backdrop-blur-md p-2.5 rounded-2xl shadow-xl border border-white max-w-[144px]"
-                                >
-                                  <div className="flex items-center gap-2.5 mb-1.5">
-                                    <div className="bg-cream rounded-lg p-0.5">
-                                      <div className="w-9 h-9 rounded-md bg-gray-200 animate-pulse" />
-                                    </div>
-                                    <div>
-                                      <div className="h-3 bg-gray-200 rounded w-16 mb-1" />
-                                      <div className="h-2 bg-gray-200 rounded w-12" />
-                                    </div>
+                          {loadingProduct || !currentProduct ? (
+                            <motion.div
+                              initial={{ opacity: 0, x: 50 }}
+                              animate={{ opacity: 1, x: 0, y: [0, -10, 0] }}
+                              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                              className="absolute top-9 -right-4 md:-right-9 z-30 bg-white/90 backdrop-blur-md p-2.5 rounded-2xl shadow-xl border border-white max-w-[144px]"
+                            >
+                              <div className="flex items-center gap-2.5 mb-1.5">
+                                <div className="bg-cream rounded-lg p-0.5">
+                                  <div className="w-9 h-9 rounded-md bg-gray-200 animate-pulse" />
+                                </div>
+                                <div>
+                                  <div className="h-3 bg-gray-200 rounded w-16 mb-1" />
+                                  <div className="h-2 bg-gray-200 rounded w-12" />
+                                </div>
+                              </div>
+                              <div className="w-full bg-teal text-white text-[9px] font-bold py-1.25 px-2.5 rounded-lg text-center">
+                                <div className="h-2 bg-gray-200 rounded animate-pulse" />
+                              </div>
+                            </motion.div>
+                          ) : (
+                            <motion.div
+                              initial={{ opacity: 0, x: 50 }}
+                              animate={{ opacity: 1, x: 0, y: [0, -10, 0] }}
+                              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                              className="absolute top-9 -right-4 md:-right-9 z-30 bg-white/90 backdrop-blur-md p-2.5 rounded-2xl shadow-xl border border-white max-w-[144px]"
+                            >
+                              <Link href={`/products/${currentProduct.id}`} className="block">
+                                <div className="flex items-center gap-2.5 mb-1.5">
+                                  <div className="bg-cream rounded-lg p-0.5">
+                                    <img
+                                      src={currentProduct.main_image_url || "https://placehold.co/100x100?text=No+Image"}
+                                      className="w-9 h-9 rounded-md object-cover"
+                                      alt={currentProduct.name}
+                                      onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.src = "https://placehold.co/100x100?text=No+Image";
+                                      }}
+                                    />
                                   </div>
-                                  <div className="w-full bg-teal text-white text-[9px] font-bold py-1.25 px-2.5 rounded-lg text-center">
-                                    <div className="h-2 bg-gray-200 rounded animate-pulse" />
+                                  <div>
+                                    <p className="text-[9px] font-bold text-teal line-clamp-1">{currentProduct.name}</p>
+                                    <p className="text-[9px] text-gray-500">Rp {currentProduct.base_price.toLocaleString()}</p>
                                   </div>
-                                </motion.div>
-                              );
-                            }
-
-                            return (
-                              <motion.div
-                                initial={{ opacity: 0, x: 50 }}
-                                animate={{ opacity: 1, x: 0, y: [0, -10, 0] }}
-                                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                                className="absolute top-9 -right-4 md:-right-9 z-30 bg-white/90 backdrop-blur-md p-2.5 rounded-2xl shadow-xl border border-white max-w-[144px]"
-                              >
-                                <Link href={`/products/${currentProduct.id}`} className="block">
-                                  <div className="flex items-center gap-2.5 mb-1.5">
-                                    <div className="bg-cream rounded-lg p-0.5">
-                                      <img
-                                        src={currentProduct.main_image_url || "https://placehold.co/100x100?text=No+Image"}
-                                        className="w-9 h-9 rounded-md object-cover"
-                                        alt={currentProduct.name}
-                                        onError={(e) => {
-                                          const target = e.target as HTMLImageElement;
-                                          target.src = "https://placehold.co/100x100?text=No+Image";
-                                        }}
-                                      />
-                                    </div>
-                                    <div>
-                                      <p className="text-[9px] font-bold text-teal line-clamp-1">{currentProduct.name}</p>
-                                      <p className="text-[9px] text-gray-500">Rp {currentProduct.base_price.toLocaleString()}</p>
-                                    </div>
-                                  </div>
-                                </Link>
-                                <Link href={`/cart?add=${currentProduct.id}`} className="block">
-                                  <div className="w-full bg-teal text-white text-[9px] font-bold py-1.25 px-2.5 rounded-lg text-center cursor-pointer hover:bg-teal-dark transition-colors flex items-center justify-center gap-1">
-                                    Add to Cart <span>🛒</span>
-                                  </div>
-                                </Link>
-                              </motion.div>
-                            );
-                          })()}
+                                </div>
+                              </Link>
+                              <Link href={`/cart?add=${currentProduct.id}`} className="block">
+                                <div className="w-full bg-teal text-white text-[9px] font-bold py-1.25 px-2.5 rounded-lg text-center cursor-pointer hover:bg-teal-dark transition-colors flex items-center justify-center gap-1">
+                                  Add to Cart <span>🛒</span>
+                                </div>
+                              </Link>
+                            </motion.div>
+                          )}
 
                           {/* 100% Natural Badge */}
                           <div className="absolute top-0 left-0 z-20 transform -rotate-12">
