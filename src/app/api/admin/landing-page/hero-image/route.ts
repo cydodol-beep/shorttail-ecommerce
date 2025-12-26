@@ -1,18 +1,17 @@
 import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { cookies } from 'next/headers';
 
 // API route to handle hero image uploads
 export async function POST(request: NextRequest) {
   try {
     // Verify admin access
     const supabase = createClient();
-    const cookieStore = cookies();
     const {
       data: { user },
-    } = await supabase.auth.getUser(cookieStore.get('sb-access-token')?.value);
+      error: userError
+    } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (userError || !user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -38,7 +37,7 @@ export async function POST(request: NextRequest) {
     // Update the hero section settings in the database
     const { error } = await supabase
       .from('landing_page_sections')
-      .update({ 
+      .update({
         settings: { imageUrls },
         updated_at: new Date().toISOString()
       })
@@ -49,7 +48,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'Failed to update hero section' }, { status: 500 });
     }
 
-    return Response.json({ 
+    return Response.json({
       success: true,
       message: 'Hero images updated successfully'
     });
