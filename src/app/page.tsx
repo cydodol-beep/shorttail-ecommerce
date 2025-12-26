@@ -58,6 +58,9 @@ interface HeroSectionSettings {
   ctaText?: string;
   buttonText?: string;
   imageUrls?: string[];
+  discountValue?: string;
+  discountLabel?: string;
+  vetApprovedText?: string;
 }
 
 const BenefitsSection = () => {
