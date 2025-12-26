@@ -7,13 +7,13 @@ import { ShoppingCart, Search, Menu, X, Heart, ArrowRight, User, Percent, Tag, C
 import { motion } from 'framer-motion';
 
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useCartItemCount } from '@/store/cart-store';
@@ -161,7 +161,7 @@ export function Header() {
         </div>
       </div>
 
-      {/* Full-width News Ticker - moved outside the max-w-7xl container */}
+      {/* Full-width News Ticker */}
       <div className="sticky top-0 z-40 w-full transition-all duration-300 pointer-events-none">
         <div className="w-full" style={{ backgroundColor: '#006d77', color: '#fdf6ec' }}>
           {/* News Ticker with Active Promotions - Full width */}
@@ -226,7 +226,7 @@ export function Header() {
         </div>
       </div>
 
-      {/* Main Header Content - still constrained to max-w-7xl */}
+      {/* Main Header Content - constrained to max-w-7xl */}
       <div className="sticky top-0 z-40 px-4 flex justify-center w-full transition-all duration-300 pointer-events-none">
         <div className="w-full max-w-7xl">
           <header
@@ -322,8 +322,8 @@ export function Header() {
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" className="flex items-center gap-2 px-2">
                             <Avatar className="h-8 w-8">
-                              <AvatarImage
-                                src={profile?.user_avatar_url && getAvatarDataInfo(profile.user_avatar_url).isValid ? profile.user_avatar_url : undefined}
+                              <AvatarImage 
+                                src={profile?.user_avatar_url && getAvatarDataInfo(profile.user_avatar_url).isValid ? profile.user_avatar_url : undefined} 
                                 onError={(e) => {
                                   console.error('Header avatar image failed to load:', profile?.user_avatar_url);
                                 }}
@@ -356,7 +356,7 @@ export function Header() {
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem
+                          <DropdownMenuItem 
                             onClick={async () => {
                               try {
                                 await signOut();
@@ -431,10 +431,10 @@ export function Header() {
                             Dashboard
                           </Button>
                         </Link>
-                        <Button
-                          variant="default"
-                          size="sm"
-                          className="flex-1 justify-center"
+                        <Button 
+                          variant="default" 
+                          size="sm" 
+                          className="flex-1 justify-center" 
                           tabIndex={isMobileMenuOpen ? 0 : -1}
                           onClick={async (e) => {
                             e.preventDefault();
@@ -466,12 +466,10 @@ export function Header() {
                   </div>
                </div>
           </div>
-        </div> {/* Close max-w-7xl div */}
-      </header>
-    </div> {/* Close px-4 flex justify-center w-full div */}
-  </div> {/* Close sticky top-0 z-40 w-full div */}
-</div> {/* Close the original div that was at the beginning */}
-</div> {/* Close the original sticky div that contains everything */}
+        </header>
+      </div>
+    </div>
+    </div>
     </>
   );
 }
