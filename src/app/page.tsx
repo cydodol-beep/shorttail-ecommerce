@@ -182,7 +182,7 @@ export default function HomePage() {
     error
   } = useProductData();
   const [loading, setLoading] = useState(true);
-  const { isSectionVisible } = useLandingSections(); // Hook for admin section visibility
+  const { isSectionVisible, getSectionSettings } = useLandingSections(); // Hook for admin section visibility and settings
 
   // Pagination State
   const [bestSellersPage, setBestSellersPage] = useState(1);
