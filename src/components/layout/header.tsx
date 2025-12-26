@@ -22,7 +22,7 @@ const NAV_ITEMS = [
 
 export function Header() {
   const router = useRouter();
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, signOut } = useAuth();
   const itemCount = useCartItemCount();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -299,11 +299,30 @@ export function Header() {
                   )}
                 </Link>
 
-                {/* User Profile - Hides when search is open */}
+                {/* User Profile/Logout - Hides when search is open */}
                 {!isSearchOpen && (
-                  <Link href={user ? "/dashboard" : "/login"} className="hidden sm:block p-2 text-teal hover:text-accent hover:bg-teal/5 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-teal">
-                    <User size={20} />
-                  </Link>
+                  <>
+                    {user ? (
+                      <button
+                        onClick={async () => {
+                          try {
+                            await signOut();
+                            // The middleware will handle redirecting to login
+                          } catch (error) {
+                            console.error('Error during logout:', error);
+                          }
+                        }}
+                        className="hidden sm:block p-2 text-teal hover:text-accent hover:bg-teal/5 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-teal"
+                        aria-label="Logout"
+                      >
+                        <User size={20} />
+                      </button>
+                    ) : (
+                      <Link href="/login" className="hidden sm:block p-2 text-teal hover:text-accent hover:bg-teal/5 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-teal">
+                        <User size={20} />
+                      </Link>
+                    )}
+                  </>
                 )}
 
                 {/* Mobile Menu Button */}
@@ -345,16 +364,45 @@ export function Header() {
                   ))}
                   <div className="h-px bg-teal/10 my-2"></div>
                   <div className="flex gap-4">
-                    <Link href="/login">
-                      <Button variant="outline" size="sm" className="flex-1 justify-center" tabIndex={isMobileMenuOpen ? 0 : -1}>
-                        Log In
-                      </Button>
-                    </Link>
-                    <Link href="/register">
-                      <Button variant="default" size="sm" className="flex-1 justify-center" tabIndex={isMobileMenuOpen ? 0 : -1}>
-                        Sign Up
-                      </Button>
-                    </Link>
+                    {user ? (
+                      <>
+                        <Link href="/dashboard">
+                          <Button variant="outline" size="sm" className="flex-1 justify-center" tabIndex={isMobileMenuOpen ? 0 : -1}>
+                            Dashboard
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="flex-1 justify-center"
+                          tabIndex={isMobileMenuOpen ? 0 : -1}
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            try {
+                              await signOut();
+                              // The middleware will handle redirecting to login
+                            } catch (error) {
+                              console.error('Error during logout:', error);
+                            }
+                          }}
+                        >
+                          Logout
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Link href="/login">
+                          <Button variant="outline" size="sm" className="flex-1 justify-center" tabIndex={isMobileMenuOpen ? 0 : -1}>
+                            Log In
+                          </Button>
+                        </Link>
+                        <Link href="/register">
+                          <Button variant="default" size="sm" className="flex-1 justify-center" tabIndex={isMobileMenuOpen ? 0 : -1}>
+                            Sign Up
+                          </Button>
+                        </Link>
+                      </>
+                    )}
                   </div>
                </div>
           </div>
