@@ -191,80 +191,80 @@ export default function HeroSection() {
                    : "Premium organic treats, durable toys, and cozy beds. Everything your <span class=\"text-accent font-bold\">Anabul</span> needs for a happier, healthier life."
                }}>
             </p>
-          </div>
 
-          {/* Button section */}
-          <div className="flex flex-col sm:flex-row gap-3.5 mb-9">
-            <Link href="/products">
-              <Button variant="default" size="lg" className="bg-accent hover:bg-accent-hover shadow-xl shadow-teal/20 hover:shadow-teal/30 group text-sm">
+            {/* Button section */}
+            <div className="flex flex-col sm:flex-row gap-3.5 mb-9">
+              <Link href="/products">
+                <Button variant="default" size="lg" className="bg-accent hover:bg-accent-hover shadow-xl shadow-teal/20 hover:shadow-teal/30 group text-sm">
+                  {(() => {
+                    const heroSettings: HeroSectionSettings = getSectionSettings('hero', {
+                      title: "Everything Your Pet Needs & Loves",
+                      subtitle: "",
+                      showTrustBadges: true,
+                      trustBadges: [
+                        {text: "Fast Delivery", icon: "truck"},
+                        {text: "Secure Payment", icon: "shield"},
+                        {text: "24/7 Support", icon: "clock"}
+                      ],
+                      topTags: [
+                        "#1 Vet Recommended",
+                        "New Collection 2024"
+                      ],
+                      description: "Premium organic treats, durable toys, and cozy beds. Everything your Anabul needs for a happier, healthier life.",
+                      ctaText: "Shop Products",
+                      buttonText: "About Us",
+                      imageUrls: [
+                        "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=800&auto=format&fit=crop",
+                        "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=500&auto=format&fit=crop"
+                      ]
+                    });
+                    return heroSettings.ctaText || "Shop Products";
+                  })()}
+                  <span className="ml-2 group-hover:translate-x-1 transition-transform">
+                    <ArrowRight className="w-5 h-5" />
+                  </span>
+                </Button>
+              </Link>
+              <Link href="/about">
+              <Button variant="outline" size="lg" className="border-teal text-teal hover:bg-teal hover:text-white group text-sm">
+                <span className="mr-2 group-hover:scale-110 transition-transform">▶</span>
                 {(() => {
                   const heroSettings: HeroSectionSettings = getSectionSettings('hero', {
                     title: "Everything Your Pet Needs & Loves",
                     subtitle: "",
-                    showTrustBadges: true,
-                    trustBadges: [
-                      {text: "Fast Delivery", icon: "truck"},
-                      {text: "Secure Payment", icon: "shield"},
-                      {text: "24/7 Support", icon: "clock"}
-                    ],
                     topTags: [
                       "#1 Vet Recommended",
                       "New Collection 2024"
                     ],
                     description: "Premium organic treats, durable toys, and cozy beds. Everything your Anabul needs for a happier, healthier life.",
-                    ctaText: "Shop Products",
+                    ctaText: "Start Shopping",
                     buttonText: "About Us",
                     imageUrls: [
                       "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=800&auto=format&fit=crop",
                       "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=500&auto=format&fit=crop"
                     ]
                   });
-                  return heroSettings.ctaText || "Shop Products";
+                  return heroSettings.buttonText || "About Us";
                 })()}
-                <span className="ml-2 group-hover:translate-x-1 transition-transform">
-                  <ArrowRight className="w-5 h-5" />
-                </span>
               </Button>
             </Link>
-            <Link href="/about">
-            <Button variant="outline" size="lg" className="border-teal text-teal hover:bg-teal hover:text-white group text-sm">
-              <span className="mr-2 group-hover:scale-110 transition-transform">▶</span>
-              {(() => {
-                const heroSettings: HeroSectionSettings = getSectionSettings('hero', {
-                  title: "Everything Your Pet Needs & Loves",
-                  subtitle: "",
-                  topTags: [
-                    "#1 Vet Recommended",
-                    "New Collection 2024"
-                  ],
-                  description: "Premium organic treats, durable toys, and cozy beds. Everything your Anabul needs for a happier, healthier life.",
-                  ctaText: "Start Shopping",
-                  buttonText: "About Us",
-                  imageUrls: [
-                    "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=800&auto=format&fit=crop",
-                    "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=500&auto=format&fit=crop"
-                  ]
-                });
-                return heroSettings.buttonText || "About Us";
-              })()}
-            </Button>
-          </Link>
-          </div>
-
-          {/* User testimonials section */}
-          <div className="flex items-center gap-3.5">
-            <div className="flex -space-x-3.5">
-              {[1, 2, 3, 4].map(i => (
-                <img key={i} src={`https://picsum.photos/id/${i + 60}/50/50`} alt="User" className="w-10.5 h-10.5 rounded-full border-2.5 border-cream object-cover shadow-sm" />
-              ))}
-              <div className="w-10.5 h-10.5 rounded-full border-2.5 border-cream bg-teal text-white flex items-center justify-center text-[10px] font-bold">
-                +12k
-              </div>
             </div>
-            <div className="text-xs">
-              <p className="font-bold text-teal">Happy Parents</p>
-              <div className="flex text-accent text-[9px] mt-0.5">
-                {[1,2,3,4,5].map(s => <span key={s} className="text-base">★</span>)}
+
+            {/* User testimonials section */}
+            <div className="flex items-center gap-3.5">
+              <div className="flex -space-x-3.5">
+                {[1, 2, 3, 4].map(i => (
+                  <img key={i} src={`https://picsum.photos/id/${i + 60}/50/50`} alt="User" className="w-10.5 h-10.5 rounded-full border-2.5 border-cream object-cover shadow-sm" />
+                ))}
+                <div className="w-10.5 h-10.5 rounded-full border-2.5 border-cream bg-teal text-white flex items-center justify-center text-[10px] font-bold">
+                  +12k
+                </div>
+              </div>
+              <div className="text-xs">
+                <p className="font-bold text-teal">Happy Parents</p>
+                <div className="flex text-accent text-[9px] mt-0.5">
+                  {[1,2,3,4,5].map(s => <span key={s} className="text-base">★</span>)}
+                </div>
               </div>
             </div>
           </div>
