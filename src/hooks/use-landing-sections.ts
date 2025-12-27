@@ -97,7 +97,7 @@ export function useLandingSections() {
       // If we have sections data, use it regardless of fetched status
       if (sections.length > 0) {
         const section = sections.find((s) => s.section_key === key);
-        return section ? section.is_visible : true;
+        return section ? section.is_visible : false;  // Section not found, should not be visible
       }
       // If no data yet, show all sections by default (first load)
       return true;
