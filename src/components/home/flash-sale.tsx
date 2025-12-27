@@ -70,10 +70,13 @@ export function FlashSale() {
     }
 
     if (!promoData || promoData.length === 0) {
+      console.log('No active promotions found');
       setProducts([]);
       setLoading(false);
       return;
     }
+
+    console.log('All active promotions:', promoData);
 
     // Find the closest expiration date among active promotions
     let closestExpiration: Date | null = null;
@@ -86,13 +89,6 @@ export function FlashSale() {
       }
     }
 
-    // Store closest expiration in state
-    setProducts(products => {
-      // This callback doesn't affect the products state but allows us to set closestExpiration
-      // We'll handle the interval in a separate effect
-      return products;
-    });
-
     console.log('Flash sale promotions:', promoData);
 
     // Build a map of product_id -> details for specific products
@@ -103,21 +99,21 @@ export function FlashSale() {
       buy_quantity?: number;
       get_quantity?: number;
     }>();
-    let hasAllProductsPromo = false;
-    let allProductsPromoDetails = {
-      discount_value: 0,
-      discount_type: 'percentage',
-      code: '',
-      buy_quantity: undefined,
-      get_quantity: undefined
-    };
+
+    // Track highest-value "all products" promotion
+    let allProductsPromotion: {
+      discount_value: number;
+      discount_type: string;
+      code: string;
+      buy_quantity?: number;
+      get_quantity?: number;
+    } | null = null;
 
     for (const promo of promoData) {
       if (promo.applies_to === 'all_products') {
-        hasAllProductsPromo = true;
         // Use the promotion with the highest discount value for all products
-        if (promo.discount_value > allProductsPromoDetails.discount_value) {
-          allProductsPromoDetails = {
+        if (!allProductsPromotion || promo.discount_value > allProductsPromotion.discount_value) {
+          allProductsPromotion = {
             discount_value: promo.discount_value,
             discount_type: promo.discount_type,
             code: promo.code,
@@ -142,9 +138,13 @@ export function FlashSale() {
       }
     }
 
+    console.log('Specific product promotions map:', Object.fromEntries(productPromoMap));
+    console.log('All products promotion:', allProductsPromotion);
+
     // Get specific product IDs with promotions
     const specificProductIds = Array.from(productPromoMap.keys());
 
+    // Build query based on promotion types
     let query = supabase
       .from('products')
       .select('*, product_variants(*)')
@@ -153,11 +153,12 @@ export function FlashSale() {
       .order('created_at', { ascending: false })
       .limit(6);
 
-    // If there are specific products with promotions, prioritize them
+    // If there are specific products with promotions, query only those
     if (specificProductIds.length > 0) {
       query = query.in('id', specificProductIds);
-    } else if (!hasAllProductsPromo) {
-      // No products to show
+    } else if (!allProductsPromotion) {
+      // No products to show if no specific promotions and no all-products promotions
+      console.log('No specific or all-products promotions available');
       setProducts([]);
       setLoading(false);
       return;
@@ -171,18 +172,19 @@ export function FlashSale() {
       return;
     }
 
-    console.log('Flash sale - allProductsPromoDetails:', allProductsPromoDetails);
-    console.log('Flash sale - productPromoMap:', Object.fromEntries(productPromoMap));
+    console.log('Fetched products for flash sale:', data?.length || 0);
 
     // Apply discounts from promotions
     const productsWithDiscounts: FlashSaleProduct[] = [];
 
     for (const product of (data || [])) {
       // Get promotion details: specific product promotion or all-products promotion
-      const promoDetails = productPromoMap.get(product.id) || allProductsPromoDetails;
+      const specificPromo = productPromoMap.get(product.id);
+      const promoDetails = specificPromo || allProductsPromotion;
 
       if (!promoDetails) {
-        continue; // Skip products without promotions
+        console.log(`Product ${product.id} has no applicable promotion`);
+        continue; // Skip products without applicable promotions
       }
 
       // Determine if this is a valid promotion to display
@@ -190,13 +192,16 @@ export function FlashSale() {
 
       if (promoDetails.discount_type === 'percentage' && promoDetails.discount_value <= 0) {
         isValidPromotion = false;
+        console.log(`Percentage promotion for product ${product.id} has invalid discount value: ${promoDetails.discount_value}`);
       } else if (promoDetails.discount_type === 'fixed' && promoDetails.discount_value <= 0) {
         isValidPromotion = false;
+        console.log(`Fixed discount promotion for product ${product.id} has invalid discount value: ${promoDetails.discount_value}`);
       }
       // buy_x_get_y promotions are considered valid if they have valid quantities
       else if (promoDetails.discount_type === 'buy_x_get_y' &&
                (!promoDetails.buy_quantity || !promoDetails.get_quantity)) {
         isValidPromotion = false;
+        console.log(`Buy-X-Get-Y promotion for product ${product.id} has invalid quantities`);
       }
 
       if (!isValidPromotion) {
@@ -240,7 +245,12 @@ export function FlashSale() {
       });
     }
 
-    console.log('Flash sale products with discounts:', productsWithDiscounts.map(p => ({ name: p.name, discount: p.discount_percentage })));
+    console.log('Final flash sale products with discounts:', productsWithDiscounts.map(p => ({
+      name: p.name,
+      discount: p.discount_percentage,
+      promotion_type: p.promotion_details?.discount_type
+    })));
+
     setProducts(productsWithDiscounts);
     setLoading(false);
   }, []);
