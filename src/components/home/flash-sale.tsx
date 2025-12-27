@@ -336,6 +336,7 @@ export function FlashSale() {
   }, []);
 
   useEffect(() => {
+    console.log('FlashSale component mounted, starting fetch...');
     fetchFlashSaleProducts();
   }, [fetchFlashSaleProducts]);
 
@@ -345,6 +346,7 @@ export function FlashSale() {
   };
 
   if (loading) {
+    console.log('FlashSale - Currently loading...');
     return (
       <section className="py-12 bg-gradient-to-r from-red-500 to-orange-500">
         <div className="container mx-auto px-4">
@@ -370,7 +372,10 @@ export function FlashSale() {
     );
   }
 
+  console.log('FlashSale - Products count:', products.length, 'Loading state:', loading);
+
   if (products.length === 0 && !loading) {
+    console.log('FlashSale - Showing no promotions message...');
     return (
       <section className="py-12 bg-gradient-to-r from-red-500 to-orange-500">
         <div className="container mx-auto px-4">
