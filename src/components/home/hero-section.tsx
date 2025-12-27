@@ -365,8 +365,8 @@ export default function HeroSection() {
                 </motion.div>
               )}
 
-              {/* 100% Natural Badge - Positioned to avoid conflicts */}
-              <div className="absolute top-0 left-0 z-30 transform -rotate-12">
+              {/* 100% Natural Badge */}
+              <div className="absolute top-0 left-0 z-20 transform -rotate-12">
                 <motion.div
                   animate={{ rotate: [-12, -8, -12] }}
                   transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
@@ -381,8 +381,8 @@ export default function HeroSection() {
                 </motion.div>
               </div>
 
-              {/* Quality Check Badge - Positioned to prevent overlap */}
-              <div className="absolute top-4 right-4 z-30">
+              {/* Quality Check Badge - Adjusted position to prevent overlap */}
+              <div className="absolute bottom-10.5 -right-1.5 md:-right-7 z-20">
                 <div className="bg-white px-3.5 py-1.5 rounded-xl shadow-lg border border-teal/10 flex items-center gap-1.5">
                   <div className="bg-green-100 text-green-600 p-0.5 rounded-full">
                     <span className="text-base">✓</span>

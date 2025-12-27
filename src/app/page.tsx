@@ -19,7 +19,6 @@ import type { ExtendedProduct } from '@/hooks/use-product-data';
 // Import the section components from the components directory
 import { CategorySection } from '@/components/home/category-section';
 import HeroSection from '@/components/home/hero-section';
-import { PromoBanner } from '@/components/home/promo-banner';
 
 
 
@@ -352,9 +351,6 @@ export default function HomePage() {
         <Header />
 
         <main>
-          {/* Promo Banner - Always visible at the top */}
-          <PromoBanner />
-
           {/* Hero Section - Always visible */}
           {(isSectionVisible('hero') || true) && ( // Hero section is always visible
             <HeroSection />
