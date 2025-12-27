@@ -2039,6 +2039,35 @@ When working with Zustand stores and caching:
 
 ---
 
+## 🔄 Recent Updates (February 1, 2026)
+
+### Promotions Management Sync & Mobile Touch Handling Improvements 🛒
+- **Fixed Promotions Management Database Synchronization**:
+  - **Issue**: Admin panel promotions management was not properly syncing with database, causing discrepancies between admin panel and actual promotional displays on the frontpage
+  - **Solution**: Enhanced data synchronization mechanisms to ensure real-time updates between admin panel and database
+  - **Implementation Details**:
+    - Updated promotions store with proper cache invalidation after CRUD operations
+    - Added manual refresh mechanisms after create/update/delete operations
+    - Implemented proper error handling to prevent synchronization failures
+    - Fixed type mismatches in the promotions table component that were causing data display issues
+    - Implemented proper cache invalidation after operations to ensure data freshness
+    - Added better error checking and reporting to alert admin users of sync issues
+  - **Result**: Promotions management now properly reflects database state in real-time
+  - **Impact**: Admin users can now reliably manage promotions knowing changes are immediately reflected in the system
+
+- **Improved Mobile Touch Handling for Game Elements**:
+  - **Issue**: Items in the Treat Catcher game were falling through the character on mobile devices despite being in the right position
+  - **Solution**: Enhanced collision detection algorithms with more forgiving collision boundaries for touch interfaces
+  - **Implementation Details**:
+    - Increased collision detection area slightly to make it more forgiving on touch interfaces
+    - Implemented more precise collision detection calculations that account for touch imprecision
+    - Updated touch event handling to ensure proper positional accuracy
+    - Added more responsive feedback when items are caught to improve user experience
+  - **Result**: Items now properly collide with the character when in range on mobile devices
+  - **Impact**: Better gameplay experience on mobile devices with accurate collection of items
+
+---
+
 ## License
 
 Private project - All rights reserved.
