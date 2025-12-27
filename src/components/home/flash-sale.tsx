@@ -185,11 +185,21 @@ export function FlashSale() {
         continue; // Skip products without promotions
       }
 
-      // Skip if it's a percentage promotion with no discount value, and it's not a special type
-      if (promoDetails.discount_type === 'percentage' && promoDetails.discount_value <= 0 &&
-          promoDetails.discount_type !== 'buy_x_get_y' &&
-          promoDetails.discount_type !== 'fixed' &&
-          promoDetails.discount_type !== 'free_shipping') {
+      // Determine if this is a valid promotion to display
+      let isValidPromotion = true;
+
+      if (promoDetails.discount_type === 'percentage' && promoDetails.discount_value <= 0) {
+        isValidPromotion = false;
+      } else if (promoDetails.discount_type === 'fixed' && promoDetails.discount_value <= 0) {
+        isValidPromotion = false;
+      }
+      // buy_x_get_y promotions are considered valid if they have valid quantities
+      else if (promoDetails.discount_type === 'buy_x_get_y' &&
+               (!promoDetails.buy_quantity || !promoDetails.get_quantity)) {
+        isValidPromotion = false;
+      }
+
+      if (!isValidPromotion) {
         continue;
       }
 
@@ -231,9 +241,6 @@ export function FlashSale() {
     console.log('Flash sale products with discounts:', productsWithDiscounts.map(p => ({ name: p.name, discount: p.discount_percentage })));
     setProducts(productsWithDiscounts);
     setLoading(false);
-
-    // Return the closest expiration date for the useEffect
-    return closestExpiration;
   }, []);
 
   // Countdown timer effect
