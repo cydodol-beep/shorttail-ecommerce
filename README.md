@@ -1899,6 +1899,67 @@ When working with Zustand stores and caching:
 
 ---
 
+## Recent Updates (December 26, 2025)
+
+### Enhanced Hero Section with Auto-Rotating Product Teaser 🛍️
+- **Implemented Dynamic Floating Product Teaser Card**:
+  - **Issue**: Hero section had static product teaser that didn't showcase real products from the store
+  - **Solution**: Created auto-rotating product teaser that displays random products from the shop
+  - **Implementation Details**:
+    - Added client-side component for hero section to handle dynamic product loading
+    - Fetches random active products that have images from database
+    - Auto-rotates displayed product every 10 seconds with smooth animations
+    - Shows product image, name, and formatted price
+    - Includes loading state with skeleton elements
+    - Added error handling for missing product images
+    - Product images link to individual product pages
+    - "Add to Cart" button links to cart with product pre-added
+    - Proper state management for current product in rotation
+    - Separated component structure to maintain server/client component compatibility
+  - **Result**: Hero section now showcases real products from the store with engaging auto-rotation
+
+### Admin-Configurable Hero Section Elements 🎨
+- **Made "50% OFF" and "Vet Approved" Badges Editable**:
+  - **Issue**: Discount and vet approved badges in hero section were hardcoded and not editable in admin panel
+  - **Solution**: Added configurable fields in admin panel for these elements
+  - **Implementation Details**:
+    - Added "Discount Value" field to set percentage (defaults to "50%")
+    - Added "Discount Label" field to set label (defaults to "OFF")
+    - Added "Badge Text" field for vet approved text (defaults to "Vet Approved")
+    - Updated frontpage to use admin settings with fallbacks to original values
+    - Added new properties to HeroSectionSettings interface for TypeScript support
+  - **Result**: Administrators can now customize these hero section elements through the admin panel
+
+### Resized Hero Section Elements by 10% 🔍
+- **Reduced Hero Section Size for Better Layout**:
+  - **Issue**: Hero section elements were too large for some screen sizes
+  - **Solution**: Reduced all elements in the hero section by 10% to improve layout
+  - **Implementation Details**:
+    - Main container: `w-[340px] md:w-[450px]` → `w-[306px] md:w-[405px]`
+    - Main pet image border: `border-[8px]` → `border-[7px]`
+    - Secondary image: `w-40 h-40 md:w-48 md:h-48` → `w-36 h-36 md:w-43 md:h-43`
+    - Secondary image border: `border-[6px]` → `border-[5px]`
+    - Product teaser card: `max-w-[160px]` → `max-w-[144px]`
+    - Discount badge: `w-20 h-20` → `w-18 h-18`
+    - Adjusted text sizes and margins throughout the hero section
+    - Reduced various spacing elements (gaps, margins, padding) to maintain proportional relationships
+  - **Result**: More balanced hero section that looks better on different screen sizes
+
+### Enhanced Hero Section with Secondary Image Upload 🖼️
+- **Added Secondary Image Upload Functionality**:
+  - **Issue**: Only primary hero image could be uploaded via admin panel
+  - **Solution**: Added separate upload functionality for secondary hero image
+  - **Implementation Details**:
+    - Added "Upload Secondary Hero Image" button in admin panel
+    - Accepts JPEG, PNG, TIF, and WebP formats
+    - Converts non-WebP images to WebP format with quality 0.8 and max dimensions of 1920x1080
+    - Maintains existing functionality for primary image
+    - Properly updates image URLs in the appropriate array position (secondary image updates index 1)
+    - Includes file size validation (5MB limit) and format validation
+  - **Result**: Admins can now easily upload both primary and secondary hero images through the admin panel
+
+---
+
 ## License
 
 Private project - All rights reserved.
