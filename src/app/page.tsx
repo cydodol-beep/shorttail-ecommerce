@@ -19,6 +19,7 @@ import type { ExtendedProduct } from '@/hooks/use-product-data';
 // Import the section components from the components directory
 import { CategorySection } from '@/components/home/category-section';
 import HeroSection from '@/components/home/hero-section';
+import { FlashSales } from '@/components/home/flash-sales';
 
 
 
@@ -392,7 +393,7 @@ export default function HomePage() {
             </section>
           )}
 
-          {isSectionVisible('flash_sale') && <FlashSale />}
+          {isSectionVisible('flash_sale') && <FlashSales />}
 
           {/* New Arrivals Section */}
           {isSectionVisible('new_arrivals') && (
