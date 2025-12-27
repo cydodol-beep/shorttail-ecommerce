@@ -219,9 +219,18 @@ export const TreatCatcher: React.FC = () => {
 
   const handleMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     if (!containerRef.current || !isPlaying) return;
+    // Prevent scrolling on mobile when dragging
+    if ('touches' in e) {
+      e.preventDefault();
+    }
     const rect = containerRef.current.getBoundingClientRect();
     let clientX: number;
-    if ('touches' in e) { if (e.touches.length > 0) clientX = e.touches[0].clientX; else return; } else { clientX = (e as React.MouseEvent).clientX; }
+    if ('touches' in e) {
+      if (e.touches.length > 0) clientX = e.touches[0].clientX;
+      else return;
+    } else {
+      clientX = (e as React.MouseEvent).clientX;
+    }
     let newX = ((clientX - rect.left) / rect.width) * 100;
     newX = Math.max(DOG_SIZE / 2, Math.min(100 - DOG_SIZE / 2, newX));
     dogX.set(newX);
@@ -319,42 +328,49 @@ export const TreatCatcher: React.FC = () => {
 
     setItems(prevItems => {
       const nextItems: GameItem[] = [];
-      const currentDogX = smoothDogX.get(); 
+      const currentDogX = smoothDogX.get();
+      const dogHalfWidth = DOG_SIZE / 2;
+
       prevItems.forEach(item => {
-        const nextY = item.y + (1.5 * currentConfig.speedMultiplier); 
-        const hitDog = nextY > 80 && nextY < 95 && Math.abs(item.x - currentDogX) < (DOG_SIZE / 1.5);
+        const nextY = item.y + (1.5 * currentConfig.speedMultiplier);
+
+        // More accurate collision detection for mobile devices
+        // Expand collision area slightly to make it easier to collect items
+        const itemCollisionWidth = DOG_SIZE * 1.2; // Increased for mobile touch accuracy (12 * 1.2 = 14.4% of screen width)
+        const hitDog = nextY > 78 && nextY < 97 && Math.abs(item.x - currentDogX) < itemCollisionWidth; // Slightly expanded Y range too
+
         if (hitDog) {
           if (['bone', 'toy', 'golden_bone'].includes(item.type)) {
             sessionStatsRef.current.caught += 1; updateQuestProgress('catch_items', 1); poopComboRef.current = 0;
             let points = 0;
             let color = '';
-            
-            if (item.type === 'golden_bone') { 
-                points = 50; color = 'text-orange font-extrabold'; playSound('bonus'); 
-            } else if (item.type === 'bone') { 
-                points = 10; color = 'text-teal-600 font-bold'; playSound('catch'); 
-            } else { 
-                points = 25; color = 'text-blue-500 font-bold'; playSound('catch'); 
+
+            if (item.type === 'golden_bone') {
+                points = 50; color = 'text-orange font-extrabold'; playSound('bonus');
+            } else if (item.type === 'bone') {
+                points = 10; color = 'text-teal-600 font-bold'; playSound('catch');
+            } else {
+                points = 25; color = 'text-blue-500 font-bold'; playSound('catch');
             }
-            
+
             setScore(s => s + points);
             const ftId = Date.now() + Math.random();
             setFloatingTexts(prev => [...prev, { id: ftId, text: `+${points}`, color }]);
             setTimeout(() => setFloatingTexts(prev => prev.filter(ft => ft.id !== ftId)), 800);
-            
+
             triggerDogReaction('catching');
           } else {
             sessionStatsRef.current.poopHit += 1; poopComboRef.current += 1;
             const penalty = poopComboRef.current >= 3 ? 15 : 10;
-            setScore(s => Math.max(0, s - penalty)); 
-            
+            setScore(s => Math.max(0, s - penalty));
+
             const ftId = Date.now() + Math.random();
             setFloatingTexts(prev => [...prev, { id: ftId, text: `-${penalty}`, color: 'text-red-500 font-bold' }]);
             setTimeout(() => setFloatingTexts(prev => prev.filter(ft => ft.id !== ftId)), 800);
 
             triggerDogReaction('hit'); playSound('hit');
           }
-          return; 
+          return;
         }
         if (level >= 5 && item.y < 95 && nextY >= 95 && ['bone', 'toy', 'golden_bone'].includes(item.type)) {
              setScore(s => Math.max(0, s - 2)); playSound('miss');
@@ -485,8 +501,10 @@ export const TreatCatcher: React.FC = () => {
         </div>
       </div>
 
-      <div ref={containerRef} className="flex-1 rounded-2xl relative overflow-hidden cursor-crosshair border-2 border-teal-100 group touch-none"
-        onMouseMove={handleMove} onTouchMove={handleMove} onTouchStart={handleMove}>
+        <div ref={containerRef} className="flex-1 rounded-2xl relative overflow-hidden cursor-crosshair border-2 border-teal-100 group touch-pan-x"
+        onMouseMove={handleMove}
+        onTouchMove={handleMove}
+        onTouchStart={handleMove}>
         
         {/* === SCENERY BACKGROUND === */}
         <div className={`absolute inset-0 z-0 transition-colors duration-[2000ms] ease-in-out ${bgStyle.sky}`}></div>
