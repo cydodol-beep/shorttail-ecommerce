@@ -459,11 +459,16 @@ export default function CheckoutPage() {
       const allPromotions = promotionsStore.promotions;
 
       // Filter to get only active promotions that can be applied to this cart
+      // Exclude POS-only promotions from online checkout
       const applicablePromotions = allPromotions.filter(promo => {
         if (!promo.is_active) return false;
         if (promo.start_date && new Date(promo.start_date) > new Date()) return false;
         if (promo.end_date && new Date(promo.end_date) < new Date()) return false;
         if (promo.min_purchase_amount && subtotal < promo.min_purchase_amount) return false;
+
+        // When available_for_pos is false, exclude from online checkout
+        // When available_for_pos is true, include in online checkout (as well as POS)
+        if (promo.available_for_pos === false) return false;
 
         // Check if promotion applies to cart items
         if (promo.applies_to === 'specific_products') {
