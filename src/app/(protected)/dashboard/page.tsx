@@ -383,44 +383,49 @@ export default function DashboardPage() {
                   {orders.map((order) => (
                     <div
                       key={order.id}
-                      className="p-4 bg-brown-50 rounded-lg"
+                      className="p-4 bg-brown-50 rounded-lg border border-brown-100"
                     >
                       {/* Order Info - Stack on mobile, flex row on larger screens */}
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div className="flex-1 min-w-0">
-                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
                             <p className="font-medium text-brown-900 truncate">
                               Order #{order.id.slice(0, 8)}
                             </p>
-                            <Badge variant="outline" className="capitalize text-xs px-2 py-0 h-6 flex-shrink-0">
+                            <Badge variant="outline" className="capitalize text-xs px-2.5 py-0.5 h-6 flex-shrink-0">
                               {order.status}
                             </Badge>
                           </div>
-                          <p className="text-sm text-brown-600">
-                            {new Date(order.created_at).toLocaleDateString('id-ID', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                            })}{' '}
-                            {new Date(order.created_at).toLocaleTimeString('id-ID', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </p>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-brown-600">
+                            <span>
+                              {new Date(order.created_at).toLocaleDateString('id-ID', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                              })}
+                            </span>
+                            <span className="hidden sm:block">•</span>
+                            <span>
+                              {new Date(order.created_at).toLocaleTimeString('id-ID', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </div>
                         </div>
 
                         {/* Price and Actions - Stack on mobile, stay inline on larger screens */}
-                        <div className="flex sm:block sm:text-right">
-                          <div className="font-bold text-primary mb-2 sm:mb-0 sm:mr-4">
+                        <div className="w-full sm:w-auto sm:text-right">
+                          <div className="font-bold text-primary text-lg mb-3 sm:mb-2 sm:mr-0 sm:text-right">
                             {formatPrice(order.total_amount)}
                           </div>
 
                           {/* Action buttons - Stack vertically on mobile */}
-                          <div className="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
+                          <div className="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0 sm:items-center">
                             <Button
                               variant="outline"
                               size="sm"
-                              className="h-8 text-xs w-full sm:w-auto"
+                              className="h-9 text-sm flex-1 sm:flex-none w-full sm:w-auto"
                               onClick={async () => {
                                 // Generate invoice preview
                                 try {
@@ -574,7 +579,7 @@ export default function DashboardPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-8 text-xs w-full sm:w-auto"
+                                className="h-9 text-sm w-full sm:w-auto"
                               >
                                 View Details
                               </Button>
