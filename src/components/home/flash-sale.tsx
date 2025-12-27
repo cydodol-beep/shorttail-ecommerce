@@ -154,6 +154,8 @@ export function FlashSale() {
         .order('created_at', { ascending: false })
         .limit(6);
 
+      console.log('Supabase query object:', query);
+
       // If there are specific products with promotions, query only those
       if (specificProductIds.length > 0) {
         query = query.in('id', specificProductIds);
@@ -169,12 +171,20 @@ export function FlashSale() {
 
       if (error) {
         console.error('Error fetching flash sale products:', error);
+        console.error('Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
         setProducts([]);
         setLoading(false);
         return;
       }
 
       console.log('Fetched products for flash sale:', data?.length || 0);
+      if (data) {
+        console.log('Sample product data:', data[0]); // Log first product to see field names
+      }
 
       // Apply discounts from promotions
       const productsWithDiscounts: FlashSaleProduct[] = [];
@@ -210,9 +220,19 @@ export function FlashSale() {
           continue;
         }
 
+        // Handle different possible price field names for flexibility
+        let originalPrice = product.base_price || product.price || product.regular_price;
+        if (typeof originalPrice === 'string') {
+          originalPrice = parseFloat(originalPrice);
+        }
+
+        if (!originalPrice && originalPrice !== 0) {
+          console.warn(`Product ${product.id} has no valid price, skipping promotion application`);
+          continue;
+        }
+
         let discountPercentage = 0;
-        let originalPrice = product.base_price;
-        let discountedPrice = product.base_price;
+        let discountedPrice = originalPrice;
 
         // Calculate based on promotion type
         if (promoDetails.discount_type === 'percentage') {
