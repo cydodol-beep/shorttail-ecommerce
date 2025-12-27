@@ -383,197 +383,204 @@ export default function DashboardPage() {
                   {orders.map((order) => (
                     <div
                       key={order.id}
-                      className="flex items-center justify-between p-4 bg-brown-50 rounded-lg"
+                      className="p-4 bg-brown-50 rounded-lg"
                     >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-medium text-brown-900">
-                            Order #{order.id.slice(0, 8)}
+                      {/* Order Info - Stack on mobile, flex row on larger screens */}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <p className="font-medium text-brown-900 truncate">
+                              Order #{order.id.slice(0, 8)}
+                            </p>
+                            <Badge variant="outline" className="capitalize text-xs px-2 py-0 h-6 flex-shrink-0">
+                              {order.status}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-brown-600">
+                            {new Date(order.created_at).toLocaleDateString('id-ID', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                            })}{' '}
+                            {new Date(order.created_at).toLocaleTimeString('id-ID', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
                           </p>
-                          <Badge variant="outline" className="capitalize text-xs px-2 py-0 h-6">
-                            {order.status}
-                          </Badge>
                         </div>
-                        <p className="text-sm text-brown-600">
-                          {new Date(order.created_at).toLocaleDateString('id-ID', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                          })}{' '}
-                          {new Date(order.created_at).toLocaleTimeString('id-ID', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-right mr-4">
-                          <p className="font-bold text-primary">
+
+                        {/* Price and Actions - Stack on mobile, stay inline on larger screens */}
+                        <div className="flex sm:block sm:text-right">
+                          <div className="font-bold text-primary mb-2 sm:mb-0 sm:mr-4">
                             {formatPrice(order.total_amount)}
-                          </p>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 text-xs"
-                          onClick={async () => {
-                            // Generate invoice preview
-                            try {
-                              const supabase = createClient();
+                          </div>
 
-                              // Fetch the order with items to generate invoice
-                              // First get the order
-                              const { data: orderData, error: orderError } = await supabase
-                                .from('orders')
-                                .select('id, user_id, cashier_id, source, status, subtotal, shipping_fee, discount_amount, total_amount, recipient_name, recipient_phone, recipient_address, recipient_province, shipping_courier, shipping_courier_name, shipping_address_snapshot, customer_notes, created_at, updated_at')
-                                .eq('id', order.id)
-                                .single();
-
-                              if (orderError) throw orderError;
-
-                              // Then get the order items
-                              const { data: itemsData, error: itemsError } = await supabase
-                                .from('order_items')
-                                .select('product_id, variant_id, quantity, price_at_purchase')
-                                .eq('order_id', order.id);
-
-                              if (itemsError) throw itemsError;
-
-                              // For each item, get product and variant details
-                              let itemsWithDetails = [];
-                              if (itemsData && itemsData.length > 0) {
-                                for (const item of itemsData) {
-                                  // Get product details
-                                  const { data: productData, error: productError } = await supabase
-                                    .from('products')
-                                    .select('name, sku')
-                                    .eq('id', item.product_id)
-                                    .single();
-
-                                  let productDetails = {
-                                    name: 'Unknown Product',
-                                    sku: undefined
-                                  };
-
-                                  if (!productError && productData) {
-                                    productDetails = {
-                                      name: productData.name,
-                                      sku: productData.sku
-                                    };
-                                  }
-
-                                  // Get variant details if exists
-                                  let variantDetails = {
-                                    name: null,
-                                    sku: null
-                                  };
-
-                                  if (item.variant_id) {
-                                    const { data: variantData, error: variantError } = await supabase
-                                      .from('product_variants')
-                                      .select('variant_name, sku')
-                                      .eq('id', item.variant_id)
-                                      .single();
-
-                                    if (!variantError && variantData) {
-                                      variantDetails = {
-                                        name: variantData.variant_name,
-                                        sku: variantData.sku
-                                      };
-                                    }
-                                  }
-
-                                  itemsWithDetails.push({
-                                    product_id: item.product_id,
-                                    product_name: productDetails.name,
-                                    product_sku: productDetails.sku,
-                                    variant_id: item.variant_id,
-                                    variant_name: variantDetails.name || undefined,
-                                    variant_sku: variantDetails.sku || undefined,
-                                    quantity: item.quantity,
-                                    price_at_purchase: item.price_at_purchase,
-                                  });
-                                }
-                              }
-
-                              // Get user profile to get the user name
-                              let userName = '';
-                              if (orderData.user_id) {
-                                const { data: profileData, error: profileError } = await supabase
-                                  .from('profiles')
-                                  .select('user_name')
-                                  .eq('id', orderData.user_id)
-                                  .single();
-
-                                if (!profileError && profileData) {
-                                  userName = profileData.user_name || '';
-                                }
-                              }
-
-                              // Get store settings for invoice generation
-                              const { allSettings } = useStoreSettingsStore.getState();
-                              const storeSettings = {
-                                store_name: allSettings?.store?.storeName || 'ShortTail.id',
-                                store_logo: allSettings?.store?.storeLogo || '',
-                                store_address: allSettings?.store?.storeAddress || '',
-                                store_phone: allSettings?.store?.storePhone || '',
-                                store_email: allSettings?.store?.storeEmail || '',
-                              };
-
-                              // Format the order data to match the expected structure for the invoice generator
-                              const orderForInvoice = {
-                                id: orderData.id,
-                                user_id: orderData.user_id || undefined,
-                                cashier_id: orderData.cashier_id || undefined,
-                                user_name: userName,
-                                source: orderData.source,
-                                status: orderData.status,
-                                subtotal: orderData.subtotal,
-                                shipping_fee: orderData.shipping_fee,
-                                discount_amount: orderData.discount_amount,
-                                total_amount: orderData.total_amount,
-                                recipient_name: orderData.recipient_name || (orderData.shipping_address_snapshot as any)?.recipient_name || undefined,
-                                recipient_phone: orderData.recipient_phone || (orderData.shipping_address_snapshot as any)?.phone || undefined,
-                                recipient_address: orderData.recipient_address || (orderData.shipping_address_snapshot as any)?.address_line1 || undefined,
-                                recipient_province: orderData.recipient_province || (orderData.shipping_address_snapshot as any)?.province || undefined,
-                                shipping_courier: orderData.shipping_courier || orderData.shipping_courier_name || undefined,
-                                shipping_courier_name: orderData.shipping_courier_name || undefined,
-                                shipping_address_snapshot: orderData.shipping_address_snapshot,
-                                customer_notes: orderData.customer_notes || undefined,
-                                items_count: itemsWithDetails.length,
-                                items: itemsWithDetails,
-                                created_at: orderData.created_at,
-                                updated_at: orderData.updated_at,
-                              };
-
-                              // Generate the invoice
-                              const invoiceBlob = await generateInvoiceJPEG(orderForInvoice, storeSettings);
-
-                              // Create a temporary URL for the preview
-                              const url = URL.createObjectURL(invoiceBlob);
-
-                              // Open the invoice in a new tab
-                              window.open(url, '_blank');
-
-                              // Clean up the object URL after a delay
-                              setTimeout(() => URL.revokeObjectURL(url), 10000);
-                            } catch (error) {
-                              console.error('Error generating invoice:', error);
-                              alert('Error generating invoice. Please try again.');
-                            }
-                          }}
-                        >
-                          Invoice
-                        </Button>
-                        <Link href={`/dashboard/orders/${order.id}`}>
+                          {/* Action buttons - Stack vertically on mobile */}
+                          <div className="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
                             <Button
                               variant="outline"
                               size="sm"
-                              className="h-8 text-xs"
+                              className="h-8 text-xs w-full sm:w-auto"
+                              onClick={async () => {
+                                // Generate invoice preview
+                                try {
+                                  const supabase = createClient();
+
+                                  // Fetch the order with items to generate invoice
+                                  // First get the order
+                                  const { data: orderData, error: orderError } = await supabase
+                                    .from('orders')
+                                    .select('id, user_id, cashier_id, source, status, subtotal, shipping_fee, discount_amount, total_amount, recipient_name, recipient_phone, recipient_address, recipient_province, shipping_courier, shipping_courier_name, shipping_address_snapshot, customer_notes, created_at, updated_at')
+                                    .eq('id', order.id)
+                                    .single();
+
+                                  if (orderError) throw orderError;
+
+                                  // Then get the order items
+                                  const { data: itemsData, error: itemsError } = await supabase
+                                    .from('order_items')
+                                    .select('product_id, variant_id, quantity, price_at_purchase')
+                                    .eq('order_id', order.id);
+
+                                  if (itemsError) throw itemsError;
+
+                                  // For each item, get product and variant details
+                                  let itemsWithDetails = [];
+                                  if (itemsData && itemsData.length > 0) {
+                                    for (const item of itemsData) {
+                                      // Get product details
+                                      const { data: productData, error: productError } = await supabase
+                                        .from('products')
+                                        .select('name, sku')
+                                        .eq('id', item.product_id)
+                                        .single();
+
+                                      let productDetails = {
+                                        name: 'Unknown Product',
+                                        sku: undefined
+                                      };
+
+                                      if (!productError && productData) {
+                                        productDetails = {
+                                          name: productData.name,
+                                          sku: productData.sku
+                                        };
+                                      }
+
+                                      // Get variant details if exists
+                                      let variantDetails = {
+                                        name: null,
+                                        sku: null
+                                      };
+
+                                      if (item.variant_id) {
+                                        const { data: variantData, error: variantError } = await supabase
+                                          .from('product_variants')
+                                          .select('variant_name, sku')
+                                          .eq('id', item.variant_id)
+                                          .single();
+
+                                        if (!variantError && variantData) {
+                                          variantDetails = {
+                                            name: variantData.variant_name,
+                                            sku: variantData.sku
+                                          };
+                                        }
+                                      }
+
+                                      itemsWithDetails.push({
+                                        product_id: item.product_id,
+                                        product_name: productDetails.name,
+                                        product_sku: productDetails.sku,
+                                        variant_id: item.variant_id,
+                                        variant_name: variantDetails.name || undefined,
+                                        variant_sku: variantDetails.sku || undefined,
+                                        quantity: item.quantity,
+                                        price_at_purchase: item.price_at_purchase,
+                                      });
+                                    }
+                                  }
+
+                                  // Get user profile to get the user name
+                                  let userName = '';
+                                  if (orderData.user_id) {
+                                    const { data: profileData, error: profileError } = await supabase
+                                      .from('profiles')
+                                      .select('user_name')
+                                      .eq('id', orderData.user_id)
+                                      .single();
+
+                                    if (!profileError && profileData) {
+                                      userName = profileData.user_name || '';
+                                    }
+                                  }
+
+                                  // Get store settings for invoice generation
+                                  const { allSettings } = useStoreSettingsStore.getState();
+                                  const storeSettings = {
+                                    store_name: allSettings?.store?.storeName || 'ShortTail.id',
+                                    store_logo: allSettings?.store?.storeLogo || '',
+                                    store_address: allSettings?.store?.storeAddress || '',
+                                    store_phone: allSettings?.store?.storePhone || '',
+                                    store_email: allSettings?.store?.storeEmail || '',
+                                  };
+
+                                  // Format the order data to match the expected structure for the invoice generator
+                                  const orderForInvoice = {
+                                    id: orderData.id,
+                                    user_id: orderData.user_id || undefined,
+                                    cashier_id: orderData.cashier_id || undefined,
+                                    user_name: userName,
+                                    source: orderData.source,
+                                    status: orderData.status,
+                                    subtotal: orderData.subtotal,
+                                    shipping_fee: orderData.shipping_fee,
+                                    discount_amount: orderData.discount_amount,
+                                    total_amount: orderData.total_amount,
+                                    recipient_name: orderData.recipient_name || (orderData.shipping_address_snapshot as any)?.recipient_name || undefined,
+                                    recipient_phone: orderData.recipient_phone || (orderData.shipping_address_snapshot as any)?.phone || undefined,
+                                    recipient_address: orderData.recipient_address || (orderData.shipping_address_snapshot as any)?.address_line1 || undefined,
+                                    recipient_province: orderData.recipient_province || (orderData.shipping_address_snapshot as any)?.province || undefined,
+                                    shipping_courier: orderData.shipping_courier || orderData.shipping_courier_name || undefined,
+                                    shipping_courier_name: orderData.shipping_courier_name || undefined,
+                                    shipping_address_snapshot: orderData.shipping_address_snapshot,
+                                    customer_notes: orderData.customer_notes || undefined,
+                                    items_count: itemsWithDetails.length,
+                                    items: itemsWithDetails,
+                                    created_at: orderData.created_at,
+                                    updated_at: orderData.updated_at,
+                                  };
+
+                                  // Generate the invoice
+                                  const invoiceBlob = await generateInvoiceJPEG(orderForInvoice, storeSettings);
+
+                                  // Create a temporary URL for the preview
+                                  const url = URL.createObjectURL(invoiceBlob);
+
+                                  // Open the invoice in a new tab
+                                  window.open(url, '_blank');
+
+                                  // Clean up the object URL after a delay
+                                  setTimeout(() => URL.revokeObjectURL(url), 10000);
+                                } catch (error) {
+                                  console.error('Error generating invoice:', error);
+                                  alert('Error generating invoice. Please try again.');
+                                }
+                              }}
                             >
-                              View Details
+                              Invoice
                             </Button>
-                          </Link>
+                            <Link href={`/dashboard/orders/${order.id}`}>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 text-xs w-full sm:w-auto"
+                              >
+                                View Details
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))}
