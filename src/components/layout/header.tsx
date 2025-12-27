@@ -7,13 +7,13 @@ import { ShoppingCart, Search, Menu, X, Heart, ArrowRight, User, Percent, Tag, C
 import { motion } from 'framer-motion';
 
 import { Button } from '@/components/ui/button';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useCartItemCount } from '@/store/cart-store';
@@ -161,11 +161,11 @@ export function Header() {
         </div>
       </div>
 
-      {/* Full-width News Ticker */}
-      <div className="sticky top-0 z-40 w-full">
+      {/* Full-width News Ticker - Sticky at top and always visible */}
+      <div className="sticky top-0 z-50 w-full">
         <div className="w-full" style={{ backgroundColor: '#006d77', color: '#fdf6ec' }}>
           {/* News Ticker with Active Promotions - Full width */}
-          <div className="text-xs py-1.5 font-medium tracking-wide relative z-40 overflow-hidden">
+          <div className="text-xs py-1.5 font-medium tracking-wide relative z-50 overflow-hidden">
             <div className="whitespace-nowrap hover:[animation-play-state:paused] w-max marquee-slow">
               {promotions.length > 0 ? (
                 <span className="flex items-center gap-2">
@@ -227,7 +227,7 @@ export function Header() {
       </div>
 
       {/* Main Header Content - constrained to max-w-7xl */}
-      <div className="sticky top-0 z-40 px-4 flex justify-center w-full">
+      <div className="sticky top-[28px] z-40 px-4 flex justify-center w-full"> {/* Positioned below the news ticker */}
         <div className="w-full max-w-7xl">
           <header
             className={`w-full pointer-events-auto rounded-full border -mt-0.5 ${
@@ -322,8 +322,8 @@ export function Header() {
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="flex items-center gap-2 px-2">
                               <Avatar className="h-8 w-8">
-                                <AvatarImage 
-                                  src={profile?.user_avatar_url && getAvatarDataInfo(profile.user_avatar_url).isValid ? profile.user_avatar_url : undefined} 
+                                <AvatarImage
+                                  src={profile?.user_avatar_url && getAvatarDataInfo(profile.user_avatar_url).isValid ? profile.user_avatar_url : undefined}
                                   onError={(e) => {
                                     console.error('Header avatar image failed to load:', profile?.user_avatar_url);
                                   }}
@@ -356,7 +356,7 @@ export function Header() {
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               onClick={async () => {
                                 try {
                                   await signOut();
@@ -431,10 +431,10 @@ export function Header() {
                           Dashboard
                         </Button>
                       </Link>
-                      <Button 
-                        variant="default" 
-                        size="sm" 
-                        className="flex-1 justify-center" 
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="flex-1 justify-center"
                         tabIndex={isMobileMenuOpen ? 0 : -1}
                         onClick={async (e) => {
                           e.preventDefault();
