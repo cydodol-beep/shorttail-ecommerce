@@ -219,7 +219,9 @@ export function FlashSale() {
       } else if (promoDetails.discount_type === 'buy_x_get_y') {
         // For buy_x_get_y, we'll calculate a simple average discount percentage
         // For example: Buy 2 Get 1 Free is effectively 33% off
-        discountPercentage = Math.round((promoDetails.get_quantity / (promoDetails.buy_quantity + promoDetails.get_quantity)) * 100);
+        const buyQty = promoDetails.buy_quantity || 1;
+        const getQty = promoDetails.get_quantity || 1;
+        discountPercentage = Math.round((getQty / (buyQty + getQty)) * 100);
         discountedPrice = Math.round(originalPrice * (1 - discountPercentage / 100));
       }
 
