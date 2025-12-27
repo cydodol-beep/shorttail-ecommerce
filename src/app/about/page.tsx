@@ -119,7 +119,7 @@ export default function AboutPage() {
         // Continue even if sections fail to load
       } else if (sectionsData) {
         const sectionsMap: Record<string, AboutSection> = {};
-        sectionsData.forEach(section => {
+        sectionsData.forEach((section: any) => {
           sectionsMap[section.section_key] = section;
         });
         setSections(sectionsMap);

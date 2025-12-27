@@ -1,14 +1,15 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { ReactNode, HTMLAttributes } from 'react';
+import { ReactNode } from 'react';
+import type { HTMLMotionProps } from 'framer-motion';
 
 // Fade In Animation Component
-export const FadeIn = ({ children, delay = 0, duration = 0.6, ...props }: { 
-  children: ReactNode; 
-  delay?: number; 
-  duration?: number; 
-} & HTMLAttributes<HTMLDivElement>) => (
+export const FadeIn = ({ children, delay = 0, duration = 0.6, ...props }: {
+  children: ReactNode;
+  delay?: number;
+  duration?: number;
+} & HTMLMotionProps<'div'>) => (
   <motion.div
     initial={{ opacity: 0 }}
     whileInView={{ opacity: 1 }}
@@ -21,9 +22,9 @@ export const FadeIn = ({ children, delay = 0, duration = 0.6, ...props }: {
 );
 
 // Stagger Container for Animations
-export const StaggerContainer = ({ children, ...props }: { 
-  children: ReactNode; 
-} & HTMLAttributes<HTMLDivElement>) => (
+export const StaggerContainer = ({ children, ...props }: {
+  children: ReactNode;
+} & HTMLMotionProps<'div'>) => (
   <motion.div
     initial="hidden"
     whileInView="visible"
@@ -39,17 +40,17 @@ export const StaggerContainer = ({ children, ...props }: {
 );
 
 // Slide In Animation Component
-export const SlideIn = ({ 
-  children, 
-  direction = 'up', 
-  delay = 0, 
-  duration = 0.6 
-}: { 
-  children: ReactNode; 
+export const SlideIn = ({
+  children,
+  direction = 'up',
+  delay = 0,
+  duration = 0.6
+}: {
+  children: ReactNode;
   direction?: 'up' | 'down' | 'left' | 'right';
-  delay?: number; 
-  duration?: number; 
-}) => {
+  delay?: number;
+  duration?: number;
+} & HTMLMotionProps<'div'>) => {
   const directions = {
     up: { y: 20 },
     down: { y: -20 },
@@ -59,10 +60,11 @@ export const SlideIn = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, ...directions[direction] }}
+      initial={{ opacity: 0, ...directions[direction as keyof typeof directions] }}
       whileInView={{ opacity: 1, x: 0, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay, duration }}
+      {...(delay && duration && { transition: { delay, duration } })}
     >
       {children}
     </motion.div>
@@ -70,9 +72,9 @@ export const SlideIn = ({
 };
 
 // Stagger Item Component
-export const StaggerItem = ({ children, ...props }: { 
-  children: ReactNode; 
-} & HTMLAttributes<HTMLDivElement>) => (
+export const StaggerItem = ({ children, ...props }: {
+  children: ReactNode;
+} & HTMLMotionProps<'div'>) => (
   <motion.div
     variants={{
       hidden: { opacity: 0, y: 20 },
@@ -85,9 +87,9 @@ export const StaggerItem = ({ children, ...props }: {
 );
 
 // Reveal Animation Component
-export const Reveal = ({ children, ...props }: { 
-  children: ReactNode; 
-} & HTMLAttributes<HTMLDivElement>) => (
+export const Reveal = ({ children, ...props }: {
+  children: ReactNode;
+} & HTMLMotionProps<'div'>) => (
   <div className="relative overflow-hidden">
     <motion.div
       initial={{ y: "100%" }}
@@ -102,10 +104,10 @@ export const Reveal = ({ children, ...props }: {
 );
 
 // Scale In Animation Component
-export const ScaleIn = ({ children, delay = 0, ...props }: { 
-  children: ReactNode; 
-  delay?: number; 
-} & HTMLAttributes<HTMLDivElement>) => (
+export const ScaleIn = ({ children, delay = 0, ...props }: {
+  children: ReactNode;
+  delay?: number;
+} & HTMLMotionProps<'div'>) => (
   <motion.div
     initial={{ scale: 0.8, opacity: 0 }}
     whileInView={{ scale: 1, opacity: 1 }}
@@ -118,18 +120,18 @@ export const ScaleIn = ({ children, delay = 0, ...props }: {
 );
 
 // Blur In Animation Component
-export const BlurIn = ({ children, delay = 0, ...props }: { 
-  children: ReactNode; 
-  delay?: number; 
-} & HTMLAttributes<HTMLDivElement>) => (
+export const BlurIn = ({ children, delay = 0, ...props }: {
+  children: ReactNode;
+  delay?: number;
+} & HTMLMotionProps<'div'>) => (
   <motion.div
-    initial={{ 
-      opacity: 0, 
+    initial={{
+      opacity: 0,
       filter: "blur(4px)",
       transform: "scale(0.95)"
     }}
-    whileInView={{ 
-      opacity: 1, 
+    whileInView={{
+      opacity: 1,
       filter: "blur(0px)",
       transform: "scale(1)"
     }}
@@ -142,15 +144,15 @@ export const BlurIn = ({ children, delay = 0, ...props }: {
 );
 
 // Floating Animation Component
-export const Float = ({ children, duration = 3, ...props }: { 
-  children: ReactNode; 
-  duration?: number; 
-} & HTMLAttributes<HTMLDivElement>) => (
+export const Float = ({ children, duration = 3, ...props }: {
+  children: ReactNode;
+  duration?: number;
+} & HTMLMotionProps<'div'>) => (
   <motion.div
-    animate={{ 
+    animate={{
       y: [0, -10, 0],
     }}
-    transition={{ 
+    transition={{
       duration,
       repeat: Infinity,
       ease: "easeInOut"
@@ -162,9 +164,9 @@ export const Float = ({ children, duration = 3, ...props }: {
 );
 
 // Pull Apart Animation Component
-export const PullApart = ({ children, ...props }: { 
-  children: ReactNode; 
-} & HTMLAttributes<HTMLDivElement>) => (
+export const PullApart = ({ children, ...props }: {
+  children: ReactNode;
+} & HTMLMotionProps<'div'>) => (
   <motion.div
     initial={{ opacity: 0, scale: 0.8, x: 0 }}
     whileInView={{ opacity: 1, scale: 1, x: 0 }}
