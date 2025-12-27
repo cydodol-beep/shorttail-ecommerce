@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCartStore } from '@/store/cart-store';
 import { createClient } from '@/lib/supabase/client';
 import { useLandingSections } from '@/hooks/use-landing-sections';
+import type { Product } from '@/types/database';
 
 interface Promotion {
   id: string;
@@ -29,18 +30,6 @@ interface Promotion {
   max_uses_per_user?: number;
   total_uses?: number;
   available_for_pos?: boolean;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  description?: string;
-  base_price: number;
-  main_image_url?: string;
-  is_active: boolean;
-  stock_quantity: number;
-  created_at: string;
-  updated_at: string;
 }
 
 interface FlashSaleProduct extends Product {
@@ -284,14 +273,10 @@ export function FlashSales({ className = '' }: { className?: string }) {
     return () => clearInterval(timer);
   }, []);
 
+  // Add to cart handler - uses the cart store's addItem interface
   const handleAddToCart = (product: FlashSaleProduct) => {
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: product.sale_price || product.base_price,
-      image: product.main_image_url,
-      quantity: 1,
-    });
+    const { addItem } = useCartStore();
+    addItem(product, undefined, 1); // Pass the full product object, no variant, quantity of 1
   };
 
   if (loading) {
@@ -479,8 +464,8 @@ export function FlashSales({ className = '' }: { className?: string }) {
                   )}
                 </div>
 
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   className="w-full"
                   onClick={() => handleAddToCart(product)}
                 >
