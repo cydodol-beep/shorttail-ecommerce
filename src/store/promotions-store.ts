@@ -205,6 +205,9 @@ export const usePromotionsStore = create<PromotionsStore>((set, get) => ({
         promotions: [promotion, ...state.promotions],
       }));
 
+      // Invalidate cache to ensure freshness on next fetch
+      get().invalidate();
+
       return promotion;
     } catch (err) {
       console.error('Exception creating promotion:', err);
@@ -302,6 +305,9 @@ export const usePromotionsStore = create<PromotionsStore>((set, get) => ({
         ),
       }));
 
+      // Invalidate cache to ensure freshness on next fetch
+      get().invalidate();
+
       return true;
     } catch (err) {
       console.error('Exception updating promotion:', err);
@@ -327,6 +333,9 @@ export const usePromotionsStore = create<PromotionsStore>((set, get) => ({
       set((state) => ({
         promotions: state.promotions.filter((promo) => promo.id !== id),
       }));
+
+      // Invalidate cache to ensure freshness on next fetch
+      get().invalidate();
 
       return true;
     } catch (err) {
