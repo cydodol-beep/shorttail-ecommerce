@@ -35,7 +35,6 @@ export function Header() {
   const { user, profile, loading, signOut } = useAuth();
   const itemCount = useCartItemCount();
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const desktopInputRef = useRef<HTMLInputElement>(null);
@@ -86,24 +85,12 @@ export function Header() {
       router.push(`/products?search=${encodeURIComponent(searchQuery)}`);
     }
     setIsSearchOpen(false);
-    setIsMobileMenuOpen(false);
     searchTriggerRef.current?.focus();
   };
 
   const toggleSearch = () => {
     const newState = !isSearchOpen;
     setIsSearchOpen(newState);
-    if (newState) {
-      setIsMobileMenuOpen(false);
-    }
-  };
-
-  const toggleMobileMenu = () => {
-    const newState = !isMobileMenuOpen;
-    setIsMobileMenuOpen(newState);
-    if (newState) {
-      setIsSearchOpen(false);
-    }
   };
 
   return (
@@ -385,86 +372,12 @@ export function Header() {
                     </>
                   )}
 
-                  {/* Mobile Menu Button */}
-                  <button
-                    className={`md:hidden p-2 text-teal hover:bg-teal/5 rounded-full focus:outline-none focus:ring-2 focus:ring-teal ${isSearchOpen ? 'hidden' : 'block'}`}
-                    onClick={toggleMobileMenu}
-                    aria-expanded={isMobileMenuOpen}
-                    aria-controls="mobile-menu"
-                    aria-label={isMobileMenuOpen ? "Close menu" : "Open mobile menu"}
-                  >
-                    {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                  </button>
+                  {/* Mobile Menu Button - HIDDEN */}
                 </div>
               </div>
             </div>
 
-            {/* Mobile Menu Dropdown */}
-            <div
-              id="mobile-menu"
-              className={`
-                absolute top-full left-0 right-0 mt-2 mx-2
-                bg-white/95 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50
-                overflow-hidden transition-all duration-300 origin-top
-                ${isMobileMenuOpen ? 'max-h-96 opacity-100 py-6 visible' : 'max-h-0 opacity-0 py-0 invisible'}
-              `}
-              aria-hidden={!isMobileMenuOpen}
-            >
-              <div className="flex flex-col gap-2 px-6">
-                {NAV_ITEMS.map((item) => (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className="text-teal font-bold text-lg hover:text-accent hover:pl-2 transition-all focus:outline-none focus:text-accent focus:pl-2"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    tabIndex={isMobileMenuOpen ? 0 : -1}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-                <div className="h-px bg-teal/10 my-2"></div>
-                <div className="flex gap-4">
-                  {user ? (
-                    <>
-                      <Link href="/dashboard">
-                        <Button variant="outline" size="sm" className="flex-1 justify-center" tabIndex={isMobileMenuOpen ? 0 : -1}>
-                          Dashboard
-                        </Button>
-                      </Link>
-                      <Button
-                        variant="default"
-                        size="sm"
-                        className="flex-1 justify-center"
-                        tabIndex={isMobileMenuOpen ? 0 : -1}
-                        onClick={async (e) => {
-                          e.preventDefault();
-                          try {
-                            await signOut();
-                          } catch (error) {
-                            console.error('Error during logout:', error);
-                          }
-                        }}
-                      >
-                        Logout
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Link href="/login">
-                        <Button variant="outline" size="sm" className="flex-1 justify-center" tabIndex={isMobileMenuOpen ? 0 : -1}>
-                          Log In
-                        </Button>
-                      </Link>
-                      <Link href="/register">
-                        <Button variant="default" size="sm" className="flex-1 justify-center" tabIndex={isMobileMenuOpen ? 0 : -1}>
-                          Sign Up
-                        </Button>
-                      </Link>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
+            {/* Mobile Menu Dropdown - REMOVED */}
           </header>
         </div>
       </div>
