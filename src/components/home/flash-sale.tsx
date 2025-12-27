@@ -51,209 +51,228 @@ export function FlashSale() {
   });
 
   const fetchFlashSaleProducts = useCallback(async () => {
-    const supabase = createClient();
-    const now = new Date().toISOString();
+    try {
+      const supabase = createClient();
+      const now = new Date().toISOString();
 
-    // Fetch all active promotions that are currently valid
-    const { data: promoData, error: promoError } = await supabase
-      .from('promotions')
-      .select('id, code, product_ids, discount_type, discount_value, applies_to, start_date, end_date, min_purchase_amount, buy_quantity, get_quantity')
-      .eq('is_active', true)
-      .or(`start_date.is.null,start_date.lte.${now}`)
-      .or(`end_date.is.null,end_date.gte.${now}`);
+      // Fetch all active promotions that are currently valid
+      const { data: promoData, error: promoError } = await supabase
+        .from('promotions')
+        .select('id, code, product_ids, discount_type, discount_value, applies_to, start_date, end_date, min_purchase_amount, buy_quantity, get_quantity')
+        .eq('is_active', true)
+        .or(`start_date.is.null,start_date.lte.${now}`)
+        .or(`end_date.is.null,end_date.gte.${now}`);
 
-    if (promoError) {
-      console.error('Error fetching promotions:', promoError);
-      setProducts([]);
-      setLoading(false);
-      return;
-    }
+      if (promoError) {
+        console.error('Error fetching promotions:', promoError);
+        setProducts([]);
+        setLoading(false);
+        return;
+      }
 
-    if (!promoData || promoData.length === 0) {
-      console.log('No active promotions found');
-      setProducts([]);
-      setLoading(false);
-      return;
-    }
+      if (!promoData || promoData.length === 0) {
+        console.log('No active promotions found');
+        setProducts([]);
+        setLoading(false);
+        return;
+      }
 
-    console.log('All active promotions:', promoData);
+      console.log('All active promotions:', promoData);
 
-    // Find the closest expiration date among active promotions
-    let closestExpiration: Date | null = null;
-    for (const promo of promoData) {
-      if (promo.end_date) {
-        const promoEndDate = new Date(promo.end_date);
-        if (!closestExpiration || promoEndDate < closestExpiration) {
-          closestExpiration = promoEndDate;
+      // Find the closest expiration date among active promotions
+      let closestExpiration: Date | null = null;
+      for (const promo of promoData) {
+        if (promo.end_date) {
+          const promoEndDate = new Date(promo.end_date);
+          if (!closestExpiration || promoEndDate < closestExpiration) {
+            closestExpiration = promoEndDate;
+          }
         }
       }
-    }
 
-    console.log('Flash sale promotions:', promoData);
+      console.log('Flash sale promotions:', promoData);
 
-    // Build a map of product_id -> details for specific products
-    const productPromoMap = new Map<string, {
-      discount_value: number;
-      discount_type: string;
-      code: string;
-      buy_quantity?: number;
-      get_quantity?: number;
-    }>();
+      // Build a map of product_id -> details for specific products
+      const productPromoMap = new Map<string, {
+        discount_value: number;
+        discount_type: string;
+        code: string;
+        buy_quantity?: number;
+        get_quantity?: number;
+      }>();
 
-    // Track highest-value "all products" promotion
-    let allProductsPromotion: {
-      discount_value: number;
-      discount_type: string;
-      code: string;
-      buy_quantity?: number;
-      get_quantity?: number;
-    } | null = null;
+      // Track highest-value "all products" promotion
+      let allProductsPromotion: {
+        discount_value: number;
+        discount_type: string;
+        code: string;
+        buy_quantity?: number;
+        get_quantity?: number;
+      } | null = null;
 
-    for (const promo of promoData) {
-      if (promo.applies_to === 'all_products') {
-        // Use the promotion with the highest discount value for all products
-        if (!allProductsPromotion || promo.discount_value > allProductsPromotion.discount_value) {
-          allProductsPromotion = {
-            discount_value: promo.discount_value,
-            discount_type: promo.discount_type,
-            code: promo.code,
-            buy_quantity: promo.buy_quantity,
-            get_quantity: promo.get_quantity
-          };
-        }
-      } else if (promo.product_ids && promo.product_ids.length > 0) {
-        for (const productId of promo.product_ids) {
-          const existing = productPromoMap.get(productId);
-          // Use the promotion with the highest discount value for each product
-          if (!existing || promo.discount_value > existing.discount_value) {
-            productPromoMap.set(productId, {
+      for (const promo of promoData) {
+        if (promo.applies_to === 'all_products') {
+          // Use the promotion with the highest discount value for all products
+          if (!allProductsPromotion || promo.discount_value > allProductsPromotion.discount_value) {
+            allProductsPromotion = {
               discount_value: promo.discount_value,
               discount_type: promo.discount_type,
               code: promo.code,
               buy_quantity: promo.buy_quantity,
               get_quantity: promo.get_quantity
-            });
+            };
+          }
+        } else if (promo.product_ids && promo.product_ids.length > 0) {
+          for (const productId of promo.product_ids) {
+            const existing = productPromoMap.get(productId);
+            // Use the promotion with the highest discount value for each product
+            if (!existing || promo.discount_value > existing.discount_value) {
+              productPromoMap.set(productId, {
+                discount_value: promo.discount_value,
+                discount_type: promo.discount_type,
+                code: promo.code,
+                buy_quantity: promo.buy_quantity,
+                get_quantity: promo.get_quantity
+              });
+            }
           }
         }
       }
-    }
 
-    console.log('Specific product promotions map:', Object.fromEntries(productPromoMap));
-    console.log('All products promotion:', allProductsPromotion);
+      console.log('Specific product promotions map:', Object.fromEntries(productPromoMap));
+      console.log('All products promotion:', allProductsPromotion);
 
-    // Get specific product IDs with promotions
-    const specificProductIds = Array.from(productPromoMap.keys());
+      // Get specific product IDs with promotions
+      const specificProductIds = Array.from(productPromoMap.keys());
 
-    // Build query based on promotion types
-    let query = supabase
-      .from('products')
-      .select('*, product_variants(*)')
-      .eq('is_active', true)
-      .gt('stock_quantity', 0)
-      .order('created_at', { ascending: false })
-      .limit(6);
+      // Build query based on promotion types
+      let query = supabase
+        .from('products')
+        .select('*, product_variants(*)')
+        .eq('is_active', true)
+        .gt('stock_quantity', 0)
+        .order('created_at', { ascending: false })
+        .limit(6);
 
-    // If there are specific products with promotions, query only those
-    if (specificProductIds.length > 0) {
-      query = query.in('id', specificProductIds);
-    } else if (!allProductsPromotion) {
-      // No products to show if no specific promotions and no all-products promotions
-      console.log('No specific or all-products promotions available');
-      setProducts([]);
-      setLoading(false);
-      return;
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Error fetching flash sale products:', error);
-      setLoading(false);
-      return;
-    }
-
-    console.log('Fetched products for flash sale:', data?.length || 0);
-
-    // Apply discounts from promotions
-    const productsWithDiscounts: FlashSaleProduct[] = [];
-
-    for (const product of (data || [])) {
-      // Get promotion details: specific product promotion or all-products promotion
-      const specificPromo = productPromoMap.get(product.id);
-      const promoDetails = specificPromo || allProductsPromotion;
-
-      if (!promoDetails) {
-        console.log(`Product ${product.id} has no applicable promotion`);
-        continue; // Skip products without applicable promotions
+      // If there are specific products with promotions, query only those
+      if (specificProductIds.length > 0) {
+        query = query.in('id', specificProductIds);
+      } else if (!allProductsPromotion) {
+        // No products to show if no specific promotions and no all-products promotions
+        console.log('No specific or all-products promotions available');
+        setProducts([]);
+        setLoading(false);
+        return;
       }
 
-      // Determine if this is a valid promotion to display
-      let isValidPromotion = true;
+      const { data, error } = await query;
 
-      if (promoDetails.discount_type === 'percentage' && promoDetails.discount_value <= 0) {
-        isValidPromotion = false;
-        console.log(`Percentage promotion for product ${product.id} has invalid discount value: ${promoDetails.discount_value}`);
-      } else if (promoDetails.discount_type === 'fixed' && promoDetails.discount_value <= 0) {
-        isValidPromotion = false;
-        console.log(`Fixed discount promotion for product ${product.id} has invalid discount value: ${promoDetails.discount_value}`);
-      }
-      // buy_x_get_y promotions are considered valid if they have valid quantities
-      else if (promoDetails.discount_type === 'buy_x_get_y' &&
-               (!promoDetails.buy_quantity || !promoDetails.get_quantity)) {
-        isValidPromotion = false;
-        console.log(`Buy-X-Get-Y promotion for product ${product.id} has invalid quantities`);
+      if (error) {
+        console.error('Error fetching flash sale products:', error);
+        setProducts([]);
+        setLoading(false);
+        return;
       }
 
-      if (!isValidPromotion) {
-        continue;
-      }
+      console.log('Fetched products for flash sale:', data?.length || 0);
 
-      let discountPercentage = 0;
-      let originalPrice = product.base_price;
-      let discountedPrice = product.base_price;
+      // Apply discounts from promotions
+      const productsWithDiscounts: FlashSaleProduct[] = [];
 
-      // Calculate based on promotion type
-      if (promoDetails.discount_type === 'percentage') {
-        discountPercentage = promoDetails.discount_value;
-        discountedPrice = Math.round(originalPrice * (1 - discountPercentage / 100));
-      } else if (promoDetails.discount_type === 'fixed') {
-        // For fixed discount, calculate the percentage based on original price
-        const fixedDiscount = promoDetails.discount_value;
-        discountPercentage = Math.round((fixedDiscount / originalPrice) * 100);
-        discountedPrice = Math.max(0, originalPrice - fixedDiscount);
-      } else if (promoDetails.discount_type === 'buy_x_get_y') {
-        // For buy_x_get_y, we'll calculate a simple average discount percentage
-        // For example: Buy 2 Get 1 Free is effectively 33% off
-        const buyQty = promoDetails.buy_quantity || 1;
-        const getQty = promoDetails.get_quantity || 1;
-        discountPercentage = Math.round((getQty / (buyQty + getQty)) * 100);
-        discountedPrice = Math.round(originalPrice * (1 - discountPercentage / 100));
-      }
+      for (const product of (data || [])) {
+        // Get promotion details: specific product promotion or all-products promotion
+        const specificPromo = productPromoMap.get(product.id);
+        const promoDetails = specificPromo || allProductsPromotion;
 
-      productsWithDiscounts.push({
-        ...product,
-        original_price: originalPrice,
-        base_price: discountedPrice,
-        discount_percentage: discountPercentage,
-        promotion_details: {
-          code: promoDetails.code,
-          discount_type: promoDetails.discount_type,
-          discount_value: promoDetails.discount_value,
-          buy_quantity: promoDetails.buy_quantity,
-          get_quantity: promoDetails.get_quantity,
+        if (!promoDetails) {
+          console.log(`Product ${product.id} has no applicable promotion`);
+          continue; // Skip products without applicable promotions
         }
-      });
+
+        // Determine if this is a valid promotion to display
+        let isValidPromotion = true;
+
+        if (promoDetails.discount_type === 'percentage' && promoDetails.discount_value <= 0) {
+          isValidPromotion = false;
+          console.log(`Percentage promotion for product ${product.id} has invalid discount value: ${promoDetails.discount_value}`);
+        } else if (promoDetails.discount_type === 'fixed' && promoDetails.discount_value <= 0) {
+          isValidPromotion = false;
+          console.log(`Fixed discount promotion for product ${product.id} has invalid discount value: ${promoDetails.discount_value}`);
+        }
+        // buy_x_get_y promotions are considered valid if they have valid quantities
+        else if (promoDetails.discount_type === 'buy_x_get_y' &&
+                 (!promoDetails.buy_quantity || !promoDetails.get_quantity)) {
+          isValidPromotion = false;
+          console.log(`Buy-X-Get-Y promotion for product ${product.id} has invalid quantities`);
+        }
+
+        if (!isValidPromotion) {
+          continue;
+        }
+
+        let discountPercentage = 0;
+        let originalPrice = product.base_price;
+        let discountedPrice = product.base_price;
+
+        // Calculate based on promotion type
+        if (promoDetails.discount_type === 'percentage') {
+          discountPercentage = promoDetails.discount_value;
+          discountedPrice = Math.round(originalPrice * (1 - discountPercentage / 100));
+        } else if (promoDetails.discount_type === 'fixed') {
+          // For fixed discount, calculate the percentage based on original price
+          const fixedDiscount = promoDetails.discount_value;
+          discountPercentage = Math.round((fixedDiscount / originalPrice) * 100);
+          discountedPrice = Math.max(0, originalPrice - fixedDiscount);
+        } else if (promoDetails.discount_type === 'buy_x_get_y') {
+          // For buy_x_get_y, we'll calculate a simple average discount percentage
+          // For example: Buy 2 Get 1 Free is effectively 33% off
+          const buyQty = promoDetails.buy_quantity || 1;
+          const getQty = promoDetails.get_quantity || 1;
+          discountPercentage = Math.round((getQty / (buyQty + getQty)) * 100);
+          discountedPrice = Math.round(originalPrice * (1 - discountPercentage / 100));
+        }
+
+        productsWithDiscounts.push({
+          ...product,
+          original_price: originalPrice,
+          base_price: discountedPrice,
+          discount_percentage: discountPercentage,
+          promotion_details: {
+            code: promoDetails.code,
+            discount_type: promoDetails.discount_type,
+            discount_value: promoDetails.discount_value,
+            buy_quantity: promoDetails.buy_quantity,
+            get_quantity: promoDetails.get_quantity,
+          }
+        });
+      }
+
+      console.log('Final flash sale products with discounts:', productsWithDiscounts.map(p => ({
+        name: p.name,
+        discount: p.discount_percentage,
+        promotion_type: p.promotion_details?.discount_type
+      })));
+
+      setProducts(productsWithDiscounts);
+    } catch (error) {
+      console.error('Unexpected error in fetchFlashSaleProducts:', error);
+      setProducts([]);
+    } finally {
+      setLoading(false);
     }
-
-    console.log('Final flash sale products with discounts:', productsWithDiscounts.map(p => ({
-      name: p.name,
-      discount: p.discount_percentage,
-      promotion_type: p.promotion_details?.discount_type
-    })));
-
-    setProducts(productsWithDiscounts);
-    setLoading(false);
   }, []);
+
+  // Handle error cases to ensure loading stops
+  useEffect(() => {
+    if (loading && !products.length) {
+      // If loading has been true for a long time, it may indicate an issue
+      const timer = setTimeout(() => {
+        console.warn('FlashSale: Loading taking long time, check for errors in console');
+      }, 10000); // 10 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [loading, products.length]);
 
   // Countdown timer effect
   useEffect(() => {
