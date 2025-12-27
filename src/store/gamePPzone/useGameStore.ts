@@ -269,15 +269,19 @@ export const useGameStore = create<GameState>()(
       },
 
       checkDailyBonus: () => {
-        const today = new Date().toDateString();
+        const now = Date.now();
         const { stats } = get();
 
-        if (stats.lastLoginDate !== today) {
+        // Check if 24 hours (86400000 milliseconds) have passed since the last login
+        const lastLoginTime = stats.lastLoginDate ? new Date(stats.lastLoginDate).getTime() : 0;
+        const hoursSinceLastLogin = (now - lastLoginTime) / (1000 * 60 * 60); // Convert to hours
+
+        if (hoursSinceLastLogin >= 24 || !stats.lastLoginDate) {
           set((state) => ({
             stats: {
               ...state.stats,
               points: state.stats.points + 25,
-              lastLoginDate: today
+              lastLoginDate: new Date(now).toISOString()
             }
           }));
           get().syncToSupabase();
@@ -287,16 +291,20 @@ export const useGameStore = create<GameState>()(
       },
 
       checkDailyQuestsReset: () => {
-        const today = new Date().toDateString();
+        const now = Date.now();
         const { stats } = get();
 
-        if (stats.lastQuestResetDate !== today) {
+        // Check if 24 hours (86400000 milliseconds) have passed since the last quest reset
+        const lastResetTime = stats.lastQuestResetDate ? new Date(stats.lastQuestResetDate).getTime() : 0;
+        const hoursSinceLastReset = (now - lastResetTime) / (1000 * 60 * 60); // Convert to hours
+
+        if (hoursSinceLastReset >= 24 || !stats.lastQuestResetDate) {
           console.log("Resetting Daily Quests for new day...");
           set((state) => ({
             quests: DEFAULT_QUESTS.map(q => ({ ...q, progress: 0, completed: false, claimed: false })),
             stats: {
               ...state.stats,
-              lastQuestResetDate: today
+              lastQuestResetDate: new Date(now).toISOString()
             }
           }));
           get().syncToSupabase();
