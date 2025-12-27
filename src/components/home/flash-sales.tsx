@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Zap, Clock, ShoppingCart, Heart, Star, Package as ShoppingBag } from 'lucide-react';
+import { Zap, Clock, ShoppingCart, Heart, Star, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,18 +11,42 @@ import { useCartStore } from '@/store/cart-store';
 import { createClient } from '@/lib/supabase/client';
 import { useLandingSections } from '@/hooks/use-landing-sections';
 
-interface FlashSaleProduct {
+interface Promotion {
+  id: string;
+  code: string;
+  description?: string;
+  discount_type: 'percentage' | 'fixed' | 'buy_x_get_y' | 'free_shipping';
+  discount_value: number;
+  min_purchase_amount?: number;
+  start_date?: string;
+  end_date?: string;
+  is_active: boolean;
+  applies_to: 'all_products' | 'specific_products';
+  product_ids?: string[];
+  category_ids?: string[];
+  buy_quantity?: number;
+  get_quantity?: number;
+  max_uses_per_user?: number;
+  total_uses?: number;
+  available_for_pos?: boolean;
+}
+
+interface Product {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   base_price: number;
-  sale_price: number;
-  discount_percentage: number;
   main_image_url?: string;
-  is_on_sale: boolean;
+  is_active: boolean;
   stock_quantity: number;
   created_at: string;
   updated_at: string;
+}
+
+interface FlashSaleProduct extends Product {
+  original_price: number;
+  sale_price: number;
+  discount_percentage: number;
   promotion_details?: {
     code: string;
     discount_type: string;
@@ -32,37 +56,12 @@ interface FlashSaleProduct {
   };
 }
 
-interface Promotion {
-  id: string;
-  code: string;
-  description: string;
-  discount_type: 'percentage' | 'fixed' | 'buy_x_get_y';
-  discount_value: number;
-  min_purchase_amount?: number;
-  start_date?: string;
-  end_date?: string;
-  is_active: boolean;
-  applies_to: 'all_products' | 'specific_products';
-  product_ids?: string[];
-  category_ids?: string[];
-  free_shipping?: boolean;
-  buy_quantity?: number;
-  get_quantity?: number;
-  max_uses_per_user?: number;
-  total_uses?: number;
-  available_for_pos?: boolean;
-}
-
-interface FlashSalesProps {
-  className?: string;
-}
-
-export function FlashSales({ className = '' }: FlashSalesProps) {
+export function FlashSales({ className = '' }: { className?: string }) {
   const [products, setProducts] = useState<FlashSaleProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
-  const addItem = useCartStore((state) => state.addItem);
+  const { addItem } = useCartStore();
 
   const { getSectionSettings } = useLandingSections();
   const settings = getSectionSettings('flash_sales', {
@@ -70,25 +69,15 @@ export function FlashSales({ className = '' }: FlashSalesProps) {
     showCountdown: true,
   });
 
-  const handleAddToCart = (product: FlashSaleProduct) => {
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: product.sale_price || product.base_price,
-      image: product.main_image_url,
-      quantity: 1,
-    });
-  };
-
   const fetchPromotionalProducts = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const supabase = createClient();
       const now = new Date().toISOString();
 
-      // First, fetch all active promotions that are currently valid
+      // Fetch all active promotions that are currently valid
       const { data: promotionsData, error: promotionsError } = await supabase
         .from('promotions')
         .select(`
@@ -104,7 +93,6 @@ export function FlashSales({ className = '' }: FlashSalesProps) {
           applies_to,
           product_ids,
           category_ids,
-          free_shipping,
           buy_quantity,
           get_quantity,
           max_uses_per_user,
@@ -133,7 +121,7 @@ export function FlashSales({ className = '' }: FlashSalesProps) {
         return;
       }
 
-      // Identify products with specific promotions
+      // Identify products with specific promotions and all-products promotions
       const specificProductIds: string[] = [];
       let allProductsPromotion: Promotion | null = null;
 
@@ -141,7 +129,7 @@ export function FlashSales({ className = '' }: FlashSalesProps) {
         if (promo.applies_to === 'specific_products' && promo.product_ids && promo.product_ids.length > 0) {
           specificProductIds.push(...promo.product_ids);
         } else if (promo.applies_to === 'all_products') {
-          // Use the promotion with highest discount value for all products
+          // Use the promotion with the highest discount value for all products
           if (!allProductsPromotion || promo.discount_value > allProductsPromotion.discount_value) {
             allProductsPromotion = promo;
           }
@@ -162,34 +150,24 @@ export function FlashSales({ className = '' }: FlashSalesProps) {
         }
       }
 
-      // Query products based on promotions
+      // Build query based on promotion types
       let query = supabase
         .from('products')
-        .select(`
-          id,
-          name,
-          description,
-          base_price,
-          main_image_url,
-          is_active,
-          stock_quantity,
-          created_at,
-          updated_at
-        `)
+        .select('id, name, description, base_price, main_image_url, is_active, stock_quantity, created_at, updated_at')
         .eq('is_active', true)
         .gt('stock_quantity', 0)
         .order('created_at', { ascending: false })
         .limit(6);
 
-      // If we have specific products with promotions, only fetch those
+      // If there are specific products with promotions, query only those
       if (specificProductIds.length > 0) {
         query = query.in('id', Array.from(new Set(specificProductIds)));
-      }
+      } 
       // If no specific products but there's an all-products promotion, fetch all products
       else if (allProductsPromotion) {
-        // Just use the base query (will get all active products with stock)
+        // Proceed with the general query (all active products)
       }
-      // If neither, no products to show
+      // If no specific products and no all-products promotion, no products to show
       else {
         setProducts([]);
         setLoading(false);
@@ -226,7 +204,7 @@ export function FlashSales({ className = '' }: FlashSalesProps) {
           continue;
         }
 
-        // Calculate discount based on promotion type
+        // Calculate discounted price based on promotion type
         let discountPercentage = 0;
         let salePrice = product.base_price;
 
@@ -234,19 +212,22 @@ export function FlashSales({ className = '' }: FlashSalesProps) {
           discountPercentage = applicablePromotion.discount_value;
           salePrice = product.base_price * (1 - applicablePromotion.discount_value / 100);
         } else if (applicablePromotion.discount_type === 'fixed') {
+          // For fixed discount, calculate the percentage based on original price
           const fixedDiscount = applicablePromotion.discount_value;
           discountPercentage = Math.round((fixedDiscount / product.base_price) * 100);
           salePrice = Math.max(0, product.base_price - fixedDiscount);
         } else if (applicablePromotion.discount_type === 'buy_x_get_y') {
-          // For buy_x_get_y promotions, calculate effective percentage discount
+          // For buy_x_get_y promotions, calculate effective discount percentage
           const buyQty = applicablePromotion.buy_quantity || 1;
           const getQty = applicablePromotion.get_quantity || 1;
           discountPercentage = Math.round((getQty / (buyQty + getQty)) * 100);
           salePrice = product.base_price * (1 - discountPercentage / 100);
         }
+        // Note: free_shipping promotions don't affect product price directly
 
         promotionalProducts.push({
           ...product,
+          original_price: product.base_price,
           sale_price: salePrice,
           discount_percentage: discountPercentage,
           promotion_details: {
@@ -259,7 +240,12 @@ export function FlashSales({ className = '' }: FlashSalesProps) {
         });
       }
 
-      console.log('Final promotional products:', promotionalProducts);
+      console.log('Final promotional products:', promotionalProducts.map(p => ({ 
+        name: p.name, 
+        discount: p.discount_percentage,
+        promotion_code: p.promotion_details?.code 
+      })));
+
       setProducts(promotionalProducts);
     } catch (err) {
       console.error('Unexpected error in fetchPromotionalProducts:', err);
@@ -278,11 +264,9 @@ export function FlashSales({ className = '' }: FlashSalesProps) {
     return () => clearInterval(interval);
   }, [fetchPromotionalProducts]);
 
-  // Countdown timer logic
+  // Countdown timer effect - for demo purposes, counting down to end of day
   useEffect(() => {
     const updateTimer = () => {
-      // Calculate time until next promotion expires
-      // For simplicity, we'll calculate time until the end of the day
       const now = new Date();
       const endOfDay = new Date();
       endOfDay.setHours(23, 59, 59, 999);
@@ -341,7 +325,7 @@ export function FlashSales({ className = '' }: FlashSalesProps) {
     );
   }
 
-  if (products.length === 0 && !loading) {
+  if (products.length === 0) {
     return (
       <section className={`py-12 bg-gradient-to-r from-red-500 to-orange-500 ${className}`}>
         <div className="container mx-auto px-4">
@@ -429,7 +413,7 @@ export function FlashSales({ className = '' }: FlashSalesProps) {
                       <div className="w-full h-full flex items-center justify-center bg-brown-200">
                         <div className="text-center p-4">
                           <div className="bg-brown-300 p-3 rounded-full inline-block mb-2">
-                            <ShoppingBag className="h-6 w-6 text-white" />
+                            <Package className="h-6 w-6 text-white" />
                           </div>
                           <p className="text-brown-600 text-xs">No Image</p>
                         </div>
@@ -438,7 +422,7 @@ export function FlashSales({ className = '' }: FlashSalesProps) {
                     
                     {/* Discount Badge */}
                     <Badge className="absolute top-2 left-2 bg-red-500 hover:bg-red-500 text-white">
-                      -{product.discount_percentage}%
+                      -{Math.round(product.discount_percentage)}%
                     </Badge>
                     
                     {/* Favorite Button */}
@@ -484,7 +468,7 @@ export function FlashSales({ className = '' }: FlashSalesProps) {
                         style: 'currency',
                         currency: 'IDR',
                         minimumFractionDigits: 0,
-                      }).format(product.base_price)}
+                      }).format(product.original_price)}
                     </span>
                   </div>
                   
@@ -495,8 +479,8 @@ export function FlashSales({ className = '' }: FlashSalesProps) {
                   )}
                 </div>
 
-                <Button
-                  size="sm"
+                <Button 
+                  size="sm" 
                   className="w-full"
                   onClick={() => handleAddToCart(product)}
                 >
