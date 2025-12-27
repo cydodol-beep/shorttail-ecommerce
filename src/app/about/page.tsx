@@ -808,7 +808,7 @@ export default function AboutPage() {
                           />
                         ))}
                       </div>
-                      <blockquote className="text-teal/80 italic mb-6 relative pl-6 before:content-['\"'] before:absolute before:left-0 before:top-0 before:text-4xl before:text-accent before:opacity-20">
+                      <blockquote className="text-teal/80 italic mb-6 relative pl-6 before:content-['“'] before:absolute before:left-0 before:top-0 before:text-4xl before:text-accent before:opacity-20">
                         {testimonial.testimonial_text}
                       </blockquote>
                       <div className="flex items-center">
@@ -888,7 +888,7 @@ export default function AboutPage() {
                             />
                           ))}
                         </div>
-                        <blockquote className="text-teal/80 italic mb-6 relative pl-6 before:content-['\"'] before:absolute before:left-0 before:top-0 before:text-4xl before:text-accent before:opacity-20">
+                        <blockquote className="text-teal/80 italic mb-6 relative pl-6 before:content-['“'] before:absolute before:left-0 before:top-0 before:text-4xl before:text-accent before:opacity-20">
                           {testimonial.text}
                         </blockquote>
                         <div className="flex items-center">
