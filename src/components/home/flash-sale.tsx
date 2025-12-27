@@ -29,12 +29,19 @@ interface FlashSaleProduct extends Product {
   product_variants?: ProductVariant[];
   original_price?: number;
   discount_percentage?: number;
+  promotion_details?: {
+    code: string;
+    discount_type: string;
+    discount_value: number;
+    buy_quantity?: number;
+    get_quantity?: number;
+  };
 }
 
 export function FlashSale() {
   const [products, setProducts] = useState<FlashSaleProduct[]>([]);
   const [loading, setLoading] = useState(true);
-  const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 59, seconds: 59 });
+  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
   const addItem = useCartStore((state) => state.addItem);
   
   const { getSectionSettings } = useLandingSections();
@@ -46,56 +53,97 @@ export function FlashSale() {
   const fetchFlashSaleProducts = useCallback(async () => {
     const supabase = createClient();
     const now = new Date().toISOString();
-    
-    // Fetch only percentage-type promotions that are currently active
-    // First get all active percentage promotions, then filter by date in JS
-    // This handles NULL dates (no date restriction)
-    const { data: promoData } = await supabase
+
+    // Fetch all active promotions that are currently valid
+    const { data: promoData, error: promoError } = await supabase
       .from('promotions')
-      .select('product_ids, discount_type, discount_value, applies_to, start_date, end_date')
+      .select('id, code, product_ids, discount_type, discount_value, applies_to, start_date, end_date, min_purchase_amount, buy_quantity, get_quantity')
       .eq('is_active', true)
-      .eq('discount_type', 'percentage');
+      .or(`start_date.is.null,start_date.lte.${now}`)
+      .or(`end_date.is.null,end_date.gte.${now}`);
 
-    // Filter by date - NULL dates mean no restriction
-    const validPromos = (promoData || []).filter((promo: { start_date: string | null; end_date: string | null }) => {
-      const startOk = !promo.start_date || new Date(promo.start_date) <= new Date(now);
-      const endOk = !promo.end_date || new Date(promo.end_date) >= new Date(now);
-      return startOk && endOk;
-    });
-
-    console.log('Flash sale promotions:', validPromos);
-
-    if (validPromos.length === 0) {
+    if (promoError) {
+      console.error('Error fetching promotions:', promoError);
       setProducts([]);
       setLoading(false);
       return;
     }
 
-    // Build a map of product_id -> discount_value for specific products
-    const productDiscountMap = new Map<string, number>();
-    let hasAllProductsPromo = false;
-    let allProductsDiscountValue = 0;
+    if (!promoData || promoData.length === 0) {
+      setProducts([]);
+      setLoading(false);
+      return;
+    }
 
-    for (const promo of validPromos) {
+    // Find the closest expiration date among active promotions
+    let closestExpiration: Date | null = null;
+    for (const promo of promoData) {
+      if (promo.end_date) {
+        const promoEndDate = new Date(promo.end_date);
+        if (!closestExpiration || promoEndDate < closestExpiration) {
+          closestExpiration = promoEndDate;
+        }
+      }
+    }
+
+    // Store closest expiration in state
+    setProducts(products => {
+      // This callback doesn't affect the products state but allows us to set closestExpiration
+      // We'll handle the interval in a separate effect
+      return products;
+    });
+
+    console.log('Flash sale promotions:', promoData);
+
+    // Build a map of product_id -> details for specific products
+    const productPromoMap = new Map<string, {
+      discount_value: number;
+      discount_type: string;
+      code: string;
+      buy_quantity?: number;
+      get_quantity?: number;
+    }>();
+    let hasAllProductsPromo = false;
+    let allProductsPromoDetails = {
+      discount_value: 0,
+      discount_type: 'percentage',
+      code: '',
+      buy_quantity: undefined,
+      get_quantity: undefined
+    };
+
+    for (const promo of promoData) {
       if (promo.applies_to === 'all_products') {
         hasAllProductsPromo = true;
-        // Use the highest discount for all products
-        if (promo.discount_value > allProductsDiscountValue) {
-          allProductsDiscountValue = promo.discount_value;
+        // Use the promotion with the highest discount value for all products
+        if (promo.discount_value > allProductsPromoDetails.discount_value) {
+          allProductsPromoDetails = {
+            discount_value: promo.discount_value,
+            discount_type: promo.discount_type,
+            code: promo.code,
+            buy_quantity: promo.buy_quantity,
+            get_quantity: promo.get_quantity
+          };
         }
       } else if (promo.product_ids && promo.product_ids.length > 0) {
         for (const productId of promo.product_ids) {
-          const existing = productDiscountMap.get(productId) || 0;
-          // Use the highest discount for each product
-          if (promo.discount_value > existing) {
-            productDiscountMap.set(productId, promo.discount_value);
+          const existing = productPromoMap.get(productId);
+          // Use the promotion with the highest discount value for each product
+          if (!existing || promo.discount_value > existing.discount_value) {
+            productPromoMap.set(productId, {
+              discount_value: promo.discount_value,
+              discount_type: promo.discount_type,
+              code: promo.code,
+              buy_quantity: promo.buy_quantity,
+              get_quantity: promo.get_quantity
+            });
           }
         }
       }
     }
 
     // Get specific product IDs with promotions
-    const specificProductIds = Array.from(productDiscountMap.keys());
+    const specificProductIds = Array.from(productPromoMap.keys());
 
     let query = supabase
       .from('products')
@@ -123,60 +171,135 @@ export function FlashSale() {
       return;
     }
 
-    console.log('Flash sale - allProductsDiscountValue:', allProductsDiscountValue);
-    console.log('Flash sale - productDiscountMap:', Object.fromEntries(productDiscountMap));
+    console.log('Flash sale - allProductsPromoDetails:', allProductsPromoDetails);
+    console.log('Flash sale - productPromoMap:', Object.fromEntries(productPromoMap));
 
     // Apply discounts from promotions
     const productsWithDiscounts: FlashSaleProduct[] = [];
-    
+
     for (const product of (data || [])) {
-      // Get discount: specific product discount or all-products discount
-      const discountPercent = productDiscountMap.get(product.id) || allProductsDiscountValue;
-      
-      console.log(`Product ${product.name}: discountPercent=${discountPercent}, base_price=${product.base_price}`);
-      
-      if (discountPercent <= 0) {
-        continue; // Skip products without percentage discount
+      // Get promotion details: specific product promotion or all-products promotion
+      const promoDetails = productPromoMap.get(product.id) || allProductsPromoDetails;
+
+      if (!promoDetails) {
+        continue; // Skip products without promotions
       }
-      
-      // Calculate discounted price from original base_price
-      const originalPrice = product.base_price;
-      const discountedPrice = Math.round(originalPrice * (1 - discountPercent / 100));
-      
+
+      // Skip if it's a percentage promotion with no discount value, and it's not a special type
+      if (promoDetails.discount_type === 'percentage' && promoDetails.discount_value <= 0 &&
+          promoDetails.discount_type !== 'buy_x_get_y' &&
+          promoDetails.discount_type !== 'fixed' &&
+          promoDetails.discount_type !== 'free_shipping') {
+        continue;
+      }
+
+      let discountPercentage = 0;
+      let originalPrice = product.base_price;
+      let discountedPrice = product.base_price;
+
+      // Calculate based on promotion type
+      if (promoDetails.discount_type === 'percentage') {
+        discountPercentage = promoDetails.discount_value;
+        discountedPrice = Math.round(originalPrice * (1 - discountPercentage / 100));
+      } else if (promoDetails.discount_type === 'fixed') {
+        // For fixed discount, calculate the percentage based on original price
+        const fixedDiscount = promoDetails.discount_value;
+        discountPercentage = Math.round((fixedDiscount / originalPrice) * 100);
+        discountedPrice = Math.max(0, originalPrice - fixedDiscount);
+      } else if (promoDetails.discount_type === 'buy_x_get_y') {
+        // For buy_x_get_y, we'll calculate a simple average discount percentage
+        // For example: Buy 2 Get 1 Free is effectively 33% off
+        discountPercentage = Math.round((promoDetails.get_quantity / (promoDetails.buy_quantity + promoDetails.get_quantity)) * 100);
+        discountedPrice = Math.round(originalPrice * (1 - discountPercentage / 100));
+      }
+
       productsWithDiscounts.push({
         ...product,
         original_price: originalPrice,
         base_price: discountedPrice,
-        discount_percentage: discountPercent, // Use exact promotion percentage
+        discount_percentage: discountPercentage,
+        promotion_details: {
+          code: promoDetails.code,
+          discount_type: promoDetails.discount_type,
+          discount_value: promoDetails.discount_value,
+          buy_quantity: promoDetails.buy_quantity,
+          get_quantity: promoDetails.get_quantity,
+        }
       });
     }
 
     console.log('Flash sale products with discounts:', productsWithDiscounts.map(p => ({ name: p.name, discount: p.discount_percentage })));
     setProducts(productsWithDiscounts);
     setLoading(false);
+
+    // Return the closest expiration date for the useEffect
+    return closestExpiration;
+  }, []);
+
+  // Countdown timer effect
+  useEffect(() => {
+    const fetchAndSetTimer = async () => {
+      const supabase = createClient();
+      const now = new Date().toISOString();
+
+      // Fetch all active promotions that are currently valid
+      const { data: promoData, error: promoError } = await supabase
+        .from('promotions')
+        .select('end_date')
+        .eq('is_active', true)
+        .or(`start_date.is.null,start_date.lte.${now}`)
+        .or(`end_date.is.null,end_date.gte.${now}`);
+
+      if (promoError) {
+        console.error('Error fetching promotions for countdown:', promoError);
+        return;
+      }
+
+      if (!promoData || promoData.length === 0) {
+        return;
+      }
+
+      // Find the closest expiration date among active promotions
+      let closestExpiration: Date | null = null;
+      for (const promo of promoData) {
+        if (promo.end_date) {
+          const promoEndDate = new Date(promo.end_date);
+          if (!closestExpiration || promoEndDate < closestExpiration) {
+            closestExpiration = promoEndDate;
+          }
+        }
+      }
+
+      if (closestExpiration) {
+        const updateCountdown = () => {
+          const now = new Date();
+          const diff = closestExpiration!.getTime() - now.getTime();
+
+          if (diff > 0) {
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            setTimeLeft({ hours, minutes, seconds });
+          } else {
+            setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
+          }
+        };
+
+        // Update immediately and set interval
+        updateCountdown();
+        const interval = setInterval(updateCountdown, 1000);
+
+        // Cleanup interval on unmount
+        return () => clearInterval(interval);
+      }
+    };
+
+    fetchAndSetTimer();
   }, []);
 
   useEffect(() => {
     fetchFlashSaleProducts();
   }, [fetchFlashSaleProducts]);
-
-  // Countdown timer
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        } else if (prev.hours > 0) {
-          return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        }
-        return { hours: 23, minutes: 59, seconds: 59 }; // Reset
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
 
   const handleAddToCart = (product: Product) => {
     addItem(product);
@@ -271,9 +394,21 @@ export function FlashSale() {
                         <PawPrint className="h-12 w-12 text-brown-300" />
                       </div>
                     )}
-                    {/* Discount Badge */}
-                    <Badge className="absolute top-2 left-2 bg-red-500 hover:bg-red-500">
-                      -{product.discount_percentage}%
+                    {/* Discount Badge - Enhanced to show promotion details */}
+                    <Badge className="absolute top-2 left-2 bg-red-500 hover:bg-red-500 text-xs">
+                      {product.promotion_details ? (
+                        product.promotion_details.discount_type === 'percentage' ? (
+                          `-${product.promotion_details.discount_value}%`
+                        ) : product.promotion_details.discount_type === 'fixed' ? (
+                          `-${formatPrice(product.promotion_details.discount_value)}`
+                        ) : product.promotion_details.discount_type === 'buy_x_get_y' ? (
+                          `Buy ${product.promotion_details.buy_quantity} Get ${product.promotion_details.get_quantity} Free`
+                        ) : (
+                          'Special Offer'
+                        )
+                      ) : (
+                        'Special Offer'
+                      )}
                     </Badge>
                   </div>
                 </Link>
