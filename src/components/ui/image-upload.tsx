@@ -1,17 +1,20 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
-import { X, Loader2, Image as ImageIcon } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { convertToWebP } from '@/lib/image-utils';
+import { convertImageToWebP } from '@/lib/utils';
 
 interface ImageUploadProps {
   value?: string;
-  onChange: (url: string) => void;
+  onChange: (file: string) => void;
   onRemove?: () => void;
+  label?: string;
   className?: string;
-  aspectRatio?: 'square' | 'video' | 'logo';
+  quality?: number;
+  maxWidth?: number;
+  maxHeight?: number;
+  aspectRatio?: string;
   placeholder?: string;
 }
 
@@ -19,159 +22,162 @@ export function ImageUpload({
   value,
   onChange,
   onRemove,
-  className,
-  aspectRatio = 'square',
-  placeholder = 'Upload Image',
+  label,
+  className = '',
+  quality = 0.8,
+  maxWidth = 1920,
+  maxHeight = 1080,
+  aspectRatio,
+  placeholder,
+  ...props
 }: ImageUploadProps) {
-  const [uploading, setUploading] = useState(false);
-  const [dragOver, setDragOver] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const aspectClasses = {
-    square: 'aspect-square',
-    video: 'aspect-video',
-    logo: 'aspect-[3/1]',
-  };
+  useEffect(() => {
+    setPreviewUrl(value || null);
+  }, [value]);
 
-  const handleFileSelect = useCallback(async (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+  const handleFileChange = async (file: File) => {
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/tiff', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      alert('Please upload a valid image file (JPEG, PNG, TIFF, or WebP)');
       return;
     }
 
-    // Max 10MB for original file (will be compressed)
-    if (file.size > 10 * 1024 * 1024) {
-      alert('Image must be less than 10MB');
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size exceeds 5MB limit. Please choose a smaller image.');
       return;
     }
 
-    setUploading(true);
+    setIsUploading(true);
 
     try {
-      // Convert to WebP format for better compression and faster loading
-      const webpDataUrl = await convertToWebP(file, 0.85, 1920, 1080);
-      onChange(webpDataUrl);
-      setUploading(false);
-    } catch (err) {
-      console.error('Failed to convert image:', err);
-      // Fallback to original format if WebP conversion fails
-      try {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64 = reader.result as string;
-          onChange(base64);
-          setUploading(false);
-        };
-        reader.onerror = () => {
-          alert('Failed to read file');
-          setUploading(false);
-        };
-        reader.readAsDataURL(file);
-      } catch {
-        alert('Failed to upload image');
-        setUploading(false);
-      }
-    }
-  }, [onChange]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleFileSelect(file);
+      // Convert to WebP format
+      const webPDataUrl = await convertImageToWebP(file, quality, maxWidth, maxHeight);
+      onChange(webPDataUrl);
+      setPreviewUrl(webPDataUrl);
+    } catch (error) {
+      console.error('Error converting image to WebP:', error);
+      alert('Error converting image. Please try again.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setDragOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      handleFileSelect(file);
-    }
-  }, [handleFileSelect]);
+    setIsDragging(false);
 
-  const handleDragOver = (e: React.DragEvent) => {
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      handleFileChange(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setDragOver(true);
+    setIsDragging(true);
   };
 
   const handleDragLeave = () => {
-    setDragOver(false);
+    setIsDragging(false);
   };
 
-  const handleRemove = () => {
-    onChange('');
-    onRemove?.();
-    if (inputRef.current) {
-      inputRef.current.value = '';
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      handleFileChange(file);
+      // Reset the input so the same file can be selected again
+      e.target.value = '';
     }
   };
 
-  return (
-    <div className={cn('relative', className)}>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleInputChange}
-        className="hidden"
-        aria-label={placeholder}
-        title={placeholder}
-      />
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
 
-      {value ? (
-        <div className={cn('relative rounded-lg overflow-hidden border border-brown-200', aspectClasses[aspectRatio])}>
-          <img
-            src={value}
-            alt="Uploaded"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+  const removeImage = () => {
+    setPreviewUrl(null);
+    onChange('');
+    if (onRemove) onRemove();
+  };
+
+  return (
+    <div className={`space-y-3 ${className}`}>
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      
+      <div 
+        className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+          isDragging 
+            ? 'border-accent bg-accent/10' 
+            : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+        }`}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onClick={triggerFileInput}
+      >
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileInput}
+          accept="image/jpeg,image/jpg,image/png,image/tiff,image/webp"
+          className="hidden"
+        />
+        
+        {isUploading ? (
+          <div className="flex flex-col items-center justify-center py-8">
+            <Loader2 className="h-10 w-10 animate-spin text-accent mb-3" />
+            <p className="text-gray-600">Converting image to WebP...</p>
+          </div>
+        ) : previewUrl ? (
+          <div className="relative">
+            <img
+              src={previewUrl}
+              alt="Preview"
+              className="max-h-64 w-full object-contain rounded-lg border border-gray-200"
+            />
             <Button
               type="button"
-              variant="secondary"
               size="sm"
-              onClick={() => inputRef.current?.click()}
-              disabled={uploading}
-            >
-              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Change'}
-            </Button>
-            <Button
-              type="button"
               variant="destructive"
-              size="sm"
-              onClick={handleRemove}
+              className="absolute top-2 right-2 rounded-full h-8 w-8 p-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                removeImage();
+              }}
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
-        </div>
-      ) : (
-        <div
-          onClick={() => inputRef.current?.click()}
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          className={cn(
-            'border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors',
-            aspectClasses[aspectRatio],
-            dragOver
-              ? 'border-primary bg-primary/5'
-              : 'border-brown-200 hover:border-brown-300 bg-brown-50',
-            uploading && 'pointer-events-none opacity-50'
-          )}
-        >
-          {uploading ? (
-            <Loader2 className="h-8 w-8 text-primary animate-spin" />
-          ) : (
-            <>
-              <ImageIcon className="h-8 w-8 text-brown-400 mb-2" />
-              <p className="text-sm text-brown-600">{placeholder}</p>
-              <p className="text-xs text-brown-400 mt-1">Click or drag to upload</p>
-            </>
-          )}
-        </div>
-      )}
+        ) : (
+          <div className="flex flex-col items-center justify-center py-8">
+            <ImageIcon className="h-10 w-10 text-gray-400 mb-3" />
+            <p className="text-gray-600 mb-1">Click or drag an image file to upload</p>
+            <p className="text-sm text-gray-500">Supports JPEG, PNG, TIFF (Max 5MB)</p>
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm" 
+              className="mt-4"
+              onClick={(e) => {
+                e.stopPropagation();
+                triggerFileInput();
+              }}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Browse Files
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

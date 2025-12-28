@@ -10,6 +10,7 @@ CREATE TABLE public.about_page_sections (
   title TEXT,
   subtitle TEXT,
   content TEXT,
+  image_url TEXT,
   is_active BOOLEAN DEFAULT true,
   sort_order INTEGER DEFAULT 0,
   settings JSONB DEFAULT '{}', -- Additional settings for the section

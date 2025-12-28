@@ -28,11 +28,14 @@ import {
   Volume2,
   VolumeX,
   Play,
-  Gift
+  Gift,
+  Upload as UploadIcon,
+  Image as ImageIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ImageUpload } from '@/components/ui/image-upload';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -48,6 +51,7 @@ interface AboutPageSection {
   title?: string;
   subtitle?: string;
   content?: string;
+  image_url?: string;
   is_active: boolean;
   sort_order: number;
   settings: Record<string, any>;
@@ -186,6 +190,7 @@ export default function AboutPageManagement() {
             title: editingSection.title,
             subtitle: editingSection.subtitle,
             content: editingSection.content,
+            image_url: editingSection.image_url,
             is_active: editingSection.is_active,
             sort_order: editingSection.sort_order,
             settings: editingSection.settings
@@ -202,6 +207,7 @@ export default function AboutPageManagement() {
             title: editingSection.title,
             subtitle: editingSection.subtitle,
             content: editingSection.content,
+            image_url: editingSection.image_url,
             is_active: editingSection.is_active,
             sort_order: editingSection.sort_order,
             settings: editingSection.settings
@@ -834,6 +840,20 @@ export default function AboutPageManagement() {
                   placeholder="0"
                 />
               </div>
+
+              {/* Image Upload for Section */}
+              <div>
+                <ImageUpload
+                  value={editingSection.image_url || ''}
+                  onChange={(imageData) =>
+                    setEditingSection({ ...editingSection, image_url: imageData })
+                  }
+                  label="Section Image"
+                  quality={0.8}
+                  maxWidth={1920}
+                  maxHeight={1080}
+                />
+              </div>
             </div>
           )}
           
@@ -983,12 +1003,15 @@ export default function AboutPageManagement() {
               </div>
               
               <div>
-                <Label htmlFor="memberImageUrl">Image URL</Label>
-                <Input
-                  id="memberImageUrl"
+                <ImageUpload
                   value={editingTeamMember.image_url || ''}
-                  onChange={(e) => setEditingTeamMember({ ...editingTeamMember, image_url: e.target.value })}
-                  placeholder="URL to team member image"
+                  onChange={(imageData) =>
+                    setEditingTeamMember({ ...editingTeamMember, image_url: imageData })
+                  }
+                  label="Team Member Image"
+                  quality={0.8}
+                  maxWidth={400}
+                  maxHeight={400}
                 />
               </div>
               
