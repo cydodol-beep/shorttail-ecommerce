@@ -84,10 +84,12 @@ export function Footer() {
                 style={{ color: '#fdf6ec' }}>Shop</h3>
               <ul className="space-y-4">
                 <li>
-                  <Link href="/products" className="text-[#fdf6ec]/80 hover:text-[#ff911d] transition-colors" // 30% cream, hover 10% accent
+                  <Link href="/products"
+                    className="text-[#fdf6ec]/80 hover:text-[#ff911d] transition-colors" // 30% cream, hover 10% accent
                     style={{ color: 'rgba(253, 246, 236, 0.8)' }}
                     onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#ff911d'}
-                    onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'rgba(253, 246, 236, 0.8)'}}>
+                    onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'rgba(253, 246, 236, 0.8)'}
+                    onClick={() => {}}>
                     All Products
                   </Link>
                 </li>
@@ -98,7 +100,8 @@ export function Footer() {
                       className="text-[#fdf6ec]/80 hover:text-[#ff911d] transition-colors" // 30% cream, hover 10% accent
                       style={{ color: 'rgba(253, 246, 236, 0.8)' }}
                       onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#ff911d'}
-                      onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'rgba(253, 246, 236, 0.8)'}}>
+                      onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'rgba(253, 246, 236, 0.8)'}
+                      onClick={() => {}}>
                       {cat.name}
                     </Link>
                   </li>
@@ -117,7 +120,8 @@ export function Footer() {
                   <Link href="/help" className="text-[#fdf6ec]/80 hover:text-[#ff911d] transition-colors" // 30% cream, hover 10% accent
                     style={{ color: 'rgba(253, 246, 236, 0.8)' }}
                     onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#ff911d'}
-                    onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'rgba(253, 246, 236, 0.8)'}}>
+                    onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'rgba(253, 246, 236, 0.8)'}
+                    onClick={() => {}}>
                     Help Center
                   </Link>
                 </li>
@@ -125,7 +129,8 @@ export function Footer() {
                   <Link href="/shipping" className="text-[#fdf6ec]/80 hover:text-[#ff911d] transition-colors" // 30% cream, hover 10% accent
                     style={{ color: 'rgba(253, 246, 236, 0.8)' }}
                     onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#ff911d'}
-                    onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'rgba(253, 246, 236, 0.8)'}}>
+                    onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'rgba(253, 246, 236, 0.8)'}
+                    onClick={() => {}}>
                     Shipping Info
                   </Link>
                 </li>
@@ -133,7 +138,8 @@ export function Footer() {
                   <Link href="/returns" className="text-[#fdf6ec]/80 hover:text-[#ff911d] transition-colors" // 30% cream, hover 10% accent
                     style={{ color: 'rgba(253, 246, 236, 0.8)' }}
                     onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#ff911d'}
-                    onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'rgba(253, 246, 236, 0.8)'}}>
+                    onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'rgba(253, 246, 236, 0.8)'}
+                    onClick={() => {}}>
                     Returns & Refunds
                   </Link>
                 </li>
@@ -141,7 +147,8 @@ export function Footer() {
                   <Link href="/contact" className="text-[#fdf6ec]/80 hover:text-[#ff911d] transition-colors" // 30% cream, hover 10% accent
                     style={{ color: 'rgba(253, 246, 236, 0.8)' }}
                     onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#ff911d'}
-                    onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'rgba(253, 246, 236, 0.8)'}}>
+                    onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'rgba(253, 246, 236, 0.8)'}
+                    onClick={() => {}}>
                     Contact Us
                   </Link>
                 </li>
@@ -159,7 +166,8 @@ export function Footer() {
                   <Link href="/privacy" className="text-[#fdf6ec]/80 hover:text-[#ff911d] transition-colors" // 30% cream, hover 10% accent
                     style={{ color: 'rgba(253, 246, 236, 0.8)' }}
                     onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#ff911d'}
-                    onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'rgba(253, 246, 236, 0.8)'}}>
+                    onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'rgba(253, 246, 236, 0.8)'}
+                    onClick={() => {}}>
                     Privacy Policy
                   </Link>
                 </li>
@@ -167,7 +175,8 @@ export function Footer() {
                   <Link href="/terms" className="text-[#fdf6ec]/80 hover:text-[#ff911d] transition-colors" // 30% cream, hover 10% accent
                     style={{ color: 'rgba(253, 246, 236, 0.8)' }}
                     onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#ff911d'}
-                    onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'rgba(253, 246, 236, 0.8)'}}>
+                    onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'rgba(253, 246, 236, 0.8)'}
+                    onClick={() => {}}>
                     Terms of Service
                   </Link>
                 </li>
@@ -175,7 +184,8 @@ export function Footer() {
                   <Link href="/cookies" className="text-[#fdf6ec]/80 hover:text-[#ff911d] transition-colors" // 30% cream, hover 10% accent
                     style={{ color: 'rgba(253, 246, 236, 0.8)' }}
                     onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#ff911d'}
-                    onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'rgba(253, 246, 236, 0.8)'}}>
+                    onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'rgba(253, 246, 236, 0.8)'}
+                    onClick={() => {}}>
                     Cookie Policy
                   </Link>
                 </li>
