@@ -2,17 +2,23 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Users, 
-  Heart, 
-  PawPrint, 
-  Star, 
-  Globe, 
-  Leaf, 
-  Shield, 
-  Award, 
+import {
+  Users,
+  Heart,
+  PawPrint,
+  Star,
+  Globe,
+  Leaf,
+  Shield,
+  Award,
   Briefcase,
-  ChevronDown
+  ChevronDown,
+  Calendar,
+  Target,
+  Sparkles,
+  Mountain,
+  Plane,
+  Building
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -110,7 +116,7 @@ export default function AboutPage() {
         // Continue even if sections fail to load
       } else if (sectionsData) {
         const sectionsMap: Record<string, AboutSection> = {};
-        sectionsData.forEach(section => {
+        sectionsData.forEach((section: any) => {
           sectionsMap[section.section_key] = section;
         });
         setSections(sectionsMap);
@@ -775,7 +781,7 @@ export default function AboutPage() {
                             />
                           ))}
                         </div>
-                        <blockquote className="text-[#006d77]/80 italic mb-6 relative pl-6 before:content-['\"'] before:absolute before:left-0 before:top-0 before:text-4xl before:text-[#ff911d] before:opacity-20">
+                        <blockquote className="text-[#006d77]/80 italic mb-6 relative pl-6 before:content-[open-quote] before:absolute before:left-0 before:top-0 before:text-4xl before:text-[#ff911d] before:opacity-20">
                           {testimonial.testimonial_text}
                         </blockquote>
                         <div className="flex items-center">
@@ -855,7 +861,7 @@ export default function AboutPage() {
                               />
                             ))}
                           </div>
-                          <blockquote className="text-[#006d77]/80 italic mb-6 relative pl-6 before:content-['\"'] before:absolute before:left-0 before:top-0 before:text-4xl before:text-[#ff911d] before:opacity-20">
+                          <blockquote className="text-[#006d77]/80 italic mb-6 relative pl-6 before:content-[open-quote] before:absolute before:left-0 before:top-0 before:text-4xl before:text-[#ff911d] before:opacity-20">
                             {testimonial.text}
                           </blockquote>
                           <div className="flex items-center">
