@@ -42,13 +42,32 @@ export function Footer() {
           {/* Brand - Primary section with teal emphasis (part of 60%) */}
           <div className="col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-6">
-              <div className="p-1.5 bg-[#ff911d] rounded-lg"  // 10% accent for icon background
-                style={{ backgroundColor: '#ff911d' }}>
-                <PawPrint className="h-6 w-6 text-[#fdf6ec]" />  // 30% cream for icon
+              {storeSettings.storeLogo ? (
+                <img
+                  src={storeSettings.storeLogo}
+                  alt={`${storeSettings.storeName} Logo`}
+                  className="w-12 h-12 object-contain rounded-lg"
+                  onError={(e) => {
+                    // If the store logo fails to load, fall back to the paw print icon
+                    const target = e.target as HTMLImageElement;
+                    target.onerror = null; // Prevent infinite loop
+                    target.style.display = 'none';
+                    const fallbackDiv = target.parentElement?.querySelector('.logo-fallback');
+                    if (fallbackDiv) {
+                      (fallbackDiv as HTMLElement).style.display = 'block';
+                    }
+                  }}
+                />
+              ) : null}
+              <div className={`logo-fallback ${storeSettings.storeLogo ? 'hidden' : ''}`}>
+                <div className="p-1.5 bg-[#ff911d] rounded-lg"  // 10% accent for icon background
+                  style={{ backgroundColor: '#ff911d' }}>
+                  <PawPrint className="h-6 w-6 text-[#fdf6ec]" />  // 30% cream for icon
+                </div>
               </div>
               <span className="font-bold text-2xl text-[#fdf6ec] tracking-tighter" // 30% cream text
                 style={{ color: '#fdf6ec' }}>
-                ShortTail<span className="text-[#ff911d]"  // 10% accent
+                {storeSettings.storeName || 'ShortTail'}<span className="text-[#ff911d]"  // 10% accent
                   style={{ color: '#ff911d' }}>.id</span>
               </span>
             </Link>
