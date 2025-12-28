@@ -35,6 +35,7 @@ const menuItems = [
   { icon: Tag, label: 'Promotions', href: '/admin/promotions' },
   { icon: Truck, label: 'Shipping', href: '/admin/shipping' },
   { icon: Star, label: 'Reviews', href: '/admin/reviews' },
+  { icon: PawPrint, label: 'About Page', href: '/admin/about-page' },
   { icon: Layout, label: 'Landing Page', href: '/admin/landing-page' },
   { icon: Bell, label: 'Notifications', href: '/admin/notifications' },
   { icon: Settings, label: 'Settings', href: '/admin/settings' },
