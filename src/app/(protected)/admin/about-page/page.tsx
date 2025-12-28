@@ -1,22 +1,34 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  Users, 
-  Heart, 
-  PawPrint, 
-  Star, 
-  Globe, 
-  Leaf, 
-  Shield, 
-  Award, 
+import {
+  Users,
+  Heart,
+  PawPrint,
+  Star,
+  Globe,
+  Leaf,
+  Shield,
+  Award,
   Briefcase,
   Plus,
   Pencil,
   Trash2,
   Save,
   X,
-  RotateCcw
+  RotateCcw,
+  Target,
+  Package,
+  Truck,
+  Calendar,
+  Sparkles,
+  Mountain,
+  Plane,
+  Building,
+  Volume2,
+  VolumeX,
+  Play,
+  Gift
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
