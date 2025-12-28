@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-export default function AboutPageLayout({
+export default function AboutPageAdminLayout({
   children,
 }: {
   children: ReactNode;
