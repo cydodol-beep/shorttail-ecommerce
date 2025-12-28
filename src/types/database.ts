@@ -28,6 +28,8 @@ export interface Profile {
   recipient_postal_code: string | null;
   recipient_phoneno: string | null;
   is_approved: boolean;
+  level?: number;          // For user level
+  unlocked_breeds?: string[]; // For unlocked breeds (spelling error in DB column name)
   created_at: string;
   updated_at: string;
 }

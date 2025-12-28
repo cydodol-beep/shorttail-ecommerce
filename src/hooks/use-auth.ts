@@ -105,8 +105,7 @@ export function useAuth() {
               recipient_province_id,
               recipient_postal_code,
               recipient_phoneno,
-              level,
-              unlocked_breeds
+              level
             `)
             .eq('id', userId)
             .single() as Promise<{ data: Profile | null; error: any }>,
@@ -437,8 +436,7 @@ export function useAuth() {
             recipient_province_id,
             recipient_postal_code,
             recipient_phoneno,
-            level,
-            unlocked_breeds
+            level
           `)
           .eq('id', user.id)
           .single() as Promise<{ data: Profile | null; error: any }>,
