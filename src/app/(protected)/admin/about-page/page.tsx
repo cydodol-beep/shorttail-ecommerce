@@ -33,7 +33,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { Input } from '@/components/ui/input';
@@ -83,6 +83,17 @@ interface AboutTeamMember {
   updated_at: string;
 }
 
+interface Milestone {
+  id: string;
+  year: number;
+  title: string;
+  description: string;
+  icon: string;
+  is_featured?: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export default function AboutPageManagement() {
   // State for sections
   const [sections, setSections] = useState<AboutPageSection[]>([]);
@@ -95,15 +106,21 @@ export default function AboutPageManagement() {
   // State for team members
   const [teamMembers, setTeamMembers] = useState<AboutTeamMember[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(true);
+
+  // State for milestones
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [loadingMilestones, setLoadingMilestones] = useState(true);
   
   // Dialog states
   const [sectionDialogOpen, setSectionDialogOpen] = useState(false);
   const [valueDialogOpen, setValueDialogOpen] = useState(false);
   const [teamDialogOpen, setTeamDialogOpen] = useState(false);
-  
+  const [milestoneDialogOpen, setMilestoneDialogOpen] = useState(false);
+
   const [editingSection, setEditingSection] = useState<AboutPageSection | null>(null);
   const [editingValue, setEditingValue] = useState<AboutValue | null>(null);
   const [editingTeamMember, setEditingTeamMember] = useState<AboutTeamMember | null>(null);
+  const [editingMilestone, setEditingMilestone] = useState<Milestone | null>(null);
   
   const supabase = createClient();
 
@@ -170,12 +187,164 @@ export default function AboutPageManagement() {
     }
   };
 
+  // Fetch milestones data
+  const fetchMilestones = async () => {
+    setLoadingMilestones(true);
+    try {
+      const { data, error } = await supabase
+        .from('about_milestones')
+        .select('*')
+        .order('year', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching milestones:', error);
+      } else {
+        setMilestones(data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching milestones:', err);
+    } finally {
+      setLoadingMilestones(false);
+    }
+  };
+
   // Initialize data
   useEffect(() => {
     fetchSections();
     fetchValues();
     fetchTeamMembers();
+    fetchMilestones();
   }, []);
+
+  // Handle saving a milestone
+  const saveMilestone = async () => {
+    if (!editingMilestone) return;
+
+    try {
+      if (editingMilestone.id) {
+        // Update existing milestone
+        const { error } = await supabase
+          .from('about_milestones')
+          .update({
+            year: editingMilestone.year,
+            title: editingMilestone.title,
+            description: editingMilestone.description,
+            icon: editingMilestone.icon,
+            is_featured: editingMilestone.is_featured
+          })
+          .eq('id', editingMilestone.id);
+
+        if (error) throw error;
+      } else {
+        // Create new milestone
+        const { error } = await supabase
+          .from('about_milestones')
+          .insert([{
+            year: editingMilestone.year,
+            title: editingMilestone.title,
+            description: editingMilestone.description,
+            icon: editingMilestone.icon,
+            is_featured: editingMilestone.is_featured
+          }]);
+
+        if (error) throw error;
+      }
+
+      // Refresh data
+      fetchMilestones();
+      setMilestoneDialogOpen(false);
+      setEditingMilestone(null);
+    } catch (err) {
+      console.error('Error saving milestone:', err);
+    }
+  };
+
+  // Handle delete milestone
+  const deleteMilestone = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this milestone?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('about_milestones')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Refresh data
+      fetchMilestones();
+    } catch (err) {
+      console.error('Error deleting milestone:', err);
+    }
+  };
+
+  // Get icon component based on name
+  const getIconComponent = (iconName: string) => {
+    const iconProps = { className: "w-6 h-6" };
+
+    switch (iconName?.toLowerCase()) {
+      case 'pawprint':
+      case 'paw':
+        return <PawPrint {...iconProps} />;
+      case 'heart':
+        return <Heart {...iconProps} />;
+      case 'users':
+      case 'team':
+        return <Users {...iconProps} />;
+      case 'globe':
+        return <Globe {...iconProps} />;
+      case 'leaf':
+      case 'eco':
+      case 'environment':
+        return <Leaf {...iconProps} />;
+      case 'shield':
+      case 'secure':
+      case 'security':
+        return <Shield {...iconProps} />;
+      case 'award':
+      case 'achievement':
+      case 'medal':
+        return <Award {...iconProps} />;
+      case 'briefcase':
+      case 'business':
+      case 'work':
+        return <Briefcase {...iconProps} />;
+      case 'calendar':
+      case 'date':
+        return <Calendar {...iconProps} />;
+      case 'target':
+      case 'goal':
+        return <Target {...iconProps} />;
+      case 'sparkles':
+      case 'stars':
+        return <Sparkles {...iconProps} />;
+      case 'mountain':
+      case 'peak':
+        return <Mountain {...iconProps} />;
+      case 'plane':
+      case 'airplane':
+      case 'travel':
+        return <Plane {...iconProps} />;
+      case 'building':
+      case 'office':
+        return <Building {...iconProps} />;
+      case 'gift':
+        return <Gift {...iconProps} />;
+      case 'play':
+        return <Play {...iconProps} />;
+      case 'volume2':
+      case 'volume':
+        return <Volume2 {...iconProps} />;
+      case 'x':
+      case 'close':
+        return <X {...iconProps} />;
+      case 'rotateccw':
+      case 'refresh':
+        return <RotateCcw {...iconProps} />;
+      default:
+        return <Star {...iconProps} />;
+    }
+  };
 
   // Handle saving a section
   const saveSection = async () => {
@@ -755,6 +924,84 @@ export default function AboutPageManagement() {
         </CardContent>
       </Card>
 
+      {/* Milestone Section */}
+      <Card className="mt-8">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Milestones</CardTitle>
+            <CardDescription>Manage company achievements and timeline</CardDescription>
+          </div>
+          <Button onClick={() => {
+            setEditingMilestone({
+              id: '',
+              year: new Date().getFullYear(),
+              title: '',
+              description: '',
+              icon: 'award',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+            setMilestoneDialogOpen(true);
+          }}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Milestone
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {loadingMilestones ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-accent mx-auto"></div>
+            </div>
+          ) : milestones.length === 0 ? (
+            <div className="text-center py-8">
+              <Award className="h-12 w-12 text-teal/30 mx-auto mb-3" />
+              <p className="text-teal/60">No milestones added yet</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {milestones.map((milestone) => (
+                <Card key={milestone.id} className="group hover:shadow-lg transition-all">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 bg-accent/10 rounded-full flex items-center justify-center text-accent">
+                          {getIconComponent(milestone.icon)}
+                        </div>
+                        <div>
+                          <p className="font-bold text-lg text-teal">{milestone.year}</p>
+                          <p className="text-sm text-accent">{milestone.title}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setEditingMilestone(milestone);
+                            setMilestoneDialogOpen(true);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => deleteMilestone(milestone.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="text-sm text-teal/70">{milestone.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Section Edit Dialog */}
       <Dialog open={sectionDialogOpen} onOpenChange={setSectionDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -1035,6 +1282,109 @@ export default function AboutPageManagement() {
               Cancel
             </Button>
             <Button onClick={saveTeamMember}>
+              <Save className="h-4 w-4 mr-2" />
+              Save
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Milestone Edit Dialog */}
+      <Dialog open={milestoneDialogOpen} onOpenChange={setMilestoneDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingMilestone?.id ? 'Edit' : 'Add'} Milestone</DialogTitle>
+            <DialogDescription>
+              {editingMilestone?.id
+                ? `Update information for "${editingMilestone.title}"`
+                : 'Add a new company milestone or achievement'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {editingMilestone && (
+            <div className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="milestoneYear">Year</Label>
+                <Input
+                  id="milestoneYear"
+                  type="number"
+                  min="2000"
+                  max="2030"
+                  value={editingMilestone.year}
+                  onChange={(e) => setEditingMilestone({ ...editingMilestone, year: parseInt(e.target.value) || new Date().getFullYear() })}
+                  placeholder="Year (e.g. 2025)"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="milestoneTitle">Title</Label>
+                <Input
+                  id="milestoneTitle"
+                  value={editingMilestone.title}
+                  onChange={(e) => setEditingMilestone({ ...editingMilestone, title: e.target.value })}
+                  placeholder="Milestone title"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="milestoneDescription">Description</Label>
+                <Textarea
+                  id="milestoneDescription"
+                  value={editingMilestone.description}
+                  onChange={(e) => setEditingMilestone({ ...editingMilestone, description: e.target.value })}
+                  placeholder="Milestone description"
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="milestoneIcon">Icon</Label>
+                <Select
+                  value={editingMilestone.icon}
+                  onValueChange={(value) => setEditingMilestone({ ...editingMilestone, icon: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="award">Award/Trophy</SelectItem>
+                    <SelectItem value="building">Building</SelectItem>
+                    <SelectItem value="paw">Paw Print</SelectItem>
+                    <SelectItem value="gift">Gift</SelectItem>
+                    <SelectItem value="users">Users/Customers</SelectItem>
+                    <SelectItem value="leaf">Leaf/Eco</SelectItem>
+                    <SelectItem value="heart">Heart</SelectItem>
+                    <SelectItem value="star">Star</SelectItem>
+                    <SelectItem value="globe">Globe</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="milestoneFeatured">Featured</Label>
+                <Switch
+                  id="milestoneFeatured"
+                  checked={!!editingMilestone.is_featured}
+                  onCheckedChange={(checked) => setEditingMilestone({ ...editingMilestone, is_featured: checked })}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setMilestoneDialogOpen(false);
+                setEditingMilestone(null);
+              }}
+            >
+              <X className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
+            <Button
+              onClick={saveMilestone}
+            >
               <Save className="h-4 w-4 mr-2" />
               Save
             </Button>
