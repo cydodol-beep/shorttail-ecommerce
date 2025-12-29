@@ -17,12 +17,13 @@ ShortTail.id is a comprehensive e-commerce solution built using a modern tech st
 
 ### System Components
 
-The platform consists of four main user interfaces:
+The platform consists of five main user interfaces:
 
 1. **Public Storefront**: Product browsing, cart, and checkout
-2. **Admin Dashboard**: Complete store management (products, orders, users, promotions)
+2. **Admin Dashboard**: Complete store management (products, orders, users, promotions, about page)
 3. **Kasir/POS System**: In-store point of sale with real-time inventory
 4. **User Dashboard**: Customer account management (profile, pets, orders, wishlist)
+5. **About Us Page**: Company information, team, milestones, testimonials, and core values
 
 ### Key Technical Features
 
@@ -33,6 +34,17 @@ The platform consists of four main user interfaces:
 - **Caching**: Smart caching strategy with 5-minute TTLs
 - **Zustand Stores**: Global state management with built-in caching
 - **Real-time**: Supabase Realtime for notifications
+
+### Performance Optimizations
+- **Parallel Data Fetching**: Implemented parallel queries for About Us page content (sections, values, team members, milestones, testimonials) using `Promise.allSettled()` to reduce load times
+- **Caching Layer**: Added intelligent caching for About Us page data with 5-minute TTL to reduce database calls
+- **Retry Logic**: Implemented automatic retry mechanism with exponential backoff for failed requests
+- **Loading States**: Enhanced user experience with proper loading indicators during data fetch operations
+- **Optimistic Updates**: Improved perceived performance by showing cached data immediately while fetching fresh data in background
+- **Error Resilience**: Implemented graceful degradation so the page renders even when some data fetches fail
+- **Memory Management**: Optimized cache invalidation to prevent memory leaks during long sessions
+- **Viewport Optimization**: Used intersection observer for lazy loading and optimized rendering
+- **Resource Optimization**: Added proper resource cleanup to prevent memory accumulation
 
 ## 🆕 Recent Updates (December 12, 2025)
 
@@ -556,6 +568,15 @@ The database schema is located in `supabase/migrations/` and consists of the fol
 | `categories` | Product categories with hierarchical structure support |
 | `wishlists` | User saved products for later purchase |
 
+### About Page Management Tables
+| Table | Description |
+|-------|-------------|
+| `about_page_sections` | Settings and content for different sections of the About Us page |
+| `about_values` | Company values and principles displayed on the About page |
+| `about_team_members` | Team member profiles and information for the Meet Our Team section |
+| `about_milestones` | Timeline of company achievements and milestones |
+| `about_testimonials` | Customer testimonials and reviews displayed on About page |
+
 ### Order Management Tables
 | Table | Description |
 |-------|-------------|
@@ -773,6 +794,7 @@ The application uses a sophisticated Zustand-based state management system with 
 | `pets-store` | User's pets | 5 minutes |
 | `notification-store` | Notifications | Session |
 | `wishlist-store` | User wishlist | 5 minutes |
+| `ABOUT_PAGE_CACHE` | About Us page content | 5 minutes in-memory cache |
 
 #### Caching Strategy
 
@@ -792,6 +814,10 @@ The application uses a sophisticated Zustand-based state management system with 
 - **Cache warming** - Critical data is pre-loaded when the application starts
 - **Cache persistence** - Shopping cart data is persisted in localStorage to survive page reloads
 - **Cache partitioning** - Different resources have separate cache instances
+- **Parallel data fetching** - For related data sets (e.g., About Us page content) to reduce load times
+- **Retry mechanisms** - Automatic retry with exponential backoff for failed requests
+- **Optimistic loading** - Immediate UI updates with background data fetching
+- **Performance monitoring** - Loading indicators and performance metrics for user experience
 
 #### Store Architecture
 
@@ -823,6 +849,12 @@ Hooks in `/src/hooks/` are thin wrappers around Zustand stores that provide:
 - **Consistent API** across all components
 - **Loading state management**
 - **Error handling** and propagation
+
+Special optimizations for About Us page:
+- **Parallel data fetching** - Multiple content sections are fetched simultaneously for faster loading
+- **Retry mechanisms** - Failed requests are automatically retried with exponential backoff
+- **Optimistic updates** - Cached data is shown immediately while fresh data loads in background
+- **Error resilience** - Page continues to render even if some content fetches fail
 
 Example:
 ```typescript
@@ -2036,6 +2068,54 @@ When working with Zustand stores and caching:
     - Added comment to clarify the positioning logic
   - **Result**: News ticker remains visible at the top of the page as users scroll
   - **Impact**: Improved visibility of promotions and announcements for better user engagement
+
+---
+
+## 🔄 Recent Updates (February 2, 2026)
+
+### About Us Page Performance & UI Enhancements 🚀
+- **Optimized About Us Page Data Loading**:
+  - **Issue**: Slow initial load times requiring refresh to see content
+  - **Solution**: Implemented parallel data fetching and caching for faster loading
+  - **Implementation Details**:
+    - Converted sequential data fetching to parallel using `Promise.allSettled()`
+    - Added in-memory caching system with 5-minute TTL for about page data
+    - Implemented retry logic for failed requests with exponential backoff
+    - Added loading states with visual indicators during data fetch
+    - Improved error handling to prevent blank screens on partial failures
+  - **Result**: Dramatically reduced load times with cached data for returning users
+  - **Impact**: Users see content immediately instead of waiting for multiple refreshes
+
+- **Enhanced Team Section Visual Design**:
+  - **Issue**: Team section needed professional upgrade to represent team members
+  - **Solution**: Redesigned team section with 5x better professional appearance
+  - **Implementation Details**:
+    - Increased profile image size to 160px for better visibility
+    - Added animated hover effects with smooth transitions
+    - Implemented proper spacing and typography hierarchy
+    - Removed social media integration to streamline the design
+    - Created responsive layout that works on all device sizes
+    - Added decorative elements and gradient overlays
+    - Maintained the 3-color rule (teal, cream, accent orange)
+  - **Result**: Professional and visually appealing team representation
+  - **Impact**: Builds trust and credibility with visitors through professional team presentation
+
+- **Improved Timeline Section Design**:
+  - **Issue**: Timeline section lacked modern design and responsive behavior
+  - **Solution**: Implemented modern, responsive timeline with scrolling animations
+  - **Implementation Details**:
+    - Added alternating background colors (white and teal)
+    - Implemented animated background elements with subtle movement
+    - Created mobile view as stacked layout with vertical connectors
+    - Added year badges in colorful circles with white text for better visibility
+    - Implemented smooth gradient lines connecting milestones
+    - Improved desktop view with alternating left/right card layout
+    - Added scroll-triggered animations for all milestones
+    - Used enhanced viewport detection for better performance
+    - Added staggered delays for sequential appearance
+    - Ensured responsive design maintains readability on all screens
+  - **Result**: Modern, engaging timeline with smooth animations
+  - **Impact**: Engaging user experience with smooth animations as users scroll down
 
 ---
 

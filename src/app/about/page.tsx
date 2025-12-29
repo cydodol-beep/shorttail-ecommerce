@@ -410,6 +410,7 @@ export default function AboutPage() {
         )}
 
         {!loading && (
+          <div> {/* Wrapper div for multiple elements */}
         {/* Hero Section */}
         <section
           id="hero"
@@ -1232,10 +1233,11 @@ export default function AboutPage() {
             </motion.div>
           </div>
         </section>
-        )}
-      </main>
+        </div>
+      )}
 
       <Footer />
+    </main>
     </div>
   );
 }
