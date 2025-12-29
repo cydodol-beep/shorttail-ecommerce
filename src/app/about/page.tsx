@@ -90,6 +90,30 @@ interface Testimonial {
   updated_at: string;
 }
 
+// Simple in-memory cache with TTL
+const ABOUT_PAGE_CACHE = {
+  data: null as any,
+  timestamp: 0,
+  ttl: 5 * 60 * 1000, // 5 minutes
+
+  get() {
+    if (this.data && (Date.now() - this.timestamp) < this.ttl) {
+      return this.data;
+    }
+    return null;
+  },
+
+  set(data: any) {
+    this.data = data;
+    this.timestamp = Date.now();
+  },
+
+  clear() {
+    this.data = null;
+    this.timestamp = 0;
+  }
+};
+
 export default function AboutPage() {
   const [sections, setSections] = useState<Record<string, AboutSection>>({});
   const [values, setValues] = useState<Value[]>([]);
@@ -114,89 +138,186 @@ export default function AboutPage() {
     };
   }, []);
 
-  // Fetch About Us page content from database
+  // Fetch About Us page content from database with improved performance
   const fetchAboutContent = async () => {
+    // Try to get cached data first
+    const cachedData = ABOUT_PAGE_CACHE.get();
+    if (cachedData) {
+      setSections(cachedData.sections);
+      setValues(cachedData.values);
+      setTeamMembers(cachedData.teamMembers);
+      setMilestones(cachedData.milestones);
+      setTestimonials(cachedData.testimonials);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
 
-      // Fetch all section content
-      const { data: sectionsData, error: sectionsError } = await supabase
-        .from('about_page_sections')
-        .select('*')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
+      // Execute all queries in parallel for better performance with retry
+      const [sectionsResponse, valuesResponse, teamResponse, milestonesResponse, testimonialsResponse] =
+        await Promise.allSettled([
+          fetchWithRetry(() =>
+            supabase
+              .from('about_page_sections')
+              .select('*')
+              .eq('is_active', true)
+              .order('sort_order', { ascending: true })
+          ),
+          fetchWithRetry(() =>
+            supabase
+              .from('about_values')
+              .select('*')
+              .eq('is_active', true)
+              .order('sort_order', { ascending: true })
+          ),
+          fetchWithRetry(() =>
+            supabase
+              .from('about_team_members')
+              .select('*')
+              .eq('is_active', true)
+              .order('sort_order', { ascending: true })
+          ),
+          fetchWithRetry(() =>
+            supabase
+              .from('about_milestones')
+              .select('*')
+              .order('year', { ascending: false })
+          ),
+          fetchWithRetry(() =>
+            supabase
+              .from('about_testimonials')
+              .select('*')
+              .eq('is_verified', true)
+              .order('created_at', { ascending: false })
+              .limit(6)
+          )
+        ]);
 
-      if (sectionsError) {
-        console.error('Error fetching sections:', sectionsError);
-        // Continue even if sections fail to load
-      } else if (sectionsData) {
-        const sectionsMap: Record<string, AboutSection> = {};
-        sectionsData.forEach((section: any) => {
-          sectionsMap[section.section_key] = section;
-        });
-        setSections(sectionsMap);
-      }
+      let sections: Record<string, AboutSection> = {};
+      let values: Value[] = [];
+      let teamMembers: TeamMember[] = [];
+      let milestones: Milestone[] = [];
+      let testimonials: Testimonial[] = [];
 
-      // Fetch company values
-      const { data: valuesData, error: valuesError } = await supabase
-        .from('about_values')
-        .select('*')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
-
-      if (valuesError) {
-        console.error('Error fetching values:', valuesError);
+      // Handle sections data
+      if (sectionsResponse.status === 'fulfilled' && sectionsResponse.value) {
+        const { data: sectionsData, error: sectionsError } = sectionsResponse.value;
+        if (sectionsError) {
+          console.error('Error fetching sections:', sectionsError);
+        } else if (sectionsData) {
+          sectionsData.forEach((section: any) => {
+            sections[section.section_key] = section;
+          });
+        }
       } else {
-        setValues(valuesData || []);
+        console.error('Promise rejected for sections:', sectionsResponse.status === 'rejected' ? sectionsResponse.reason : 'unknown');
       }
 
-      // Fetch team members
-      const { data: teamData, error: teamError } = await supabase
-        .from('about_team_members')
-        .select('*')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
-
-      if (teamError) {
-        console.error('Error fetching team members:', teamError);
+      // Handle values data
+      if (valuesResponse.status === 'fulfilled' && valuesResponse.value) {
+        const { data: valuesData, error: valuesError } = valuesResponse.value;
+        if (valuesError) {
+          console.error('Error fetching values:', valuesError);
+        } else {
+          values = valuesData || [];
+        }
       } else {
-        setTeamMembers(teamData || []);
+        console.error('Promise rejected for values:', valuesResponse.status === 'rejected' ? valuesResponse.reason : 'unknown');
       }
 
-      // Fetch milestones
-      const { data: milestonesData, error: milestonesError } = await supabase
-        .from('about_milestones')
-        .select('*')
-        .order('year', { ascending: false });
-
-      if (milestonesError) {
-        console.error('Error fetching milestones:', milestonesError);
+      // Handle team members data
+      if (teamResponse.status === 'fulfilled' && teamResponse.value) {
+        const { data: teamData, error: teamError } = teamResponse.value;
+        if (teamError) {
+          console.error('Error fetching team members:', teamError);
+        } else {
+          teamMembers = teamData || [];
+        }
       } else {
-        setMilestones(milestonesData || []);
+        console.error('Promise rejected for team:', teamResponse.status === 'rejected' ? teamResponse.reason : 'unknown');
       }
 
-      // Fetch testimonials
-      const { data: testimonialsData, error: testimonialsError } = await supabase
-        .from('about_testimonials')
-        .select('*')
-        .eq('is_verified', true)
-        .order('created_at', { ascending: false })
-        .limit(6);
-
-      if (testimonialsError) {
-        console.error('Error fetching testimonials:', testimonialsError);
+      // Handle milestones data
+      if (milestonesResponse.status === 'fulfilled' && milestonesResponse.value) {
+        const { data: milestonesData, error: milestonesError } = milestonesResponse.value;
+        if (milestonesError) {
+          console.error('Error fetching milestones:', milestonesError);
+        } else {
+          milestones = milestonesData || [];
+        }
       } else {
-        setTestimonials(testimonialsData || []);
+        console.error('Promise rejected for milestones:', milestonesResponse.status === 'rejected' ? milestonesResponse.reason : 'unknown');
       }
+
+      // Handle testimonials data
+      if (testimonialsResponse.status === 'fulfilled' && testimonialsResponse.value) {
+        const { data: testimonialsData, error: testimonialsError } = testimonialsResponse.value;
+        if (testimonialsError) {
+          console.error('Error fetching testimonials:', testimonialsError);
+        } else {
+          testimonials = testimonialsData || [];
+        }
+      } else {
+        console.error('Promise rejected for testimonials:', testimonialsResponse.status === 'rejected' ? testimonialsResponse.reason : 'unknown');
+      }
+
+      // Update state with fetched data
+      setSections(sections);
+      setValues(values);
+      setTeamMembers(teamMembers);
+      setMilestones(milestones);
+      setTestimonials(testimonials);
+
+      // Cache the data
+      ABOUT_PAGE_CACHE.set({
+        sections,
+        values,
+        teamMembers,
+        milestones,
+        testimonials
+      });
     } catch (error) {
       console.error('Unexpected error in fetchAboutContent:', error);
+      // Even if we have partial data, we should display it rather than remain in loading state
     } finally {
       setLoading(false);
     }
   };
 
+  // Helper function to retry failed requests
+  const fetchWithRetry = async (requestFn: () => any, retries = 3) => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const result = await requestFn();
+        if (result.error) {
+          console.warn(`Attempt ${i+1} failed:`, result.error.message);
+          if (i === retries - 1) return result; // Last attempt, return error
+        } else {
+          return result; // Success, return result
+        }
+      } catch (error) {
+        console.warn(`Attempt ${i+1} threw error:`, error);
+        if (i === retries - 1) throw error; // Last attempt, rethrow
+      }
+      // Wait a bit before retrying (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 500));
+    }
+  };
+
+  // Function to clear cache when needed
+  const clearCache = () => {
+    ABOUT_PAGE_CACHE.clear();
+  };
+
   useEffect(() => {
     fetchAboutContent();
+
+    // Clear cache on component unmount to ensure fresh data on next visit if needed
+    return () => {
+      // Optionally clear cache after some time
+    };
   }, []);
 
   // Scroll to section
@@ -277,11 +398,21 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#fdf6ec', color: '#006d77' }}>
       <Header />
-      
+
       <main className="flex-1">
+        {loading && (
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="flex flex-col items-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ff911d] mb-4"></div>
+              <p className="text-[#006d77]/70 font-medium">Loading about information...</p>
+            </div>
+          </div>
+        )}
+
+        {!loading && (
         {/* Hero Section */}
-        <section 
-          id="hero" 
+        <section
+          id="hero"
           className="min-h-screen flex items-center justify-center pt-16 relative overflow-hidden"
           style={{ backgroundColor: 'linear-gradient(to bottom, #008a90, #006d77)' }}
         >
@@ -1101,8 +1232,9 @@ export default function AboutPage() {
             </motion.div>
           </div>
         </section>
+        )}
       </main>
-      
+
       <Footer />
     </div>
   );
