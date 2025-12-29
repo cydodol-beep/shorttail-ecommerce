@@ -21,6 +21,20 @@ const config: Config = {
           800: '#543F2A',
           900: '#2C1E12',
         },
+        cream: '#fdf6ec',
+        teal: {
+          50: '#e6f7f8',
+          100: '#c2e7ea',
+          200: '#94d2d7',
+          300: '#5cb0b9',
+          400: '#2d8890',
+          500: '#006d77',
+          600: '#005a61',
+          700: '#004a50',
+          800: '#003a40',
+          900: '#002a30',
+        },
+        accent: '#ff911d',
         background: 'var(--background)',
         foreground: 'var(--foreground)',
         card: {
@@ -42,10 +56,6 @@ const config: Config = {
         muted: {
           DEFAULT: 'var(--muted)',
           foreground: 'var(--muted-foreground)',
-        },
-        accent: {
-          DEFAULT: 'var(--accent)',
-          foreground: 'var(--accent-foreground)',
         },
         destructive: {
           DEFAULT: 'var(--destructive)',

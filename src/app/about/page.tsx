@@ -18,7 +18,8 @@ import {
   Sparkles,
   Mountain,
   Plane,
-  Building
+  Building,
+  ArrowRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -427,13 +428,47 @@ export default function AboutPage() {
         </section>
 
         {/* Team Section */}
-        <section id="team" className="py-20 bg-gradient-to-r from-[#006d77]/5 to-[#ff911d]/5">
-          <div className="container mx-auto px-4">
+        <section
+          id="team"
+          className="py-20 bg-gradient-to-br from-[#006d77]/5 via-cream to-[#ff911d]/5 relative overflow-hidden"
+        >
+          {/* Decorative background elements */}
+          <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+            <motion.div
+              className="absolute top-1/4 left-1/4 w-64 h-64 bg-[#ff911d]/5 rounded-full blur-3xl"
+              animate={{
+                x: [0, 30, 0],
+                y: [0, -20, 0],
+                scale: [1, 1.1, 1]
+              }}
+              transition={{
+                duration: 20,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+            <motion.div
+              className="absolute bottom-1/3 right-1/4 w-72 h-72 bg-[#006d77]/5 rounded-full blur-3xl"
+              animate={{
+                x: [0, -40, 0],
+                y: [0, 20, 0],
+                scale: [1, 1.2, 1]
+              }}
+              transition={{
+                duration: 25,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 3
+              }}
+            />
+          </div>
+
+          <div className="container mx-auto px-4 relative z-10">
             <div className="text-center max-w-3xl mx-auto mb-16">
-              <Badge className="bg-[#ff911d]/10 text-[#ff911d] border-[#ff911d]/20 mb-4">
+              <Badge className="bg-[#ff911d]/10 text-[#ff911d] border-[#ff911d]/20 mb-4 backdrop-blur-sm">
                 Meet Our Team
               </Badge>
-              <motion.h2 
+              <motion.h2
                 className="text-3xl md:text-4xl font-bold text-[#006d77] mb-6"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -442,8 +477,8 @@ export default function AboutPage() {
               >
                 {sections.team?.title || "The Passionate People Behind ShortTail.id"}
               </motion.h2>
-              <motion.p 
-                className="text-lg text-[#006d77]/70"
+              <motion.p
+                className="text-lg text-[#006d77]/80 max-w-2xl mx-auto"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -453,55 +488,127 @@ export default function AboutPage() {
               </motion.p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
               {teamMembers.length > 0 ? (
                 teamMembers.map((member, index) => (
                   <motion.div
                     key={member.id}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{ duration: 0.6, delay: index * 0.1 }}
+                    className="group"
                   >
-                    <Card className="border-0 bg-white/80 backdrop-blur-sm overflow-hidden text-center group hover:shadow-xl transition-all duration-300"
+                    <Card className="border-0 bg-white/80 backdrop-blur-sm overflow-visible text-center group hover:shadow-2xl transition-all duration-500 h-full flex flex-col"
                       style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}>
-                      <div className="relative">
+                      <div className="relative overflow-visible -mt-8">
                         {member.image_url ? (
-                          <motion.img
-                            src={member.image_url}
-                            alt={member.name}
-                            className="w-full h-64 object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.onerror = null; // Prevent infinite loop
-                              target.src = "https://placehold.co/400x400/e6dcc8/006d77?text=" + encodeURIComponent(member.name.split(' ')[0]);
-                            }}
-                            initial={{ scale: 1 }}
-                            whileHover={{ scale: 1.05 }}
+                          <motion.div
+                            className="relative mx-auto w-40 h-40 rounded-full overflow-hidden border-4 border-white shadow-lg"
+                            whileHover={{ y: -5 }}
                             transition={{ duration: 0.3 }}
-                          />
+                          >
+                            <img
+                              src={member.image_url}
+                              alt={member.name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.onerror = null; // Prevent infinite loop
+                                target.src = "https://placehold.co/400x400/e6dcc8/006d77?text=" + encodeURIComponent(member.name.split(' ')[0]);
+                              }}
+                            />
+                            {/* Decorative overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#006d77]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                            {/* Decorative border */}
+                            <div className="absolute inset-0 rounded-full border-2 border-[#ff911d]/30 pointer-events-none"></div>
+                          </motion.div>
                         ) : (
-                          <div className="w-full h-64 bg-gradient-to-br from-[#006d77]/20 to-[#ff911d]/20 flex items-center justify-center">
+                          <motion.div
+                            className="relative mx-auto w-40 h-40 rounded-full overflow-hidden border-4 border-white shadow-lg flex items-center justify-center bg-gradient-to-br from-[#006d77]/20 to-[#ff911d]/20"
+                            whileHover={{ y: -5 }}
+                            transition={{ duration: 0.3 }}
+                          >
                             <div className="text-center p-4">
-                              <motion.div 
-                                className="bg-[#006d77]/20 p-4 rounded-full inline-block mb-3"
+                              <motion.div
+                                className="bg-[#006d77]/20 p-5 rounded-full inline-block mb-3"
                                 whileHover={{ scale: 1.1 }}
                               >
-                                <PawPrint className="h-8 w-8 text-[#006d77]" />
+                                <PawPrint className="h-10 w-10 text-[#006d77]" />
                               </motion.div>
-                              <p className="text-[#006d77] font-medium">{member.name.split(' ')[0]}</p>
+                              <p className="text-[#006d77] font-medium text-xl">{member.name.split(' ')[0]}</p>
                             </div>
-                          </div>
+
+                            {/* Decorative overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#006d77]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                            {/* Decorative border */}
+                            <div className="absolute inset-0 rounded-full border-2 border-[#ff911d]/30 pointer-events-none"></div>
+                          </motion.div>
                         )}
-                        
-                        {/* Overlay effect on hover */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#006d77]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                          style={{ backgroundColor: 'rgba(0, 109, 119, 0.2)' }}></div>
                       </div>
-                      <CardContent className="p-6">
+
+                      <CardContent className="p-8 pt-4 flex flex-col flex-1">
                         <h3 className="text-xl font-bold text-[#006d77] mb-1">{member.name}</h3>
-                        <p className="text-[#ff911d] font-medium mb-3">{member.role}</p>
-                        <p className="text-[#006d77]/70 text-sm">{member.bio}</p>
+                        <p className="text-[#ff911d] font-semibold mb-4 text-lg">{member.role}</p>
+                        <p className="text-[#006d77]/80 text-base mb-6 flex-1">{member.bio}</p>
+
+                        {/* Social media links */}
+                        <div className="flex justify-center space-x-4 mt-auto">
+                          {member.social_links && Object.keys(member.social_links).length > 0 ? (
+                            Object.entries(member.social_links).map(([platform, url]) => (
+                              <motion.a
+                                key={platform}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-10 h-10 rounded-full bg-[#006d77]/10 flex items-center justify-center text-[#006d77] hover:bg-[#006d77] hover:text-white transition-colors duration-300"
+                                whileHover={{
+                                  y: -3,
+                                  backgroundColor: "#006d77",
+                                  color: "white"
+                                }}
+                                whileTap={{ scale: 0.9 }}
+                              >
+                                {platform === 'linkedin' && <span className="font-bold text-xs">in</span>}
+                                {platform === 'twitter' && <span className="font-bold text-xs">X</span>}
+                                {platform === 'instagram' && <span className="font-bold text-xs">@</span>}
+                                {platform === 'facebook' && <span className="font-bold text-xs">f</span>}
+                                {!['linkedin', 'twitter', 'instagram', 'facebook'].includes(platform) && (
+                                  <span className="font-bold text-xs">{platform.charAt(0).toUpperCase()}</span>
+                                )}
+                              </motion.a>
+                            ))
+                          ) : (
+                            <>
+                              <motion.a
+                                href="#"
+                                className="w-10 h-10 rounded-full bg-[#006d77]/10 flex items-center justify-center text-[#006d77] hover:bg-[#006d77] hover:text-white transition-colors duration-300"
+                                whileHover={{
+                                  y: -3,
+                                  backgroundColor: "#006d77",
+                                  color: "white"
+                                }}
+                                whileTap={{ scale: 0.9 }}
+                              >
+                                <span className="font-bold text-xs">in</span>
+                              </motion.a>
+                              <motion.a
+                                href="#"
+                                className="w-10 h-10 rounded-full bg-[#006d77]/10 flex items-center justify-center text-[#006d77] hover:bg-[#006d77] hover:text-white transition-colors duration-300"
+                                whileHover={{
+                                  y: -3,
+                                  backgroundColor: "#006d77",
+                                  color: "white"
+                                }}
+                                whileTap={{ scale: 0.9 }}
+                              >
+                                <span className="font-bold text-xs">@</span>
+                              </motion.a>
+                            </>
+                          )}
+                        </div>
                       </CardContent>
                     </Card>
                   </motion.div>
@@ -510,49 +617,86 @@ export default function AboutPage() {
                 // Fallback team members if none in DB
                 <>
                   {[
-                    { 
-                      name: "Siti Rahayu", 
-                      role: "Founder & CEO", 
-                      bio: "Veterinary graduate with 10+ years in pet care industry",
-                      image: "https://placehold.co/400x400/e6dcc8/006d77?text=Siti"
+                    {
+                      name: "Siti Rahayu",
+                      role: "Founder & CEO",
+                      bio: "Veterinary graduate with 10+ years in pet care industry, passionate about bringing premium products to Indonesian pet parents.",
+                      image: "https://placehold.co/400x400/e6dcc8/006d77?text=Siti",
+                      social_links: { linkedin: "#", instagram: "#" }
                     },
-                    { 
-                      name: "Ahmad Prasetyo", 
-                      role: "Head of Operations", 
-                      bio: "Supply chain expert focused on quality assurance",
-                      image: "https://placehold.co/400x400/e6dcc8/006d77?text=Ahmad"
+                    {
+                      name: "Ahmad Prasetyo",
+                      role: "Head of Operations",
+                      bio: "Supply chain expert focused on quality assurance and sustainable sourcing practices, ensuring every product meets our high standards.",
+                      image: "https://placehold.co/400x400/e6dcc8/006d77?text=Ahmad",
+                      social_links: { linkedin: "#", twitter: "#" }
                     },
-                    { 
-                      name: "Dewi Kartika", 
-                      role: "Pet Nutrition Specialist", 
-                      bio: "Animal nutritionist dedicated to healthy pet diets",
-                      image: "https://placehold.co/400x400/e6dcc8/006d77?text=Dewi"
+                    {
+                      name: "Dewi Kartika",
+                      role: "Pet Nutrition Specialist",
+                      bio: "Animal nutritionist dedicated to helping pet parents make informed dietary choices, with expertise in species-specific nutritional needs.",
+                      image: "https://placehold.co/400x400/e6dcc8/006d77?text=Dewi",
+                      social_links: { linkedin: "#", instagram: "#" }
                     }
                   ].map((member, index) => (
                     <motion.div
                       key={index}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      initial={{ opacity: 0, y: 30 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, amount: 0.3 }}
+                      transition={{ duration: 0.6, delay: index * 0.1 }}
+                      className="group"
                     >
-                      <Card className="border-0 bg-white/80 backdrop-blur-sm overflow-hidden text-center group hover:shadow-xl transition-all duration-300"
+                      <Card className="border-0 bg-white/80 backdrop-blur-sm overflow-visible text-center group hover:shadow-2xl transition-all duration-500 h-full flex flex-col"
                         style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}>
-                        <div className="relative">
-                          <motion.img
-                            src={member.image}
-                            alt={member.name}
-                            className="w-full h-64 object-cover"
-                            initial={{ scale: 1 }}
-                            whileHover={{ scale: 1.05 }}
+                        <div className="relative overflow-visible -mt-8">
+                          <motion.div
+                            className="relative mx-auto w-40 h-40 rounded-full overflow-hidden border-4 border-white shadow-lg"
+                            whileHover={{ y: -5 }}
                             transition={{ duration: 0.3 }}
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-[#006d77]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          >
+                            <img
+                              src={member.image}
+                              alt={member.name}
+                              className="w-full h-full object-cover"
+                            />
+                            {/* Decorative overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#006d77]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                            {/* Decorative border */}
+                            <div className="absolute inset-0 rounded-full border-2 border-[#ff911d]/30 pointer-events-none"></div>
+                          </motion.div>
                         </div>
-                        <CardContent className="p-6">
+
+                        <CardContent className="p-8 pt-4 flex flex-col flex-1">
                           <h3 className="text-xl font-bold text-[#006d77] mb-1">{member.name}</h3>
-                          <p className="text-[#ff911d] font-medium mb-3">{member.role}</p>
-                          <p className="text-[#006d77]/70 text-sm">{member.bio}</p>
+                          <p className="text-[#ff911d] font-semibold mb-4 text-lg">{member.role}</p>
+                          <p className="text-[#006d77]/80 text-base mb-6 flex-1">{member.bio}</p>
+
+                          {/* Social media links */}
+                          <div className="flex justify-center space-x-4 mt-auto">
+                            {Object.entries(member.social_links).map(([platform, url]) => (
+                              <motion.a
+                                key={platform}
+                                href={url}
+                                className="w-10 h-10 rounded-full bg-[#006d77]/10 flex items-center justify-center text-[#006d77] hover:bg-[#006d77] hover:text-white transition-colors duration-300"
+                                whileHover={{
+                                  y: -3,
+                                  backgroundColor: "#006d77",
+                                  color: "white"
+                                }}
+                                whileTap={{ scale: 0.9 }}
+                              >
+                                {platform === 'linkedin' && <span className="font-bold text-xs">in</span>}
+                                {platform === 'twitter' && <span className="font-bold text-xs">X</span>}
+                                {platform === 'instagram' && <span className="font-bold text-xs">@</span>}
+                                {platform === 'facebook' && <span className="font-bold text-xs">f</span>}
+                                {!['linkedin', 'twitter', 'instagram', 'facebook'].includes(platform) && (
+                                  <span className="font-bold text-xs">{platform.charAt(0).toUpperCase()}</span>
+                                )}
+                              </motion.a>
+                            ))}
+                          </div>
                         </CardContent>
                       </Card>
                     </motion.div>
@@ -560,6 +704,22 @@ export default function AboutPage() {
                 </>
               )}
             </div>
+
+            {/* Call to action */}
+            <motion.div
+              className="text-center mt-16"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <Button
+                className="bg-[#006d77] hover:bg-[#005a61] text-white px-8 py-4 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                Join Our Team
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </motion.div>
           </div>
         </section>
 
