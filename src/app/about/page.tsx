@@ -98,7 +98,21 @@ export default function AboutPage() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<string>('hero');
+  const [isMobile, setIsMobile] = useState(false);
   const supabase = createClient();
+
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkIfMobile();
+    window.addEventListener('resize', checkIfMobile);
+
+    return () => {
+      window.removeEventListener('resize', checkIfMobile);
+    };
+  }, []);
 
   // Fetch About Us page content from database
   const fetchAboutContent = async () => {
@@ -637,7 +651,7 @@ export default function AboutPage() {
               <Badge className="bg-[#006d77]/10 text-[#006d77] border-[#006d77]/20 mb-4">
                 Our Journey
               </Badge>
-              <motion.h2 
+              <motion.h2
                 className="text-3xl md:text-4xl font-bold text-[#006d77] mb-6"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -646,7 +660,7 @@ export default function AboutPage() {
               >
                 {sections.milestones?.title || "Milestones & Achievements"}
               </motion.h2>
-              <motion.p 
+              <motion.p
                 className="text-lg text-[#006d77]/70"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -657,107 +671,185 @@ export default function AboutPage() {
               </motion.p>
             </div>
 
-            <div className="relative max-w-4xl mx-auto">
-              {/* Vertical timeline line */}
-              <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-0.5 bg-gradient-to-b from-[#006d77] to-[#ff911d] hidden md:block"></div>
+            {/* Mobile View (Stacked) */}
+            <div className="md:hidden space-y-8">
+              {milestones.length > 0 ? (
+                milestones.map((milestone, index) => (
+                  <motion.div
+                    key={milestone.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.4 }}
+                    transition={{ duration: 0.6, delay: index * 0.1 }}
+                    className="relative"
+                  >
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="w-10 h-10 bg-[#ff911d] rounded-full flex items-center justify-center text-white z-10 flex-shrink-0">
+                        <span className="font-bold text-sm">{milestone.year.toString().slice(-2)}</span>
+                      </div>
+                      <div className="h-1 flex-1 bg-gradient-to-r from-[#ff911d] to-[#006d77]"></div>
+                    </div>
 
-              <div className="space-y-12 md:space-y-24">
+                    <Card className="border-0 bg-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 relative z-0">
+                      <CardContent className="p-5">
+                        <div className="flex items-start gap-4">
+                          <div className="w-12 h-12 bg-[#ff911d]/10 rounded-full flex items-center justify-center flex-shrink-0 text-[#ff911d]">
+                            {getIconComponent(milestone.icon)}
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-lg font-bold text-[#006d77]">{milestone.title}</h3>
+                            <p className="text-[#006d77]/70 mt-1">{milestone.description}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))
+              ) : (
+                // Default milestones if none in DB
+                [
+                  { year: 2020, title: "Company Founded", description: "ShortTail.id launched with a vision to revolutionize pet care in Indonesia", icon: "award" },
+                  { year: 2021, title: "First Store Opening", description: "Opened our flagship physical store in Jakarta", icon: "building" },
+                  { year: 2022, title: "10,000 Happy Pets", description: "Reached 10,000 pets served with premium care products", icon: "pawprint" },
+                  { year: 2023, title: "Mobile App Launch", description: "Launched our mobile app for convenient pet care access", icon: "globe" },
+                  { year: 2024, title: "100,000 Customers", description: "Served 100,000+ pet parents across Indonesia", icon: "users" },
+                  { year: 2025, title: "Sustainability Initiative", description: "Launched eco-friendly packaging for all products", icon: "leaf" }
+                ].map((milestone, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.4 }}
+                    transition={{ duration: 0.6, delay: index * 0.1 }}
+                    className="relative"
+                  >
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="w-10 h-10 bg-[#ff911d] rounded-full flex items-center justify-center text-white z-10 flex-shrink-0">
+                        <span className="font-bold text-sm">{milestone.year.toString().slice(-2)}</span>
+                      </div>
+                      <div className="h-1 flex-1 bg-gradient-to-r from-[#ff911d] to-[#006d77]"></div>
+                    </div>
+
+                    <Card className="border-0 bg-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 relative z-0">
+                      <CardContent className="p-5">
+                        <div className="flex items-start gap-4">
+                          <div className="w-12 h-12 bg-[#ff911d]/10 rounded-full flex items-center justify-center flex-shrink-0 text-[#ff911d]">
+                            {getIconComponent(milestone.icon)}
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-lg font-bold text-[#006d77]">{milestone.title}</h3>
+                            <p className="text-[#006d77]/70 mt-1">{milestone.description}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))
+              )}
+            </div>
+
+            {/* Desktop View (Timeline) */}
+            <div className="hidden md:block relative max-w-4xl mx-auto">
+              {/* Vertical timeline line */}
+              <div className="absolute left-1/2 transform -translate-x-1/2 w-1 bg-gradient-to-b from-[#006d77] to-[#ff911d] h-full"></div>
+
+              <div className="space-y-24">
                 {milestones.length > 0 ? (
                   milestones.map((milestone, index) => (
                     <motion.div
                       key={milestone.id}
-                      initial={{ opacity: 0, y: 20 }}
+                      initial={{ opacity: 0, y: 50 }}
                       whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.6, delay: index * 0.1 }}
-                      className={`relative flex flex-col md:flex-row items-center ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}
+                      viewport={{ once: true, amount: 0.4 }}
+                      transition={{ duration: 0.7, delay: index * 0.15 }}
+                      className={`relative flex items-center ${index % 2 === 0 ? 'flex-row' : 'flex-row-reverse'}`}
                     >
-                      <div className={`w-full md:w-5/12 ${index % 2 === 0 ? 'md:pr-8 md:text-left' : 'md:pl-8 md:text-right'} mb-4 md:mb-0`}>
-                        <Card className="border-0 bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+                      <div className={`w-5/12 ${index % 2 === 0 ? 'pr-8 text-left' : 'pl-8 text-right'}`}>
+                        <Card className="border-0 bg-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group">
                           <CardContent className="p-6">
                             <div className="flex items-center gap-4">
-                              {index % 2 === 0 && (
+                              {index % 2 === 0 ? (
                                 <div className="w-12 h-12 bg-[#ff911d]/10 rounded-full flex items-center justify-center flex-shrink-0 text-[#ff911d]">
                                   {getIconComponent(milestone.icon)}
                                 </div>
-                              )}
-                              <div className={`${index % 2 !== 0 ? 'md:ml-auto' : ''} flex-1`}>
-                                <span className="text-[#ff911d] font-bold text-lg">{milestone.year}</span>
+                              ) : null}
+
+                              <div className={index % 2 !== 0 ? 'ml-auto' : ''}>
+                                <span className="text-[#ff911d] font-bold text-lg bg-[#006d77]/5 px-3 py-1 rounded-full inline-block">
+                                  {milestone.year}
+                                </span>
                                 <h3 className="text-xl font-bold text-[#006d77] mt-2">{milestone.title}</h3>
                                 <p className="text-[#006d77]/70 mt-2">{milestone.description}</p>
                               </div>
-                              {index % 2 !== 0 && (
+
+                              {index % 2 !== 0 ? (
                                 <div className="w-12 h-12 bg-[#ff911d]/10 rounded-full flex items-center justify-center flex-shrink-0 text-[#ff911d]">
                                   {getIconComponent(milestone.icon)}
                                 </div>
-                              )}
+                              ) : null}
                             </div>
                           </CardContent>
                         </Card>
                       </div>
-                      
+
                       {/* Timeline dot */}
-                      <div className="absolute left-1/2 transform -translate-x-1/2 w-6 h-6 rounded-full bg-[#ff911d] border-4 border-white shadow-lg z-10 md:flex items-center justify-center hidden">
+                      <div className="absolute left-1/2 transform -translate-x-1/2 w-6 h-6 rounded-full bg-[#ff911d] border-4 border-white shadow-lg z-10 flex items-center justify-center">
                         <div className="w-2 h-2 bg-white rounded-full"></div>
                       </div>
-                      
-                      {/* Mobile timeline */}
-                      <div className="w-0.5 h-8 bg-[#006d77]/30 md:hidden mx-auto"></div>
                     </motion.div>
                   ))
                 ) : (
                   // Default milestones if none in DB
-                  <>
-                    {[
-                      { year: 2020, title: "Company Founded", description: "ShortTail.id launched with a vision to revolutionize pet care in Indonesia", icon: "award" },
-                      { year: 2021, title: "First Store Opening", description: "Opened our flagship physical store in Jakarta", icon: "building" },
-                      { year: 2022, title: "10,000 Happy Pets", description: "Reached 10,000 pets served with premium care products", icon: "pawprint" },
-                      { year: 2023, title: "Mobile App Launch", description: "Launched our mobile app for convenient pet care access", icon: "globe" },
-                      { year: 2024, title: "100,000 Customers", description: "Served 100,000+ pet parents across Indonesia", icon: "users" },
-                      { year: 2025, title: "Sustainability Initiative", description: "Launched eco-friendly packaging for all products", icon: "leaf" }
-                    ].map((milestone, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: index * 0.1 }}
-                        className={`relative flex flex-col md:flex-row items-center ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}
-                      >
-                        <div className={`w-full md:w-5/12 ${index % 2 === 0 ? 'md:pr-8 md:text-left' : 'md:pl-8 md:text-right'} mb-4 md:mb-0`}>
-                          <Card className="border-0 bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
-                            <CardContent className="p-6">
-                              <div className="flex items-center gap-4">
-                                {index % 2 === 0 && (
-                                  <div className="w-12 h-12 bg-[#ff911d]/10 rounded-full flex items-center justify-center flex-shrink-0 text-[#ff911d]">
-                                    {getIconComponent(milestone.icon)}
-                                  </div>
-                                )}
-                                <div className={`${index % 2 !== 0 ? 'md:ml-auto' : ''} flex-1`}>
-                                  <span className="text-[#ff911d] font-bold text-lg">{milestone.year}</span>
-                                  <h3 className="text-xl font-bold text-[#006d77] mt-2">{milestone.title}</h3>
-                                  <p className="text-[#006d77]/70 mt-2">{milestone.description}</p>
+                  [
+                    { year: 2020, title: "Company Founded", description: "ShortTail.id launched with a vision to revolutionize pet care in Indonesia", icon: "award" },
+                    { year: 2021, title: "First Store Opening", description: "Opened our flagship physical store in Jakarta", icon: "building" },
+                    { year: 2022, title: "10,000 Happy Pets", description: "Reached 10,000 pets served with premium care products", icon: "pawprint" },
+                    { year: 2023, title: "Mobile App Launch", description: "Launched our mobile app for convenient pet care access", icon: "globe" },
+                    { year: 2024, title: "100,000 Customers", description: "Served 100,000+ pet parents across Indonesia", icon: "users" },
+                    { year: 2025, title: "Sustainability Initiative", description: "Launched eco-friendly packaging for all products", icon: "leaf" }
+                  ].map((milestone, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 50 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, amount: 0.4 }}
+                      transition={{ duration: 0.7, delay: index * 0.15 }}
+                      className={`relative flex items-center ${index % 2 === 0 ? 'flex-row' : 'flex-row-reverse'}`}
+                    >
+                      <div className={`w-5/12 ${index % 2 === 0 ? 'pr-8 text-left' : 'pl-8 text-right'}`}>
+                        <Card className="border-0 bg-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group">
+                          <CardContent className="p-6">
+                            <div className="flex items-center gap-4">
+                              {index % 2 === 0 ? (
+                                <div className="w-12 h-12 bg-[#ff911d]/10 rounded-full flex items-center justify-center flex-shrink-0 text-[#ff911d]">
+                                  {getIconComponent(milestone.icon)}
                                 </div>
-                                {index % 2 !== 0 && (
-                                  <div className="w-12 h-12 bg-[#ff911d]/10 rounded-full flex items-center justify-center flex-shrink-0 text-[#ff911d]">
-                                    {getIconComponent(milestone.icon)}
-                                  </div>
-                                )}
+                              ) : null}
+
+                              <div className={index % 2 !== 0 ? 'ml-auto' : ''}>
+                                <span className="text-[#ff911d] font-bold text-lg bg-[#006d77]/5 px-3 py-1 rounded-full inline-block">
+                                  {milestone.year}
+                                </span>
+                                <h3 className="text-xl font-bold text-[#006d77] mt-2">{milestone.title}</h3>
+                                <p className="text-[#006d77]/70 mt-2">{milestone.description}</p>
                               </div>
-                            </CardContent>
-                          </Card>
-                        </div>
-                        
-                        {/* Timeline dot */}
-                        <div className="absolute left-1/2 transform -translate-x-1/2 w-6 h-6 rounded-full bg-[#ff911d] border-4 border-white shadow-lg z-10 md:flex items-center justify-center hidden">
-                          <div className="w-2 h-2 bg-white rounded-full"></div>
-                        </div>
-                        
-                        {/* Mobile timeline */}
-                        <div className="w-0.5 h-8 bg-[#006d77]/30 md:hidden mx-auto"></div>
-                      </motion.div>
-                    ))}
-                  </>
+
+                              {index % 2 !== 0 ? (
+                                <div className="w-12 h-12 bg-[#ff911d]/10 rounded-full flex items-center justify-center flex-shrink-0 text-[#ff911d]">
+                                  {getIconComponent(milestone.icon)}
+                                </div>
+                              ) : null}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      {/* Timeline dot */}
+                      <div className="absolute left-1/2 transform -translate-x-1/2 w-6 h-6 rounded-full bg-[#ff911d] border-4 border-white shadow-lg z-10 flex items-center justify-center">
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                      </div>
+                    </motion.div>
+                  ))
                 )}
               </div>
             </div>
