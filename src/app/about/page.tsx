@@ -698,7 +698,14 @@ export default function AboutPage() {
                           </div>
                           <div className="flex-1">
                             <h3 className={`text-lg font-bold ${index % 2 === 0 ? 'text-[#006d77]' : 'text-[#ff911d]'}`}>{milestone.title}</h3>
-                            <p className={`${index % 2 === 0 ? 'text-[#006d77]/80' : 'text-[#e6dcc8]/90'} mt-1`}>{milestone.description}</p>
+                            <div className={`${index % 2 === 0 ? 'text-[#006d77]/80' : 'text-[#e6dcc8]/90'} mt-1`}>
+                              {milestone.description.split('\n').map((line, i) => (
+                                <div key={i} className="flex items-start">
+                                  <span className="mr-2">•</span>
+                                  <span>{line}</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       </CardContent>
@@ -708,12 +715,12 @@ export default function AboutPage() {
               ) : (
                 // Default milestones if none in DB
                 [
-                  { year: 2020, title: "Company Founded", description: "ShortTail.id launched with a vision to revolutionize pet care in Indonesia", icon: "award" },
-                  { year: 2021, title: "First Store Opening", description: "Opened our flagship physical store in Jakarta", icon: "building" },
-                  { year: 2022, title: "10,000 Happy Pets", description: "Reached 10,000 pets served with premium care products", icon: "pawprint" },
-                  { year: 2023, title: "Mobile App Launch", description: "Launched our mobile app for convenient pet care access", icon: "globe" },
-                  { year: 2024, title: "100,000 Customers", description: "Served 100,000+ pet parents across Indonesia", icon: "users" },
-                  { year: 2025, title: "Sustainability Initiative", description: "Launched eco-friendly packaging for all products", icon: "leaf" }
+                  { year: 2020, title: "Company Founded", description: "ShortTail.id launched with a vision to revolutionize pet care in Indonesia\nStarted with a small team of animal lovers\nCommitted to premium products", icon: "award" },
+                  { year: 2021, title: "First Store Opening", description: "Opened our flagship physical store in Jakarta\nEstablished local customer base\nExpanded product range", icon: "building" },
+                  { year: 2022, title: "10,000 Happy Pets", description: "Reached 10,000 pets served with premium care products\nReceived positive customer feedback\nExpanded team to 15 members", icon: "pawprint" },
+                  { year: 2023, title: "Mobile App Launch", description: "Launched our mobile app for convenient pet care access\nEnabled online ordering system\nIntegrated loyalty program", icon: "globe" },
+                  { year: 2024, title: "100,000 Customers", description: "Served 100,000+ pet parents across Indonesia\nExpanded to 5 major cities\nAchieved 4.8 star rating", icon: "users" },
+                  { year: 2025, title: "Sustainability Initiative", description: "Launched eco-friendly packaging for all products\nPartnered with green suppliers\nIntroduced recycling program", icon: "leaf" }
                 ].map((milestone, index) => (
                   <motion.div
                     key={index}
@@ -738,7 +745,14 @@ export default function AboutPage() {
                           </div>
                           <div className="flex-1">
                             <h3 className={`text-lg font-bold ${index % 2 === 0 ? 'text-[#006d77]' : 'text-[#ff911d]'}`}>{milestone.title}</h3>
-                            <p className={`${index % 2 === 0 ? 'text-[#006d77]/80' : 'text-[#e6dcc8]/90'} mt-1`}>{milestone.description}</p>
+                            <div className={`${index % 2 === 0 ? 'text-[#006d77]/80' : 'text-[#e6dcc8]/90'} mt-1`}>
+                              {milestone.description.split('\n').map((line, i) => (
+                                <div key={i} className="flex items-start">
+                                  <span className="mr-2">•</span>
+                                  <span>{line}</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       </CardContent>
@@ -779,7 +793,14 @@ export default function AboutPage() {
                                   {milestone.year}
                                 </span>
                                 <h3 className={`text-xl font-bold mt-2 ${index % 2 === 0 ? 'text-[#006d77]' : 'text-[#ff911d]'}`}>{milestone.title}</h3>
-                                <p className={`mt-2 ${index % 2 === 0 ? 'text-[#006d77]/80' : 'text-[#e6dcc8]/90'}`}>{milestone.description}</p>
+                                <div className={`mt-2 ${index % 2 === 0 ? 'text-[#006d77]/80' : 'text-[#e6dcc8]/90'}`}>
+                                  {milestone.description.split('\n').map((line, i) => (
+                                    <div key={i} className="flex items-start">
+                                      <span className="mr-2">•</span>
+                                      <span>{line}</span>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
 
                               {index % 2 !== 0 ? (
@@ -801,12 +822,12 @@ export default function AboutPage() {
                 ) : (
                   // Default milestones if none in DB
                   [
-                    { year: 2020, title: "Company Founded", description: "ShortTail.id launched with a vision to revolutionize pet care in Indonesia", icon: "award" },
-                    { year: 2021, title: "First Store Opening", description: "Opened our flagship physical store in Jakarta", icon: "building" },
-                    { year: 2022, title: "10,000 Happy Pets", description: "Reached 10,000 pets served with premium care products", icon: "pawprint" },
-                    { year: 2023, title: "Mobile App Launch", description: "Launched our mobile app for convenient pet care access", icon: "globe" },
-                    { year: 2024, title: "100,000 Customers", description: "Served 100,000+ pet parents across Indonesia", icon: "users" },
-                    { year: 2025, title: "Sustainability Initiative", description: "Launched eco-friendly packaging for all products", icon: "leaf" }
+                    { year: 2020, title: "Company Founded", description: "ShortTail.id launched with a vision to revolutionize pet care in Indonesia\nStarted with a small team of animal lovers\nCommitted to premium products", icon: "award" },
+                    { year: 2021, title: "First Store Opening", description: "Opened our flagship physical store in Jakarta\nEstablished local customer base\nExpanded product range", icon: "building" },
+                    { year: 2022, title: "10,000 Happy Pets", description: "Reached 10,000 pets served with premium care products\nReceived positive customer feedback\nExpanded team to 15 members", icon: "pawprint" },
+                    { year: 2023, title: "Mobile App Launch", description: "Launched our mobile app for convenient pet care access\nEnabled online ordering system\nIntegrated loyalty program", icon: "globe" },
+                    { year: 2024, title: "100,000 Customers", description: "Served 100,000+ pet parents across Indonesia\nExpanded to 5 major cities\nAchieved 4.8 star rating", icon: "users" },
+                    { year: 2025, title: "Sustainability Initiative", description: "Launched eco-friendly packaging for all products\nPartnered with green suppliers\nIntroduced recycling program", icon: "leaf" }
                   ].map((milestone, index) => (
                     <motion.div
                       key={index}
@@ -831,7 +852,14 @@ export default function AboutPage() {
                                   {milestone.year}
                                 </span>
                                 <h3 className={`text-xl font-bold mt-2 ${index % 2 === 0 ? 'text-[#006d77]' : 'text-[#ff911d]'}`}>{milestone.title}</h3>
-                                <p className={`mt-2 ${index % 2 === 0 ? 'text-[#006d77]/80' : 'text-[#e6dcc8]/90'}`}>{milestone.description}</p>
+                                <div className={`mt-2 ${index % 2 === 0 ? 'text-[#006d77]/80' : 'text-[#e6dcc8]/90'}`}>
+                                  {milestone.description.split('\n').map((line, i) => (
+                                    <div key={i} className="flex items-start">
+                                      <span className="mr-2">•</span>
+                                      <span>{line}</span>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
 
                               {index % 2 !== 0 ? (
