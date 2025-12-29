@@ -18,6 +18,7 @@ import {
 import { Bell, LogOut, Store } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useNotificationStore } from '@/store/notification-store';
+import { SessionCountdown } from '@/components/admin/session-countdown';
 
 export default function AdminLayout({
   children,
@@ -55,6 +56,9 @@ export default function AdminLayout({
           </div>
           
           <div className="flex items-center gap-3">
+            {/* Session Countdown - visible only to master admins */}
+            <SessionCountdown />
+
             {/* View Store Link */}
             <Link href="/" target="_blank">
               <Button variant="outline" size="sm">

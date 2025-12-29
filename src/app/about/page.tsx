@@ -696,7 +696,7 @@ export default function AboutPage() {
                           <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${index % 2 === 0 ? 'bg-[#ff911d]/10 text-[#ff911d]' : 'bg-[#e6dcc8]/20 text-[#e6dcc8]'}`}>
                             {getIconComponent(milestone.icon)}
                           </div>
-                          <div className="flex-1">
+                          <div className="flex-1 text-left">
                             <h3 className={`text-lg font-bold ${index % 2 === 0 ? 'text-[#006d77]' : 'text-[#ff911d]'}`}>{milestone.title}</h3>
                             <div className={`${index % 2 === 0 ? 'text-[#006d77]/80' : 'text-[#e6dcc8]/90'} mt-1`}>
                               {milestone.description.split('\n').map((line, i) => (
@@ -743,7 +743,7 @@ export default function AboutPage() {
                           <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${index % 2 === 0 ? 'bg-[#ff911d]/10 text-[#ff911d]' : 'bg-[#e6dcc8]/20 text-[#e6dcc8]'}`}>
                             {getIconComponent(milestone.icon)}
                           </div>
-                          <div className="flex-1">
+                          <div className="flex-1 text-left">
                             <h3 className={`text-lg font-bold ${index % 2 === 0 ? 'text-[#006d77]' : 'text-[#ff911d]'}`}>{milestone.title}</h3>
                             <div className={`${index % 2 === 0 ? 'text-[#006d77]/80' : 'text-[#e6dcc8]/90'} mt-1`}>
                               {milestone.description.split('\n').map((line, i) => (
@@ -788,7 +788,7 @@ export default function AboutPage() {
                                 </div>
                               ) : null}
 
-                              <div className={index % 2 !== 0 ? 'ml-auto' : ''}>
+                              <div className={`${index % 2 !== 0 ? 'ml-auto' : ''} text-left`}>
                                 <span className={`font-bold text-lg px-3 py-1 rounded-full inline-block ${index % 2 === 0 ? 'bg-[#ff911d]/10 text-[#ff911d]' : 'bg-[#e6dcc8]/20 text-[#e6dcc8]'}`}>
                                   {milestone.year}
                                 </span>
@@ -847,7 +847,7 @@ export default function AboutPage() {
                                 </div>
                               ) : null}
 
-                              <div className={index % 2 !== 0 ? 'ml-auto' : ''}>
+                              <div className={`${index % 2 !== 0 ? 'ml-auto' : ''} text-left`}>
                                 <span className={`font-bold text-lg px-3 py-1 rounded-full inline-block ${index % 2 === 0 ? 'bg-[#ff911d]/10 text-[#ff911d]' : 'bg-[#e6dcc8]/20 text-[#e6dcc8]'}`}>
                                   {milestone.year}
                                 </span>

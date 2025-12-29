@@ -9,7 +9,7 @@ import { isValidWebPDataUrl, getAvatarDataInfo } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -24,6 +24,7 @@ import { useStoreSettings } from '@/hooks/use-store-settings';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import Image from 'next/image';
+import { SessionCountdown } from '@/components/admin/session-countdown';
 
 const navItems = [
   { icon: ShoppingCart, label: 'POS', href: '/kasir' },
@@ -108,11 +109,14 @@ export default function KasirLayout({
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Session Countdown - visible only to specific roles */}
+          <SessionCountdown />
+
           {/* Toggle Current Order Panel */}
           {pathname === '/kasir' && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => {
                 const event = new CustomEvent('toggleCurrentOrder');
                 window.dispatchEvent(event);
@@ -130,8 +134,8 @@ export default function KasirLayout({
                 <Button variant="ghost" size="icon" className="relative">
                   <Bell className="h-5 w-5" />
                   {unreadCount > 0 && (
-                    <Badge 
-                      variant="destructive" 
+                    <Badge
+                      variant="destructive"
                       className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
                     >
                       {unreadCount > 9 ? '9+' : unreadCount}
@@ -143,9 +147,9 @@ export default function KasirLayout({
                 <DropdownMenuLabel className="flex items-center justify-between">
                   <span>Notifications</span>
                   {unreadCount > 0 && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       className="h-auto p-0 text-xs text-primary hover:text-primary/80"
                       onClick={() => markAllAsRead()}
                     >
@@ -161,7 +165,7 @@ export default function KasirLayout({
                     </div>
                   ) : (
                     notifications.slice(0, 10).map((notification) => (
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         key={notification.id}
                         className={cn(
                           "flex flex-col items-start gap-1 p-3 cursor-pointer",
