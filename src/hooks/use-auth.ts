@@ -242,12 +242,12 @@ export function useAuth() {
           return;
         }
 
-        // Check if token expires within 5 minutes
+        // Check if token expires within 10 minutes of the 1-hour session (to allow for refresh)
         const expiresAt = session.expires_at;
         if (expiresAt) {
           const expiresIn = expiresAt * 1000 - Date.now();
-          // If token expires in less than 5 minutes, refresh it
-          if (expiresIn < 5 * 60 * 1000) {
+          // If token expires in less than 10 minutes of the 1-hour session, refresh it
+          if (expiresIn < 10 * 60 * 1000) {
             const refreshPromise = supabase.auth.refreshSession();
             type RefreshResult = {
               data: { session: Session | null },
@@ -282,8 +282,8 @@ export function useAuth() {
     };
 
     // Periodically check and refresh session to prevent expiry during long browsing
-    // This runs every 2 minutes to keep the session alive
-    sessionCheckInterval.current = setInterval(checkAndRefreshSession, 2 * 60 * 1000); // Every 2 minutes
+    // This runs every 45 minutes to ensure session is refreshed before the 1-hour default expires
+    sessionCheckInterval.current = setInterval(checkAndRefreshSession, 45 * 60 * 1000); // Every 45 minutes
 
     return () => {
       subscription.unsubscribe();
