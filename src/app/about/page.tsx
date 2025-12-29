@@ -430,12 +430,13 @@ export default function AboutPage() {
         {/* Team Section */}
         <section
           id="team"
-          className="py-20 bg-gradient-to-br from-[#006d77]/5 via-cream to-[#ff911d]/5 relative overflow-hidden"
+          className="py-20 bg-[#006d77] relative overflow-hidden"
+          style={{ backgroundColor: '#006d77' }}
         >
           {/* Decorative background elements */}
           <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
             <motion.div
-              className="absolute top-1/4 left-1/4 w-64 h-64 bg-[#ff911d]/5 rounded-full blur-3xl"
+              className="absolute top-1/4 left-1/4 w-64 h-64 bg-[#ff911d]/10 rounded-full blur-3xl"
               animate={{
                 x: [0, 30, 0],
                 y: [0, -20, 0],
@@ -448,7 +449,7 @@ export default function AboutPage() {
               }}
             />
             <motion.div
-              className="absolute bottom-1/3 right-1/4 w-72 h-72 bg-[#006d77]/5 rounded-full blur-3xl"
+              className="absolute bottom-1/3 right-1/4 w-72 h-72 bg-cream/10 rounded-full blur-3xl"
               animate={{
                 x: [0, -40, 0],
                 y: [0, 20, 0],
@@ -465,11 +466,11 @@ export default function AboutPage() {
 
           <div className="container mx-auto px-4 relative z-10">
             <div className="text-center max-w-3xl mx-auto mb-16">
-              <Badge className="bg-[#ff911d]/10 text-[#ff911d] border-[#ff911d]/20 mb-4 backdrop-blur-sm">
+              <Badge className="bg-cream/20 text-cream border-cream/30 mb-4 backdrop-blur-sm">
                 Meet Our Team
               </Badge>
               <motion.h2
-                className="text-3xl md:text-4xl font-bold text-[#006d77] mb-6"
+                className="text-3xl md:text-4xl font-bold text-cream mb-6"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -478,7 +479,7 @@ export default function AboutPage() {
                 {sections.team?.title || "The Passionate People Behind ShortTail.id"}
               </motion.h2>
               <motion.p
-                className="text-lg text-[#006d77]/80 max-w-2xl mx-auto"
+                className="text-lg text-cream/90 max-w-2xl mx-auto"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -552,63 +553,7 @@ export default function AboutPage() {
                       <CardContent className="p-8 pt-4 flex flex-col flex-1">
                         <h3 className="text-xl font-bold text-[#006d77] mb-1">{member.name}</h3>
                         <p className="text-[#ff911d] font-semibold mb-4 text-lg">{member.role}</p>
-                        <p className="text-[#006d77]/80 text-base mb-6 flex-1">{member.bio}</p>
-
-                        {/* Social media links */}
-                        <div className="flex justify-center space-x-4 mt-auto">
-                          {member.social_links && Object.keys(member.social_links).length > 0 ? (
-                            Object.entries(member.social_links).map(([platform, url]) => (
-                              <motion.a
-                                key={platform}
-                                href={url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="w-10 h-10 rounded-full bg-[#006d77]/10 flex items-center justify-center text-[#006d77] hover:bg-[#006d77] hover:text-white transition-colors duration-300"
-                                whileHover={{
-                                  y: -3,
-                                  backgroundColor: "#006d77",
-                                  color: "white"
-                                }}
-                                whileTap={{ scale: 0.9 }}
-                              >
-                                {platform === 'linkedin' && <span className="font-bold text-xs">in</span>}
-                                {platform === 'twitter' && <span className="font-bold text-xs">X</span>}
-                                {platform === 'instagram' && <span className="font-bold text-xs">@</span>}
-                                {platform === 'facebook' && <span className="font-bold text-xs">f</span>}
-                                {!['linkedin', 'twitter', 'instagram', 'facebook'].includes(platform) && (
-                                  <span className="font-bold text-xs">{platform.charAt(0).toUpperCase()}</span>
-                                )}
-                              </motion.a>
-                            ))
-                          ) : (
-                            <>
-                              <motion.a
-                                href="#"
-                                className="w-10 h-10 rounded-full bg-[#006d77]/10 flex items-center justify-center text-[#006d77] hover:bg-[#006d77] hover:text-white transition-colors duration-300"
-                                whileHover={{
-                                  y: -3,
-                                  backgroundColor: "#006d77",
-                                  color: "white"
-                                }}
-                                whileTap={{ scale: 0.9 }}
-                              >
-                                <span className="font-bold text-xs">in</span>
-                              </motion.a>
-                              <motion.a
-                                href="#"
-                                className="w-10 h-10 rounded-full bg-[#006d77]/10 flex items-center justify-center text-[#006d77] hover:bg-[#006d77] hover:text-white transition-colors duration-300"
-                                whileHover={{
-                                  y: -3,
-                                  backgroundColor: "#006d77",
-                                  color: "white"
-                                }}
-                                whileTap={{ scale: 0.9 }}
-                              >
-                                <span className="font-bold text-xs">@</span>
-                              </motion.a>
-                            </>
-                          )}
-                        </div>
+                        <p className="text-[#006d77]/80 text-base flex-1">{member.bio}</p>
                       </CardContent>
                     </Card>
                   </motion.div>
@@ -621,22 +566,19 @@ export default function AboutPage() {
                       name: "Siti Rahayu",
                       role: "Founder & CEO",
                       bio: "Veterinary graduate with 10+ years in pet care industry, passionate about bringing premium products to Indonesian pet parents.",
-                      image: "https://placehold.co/400x400/e6dcc8/006d77?text=Siti",
-                      social_links: { linkedin: "#", instagram: "#" }
+                      image: "https://placehold.co/400x400/e6dcc8/006d77?text=Siti"
                     },
                     {
                       name: "Ahmad Prasetyo",
                       role: "Head of Operations",
                       bio: "Supply chain expert focused on quality assurance and sustainable sourcing practices, ensuring every product meets our high standards.",
-                      image: "https://placehold.co/400x400/e6dcc8/006d77?text=Ahmad",
-                      social_links: { linkedin: "#", twitter: "#" }
+                      image: "https://placehold.co/400x400/e6dcc8/006d77?text=Ahmad"
                     },
                     {
                       name: "Dewi Kartika",
                       role: "Pet Nutrition Specialist",
                       bio: "Animal nutritionist dedicated to helping pet parents make informed dietary choices, with expertise in species-specific nutritional needs.",
-                      image: "https://placehold.co/400x400/e6dcc8/006d77?text=Dewi",
-                      social_links: { linkedin: "#", instagram: "#" }
+                      image: "https://placehold.co/400x400/e6dcc8/006d77?text=Dewi"
                     }
                   ].map((member, index) => (
                     <motion.div
@@ -671,32 +613,7 @@ export default function AboutPage() {
                         <CardContent className="p-8 pt-4 flex flex-col flex-1">
                           <h3 className="text-xl font-bold text-[#006d77] mb-1">{member.name}</h3>
                           <p className="text-[#ff911d] font-semibold mb-4 text-lg">{member.role}</p>
-                          <p className="text-[#006d77]/80 text-base mb-6 flex-1">{member.bio}</p>
-
-                          {/* Social media links */}
-                          <div className="flex justify-center space-x-4 mt-auto">
-                            {Object.entries(member.social_links).map(([platform, url]) => (
-                              <motion.a
-                                key={platform}
-                                href={url}
-                                className="w-10 h-10 rounded-full bg-[#006d77]/10 flex items-center justify-center text-[#006d77] hover:bg-[#006d77] hover:text-white transition-colors duration-300"
-                                whileHover={{
-                                  y: -3,
-                                  backgroundColor: "#006d77",
-                                  color: "white"
-                                }}
-                                whileTap={{ scale: 0.9 }}
-                              >
-                                {platform === 'linkedin' && <span className="font-bold text-xs">in</span>}
-                                {platform === 'twitter' && <span className="font-bold text-xs">X</span>}
-                                {platform === 'instagram' && <span className="font-bold text-xs">@</span>}
-                                {platform === 'facebook' && <span className="font-bold text-xs">f</span>}
-                                {!['linkedin', 'twitter', 'instagram', 'facebook'].includes(platform) && (
-                                  <span className="font-bold text-xs">{platform.charAt(0).toUpperCase()}</span>
-                                )}
-                              </motion.a>
-                            ))}
-                          </div>
+                          <p className="text-[#006d77]/80 text-base flex-1">{member.bio}</p>
                         </CardContent>
                       </Card>
                     </motion.div>
@@ -704,22 +621,6 @@ export default function AboutPage() {
                 </>
               )}
             </div>
-
-            {/* Call to action */}
-            <motion.div
-              className="text-center mt-16"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <Button
-                className="bg-[#006d77] hover:bg-[#005a61] text-white px-8 py-4 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
-              >
-                Join Our Team
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </motion.div>
           </div>
         </section>
 
