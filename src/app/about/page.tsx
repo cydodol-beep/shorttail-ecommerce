@@ -690,15 +690,15 @@ export default function AboutPage() {
                       <div className="h-1 flex-1 bg-gradient-to-r from-[#ff911d] to-[#006d77]"></div>
                     </div>
 
-                    <Card className={`border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 relative z-0 ${index % 2 === 0 ? 'bg-white' : 'bg-[#e6dcc8]'}`}>
+                    <Card className={`border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 relative z-0 ${index % 2 === 0 ? 'bg-white' : 'bg-[#006d77]'}`}>
                       <CardContent className="p-5">
                         <div className="flex items-start gap-4">
-                          <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${index % 2 === 0 ? 'bg-[#ff911d]/10 text-[#ff911d]' : 'bg-[#006d77]/10 text-[#006d77]'}`}>
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${index % 2 === 0 ? 'bg-[#ff911d]/10 text-[#ff911d]' : 'bg-[#e6dcc8]/20 text-[#e6dcc8]'}`}>
                             {getIconComponent(milestone.icon)}
                           </div>
                           <div className="flex-1">
-                            <h3 className={`text-lg font-bold ${index % 2 === 0 ? 'text-[#006d77]' : 'text-white'}`}>{milestone.title}</h3>
-                            <p className={`${index % 2 === 0 ? 'text-[#006d77]/80' : 'text-white/90'} mt-1`}>{milestone.description}</p>
+                            <h3 className={`text-lg font-bold ${index % 2 === 0 ? 'text-[#006d77]' : 'text-[#ff911d]'}`}>{milestone.title}</h3>
+                            <p className={`${index % 2 === 0 ? 'text-[#006d77]/80' : 'text-[#e6dcc8]/90'} mt-1`}>{milestone.description}</p>
                           </div>
                         </div>
                       </CardContent>
@@ -730,15 +730,15 @@ export default function AboutPage() {
                       <div className="h-1 flex-1 bg-gradient-to-r from-[#ff911d] to-[#006d77]"></div>
                     </div>
 
-                    <Card className={`border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 relative z-0 ${index % 2 === 0 ? 'bg-white' : 'bg-[#e6dcc8]'}`}>
+                    <Card className={`border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 relative z-0 ${index % 2 === 0 ? 'bg-white' : 'bg-[#006d77]'}`}>
                       <CardContent className="p-5">
                         <div className="flex items-start gap-4">
-                          <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${index % 2 === 0 ? 'bg-[#ff911d]/10 text-[#ff911d]' : 'bg-[#006d77]/10 text-[#006d77]'}`}>
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${index % 2 === 0 ? 'bg-[#ff911d]/10 text-[#ff911d]' : 'bg-[#e6dcc8]/20 text-[#e6dcc8]'}`}>
                             {getIconComponent(milestone.icon)}
                           </div>
                           <div className="flex-1">
-                            <h3 className={`text-lg font-bold ${index % 2 === 0 ? 'text-[#006d77]' : 'text-white'}`}>{milestone.title}</h3>
-                            <p className={`${index % 2 === 0 ? 'text-[#006d77]/80' : 'text-white/90'} mt-1`}>{milestone.description}</p>
+                            <h3 className={`text-lg font-bold ${index % 2 === 0 ? 'text-[#006d77]' : 'text-[#ff911d]'}`}>{milestone.title}</h3>
+                            <p className={`${index % 2 === 0 ? 'text-[#006d77]/80' : 'text-[#e6dcc8]/90'} mt-1`}>{milestone.description}</p>
                           </div>
                         </div>
                       </CardContent>
@@ -765,25 +765,25 @@ export default function AboutPage() {
                       className={`relative flex items-center ${index % 2 === 0 ? 'flex-row' : 'flex-row-reverse'}`}
                     >
                       <div className={`w-5/12 ${index % 2 === 0 ? 'pr-8 text-left' : 'pl-8 text-right'}`}>
-                        <Card className={`border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group ${index % 2 === 0 ? 'bg-white' : 'bg-[#e6dcc8]'}`}>
+                        <Card className={`border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group ${index % 2 === 0 ? 'bg-white' : 'bg-[#006d77]'}`}>
                           <CardContent className="p-6">
                             <div className="flex items-center gap-4">
                               {index % 2 === 0 ? (
-                                <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${index % 2 === 0 ? 'bg-[#ff911d]/10 text-[#ff911d]' : 'bg-[#006d77]/10 text-[#006d77]'}`}>
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${index % 2 === 0 ? 'bg-[#ff911d]/10 text-[#ff911d]' : 'bg-[#e6dcc8]/20 text-[#e6dcc8]'}`}>
                                   {getIconComponent(milestone.icon)}
                                 </div>
                               ) : null}
 
                               <div className={index % 2 !== 0 ? 'ml-auto' : ''}>
-                                <span className={`font-bold text-lg px-3 py-1 rounded-full inline-block ${index % 2 === 0 ? 'bg-[#ff911d]/10 text-[#ff911d]' : 'bg-[#006d77]/10 text-[#006d77]'}`}>
+                                <span className={`font-bold text-lg px-3 py-1 rounded-full inline-block ${index % 2 === 0 ? 'bg-[#ff911d]/10 text-[#ff911d]' : 'bg-[#e6dcc8]/20 text-[#e6dcc8]'}`}>
                                   {milestone.year}
                                 </span>
-                                <h3 className={`text-xl font-bold mt-2 ${index % 2 === 0 ? 'text-[#006d77]' : 'text-white'}`}>{milestone.title}</h3>
-                                <p className={`mt-2 ${index % 2 === 0 ? 'text-[#006d77]/80' : 'text-white/90'}`}>{milestone.description}</p>
+                                <h3 className={`text-xl font-bold mt-2 ${index % 2 === 0 ? 'text-[#006d77]' : 'text-[#ff911d]'}`}>{milestone.title}</h3>
+                                <p className={`mt-2 ${index % 2 === 0 ? 'text-[#006d77]/80' : 'text-[#e6dcc8]/90'}`}>{milestone.description}</p>
                               </div>
 
                               {index % 2 !== 0 ? (
-                                <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${index % 2 === 0 ? 'bg-[#ff911d]/10 text-[#ff911d]' : 'bg-[#006d77]/10 text-[#006d77]'}`}>
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${index % 2 === 0 ? 'bg-[#ff911d]/10 text-[#ff911d]' : 'bg-[#e6dcc8]/20 text-[#e6dcc8]'}`}>
                                   {getIconComponent(milestone.icon)}
                                 </div>
                               ) : null}
@@ -817,25 +817,25 @@ export default function AboutPage() {
                       className={`relative flex items-center ${index % 2 === 0 ? 'flex-row' : 'flex-row-reverse'}`}
                     >
                       <div className={`w-5/12 ${index % 2 === 0 ? 'pr-8 text-left' : 'pl-8 text-right'}`}>
-                        <Card className={`border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group ${index % 2 === 0 ? 'bg-white' : 'bg-[#e6dcc8]'}`}>
+                        <Card className={`border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group ${index % 2 === 0 ? 'bg-white' : 'bg-[#006d77]'}`}>
                           <CardContent className="p-6">
                             <div className="flex items-center gap-4">
                               {index % 2 === 0 ? (
-                                <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${index % 2 === 0 ? 'bg-[#ff911d]/10 text-[#ff911d]' : 'bg-[#006d77]/10 text-[#006d77]'}`}>
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${index % 2 === 0 ? 'bg-[#ff911d]/10 text-[#ff911d]' : 'bg-[#e6dcc8]/20 text-[#e6dcc8]'}`}>
                                   {getIconComponent(milestone.icon)}
                                 </div>
                               ) : null}
 
                               <div className={index % 2 !== 0 ? 'ml-auto' : ''}>
-                                <span className={`font-bold text-lg px-3 py-1 rounded-full inline-block ${index % 2 === 0 ? 'bg-[#ff911d]/10 text-[#ff911d]' : 'bg-[#006d77]/10 text-[#006d77]'}`}>
+                                <span className={`font-bold text-lg px-3 py-1 rounded-full inline-block ${index % 2 === 0 ? 'bg-[#ff911d]/10 text-[#ff911d]' : 'bg-[#e6dcc8]/20 text-[#e6dcc8]'}`}>
                                   {milestone.year}
                                 </span>
-                                <h3 className={`text-xl font-bold mt-2 ${index % 2 === 0 ? 'text-[#006d77]' : 'text-white'}`}>{milestone.title}</h3>
-                                <p className={`mt-2 ${index % 2 === 0 ? 'text-[#006d77]/80' : 'text-white/90'}`}>{milestone.description}</p>
+                                <h3 className={`text-xl font-bold mt-2 ${index % 2 === 0 ? 'text-[#006d77]' : 'text-[#ff911d]'}`}>{milestone.title}</h3>
+                                <p className={`mt-2 ${index % 2 === 0 ? 'text-[#006d77]/80' : 'text-[#e6dcc8]/90'}`}>{milestone.description}</p>
                               </div>
 
                               {index % 2 !== 0 ? (
-                                <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${index % 2 === 0 ? 'bg-[#ff911d]/10 text-[#ff911d]' : 'bg-[#006d77]/10 text-[#006d77]'}`}>
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${index % 2 === 0 ? 'bg-[#ff911d]/10 text-[#ff911d]' : 'bg-[#e6dcc8]/20 text-[#e6dcc8]'}`}>
                                   {getIconComponent(milestone.icon)}
                                 </div>
                               ) : null}
