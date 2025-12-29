@@ -466,11 +466,11 @@ export default function AboutPage() {
 
           <div className="container mx-auto px-4 relative z-10">
             <div className="text-center max-w-3xl mx-auto mb-16">
-              <Badge className="bg-cream/20 text-cream border-cream/30 mb-4 backdrop-blur-sm">
+              <Badge className="bg-[#fdf6ec]/20 text-[#fdf6ec] border-[#fdf6ec]/30 mb-4 backdrop-blur-sm">
                 Meet Our Team
               </Badge>
               <motion.h2
-                className="text-3xl md:text-4xl font-bold text-cream mb-6"
+                className="text-3xl md:text-4xl font-bold text-[#fdf6ec] mb-6"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -479,7 +479,7 @@ export default function AboutPage() {
                 {sections.team?.title || "The Passionate People Behind ShortTail.id"}
               </motion.h2>
               <motion.p
-                className="text-lg text-cream/90 max-w-2xl mx-auto"
+                className="text-lg text-[#fdf6ec]/90 max-w-2xl mx-auto"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
