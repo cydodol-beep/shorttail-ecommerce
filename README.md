@@ -2204,6 +2204,24 @@ When working with Zustand stores and caching:
 
 ---
 
+## 🔄 Recent Updates (February 29, 2026)
+
+### Enhanced Kasir/POS Mobile Responsiveness & UI Improvements 📱
+- **Full Mobile Screen Order View**: When viewing current order on mobile devices, the panel now takes up the entire screen for better visibility of order items
+- **Compact Item Layout**: Made order item cards more compact with smaller images (12x12), reduced padding, and smaller text sizes for better mobile screen utilization
+- **Proper Scrolling**: Implemented proper scrollable area for cart items allowing users to scroll through all items without obstructing the fixed order summary
+- **Fixed Bottom Order Summary**: Order summary and checkout button remain fixed at the bottom of the screen for easy access during scrolling
+- **Improved Touch Targets**: Maintained appropriate touch targets on all interactive elements (quantity controls, delete buttons) while maximizing visible content
+- **Item Count Notification**: Enhanced mobile floating cart icon with proper badge notification showing total item count
+- **Enhanced Mobile Header**: Added item count to the mobile order panel header for better context
+
+### UI/UX Improvements 🎨
+- **Removed Unnecessary Toggle Button**: Eliminated redundant "Toggle Current Order" button from kasir page header for cleaner navigation
+- **Better Mobile Layout**: Improved the mobile layout with proper flexbox structure separating header, scrollable content, and fixed footer
+- **More Efficient Space Usage**: Optimized space usage on mobile devices to show more items at once while maintaining functionality
+
+---
+
 ## License
 
 Private project - All rights reserved.
