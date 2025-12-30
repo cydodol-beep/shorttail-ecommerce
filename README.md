@@ -2253,6 +2253,18 @@ When working with Zustand stores and caching:
 - **Consistent Format**: Both POS and marketplace orders follow the same date-based sequential format
 - **Database Integration**: Custom order IDs are stored in the database with proper uniqueness constraints
 
+### Enhanced Notification System with Role-Based Functionality 🔔
+- **Automatic Notifications**: System automatically generates notifications for key events (new orders, user registrations, reviews)
+- **User Role Handling**: Different notification types based on user roles (admin, kasir, regular users)
+- **Real-time Updates**: Real-time notification delivery with appropriate badge counts
+- **Process Notifications**: Automatic notifications for order checkout (marketplace/POS), new user registration, and review submissions
+- **Manual Notifications**: Admin panel functionality to create custom notifications for specific users or system-wide
+- **Notification Pages**: Dedicated notification pages for users to manage their notifications
+- **Quick Access**: Notification bell in header with quick access to notifications
+- **Filtering & Search**: Advanced filtering and search capabilities for notification management
+- **Database Triggers**: Automated database triggers for creating notifications on system events
+- **User Dashboard Integration**: Notifications linked in user dashboard with appropriate UI elements
+
 ---
 
 ## License
