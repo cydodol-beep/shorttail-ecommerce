@@ -62,7 +62,13 @@ export default function KasirPOSPage() {
   const { user, profile } = useAuth();
   const { categories: dbCategories, loading: categoriesLoading, getActiveCategories } = useCategories();
   const { settings: storeSettings } = useAllSettings();
-  const activeCategories = useMemo(() => getActiveCategories(), [getActiveCategories]);
+  // Ensure categories are properly loaded and updated
+  const activeCategories = useMemo(() => {
+    if (dbCategories && dbCategories.length > 0) {
+      return getActiveCategories();
+    }
+    return [];
+  }, [dbCategories, getActiveCategories]);
   const [products, setProducts] = useState<ProductWithVariants[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -173,17 +179,17 @@ export default function KasirPOSPage() {
     fetchPromotions();
     fetchProvinces();
     fetchCouriers();
-    
+
     // Check if we're on mobile view
     const handleResize = () => {
       setIsMobileView(window.innerWidth < 1024); // lg breakpoint
     };
-    
+
     handleResize();
     window.addEventListener('resize', handleResize);
-    
+
     return () => window.removeEventListener('resize', handleResize);
-  }, [fetchProducts, fetchPromotions]);
+  }, [fetchProducts, fetchPromotions, dbCategories]); // Added dbCategories as dependency to ensure categories update properly
 
 
   // Cleanup debounce on unmount
@@ -1347,75 +1353,77 @@ export default function KasirPOSPage() {
           </div>
 
           {/* Category Tabs */}
-          <div className="px-4 py-2 bg-white border-b flex items-center justify-between">
-            <ScrollArea className="w-full" orientation="horizontal">
-              <div className="flex gap-1.5 min-w-max pb-1">
-                <Button
-                  variant={selectedCategory === 'all' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setSelectedCategory('all')}
-                  className="text-xs h-7 px-2.5"
-                >
-                  All
-                </Button>
-                {categoriesLoading ? (
-                  <>
-                    {[1, 2, 3, 4].map((i) => (
-                      <div
-                        key={i}
-                        className="h-7 w-16 bg-gray-100 rounded-md animate-pulse"
-                      />
-                    ))}
-                  </>
-                ) : (
-                  activeCategories.map((cat) => (
-                    <Button
-                      key={cat.id}
-                      variant={selectedCategory === cat.id ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setSelectedCategory(cat.id)}
-                      className="text-xs h-7 px-2.5"
-                    >
-                      {cat.name}
-                    </Button>
-                  ))
-                )}
-              </div>
-            </ScrollArea>
+          <div className="px-4 py-2 bg-white border-b">
+            <div className="flex items-center justify-between">
+              <ScrollArea className="w-full py-1" orientation="horizontal">
+                <div className="flex gap-1.5 min-w-max">
+                  <Button
+                    variant={selectedCategory === 'all' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedCategory('all')}
+                    className="text-xs h-7 px-2.5"
+                  >
+                    All
+                  </Button>
+                  {categoriesLoading ? (
+                    <>
+                      {[1, 2, 3, 4].map((i) => (
+                        <div
+                          key={i}
+                          className="h-7 min-w-[60px] bg-gray-100 rounded-md animate-pulse"
+                        />
+                      ))}
+                    </>
+                  ) : (
+                    activeCategories.map((cat) => (
+                      <Button
+                        key={cat.id}
+                        variant={selectedCategory === cat.id ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setSelectedCategory(cat.id)}
+                        className="text-xs h-7 px-2.5 whitespace-nowrap"
+                      >
+                        {cat.name}
+                      </Button>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
 
-            {/* View Mode Toggle */}
-            <div className="ml-3 flex items-center gap-1">
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-                className="h-7 w-7 p-0"
-                title="Grid View"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-grid-3x3">
-                  <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
-                  <path d="M3 9h18"></path>
-                  <path d="M3 15h18"></path>
-                  <path d="M9 3v18"></path>
-                  <path d="M15 3v18"></path>
-                </svg>
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-                className="h-7 w-7 p-0"
-                title="List View"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-list">
-                  <line x1="8" x2="21" y1="6" y2="6"></line>
-                  <line x1="8" x2="21" y1="12" y2="12"></line>
-                  <line x1="8" x2="21" y1="18" y2="18"></line>
-                  <line x1="3" x2="3.01" y1="6" y2="6"></line>
-                  <line x1="3" x2="3.01" y1="12" y2="12"></line>
-                  <line x1="3" x2="3.01" y1="18" y2="18"></line>
-                </svg>
-              </Button>
+              {/* View Mode Toggle */}
+              <div className="ml-3 flex items-center gap-1">
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                  className="h-7 w-7 p-0"
+                  title="Grid View"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-grid-3x3">
+                    <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+                    <path d="M3 9h18"></path>
+                    <path d="M3 15h18"></path>
+                    <path d="M9 3v18"></path>
+                    <path d="M15 3v18"></path>
+                  </svg>
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className="h-7 w-7 p-0"
+                  title="List View"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-list">
+                    <line x1="8" x2="21" y1="6" y2="6"></line>
+                    <line x1="8" x2="21" y1="12" y2="12"></line>
+                    <line x1="8" x2="21" y1="18" y2="18"></line>
+                    <line x1="3" x2="3.01" y1="6" y2="6"></line>
+                    <line x1="3" x2="3.01" y1="12" y2="12"></line>
+                    <line x1="3" x2="3.01" y1="18" y2="18"></line>
+                  </svg>
+                </Button>
+              </div>
             </div>
           </div>
 
