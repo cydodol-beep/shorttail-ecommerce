@@ -183,15 +183,6 @@ export default function KasirPOSPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, [fetchProducts, fetchPromotions]);
 
-  // Listen for toggle current order panel event
-  useEffect(() => {
-    const handleToggle = () => {
-      setShowCurrentOrder(prev => !prev);
-    };
-
-    window.addEventListener('toggleCurrentOrder', handleToggle);
-    return () => window.removeEventListener('toggleCurrentOrder', handleToggle);
-  }, []);
 
   // Cleanup debounce on unmount
   useEffect(() => {

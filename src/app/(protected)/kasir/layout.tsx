@@ -112,20 +112,6 @@ export default function KasirLayout({
           {/* Session Countdown - visible only to specific roles */}
           <SessionCountdown />
 
-          {/* Toggle Current Order Panel */}
-          {pathname === '/kasir' && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                const event = new CustomEvent('toggleCurrentOrder');
-                window.dispatchEvent(event);
-              }}
-              title="Toggle Current Order"
-            >
-              <PanelRightClose className="h-5 w-5" />
-            </Button>
-          )}
 
           {/* Notification Bell */}
           {mounted ? (
