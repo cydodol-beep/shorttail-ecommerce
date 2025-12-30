@@ -1334,36 +1334,36 @@ export default function KasirPOSPage() {
         {/* Main Content Area */}
         <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${isOrderPanelOpen && isMobileView ? 'hidden' : 'flex'} ${isOrderPanelOpen && !isMobileView ? 'lg:w-2/3' : 'w-full'}`}>
           {/* Search & Filters */}
-          <div className="p-4 bg-white border-b">
+          <div className="px-4 pt-3 pb-2 bg-white border-b">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
               <Input
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-12 text-base"
+                className="pl-8 h-8 text-sm"
               />
             </div>
           </div>
 
           {/* Category Tabs */}
-          <div className="p-4 bg-white border-b flex items-center justify-between">
+          <div className="px-4 py-2 bg-white border-b flex items-center justify-between">
             <ScrollArea className="w-full" orientation="horizontal">
-              <div className="flex gap-2 pb-1.5 min-w-max">
+              <div className="flex gap-1.5 min-w-max pb-1">
                 <Button
                   variant={selectedCategory === 'all' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setSelectedCategory('all')}
-                  className="whitespace-nowrap text-base h-10 px-4"
+                  className="text-xs h-7 px-2.5"
                 >
-                  All Products
+                  All
                 </Button>
                 {categoriesLoading ? (
                   <>
                     {[1, 2, 3, 4].map((i) => (
                       <div
                         key={i}
-                        className="h-10 w-32 bg-gray-100 rounded-md animate-pulse"
+                        className="h-7 w-16 bg-gray-100 rounded-md animate-pulse"
                       />
                     ))}
                   </>
@@ -1374,7 +1374,7 @@ export default function KasirPOSPage() {
                       variant={selectedCategory === cat.id ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setSelectedCategory(cat.id)}
-                      className="whitespace-nowrap text-base h-10 px-4"
+                      className="text-xs h-7 px-2.5"
                     >
                       {cat.name}
                     </Button>
@@ -1384,15 +1384,15 @@ export default function KasirPOSPage() {
             </ScrollArea>
 
             {/* View Mode Toggle */}
-            <div className="ml-4 flex items-center gap-2">
+            <div className="ml-3 flex items-center gap-1">
               <Button
                 variant={viewMode === 'grid' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('grid')}
-                className="h-10 w-10 p-0"
+                className="h-7 w-7 p-0"
                 title="Grid View"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-grid-3x3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-grid-3x3">
                   <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
                   <path d="M3 9h18"></path>
                   <path d="M3 15h18"></path>
@@ -1404,10 +1404,10 @@ export default function KasirPOSPage() {
                 variant={viewMode === 'list' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('list')}
-                className="h-10 w-10 p-0"
+                className="h-7 w-7 p-0"
                 title="List View"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-list">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-list">
                   <line x1="8" x2="21" y1="6" y2="6"></line>
                   <line x1="8" x2="21" y1="12" y2="12"></line>
                   <line x1="8" x2="21" y1="18" y2="18"></line>
