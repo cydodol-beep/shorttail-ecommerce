@@ -1475,7 +1475,7 @@ export default function KasirPOSPage() {
                               </div>
                             </div>
                           )}
-                          <div className="aspect-square bg-gray-50 rounded-lg mb-2.5 lg:mb-3 flex items-center justify-center overflow-hidden relative">
+                          <div className="aspect-square bg-gray-50 rounded-lg mb-2.5 flex items-center justify-center overflow-hidden relative">
                             {product.main_image_url ? (
                               <img
                                 src={product.main_image_url}
@@ -1486,26 +1486,26 @@ export default function KasirPOSPage() {
                               <PawPrint className="h-8 w-8 text-gray-300" />
                             )}
                             {product.has_variants && product.variants && product.variants.length > 0 && (
-                              <div className="absolute top-1.5 lg:top-2 right-1.5 lg:right-2 bg-primary text-white rounded-full p-1 shadow-sm">
-                                <Package className="h-2.5 lg:h-3 w-2.5 lg:w-3" />
+                              <div className="absolute top-1 right-1 bg-primary text-white rounded-full p-0.5 shadow-sm">
+                                <Package className="h-2 w-2" />
                               </div>
                             )}
                           </div>
-                          <h3 className={`font-medium text-xs lg:text-sm line-clamp-2 mb-1 lg:mb-2 transition-colors ${
+                          <h3 className={`font-medium text-xs lg:text-sm line-clamp-2 mb-1 transition-colors ${
                             outOfStock ? 'text-gray-500' : 'text-gray-900 group-hover:text-primary'
                           }`}>
                             {product.name}
                           </h3>
-                          <div className="flex items-baseline gap-1 mb-1.5 lg:mb-2">
+                          <div className="flex items-baseline gap-1 mb-1.5">
                             {product.has_variants && product.variants && product.variants.length > 0 ? (
                               <>
-                                <p className={`font-bold text-sm lg:text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
+                                <p className={`font-bold text-sm ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
                                   {formatPrice(product.base_price)}
                                 </p>
-                                <span className="text-xs lg:text-sm text-gray-500">+ var</span>
+                                <span className="text-xs text-gray-500">+ var</span>
                               </>
                             ) : (
-                              <p className={`font-bold text-sm lg:text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
+                              <p className={`font-bold text-sm ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
                                 {formatPrice(product.base_price)}
                               </p>
                             )}
@@ -1578,8 +1578,8 @@ export default function KasirPOSPage() {
                               )}
                             </div>
                             {product.has_variants && product.variants && product.variants.length > 0 && (
-                              <div className="absolute -top-1 -right-1 bg-primary text-white rounded-full p-0.5 shadow-sm">
-                                <Package className="h-2.5 lg:h-3 w-2.5 lg:w-3" />
+                              <div className="absolute -top-0.5 -right-0.5 bg-primary text-white rounded-full p-0.5 shadow-sm">
+                                <Package className="h-2 w-2" />
                               </div>
                             )}
                           </div>
