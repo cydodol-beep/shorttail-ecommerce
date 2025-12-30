@@ -79,6 +79,7 @@ export default function KasirPOSPage() {
   const [showCurrentOrder, setShowCurrentOrder] = useState(true);
   const [promoCode, setPromoCode] = useState('');
   const [validatingPromo, setValidatingPromo] = useState(false);
+  const [skipPromotions, setSkipPromotions] = useState(false);
 
   // Recipient and shipping data
   const [recipientName, setRecipientName] = useState('');
@@ -517,7 +518,7 @@ export default function KasirPOSPage() {
 
   // Automatically find and apply the best promotion
   useEffect(() => {
-    if (cart.length === 0) {
+    if (cart.length === 0 || skipPromotions) {
       setAppliedPromotion(null);
       return;
     }
@@ -577,7 +578,7 @@ export default function KasirPOSPage() {
     };
 
     findBestPromotion();
-  }, [cart, availablePromotions, subtotal]);
+  }, [cart, availablePromotions, subtotal, skipPromotions]);
 
   const applyPromoCode = async () => {
     if (!promoCode.trim()) {
@@ -954,13 +955,35 @@ export default function KasirPOSPage() {
                 <h3 className="font-semibold text-lg">Current Order</h3>
                 <span className="text-sm text-gray-500">({cart.reduce((sum, item) => sum + item.quantity, 0)} items)</span>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsOrderPanelOpen(false)}
-              >
-                <X className="h-5 w-5" />
-              </Button>
+              <div className="flex items-center gap-2">
+                {cart.length > 0 && (
+                  <Button
+                    variant={skipPromotions ? "secondary" : "outline"}
+                    size="sm"
+                    onClick={() => setSkipPromotions(!skipPromotions)}
+                    className="text-xs"
+                  >
+                    {skipPromotions ? (
+                      <>
+                        <Tag className="h-3 w-3" />
+                        Off
+                      </>
+                    ) : (
+                      <>
+                        <Tag className="h-3 w-3" />
+                        On
+                      </>
+                    )}
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsOrderPanelOpen(false)}
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
 
             {/* Order content - full height with scrollable items area */}
@@ -1050,8 +1073,17 @@ export default function KasirPOSPage() {
 
               {/* Order Summary - Fixed at bottom */}
               <div className="bg-white border-t p-4 shadow-lg">
+                {/* No Promotions Notice */}
+                {skipPromotions && (
+                  <div className="flex items-center justify-between p-2 bg-orange-50 rounded-lg border border-orange-200 mb-2">
+                    <div className="flex items-center gap-2">
+                      <Tag className="h-4 w-4 text-orange-600" />
+                      <span className="text-sm font-medium text-orange-700">Promotions Disabled</span>
+                    </div>
+                  </div>
+                )}
                 {/* Promo Applied */}
-                {appliedPromotion && discountAmount > 0 && (
+                {appliedPromotion && discountAmount > 0 && !skipPromotions && (
                   <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg border border-green-200 mb-2">
                     <div className="flex items-center gap-2">
                       <Tag className="h-4 w-4 text-green-600" />
@@ -1114,17 +1146,39 @@ export default function KasirPOSPage() {
                 </p>
               </div>
             </div>
-            {cart.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearCart}
-                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-              >
-                <Trash2 className="h-4 w-4 mr-1" />
-                Clear
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {cart.length > 0 && (
+                <Button
+                  variant={skipPromotions ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => setSkipPromotions(!skipPromotions)}
+                  className="text-xs"
+                >
+                  {skipPromotions ? (
+                    <>
+                      <Tag className="h-3 w-3 mr-1" />
+                      Promotions Off
+                    </>
+                  ) : (
+                    <>
+                      <Tag className="h-3 w-3 mr-1" />
+                      Auto Promo
+                    </>
+                  )}
+                </Button>
+              )}
+              {cart.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearCart}
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Clear
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Cart Items - Scrollable */}
@@ -1212,8 +1266,17 @@ export default function KasirPOSPage() {
 
           {/* Footer - Order Summary & Checkout */}
           <div className="border-t border-gray-200 bg-white p-4 space-y-3">
+            {/* No Promotions Notice */}
+            {skipPromotions && (
+              <div className="flex items-center justify-between p-2 bg-orange-50 rounded-lg border border-orange-200">
+                <div className="flex items-center gap-2">
+                  <Tag className="h-4 w-4 text-orange-600" />
+                  <span className="text-sm font-medium text-orange-700">Promotions Disabled</span>
+                </div>
+              </div>
+            )}
             {/* Promo Applied */}
-            {appliedPromotion && discountAmount > 0 && (
+            {appliedPromotion && discountAmount > 0 && !skipPromotions && (
               <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg border border-green-200">
                 <div className="flex items-center gap-2">
                   <Tag className="h-4 w-4 text-green-600" />
