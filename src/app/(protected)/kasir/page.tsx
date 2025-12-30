@@ -930,10 +930,6 @@ export default function KasirPOSPage() {
   const cashAmount = parseFloat(cashReceived) || 0;
   const change = cashAmount - total;
 
-  // Toggle order panel visibility
-  const toggleOrderPanel = () => {
-    setIsOrderPanelOpen(!isOrderPanelOpen);
-  };
 
   // On mobile, when order panel is open, show a compact version instead of full panel
   const renderOrderPanel = () => {
@@ -1281,13 +1277,6 @@ export default function KasirPOSPage() {
       {/* Mobile Header */}
       <div className="lg:hidden p-4 bg-white border-b flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900">POS System</h1>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={toggleOrderPanel}
-        >
-          {isOrderPanelOpen ? <X className="h-5 w-5" /> : <ShoppingCart className="h-5 w-5" />}
-        </Button>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
