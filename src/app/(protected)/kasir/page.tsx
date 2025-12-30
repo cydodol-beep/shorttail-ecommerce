@@ -70,6 +70,7 @@ export default function KasirPOSPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'bank_transfer' | 'ewallet' | 'qris'>('cash');
   const [cashReceived, setCashReceived] = useState('');
   const [variantDialogOpen, setVariantDialogOpen] = useState(false);
@@ -1346,7 +1347,7 @@ export default function KasirPOSPage() {
           </div>
 
           {/* Category Tabs */}
-          <div className="p-4 bg-white border-b">
+          <div className="p-4 bg-white border-b flex items-center justify-between">
             <ScrollArea className="w-full" orientation="horizontal">
               <div className="flex gap-2 pb-1.5 min-w-max">
                 <Button
@@ -1381,9 +1382,44 @@ export default function KasirPOSPage() {
                 )}
               </div>
             </ScrollArea>
+
+            {/* View Mode Toggle */}
+            <div className="ml-4 flex items-center gap-2">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className="h-10 w-10 p-0"
+                title="Grid View"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-grid-3x3">
+                  <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+                  <path d="M3 9h18"></path>
+                  <path d="M3 15h18"></path>
+                  <path d="M9 3v18"></path>
+                  <path d="M15 3v18"></path>
+                </svg>
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="h-10 w-10 p-0"
+                title="List View"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-list">
+                  <line x1="8" x2="21" y1="6" y2="6"></line>
+                  <line x1="8" x2="21" y1="12" y2="12"></line>
+                  <line x1="8" x2="21" y1="18" y2="18"></line>
+                  <line x1="3" x2="3.01" y1="6" y2="6"></line>
+                  <line x1="3" x2="3.01" y1="12" y2="12"></line>
+                  <line x1="3" x2="3.01" y1="18" y2="18"></line>
+                </svg>
+              </Button>
+            </div>
           </div>
 
-          {/* Products Grid */}
+          {/* Products View - Grid or List */}
           <div className="flex-1 overflow-y-auto p-4">
             {loading ? (
               <div className="flex items-center justify-center h-64">
@@ -1395,91 +1431,185 @@ export default function KasirPOSPage() {
                 <p className="text-gray-600">No products found</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                {filteredProducts.map((product) => {
-                  // Calculate total stock: variant stock + base stock for variant products
-                  const variantStock = product.variants?.reduce((sum, v) => sum + v.stock_quantity, 0) || 0;
-                  const totalStock = product.has_variants
-                    ? variantStock + product.stock_quantity  // Include base stock for variant products
-                    : product.stock_quantity;
-                  const outOfStock = isProductOutOfStock(product);
+              <>
+                {viewMode === 'grid' ? (
+                  // Grid View
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                    {filteredProducts.map((product) => {
+                      // Calculate total stock: variant stock + base stock for variant products
+                      const variantStock = product.variants?.reduce((sum, v) => sum + v.stock_quantity, 0) || 0;
+                      const totalStock = product.has_variants
+                        ? variantStock + product.stock_quantity  // Include base stock for variant products
+                        : product.stock_quantity;
+                      const outOfStock = isProductOutOfStock(product);
 
-                  return (
-                    <button
-                      key={product.id}
-                      onClick={() => {
-                        if (outOfStock) {
-                          toast.error('Out of Stock, please contact admin');
-                          return;
-                        }
-                        handleProductClick(product);
-                      }}
-                      className={`bg-white border rounded-xl p-4 text-left transition-all group relative ${
-                        outOfStock
-                          ? 'border-red-200 opacity-75 cursor-not-allowed'
-                          : 'border-gray-200 hover:shadow-lg hover:border-primary'
-                      }`}
-                    >
-                      {/* Out of Stock Overlay */}
-                      {outOfStock && (
-                        <div className="absolute inset-0 bg-gray-900/40 rounded-xl flex items-center justify-center z-10">
-                          <div className="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded transform -rotate-12">
-                            OUT OF STOCK
-                          </div>
-                        </div>
-                      )}
-                      <div className="aspect-square bg-gray-50 rounded-lg mb-3 flex items-center justify-center overflow-hidden relative">
-                        {product.main_image_url ? (
-                          <img
-                            src={product.main_image_url}
-                            alt={product.name}
-                            className={`w-full h-full object-cover ${outOfStock ? 'grayscale' : ''}`}
-                          />
-                        ) : (
-                          <PawPrint className="h-8 w-8 text-gray-300" />
-                        )}
-                        {product.has_variants && product.variants && product.variants.length > 0 && (
-                          <div className="absolute top-2 right-2 bg-primary text-white rounded-full p-1">
-                            <Package className="h-3 w-3" />
-                          </div>
-                        )}
-                      </div>
-                      <h3 className={`font-medium text-sm line-clamp-2 mb-2 transition-colors ${
-                        outOfStock ? 'text-gray-500' : 'text-gray-900 group-hover:text-primary'
-                      }`}>
-                        {product.name}
-                      </h3>
-                      <div className="flex items-baseline gap-1 mb-2">
-                        {product.has_variants && product.variants && product.variants.length > 0 ? (
-                          <>
-                            <p className={`font-bold text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
-                              {formatPrice(product.base_price)}
-                            </p>
-                            <span className="text-sm text-gray-500">+ var</span>
-                          </>
-                        ) : (
-                          <p className={`font-bold text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
-                            {formatPrice(product.base_price)}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between gap-1">
-                        <Badge
-                          variant={outOfStock ? "destructive" : "secondary"}
-                          className="text-xs px-2 py-1"
+                      return (
+                        <button
+                          key={product.id}
+                          onClick={() => {
+                            if (outOfStock) {
+                              toast.error('Out of Stock, please contact admin');
+                              return;
+                            }
+                            handleProductClick(product);
+                          }}
+                          className={`bg-white border rounded-xl p-4 text-left transition-all group relative ${
+                            outOfStock
+                              ? 'border-red-200 opacity-75 cursor-not-allowed'
+                              : 'border-gray-200 hover:shadow-lg hover:border-primary'
+                          }`}
                         >
-                          {outOfStock ? 'No Stock' : `Stock: ${totalStock}`}
-                        </Badge>
-                        {product.has_variants && product.variants && product.variants.length > 0 && (
-                          <Badge variant="outline" className="text-xs px-2 py-1">
-                            {product.variants.length} var
-                          </Badge>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+                          {/* Out of Stock Overlay */}
+                          {outOfStock && (
+                            <div className="absolute inset-0 bg-gray-900/40 rounded-xl flex items-center justify-center z-10">
+                              <div className="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded transform -rotate-12">
+                                OUT OF STOCK
+                              </div>
+                            </div>
+                          )}
+                          <div className="aspect-square bg-gray-50 rounded-lg mb-3 flex items-center justify-center overflow-hidden relative">
+                            {product.main_image_url ? (
+                              <img
+                                src={product.main_image_url}
+                                alt={product.name}
+                                className={`w-full h-full object-cover ${outOfStock ? 'grayscale' : ''}`}
+                              />
+                            ) : (
+                              <PawPrint className="h-8 w-8 text-gray-300" />
+                            )}
+                            {product.has_variants && product.variants && product.variants.length > 0 && (
+                              <div className="absolute top-2 right-2 bg-primary text-white rounded-full p-1">
+                                <Package className="h-3 w-3" />
+                              </div>
+                            )}
+                          </div>
+                          <h3 className={`font-medium text-sm line-clamp-2 mb-2 transition-colors ${
+                            outOfStock ? 'text-gray-500' : 'text-gray-900 group-hover:text-primary'
+                          }`}>
+                            {product.name}
+                          </h3>
+                          <div className="flex items-baseline gap-1 mb-2">
+                            {product.has_variants && product.variants && product.variants.length > 0 ? (
+                              <>
+                                <p className={`font-bold text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
+                                  {formatPrice(product.base_price)}
+                                </p>
+                                <span className="text-sm text-gray-500">+ var</span>
+                              </>
+                            ) : (
+                              <p className={`font-bold text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
+                                {formatPrice(product.base_price)}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between gap-1">
+                            <Badge
+                              variant={outOfStock ? "destructive" : "secondary"}
+                              className="text-xs px-2 py-1"
+                            >
+                              {outOfStock ? 'No Stock' : `Stock: ${totalStock}`}
+                            </Badge>
+                            {product.has_variants && product.variants && product.variants.length > 0 && (
+                              <Badge variant="outline" className="text-xs px-2 py-1">
+                                {product.variants.length} var
+                              </Badge>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  // List View
+                  <div className="space-y-2">
+                    {filteredProducts.map((product) => {
+                      // Calculate total stock: variant stock + base stock for variant products
+                      const variantStock = product.variants?.reduce((sum, v) => sum + v.stock_quantity, 0) || 0;
+                      const totalStock = product.has_variants
+                        ? variantStock + product.stock_quantity  // Include base stock for variant products
+                        : product.stock_quantity;
+                      const outOfStock = isProductOutOfStock(product);
+
+                      return (
+                        <button
+                          key={product.id}
+                          onClick={() => {
+                            if (outOfStock) {
+                              toast.error('Out of Stock, please contact admin');
+                              return;
+                            }
+                            handleProductClick(product);
+                          }}
+                          className={`w-full flex items-center gap-4 p-3 bg-white border rounded-lg transition-all ${
+                            outOfStock
+                              ? 'border-red-200 opacity-75 cursor-not-allowed'
+                              : 'border-gray-200 hover:shadow-md hover:border-primary'
+                          }`}
+                        >
+                          <div className="relative flex-shrink-0">
+                            {outOfStock && (
+                              <div className="absolute inset-0 bg-gray-900/40 rounded-lg flex items-center justify-center z-10">
+                                <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                                  OUT
+                                </div>
+                              </div>
+                            )}
+                            <div className="w-16 h-16 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden">
+                              {product.main_image_url ? (
+                                <img
+                                  src={product.main_image_url}
+                                  alt={product.name}
+                                  className={`w-full h-full object-cover ${outOfStock ? 'grayscale' : ''}`}
+                                />
+                              ) : (
+                                <PawPrint className="h-6 w-6 text-gray-300" />
+                              )}
+                            </div>
+                            {product.has_variants && product.variants && product.variants.length > 0 && (
+                              <div className="absolute -top-1 -right-1 bg-primary text-white rounded-full p-1">
+                                <Package className="h-3 w-3" />
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <h3 className={`font-medium text-base line-clamp-1 ${
+                              outOfStock ? 'text-gray-500' : 'text-gray-900'
+                            }`}>
+                              {product.name}
+                            </h3>
+                            <div className="flex items-center gap-2 mt-1">
+                              {product.has_variants && product.variants && product.variants.length > 0 ? (
+                                <>
+                                  <p className={`font-bold ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
+                                    {formatPrice(product.base_price)}
+                                  </p>
+                                  <span className="text-sm text-gray-500">+ variants</span>
+                                </>
+                              ) : (
+                                <p className={`font-bold ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
+                                  {formatPrice(product.base_price)}
+                                </p>
+                              )}
+                              <Badge
+                                variant={outOfStock ? "destructive" : "secondary"}
+                                className="text-xs"
+                              >
+                                {outOfStock ? 'No Stock' : `Stock: ${totalStock}`}
+                              </Badge>
+                              {product.has_variants && product.variants && product.variants.length > 0 && (
+                                <Badge variant="outline" className="text-xs">
+                                  {product.variants.length} var
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

@@ -2220,6 +2220,23 @@ When working with Zustand stores and caching:
 - **Better Mobile Layout**: Improved the mobile layout with proper flexbox structure separating header, scrollable content, and fixed footer
 - **More Efficient Space Usage**: Optimized space usage on mobile devices to show more items at once while maintaining functionality
 
+### Enhanced Promotions Control for POS System 💰
+- **Promotion Toggle Feature**: Added toggle button to enable/disable automatic promotion application for specific orders
+- **Desktop Implementation**: Added "Auto Promo" toggle button in the order header (labeled "Promotions Off" when disabled)
+- **Mobile Implementation**: Added compact "On/Off" toggle button in the mobile order header
+- **Visual Indicators**: Clear visual feedback with orange "Promotions Disabled" notice when promotions are turned off
+- **Smart Logic**: When disabled, no promotions are automatically applied; when enabled, the system applies the best available promotion
+- **Order Specific**: Toggle only affects the current order and resets for new orders
+- **User Control**: Cashiers can now manually control when to apply promotions for specific customer requests
+
+### Enhanced Product View Options for POS System 🛍️
+- **View Mode Toggle**: Added toggle buttons to switch between grid view and list view for products
+- **Grid View**: The default view showing products in a grid with images and key information
+- **List View**: Alternative view showing products in a compact list format with more items visible at once
+- **Responsive Design**: Both views are optimized for different screen sizes and use cases
+- **Visual Consistency**: Maintains the same stock, variant, and pricing information in both views
+- **User-Friendly**: Cashiers can choose the view that works best for their workflow and screen size
+
 ---
 
 ## License
