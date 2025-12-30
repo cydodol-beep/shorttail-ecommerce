@@ -15,6 +15,7 @@ export interface OrderItem {
 
 export interface Order {
   id: string;
+  custom_order_id?: string;
   user_id?: string;
   user_name?: string;
   user_email?: string;
@@ -155,6 +156,7 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
 
             return {
               id: order.id,
+              custom_order_id: order.custom_order_id,
               user_id: order.user_id,
               user_name: order.user_name,
               user_email: order.user_email,
@@ -285,6 +287,7 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
 
             return {
               id: order.id,
+              custom_order_id: order.custom_order_id,
               user_id: order.user_id,
               user_name: order.user_name || userProfile?.user_name, // Use API fetched name, fallback to profile
               user_email: order.user_email || userProfile?.user_email, // Use API fetched email, fallback to profile

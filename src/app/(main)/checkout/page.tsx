@@ -745,7 +745,7 @@ export default function CheckoutPage() {
           payment_method: previewOrderData.payment_method,
           total_weight_grams: previewOrderData.total_weight_grams,
         })
-        .select()
+        .select('id, custom_order_id') // Include custom_order_id in the response
         .single();
 
       if (orderError) {
@@ -986,7 +986,7 @@ export default function CheckoutPage() {
         // Continue with order creation even if invoice generation fails
       }
 
-      toast.success(`Order placed successfully! You earned ${pointsEarned} points. Downloading your invoice...`);
+      toast.success(`Order #${order.custom_order_id || order.id.slice(0, 8)} placed successfully! You earned ${pointsEarned} points. Downloading your invoice...`);
 
       // Clear cart after successful order
       clearCart();

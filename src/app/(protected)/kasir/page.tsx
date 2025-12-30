@@ -783,7 +783,7 @@ export default function KasirPOSPage() {
         payment_method: paymentMethod,
         customer_notes: customerNotes || null,
       })
-      .select()
+      .select('id, custom_order_id') // Include custom_order_id in the response
       .single();
 
     if (orderError) {
@@ -877,7 +877,7 @@ export default function KasirPOSPage() {
 
     // Notification will be handled by database triggers
 
-    toast.success(`Order #${order.id.slice(0, 8)} completed!`);
+    toast.success(`Order #${order.custom_order_id || order.id.slice(0, 8)} completed!`);
 
     // Reset all form data
     setCart([]);

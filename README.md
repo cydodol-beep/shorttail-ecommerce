@@ -2237,6 +2237,22 @@ When working with Zustand stores and caching:
 - **Visual Consistency**: Maintains the same stock, variant, and pricing information in both views
 - **User-Friendly**: Cashiers can choose the view that works best for their workflow and screen size
 
+### Enhanced Grid View for Desktop Mode 💻
+- **Visual Improvements**: Enhanced grid view with better hover effects and visual styling
+- **Improved Spacing**: Better spacing and padding for optimal display on desktop screens
+- **Refined Typography**: More readable text sizing and line heights for product information
+- **Better Badge Styling**: Improved badges for stock and variant information with proper contrast
+- **Variant Icon Fix**: Fixed variant indicator positioning to properly fit within product cards
+- **Responsive Consistency**: Maintained consistency between desktop and mobile experiences
+
+### Custom Order ID Format for POS and Marketplace Orders 📦
+- **POS Order IDs**: POS orders now use format 'POSST' + date (YYYYMMDD) + sequence number (e.g., POSST202601150001)
+- **Marketplace Order IDs**: Marketplace orders now use format 'MKSTP' + date (YYYYMMDD) + sequence number (e.g., MKSTP202601150001)
+- **Sequential Numbering**: Each day starts with 0001 sequence number and increments for each new order
+- **Differentiation**: Easy visual differentiation between POS and marketplace orders for admin team
+- **Consistent Format**: Both POS and marketplace orders follow the same date-based sequential format
+- **Database Integration**: Custom order IDs are stored in the database with proper uniqueness constraints
+
 ---
 
 ## License
