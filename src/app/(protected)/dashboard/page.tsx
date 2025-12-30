@@ -337,11 +337,11 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
             </Link>
-            <Link href="/dashboard/settings">
+            <Link href="/dashboard/notifications">
               <Card className="border-brown-200 hover:shadow-md transition-shadow cursor-pointer">
                 <CardContent className="pt-6 text-center">
-                  <Settings className="h-8 w-8 text-primary mx-auto mb-2" />
-                  <p className="font-medium text-brown-900">Settings</p>
+                  <Bell className="h-8 w-8 text-primary mx-auto mb-2" />
+                  <p className="font-medium text-brown-900">Notifications</p>
                 </CardContent>
               </Card>
             </Link>

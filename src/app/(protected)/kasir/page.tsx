@@ -875,7 +875,23 @@ export default function KasirPOSPage() {
       }
     }
 
-    // Notification will be handled by database triggers
+    // Create notification for new POS order
+    try {
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: null, // System notification to all admins
+          title: 'New POS Order Placed!',
+          message: `Order #${order.custom_order_id || order.id.slice(0, 8)} has been placed via POS with total amount of ${formatPrice(total)}.`,
+          action_link: `/admin/orders/${order.id}`,
+        });
+
+      if (notificationError) {
+        console.error('Error creating POS order notification:', notificationError);
+      }
+    } catch (error) {
+      console.error('Error creating POS order notification:', error);
+    }
 
     toast.success(`Order #${order.custom_order_id || order.id.slice(0, 8)} completed!`);
 

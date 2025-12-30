@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingCart, Search, Menu, X, Heart, ArrowRight, User, Percent, Tag, Calendar, Gift, Sparkles, Star } from 'lucide-react';
+import { ShoppingCart, Search, Menu, X, Heart, ArrowRight, User, Percent, Tag, Calendar, Gift, Sparkles, Star, Bell } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useCartItemCount } from '@/store/cart-store';
 import { useAuth } from '@/hooks/use-auth';
 import { useActivePromotions } from '@/hooks/use-active-promotions';
+import { useNotificationStore } from '@/store/notification-store';
 import { getAvatarDataInfo } from '@/lib/utils';
 
 // Navigation items
@@ -305,65 +306,83 @@ export function Header() {
                   {!isSearchOpen && (
                     <>
                       {user ? (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="flex items-center gap-2 px-2">
-                              <Avatar className="h-8 w-8">
-                                <AvatarImage
-                                  src={profile?.user_avatar_url && getAvatarDataInfo(profile.user_avatar_url).isValid ? profile.user_avatar_url : undefined}
-                                  onError={(e) => {
-                                    console.error('Header avatar image failed to load:', profile?.user_avatar_url);
-                                  }}
-                                  className="object-cover"
-                                />
-                                <AvatarFallback className="bg-primary text-white text-sm">
-                                  {profile?.user_name?.charAt(0).toUpperCase() || 'U'}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="hidden md:block text-left">
-                                <p className="text-sm font-medium text-gray-900">
-                                  {profile?.user_name || 'My Account'}
-                                </p>
-                              </div>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild>
-                              <Link href="/dashboard">
-                                <User className="mr-2 h-4 w-4" />
-                                <span>Dashboard</span>
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link href="/dashboard/settings">
-                                <User className="mr-2 h-4 w-4" />
-                                <span>Settings</span>
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={async () => {
-                                try {
-                                  await signOut();
-                                } catch (error) {
-                                  console.error('Error during logout:', error);
-                                }
-                              }}
-                              className="text-red-600 focus:text-red-700"
-                            >
-                              <span className="flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-log-out mr-2">
-                                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                                  <polyline points="16 17 21 12 16 7"></polyline>
-                                  <line x1="21" x2="9" y1="12" y2="12"></line>
-                                </svg>
-                                Logout
+                        <>
+                          {/* Notification Bell */}
+                          <Link href="/dashboard/notifications" className="p-2 text-teal hover:text-accent hover:bg-teal/5 rounded-full transition-all cursor-pointer focus-within:ring-2 focus-within:ring-teal relative">
+                            <Bell size={20} />
+                            {useNotificationStore.getState().unreadCount > 0 && (
+                              <span className="absolute -top-0.5 -right-0.5 h-5 w-5 bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full font-bold ring-2 ring-white">
+                                {useNotificationStore.getState().unreadCount}
                               </span>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                            )}
+                          </Link>
+
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="flex items-center gap-2 px-2">
+                                <Avatar className="h-8 w-8">
+                                  <AvatarImage
+                                    src={profile?.user_avatar_url && getAvatarDataInfo(profile.user_avatar_url).isValid ? profile.user_avatar_url : undefined}
+                                    onError={(e) => {
+                                      console.error('Header avatar image failed to load:', profile?.user_avatar_url);
+                                    }}
+                                    className="object-cover"
+                                  />
+                                  <AvatarFallback className="bg-primary text-white text-sm">
+                                    {profile?.user_name?.charAt(0).toUpperCase() || 'U'}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="hidden md:block text-left">
+                                  <p className="text-sm font-medium text-gray-900">
+                                    {profile?.user_name || 'My Account'}
+                                  </p>
+                                </div>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem asChild>
+                                <Link href="/dashboard">
+                                  <User className="mr-2 h-4 w-4" />
+                                  <span>Dashboard</span>
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link href="/dashboard/settings">
+                                  <User className="mr-2 h-4 w-4" />
+                                  <span>Settings</span>
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link href="/dashboard/notifications">
+                                  <Bell className="mr-2 h-4 w-4" />
+                                  <span>Notifications</span>
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={async () => {
+                                  try {
+                                    await signOut();
+                                  } catch (error) {
+                                    console.error('Error during logout:', error);
+                                  }
+                                }}
+                                className="text-red-600 focus:text-red-700"
+                              >
+                                <span className="flex items-center">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-log-out mr-2">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                    <polyline points="16 17 21 12 16 7"></polyline>
+                                    <line x1="21" x2="9" y1="12" y2="12"></line>
+                                  </svg>
+                                  Logout
+                                </span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </>
                       ) : (
                         <Link href="/login" className="hidden sm:block p-2 text-teal hover:text-accent hover:bg-teal/5 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-teal">
                           <User size={20} />

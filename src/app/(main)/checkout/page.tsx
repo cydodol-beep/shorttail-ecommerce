@@ -991,6 +991,36 @@ export default function CheckoutPage() {
       // Clear cart after successful order
       clearCart();
 
+      // Create notification for new order
+      try {
+        const { error: notificationError } = await supabase
+          .from('notifications')
+          .insert({
+            user_id: null, // System notification to all admins
+            title: 'New Order Placed!',
+            message: `Order #${order.custom_order_id || order.id.slice(0, 8)} has been placed with total amount of ${formatPrice(previewOrderData.total_amount)}.`,
+            action_link: `/admin/orders/${order.id}`,
+          });
+
+        if (notificationError) {
+          console.error('Error creating order notification:', notificationError);
+        }
+
+        // Also create notification for the user who placed the order
+        if (user?.id) {
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: user.id,
+              title: 'Order Confirmed!',
+              message: `Your order #${order.custom_order_id || order.id.slice(0, 8)} has been confirmed and is being processed.`,
+              action_link: `/dashboard/orders/${order.id}`,
+            });
+        }
+      } catch (error) {
+        console.error('Error creating order notification:', error);
+      }
+
       // Navigate to order details
       router.push(`/dashboard/orders/${order.id}`);
     } catch (error) {
