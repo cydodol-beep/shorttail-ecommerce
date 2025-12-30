@@ -940,13 +940,13 @@ export default function KasirPOSPage() {
           <div className="fixed bottom-24 right-4 z-50">
             <Button
               size="lg"
-              className="rounded-full shadow-lg h-14 w-14 p-0 flex items-center justify-center"
+              className="rounded-full shadow-lg h-14 w-14 p-0 flex items-center justify-center relative"
               onClick={() => setIsOrderPanelOpen(true)}
             >
               <ShoppingCart className="h-6 w-6" />
               {cart.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {cart.length}
+                <span className="absolute -top-0 -right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center transform translate-x-1/2 -translate-y-1/2 z-10 min-w-[1.25rem]">
+                  {cart.reduce((sum, item) => sum + item.quantity, 0)}
                 </span>
               )}
             </Button>
