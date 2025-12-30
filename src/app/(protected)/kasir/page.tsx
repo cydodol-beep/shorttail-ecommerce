@@ -1441,8 +1441,8 @@ export default function KasirPOSPage() {
             ) : (
               <>
                 {viewMode === 'grid' ? (
-                  // Grid View
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                  // Grid View - Enhanced Desktop Experience
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 lg:gap-4">
                     {filteredProducts.map((product) => {
                       // Calculate total stock: variant stock + base stock for variant products
                       const variantStock = product.variants?.reduce((sum, v) => sum + v.stock_quantity, 0) || 0;
@@ -1461,21 +1461,21 @@ export default function KasirPOSPage() {
                             }
                             handleProductClick(product);
                           }}
-                          className={`bg-white border rounded-xl p-4 text-left transition-all group relative ${
+                          className={`bg-white border rounded-xl p-3 lg:p-4 text-left transition-all group relative ${
                             outOfStock
                               ? 'border-red-200 opacity-75 cursor-not-allowed'
-                              : 'border-gray-200 hover:shadow-lg hover:border-primary'
+                              : 'border-gray-200 hover:shadow-xl hover:border-primary hover:shadow-primary/10'
                           }`}
                         >
                           {/* Out of Stock Overlay */}
                           {outOfStock && (
-                            <div className="absolute inset-0 bg-gray-900/40 rounded-xl flex items-center justify-center z-10">
-                              <div className="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded transform -rotate-12">
+                            <div className="absolute inset-0 bg-gray-900/50 rounded-xl flex items-center justify-center z-10">
+                              <div className="bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">
                                 OUT OF STOCK
                               </div>
                             </div>
                           )}
-                          <div className="aspect-square bg-gray-50 rounded-lg mb-3 flex items-center justify-center overflow-hidden relative">
+                          <div className="aspect-square bg-gray-50 rounded-lg mb-2.5 lg:mb-3 flex items-center justify-center overflow-hidden relative">
                             {product.main_image_url ? (
                               <img
                                 src={product.main_image_url}
@@ -1486,39 +1486,43 @@ export default function KasirPOSPage() {
                               <PawPrint className="h-8 w-8 text-gray-300" />
                             )}
                             {product.has_variants && product.variants && product.variants.length > 0 && (
-                              <div className="absolute top-2 right-2 bg-primary text-white rounded-full p-1">
-                                <Package className="h-3 w-3" />
+                              <div className="absolute top-1.5 lg:top-2 right-1.5 lg:right-2 bg-primary text-white rounded-full p-1 shadow-sm">
+                                <Package className="h-2.5 lg:h-3 w-2.5 lg:w-3" />
                               </div>
                             )}
                           </div>
-                          <h3 className={`font-medium text-sm line-clamp-2 mb-2 transition-colors ${
+                          <h3 className={`font-medium text-xs lg:text-sm line-clamp-2 mb-1 lg:mb-2 transition-colors ${
                             outOfStock ? 'text-gray-500' : 'text-gray-900 group-hover:text-primary'
                           }`}>
                             {product.name}
                           </h3>
-                          <div className="flex items-baseline gap-1 mb-2">
+                          <div className="flex items-baseline gap-1 mb-1.5 lg:mb-2">
                             {product.has_variants && product.variants && product.variants.length > 0 ? (
                               <>
-                                <p className={`font-bold text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
+                                <p className={`font-bold text-sm lg:text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
                                   {formatPrice(product.base_price)}
                                 </p>
-                                <span className="text-sm text-gray-500">+ var</span>
+                                <span className="text-xs lg:text-sm text-gray-500">+ var</span>
                               </>
                             ) : (
-                              <p className={`font-bold text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
+                              <p className={`font-bold text-sm lg:text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
                                 {formatPrice(product.base_price)}
                               </p>
                             )}
                           </div>
                           <div className="flex items-center justify-between gap-1">
                             <Badge
-                              variant={outOfStock ? "destructive" : "secondary"}
-                              className="text-xs px-2 py-1"
+                              variant={outOfStock ? "destructive" : "outline"}
+                              className={`text-xs ${
+                                outOfStock
+                                  ? 'bg-destructive/20 border-destructive/30'
+                                  : 'bg-gray-100 border-gray-300'
+                              }`}
                             >
                               {outOfStock ? 'No Stock' : `Stock: ${totalStock}`}
                             </Badge>
                             {product.has_variants && product.variants && product.variants.length > 0 && (
-                              <Badge variant="outline" className="text-xs px-2 py-1">
+                              <Badge variant="outline" className="text-xs border-gray-300 bg-gray-100">
                                 {product.variants.length} var
                               </Badge>
                             )}
@@ -1548,21 +1552,21 @@ export default function KasirPOSPage() {
                             }
                             handleProductClick(product);
                           }}
-                          className={`w-full flex items-center gap-4 p-3 bg-white border rounded-lg transition-all ${
+                          className={`w-full flex items-center gap-3 p-3 bg-white border rounded-lg transition-all ${
                             outOfStock
                               ? 'border-red-200 opacity-75 cursor-not-allowed'
-                              : 'border-gray-200 hover:shadow-md hover:border-primary'
+                              : 'border-gray-200 hover:shadow-lg hover:border-primary hover:shadow-primary/10'
                           }`}
                         >
                           <div className="relative flex-shrink-0">
                             {outOfStock && (
-                              <div className="absolute inset-0 bg-gray-900/40 rounded-lg flex items-center justify-center z-10">
-                                <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                              <div className="absolute inset-0 bg-gray-900/50 rounded-lg flex items-center justify-center z-10">
+                                <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
                                   OUT
                                 </div>
                               </div>
                             )}
-                            <div className="w-16 h-16 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden">
+                            <div className="w-14 h-14 lg:w-16 lg:h-16 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden">
                               {product.main_image_url ? (
                                 <img
                                   src={product.main_image_url}
@@ -1570,18 +1574,18 @@ export default function KasirPOSPage() {
                                   className={`w-full h-full object-cover ${outOfStock ? 'grayscale' : ''}`}
                                 />
                               ) : (
-                                <PawPrint className="h-6 w-6 text-gray-300" />
+                                <PawPrint className="h-5 lg:h-6 w-5 lg:w-6 text-gray-300" />
                               )}
                             </div>
                             {product.has_variants && product.variants && product.variants.length > 0 && (
-                              <div className="absolute -top-1 -right-1 bg-primary text-white rounded-full p-1">
-                                <Package className="h-3 w-3" />
+                              <div className="absolute -top-1 -right-1 bg-primary text-white rounded-full p-0.5 shadow-sm">
+                                <Package className="h-2.5 lg:h-3 w-2.5 lg:w-3" />
                               </div>
                             )}
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            <h3 className={`font-medium text-base line-clamp-1 ${
+                            <h3 className={`font-medium text-sm lg:text-base line-clamp-1 ${
                               outOfStock ? 'text-gray-500' : 'text-gray-900'
                             }`}>
                               {product.name}
@@ -1589,24 +1593,28 @@ export default function KasirPOSPage() {
                             <div className="flex items-center gap-2 mt-1">
                               {product.has_variants && product.variants && product.variants.length > 0 ? (
                                 <>
-                                  <p className={`font-bold ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
+                                  <p className={`font-bold text-sm lg:text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
                                     {formatPrice(product.base_price)}
                                   </p>
-                                  <span className="text-sm text-gray-500">+ variants</span>
+                                  <span className="text-xs lg:text-sm text-gray-500">+ variants</span>
                                 </>
                               ) : (
-                                <p className={`font-bold ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
+                                <p className={`font-bold text-sm lg:text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
                                   {formatPrice(product.base_price)}
                                 </p>
                               )}
                               <Badge
-                                variant={outOfStock ? "destructive" : "secondary"}
-                                className="text-xs"
+                                variant={outOfStock ? "destructive" : "outline"}
+                                className={`text-xs ${
+                                  outOfStock
+                                    ? 'bg-destructive/20 border-destructive/30'
+                                    : 'bg-gray-100 border-gray-300'
+                                }`}
                               >
                                 {outOfStock ? 'No Stock' : `Stock: ${totalStock}`}
                               </Badge>
                               {product.has_variants && product.variants && product.variants.length > 0 && (
-                                <Badge variant="outline" className="text-xs">
+                                <Badge variant="outline" className="text-xs border-gray-300 bg-gray-100">
                                   {product.variants.length} var
                                 </Badge>
                               )}
