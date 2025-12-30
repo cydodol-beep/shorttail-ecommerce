@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Search, Plus, Minus, Trash2, PawPrint, CreditCard, Banknote, Loader2, Package, Tag, ShoppingCart, Building2, Smartphone, QrCode, Wallet } from 'lucide-react';
+import { Search, Plus, Minus, Trash2, PawPrint, CreditCard, Banknote, Loader2, Package, Tag, ShoppingCart, Building2, Smartphone, QrCode, Wallet, ChevronUp, ChevronDown, X, Menu } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -79,7 +79,7 @@ export default function KasirPOSPage() {
   const [showCurrentOrder, setShowCurrentOrder] = useState(true);
   const [promoCode, setPromoCode] = useState('');
   const [validatingPromo, setValidatingPromo] = useState(false);
-  
+
   // Recipient and shipping data
   const [recipientName, setRecipientName] = useState('');
   const [recipientPhone, setRecipientPhone] = useState('');
@@ -90,7 +90,7 @@ export default function KasirPOSPage() {
   const [shippingCost, setShippingCost] = useState('');
   const [customerNotes, setCustomerNotes] = useState('');
   const [checkoutStep, setCheckoutStep] = useState<'details' | 'payment'>('details');
-  
+
   // Profile search
   const [profileSearchQuery, setProfileSearchQuery] = useState('');
   const [searchedProfiles, setSearchedProfiles] = useState<any[]>([]);
@@ -102,9 +102,13 @@ export default function KasirPOSPage() {
   // Debounce ref for profile search
   const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
+  // New states for mobile responsiveness
+  const [isOrderPanelOpen, setIsOrderPanelOpen] = useState(true);
+  const [isMobileView, setIsMobileView] = useState(false);
+
   const fetchProducts = useCallback(async () => {
     const supabase = createClient();
-    
+
     // Fetch products with variants
     const { data: productsData, error: productsError } = await supabase
       .from('products')
@@ -121,7 +125,7 @@ export default function KasirPOSPage() {
 
     // Fetch ALL variants for products that have them (including zero stock)
     const productsWithVariants = productsData?.filter((p: Product) => p.has_variants).map((p: Product) => p.id) || [];
-    
+
     if (productsWithVariants.length > 0) {
       const { data: variantsData } = await supabase
         .from('product_variants')
@@ -132,7 +136,7 @@ export default function KasirPOSPage() {
       // Attach variants to products
       const enrichedProducts = productsData?.map((product: Product) => ({
         ...product,
-        variants: product.has_variants 
+        variants: product.has_variants
           ? variantsData?.filter((v: ProductVariant) => v.product_id === product.id) || []
           : []
       })) || [];
@@ -141,14 +145,14 @@ export default function KasirPOSPage() {
     } else {
       setProducts(productsData?.map((p: Product) => ({ ...p, variants: [] })) || []);
     }
-    
+
     setLoading(false);
   }, []);
 
   const fetchPromotions = useCallback(async () => {
     const supabase = createClient();
     const now = new Date().toISOString();
-    
+
     const { data } = await supabase
       .from('promotions')
       .select('*')
@@ -167,6 +171,16 @@ export default function KasirPOSPage() {
     fetchPromotions();
     fetchProvinces();
     fetchCouriers();
+    
+    // Check if we're on mobile view
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth < 1024); // lg breakpoint
+    };
+    
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    
+    return () => window.removeEventListener('resize', handleResize);
   }, [fetchProducts, fetchPromotions]);
 
   // Listen for toggle current order panel event
@@ -174,7 +188,7 @@ export default function KasirPOSPage() {
     const handleToggle = () => {
       setShowCurrentOrder(prev => !prev);
     };
-    
+
     window.addEventListener('toggleCurrentOrder', handleToggle);
     return () => window.removeEventListener('toggleCurrentOrder', handleToggle);
   }, []);
@@ -228,7 +242,7 @@ export default function KasirPOSPage() {
     searchDebounceRef.current = setTimeout(async () => {
       try {
         const supabase = createClient();
-        
+
         const { data, error } = await supabase
           .from('profiles')
           .select('id, user_name, user_phoneno, user_email, recipient_name, recipient_phoneno, recipient_address_line1, recipient_province_id, address_line1, province_id')
@@ -248,7 +262,7 @@ export default function KasirPOSPage() {
           setSearchedProfiles([]);
           setShowProfileDropdown(false);
         }
-        
+
         setSearchingProfiles(false);
       } catch (err) {
         console.error('Exception searching profiles:', err);
@@ -262,7 +276,7 @@ export default function KasirPOSPage() {
     setRecipientName(profile.recipient_name || profile.user_name || '');
     setRecipientPhone(profile.user_phoneno || '');
     setRecipientAddress(profile.recipient_address_line1 || profile.address_line1 || '');
-    
+
     // Directly use province_id from profile (no matching needed)
     if (profile.recipient_province_id) {
       setRecipientProvince(profile.recipient_province_id.toString());
@@ -270,7 +284,7 @@ export default function KasirPOSPage() {
     } else {
       console.warn('Profile has no recipient_province_id');
     }
-    
+
     setProfileSearchQuery(profile.user_name || profile.user_phoneno);
     setShowProfileDropdown(false);
   };
@@ -299,42 +313,47 @@ export default function KasirPOSPage() {
     }
 
     setCart((prev) => {
-      const existing = prev.find((item) => 
-        item.product.id === product.id && 
+      const existing = prev.find((item) =>
+        item.product.id === product.id &&
         (variant ? item.variant?.id === variant.id : !item.variant)
       );
-      
+
       if (existing) {
         if (existing.quantity >= availableStock) {
           toast.error('Not enough stock');
           return prev;
         }
         return prev.map((item) =>
-          (item.product.id === product.id && 
+          (item.product.id === product.id &&
            (variant ? item.variant?.id === variant.id : !item.variant))
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       }
-      
-      return [...prev, { 
-        product, 
-        variant, 
+
+      return [...prev, {
+        product,
+        variant,
         quantity: 1,
         displayName,
         price,
         availableStock
       }];
     });
-    
+
     setVariantDialogOpen(false);
+    
+    // On mobile, close the order panel to focus on products
+    if (isMobileView) {
+      setIsOrderPanelOpen(false);
+    }
   };
 
   const updateQuantity = (productId: string, variantId: string | null, delta: number) => {
     setCart((prev) =>
       prev
         .map((item) => {
-          if (item.product.id === productId && 
+          if (item.product.id === productId &&
               (variantId ? item.variant?.id === variantId : !item.variant)) {
             const newQty = item.quantity + delta;
             if (newQty <= 0) return null;
@@ -351,8 +370,8 @@ export default function KasirPOSPage() {
   };
 
   const removeFromCart = (productId: string, variantId: string | null) => {
-    setCart((prev) => prev.filter((item) => 
-      !(item.product.id === productId && 
+    setCart((prev) => prev.filter((item) =>
+      !(item.product.id === productId &&
         (variantId ? item.variant?.id === variantId : !item.variant))
     ));
   };
@@ -369,7 +388,7 @@ export default function KasirPOSPage() {
 
   // Calculate total weight in grams
   const totalWeightGrams = cart.reduce((sum, item) => {
-    const itemWeight = item.variant 
+    const itemWeight = item.variant
       ? (item.variant.weight_grams || item.product.unit_weight_grams || 0)
       : (item.product.unit_weight_grams || 0);
     return sum + (itemWeight * item.quantity);
@@ -409,7 +428,7 @@ export default function KasirPOSPage() {
           .select('id, courier_name, is_active')
           .eq('id', courierId)
           .single();
-        
+
         console.log('Courier data:', courierData);
 
         if (!courierData) {
@@ -441,7 +460,7 @@ export default function KasirPOSPage() {
           .from('shipping_rates')
           .select('province_id, cost')
           .eq('courier_id', courierId);
-        
+
         console.log('All rates for this courier:', allRates);
 
         // Debug: Check if RLS is the issue by checking shipping_couriers join
@@ -459,7 +478,7 @@ export default function KasirPOSPage() {
           .eq('courier_id', courierId)
           .eq('province_id', provinceId)
           .maybeSingle();
-        
+
         console.log('Rate with courier join:', rateWithJoin);
 
         if (error) {
@@ -479,7 +498,7 @@ export default function KasirPOSPage() {
         // If weight < 1kg, use the base rate from shipping_rates
         // If weight >= 1kg, calculate per-kg rate
         const baseRate = parseFloat(data.cost.toString());
-        
+
         if (totalWeightGrams < 1000) {
           // Under 1kg: use base rate
           setShippingCost(baseRate.toString());
@@ -493,7 +512,7 @@ export default function KasirPOSPage() {
           console.log(`✓ Shipping cost (${weightInKg}kg x ${baseRate}):`, totalCost);
           toast.success(`Shipping cost auto-calculated: Rp ${totalCost.toLocaleString()} (${weightInKg}kg)`);
         }
-        
+
         console.log('=== CALCULATION COMPLETE ===');
       } catch (err) {
         console.error('Error calculating shipping:', err);
@@ -516,7 +535,7 @@ export default function KasirPOSPage() {
       const now = new Date();
       const cartProductIds = cart.map(item => item.product.id);
       const totalQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
-      
+
       let bestPromotion: Promotion | null = null;
       let maxDiscount = 0;
 
@@ -536,7 +555,7 @@ export default function KasirPOSPage() {
 
         // Calculate potential discount
         let discount = 0;
-        
+
         if (promo.discount_type === 'percentage') {
           const applicableAmount = promo.applies_to === 'specific_products' && promo.product_ids
             ? cart.filter(item => promo.product_ids!.includes(item.product.id))
@@ -548,7 +567,7 @@ export default function KasirPOSPage() {
         } else if (promo.discount_type === 'buy_x_get_y') {
           const sets = Math.floor(totalQuantity / (promo.buy_quantity || 1));
           if (sets > 0) {
-            const sortedPrices = cart.flatMap(item => 
+            const sortedPrices = cart.flatMap(item =>
               Array(item.quantity).fill(item.price)
             ).sort((a, b) => a - b);
             const freeItems = sets * (promo.get_quantity || 1);
@@ -657,7 +676,7 @@ export default function KasirPOSPage() {
       const sets = Math.floor(totalItems / (promo.buy_quantity || 1));
       if (sets > 0) {
         // Give discount on cheapest items
-        const sortedPrices = cart.flatMap(item => 
+        const sortedPrices = cart.flatMap(item =>
           Array(item.quantity).fill(item.price)
         ).sort((a, b) => a - b);
         const freeItems = sets * (promo.get_quantity || 1);
@@ -671,7 +690,7 @@ export default function KasirPOSPage() {
       const applicableSubtotal = cart
         .filter(item => promo.product_ids!.includes(item.product.id))
         .reduce((sum, item) => sum + item.price * item.quantity, 0);
-      
+
       if (promo.discount_type === 'percentage') {
         discount = applicableSubtotal * (promo.discount_value / 100);
       } else if (promo.discount_type === 'fixed') {
@@ -860,7 +879,7 @@ export default function KasirPOSPage() {
     // Notification will be handled by database triggers
 
     toast.success(`Order #${order.id.slice(0, 8)} completed!`);
-    
+
     // Reset all form data
     setCart([]);
     setAppliedPromotion(null);
@@ -868,7 +887,7 @@ export default function KasirPOSPage() {
     setCheckoutStep('details');
     setCashReceived('');
     setPaymentMethod('cash');
-    
+
     // Reset shipping details
     setRecipientName('');
     setRecipientPhone('');
@@ -879,7 +898,7 @@ export default function KasirPOSPage() {
     setShippingCost('');
     setProfileSearchQuery('');
     setSearchedProfiles([]);
-    
+
     fetchProducts(); // Refresh stock
     setProcessing(false);
   };
@@ -887,15 +906,15 @@ export default function KasirPOSPage() {
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
       const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       // Handle category filtering - 'all' shows everything, specific category only shows products in that category
       const matchesCategory = selectedCategory === 'all' || product.category_id === selectedCategory;
-      
+
       // Show ALL products regardless of stock (we'll show out of stock status instead)
       return matchesSearch && matchesCategory;
     });
   }, [products, searchQuery, selectedCategory]);
-  
+
   // Helper function to check if product is out of stock
   const isProductOutOfStock = (product: ProductWithVariants) => {
     if (product.has_variants) {
@@ -911,85 +930,441 @@ export default function KasirPOSPage() {
   const cashAmount = parseFloat(cashReceived) || 0;
   const change = cashAmount - total;
 
-  return (
-    <div className={`h-[calc(100vh-6rem)] flex flex-col lg:flex-row gap-3 lg:gap-6 p-2 lg:p-0 overflow-hidden ${showCurrentOrder ? 'pb-[280px] lg:pb-0' : ''}`}>
-      {/* Products Grid */}
-      <div className={`flex flex-col min-h-0 overflow-hidden flex-1 h-full ${!showCurrentOrder ? 'lg:pr-0' : ''}`}>
-        {/* Search & Filters */}
-        <div className="mb-2 lg:mb-4 flex gap-2 lg:gap-4 shrink-0">
-          <div className="relative flex-1">
-            <Search className="absolute left-2 lg:left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 lg:h-4 lg:w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 lg:pl-10 h-9 lg:h-10 text-sm"
-            />
+  // Toggle order panel visibility
+  const toggleOrderPanel = () => {
+    setIsOrderPanelOpen(!isOrderPanelOpen);
+  };
+
+  // On mobile, when order panel is open, show a compact version instead of full panel
+  const renderOrderPanel = () => {
+    if (isMobileView) {
+      if (!isOrderPanelOpen) {
+        // Show compact order summary as floating button
+        return (
+          <div className="fixed bottom-24 right-4 z-50">
+            <Button
+              size="lg"
+              className="rounded-full shadow-lg h-14 w-14 p-0 flex items-center justify-center"
+              onClick={() => setIsOrderPanelOpen(true)}
+            >
+              <ShoppingCart className="h-6 w-6" />
+              {cart.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {cart.length}
+                </span>
+              )}
+            </Button>
+          </div>
+        );
+      } else {
+        // Full order panel overlay
+        return (
+          <div className="fixed inset-0 z-50 bg-black/50 flex flex-col">
+            <div className="bg-white rounded-t-2xl flex flex-col flex-1 max-h-[70vh] shadow-xl">
+              {/* Mobile header with toggle */}
+              <div className="flex items-center justify-between p-4 border-b">
+                <div className="flex items-center gap-3">
+                  <ShoppingCart className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold text-lg">Current Order</h3>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsOrderPanelOpen(false)}
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+
+              {/* Order content */}
+              <div className="flex-1 overflow-y-auto p-4">
+                {cart.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center text-center text-gray-500 h-full">
+                    <ShoppingCart className="h-16 w-16 mx-auto mb-3 text-gray-300" />
+                    <h4 className="font-medium text-gray-700">Cart is empty</h4>
+                    <p className="text-sm mt-1">Add items to start your order</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Cart Items */}
+                    <div className="space-y-3 mb-6">
+                      {cart.map((item, index) => (
+                        <div
+                          key={`${item.product.id}-${item.variant?.id || 'base'}-${index}`}
+                          className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                        >
+                          {/* Product Image */}
+                          <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
+                            {item.product.main_image_url ? (
+                              <img
+                                src={item.product.main_image_url}
+                                alt={item.displayName}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <PawPrint className="h-6 w-6 text-gray-400" />
+                            )}
+                          </div>
+
+                          {/* Product Info */}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-gray-900 text-sm line-clamp-1">
+                              {item.displayName}
+                            </p>
+                            <div className="flex items-center gap-1 mt-1">
+                              <p className="text-sm font-bold text-primary">
+                                {formatPrice(item.price * item.quantity)}
+                              </p>
+                              {item.quantity > 1 && (
+                                <span className="text-xs text-gray-500">
+                                  ({formatPrice(item.price)} x {item.quantity})
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Quantity Controls */}
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8 rounded-full"
+                              onClick={() => updateQuantity(item.product.id, item.variant?.id || null, -1)}
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <span className="w-8 text-center font-semibold text-sm">
+                              {item.quantity}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8 rounded-full"
+                              onClick={() => updateQuantity(item.product.id, item.variant?.id || null, 1)}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+
+                          {/* Delete Button */}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-gray-400 hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => removeFromCart(item.product.id, item.variant?.id || null)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Order Summary */}
+                    <div className="border-t pt-4">
+                      {/* Promo Applied */}
+                      {appliedPromotion && discountAmount > 0 && (
+                        <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg border border-green-200 mb-3">
+                          <div className="flex items-center gap-2">
+                            <Tag className="h-4 w-4 text-green-600" />
+                            <span className="text-sm font-medium text-green-700">{appliedPromotion.code}</span>
+                          </div>
+                          <span className="text-sm font-bold text-green-600">-{formatPrice(discountAmount)}</span>
+                        </div>
+                      )}
+
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Subtotal ({cart.reduce((sum, item) => sum + item.quantity, 0)} items)</span>
+                          <span className="font-medium">{formatPrice(subtotal)}</span>
+                        </div>
+                        {discountAmount > 0 && (
+                          <div className="flex justify-between text-sm text-green-600">
+                            <span>Discount</span>
+                            <span className="font-medium">-{formatPrice(discountAmount)}</span>
+                          </div>
+                        )}
+                        <Separator />
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <span className="text-sm font-bold text-gray-900">Total</span>
+                          </div>
+                          <span className="text-lg font-bold text-primary">{formatPrice(total)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Checkout button */}
+              <div className="p-4 border-t">
+                <Button
+                  className="w-full h-12 text-base font-semibold shadow-lg"
+                  disabled={cart.length === 0}
+                  onClick={() => {
+                    setIsOrderPanelOpen(false);
+                    setCheckoutOpen(true);
+                  }}
+                >
+                  <CreditCard className="h-5 w-5 mr-2" />
+                  Checkout ({formatPrice(total)})
+                </Button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+    } else {
+      // Desktop view - side panel
+      return (
+        <div className={`flex flex-col h-full w-full max-w-xs lg:max-w-md ${isOrderPanelOpen ? 'block' : 'hidden lg:block'}`}>
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg">
+                <ShoppingCart className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900">Current Order</h3>
+                <p className="text-sm text-gray-600">
+                  {cart.length === 0 ? 'No items' : `${cart.reduce((sum, item) => sum + item.quantity, 0)} items`}
+                </p>
+              </div>
+            </div>
+            {cart.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearCart}
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Clear
+              </Button>
+            )}
+          </div>
+
+          {/* Cart Items - Scrollable */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {cart.length === 0 ? (
+              <div className="flex flex-col items-center justify-center text-center text-gray-500 h-full">
+                <ShoppingCart className="h-16 w-16 mx-auto mb-3 text-gray-300" />
+                <h4 className="font-medium text-gray-700">Cart is empty</h4>
+                <p className="text-sm mt-1">Add items to start your order</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {cart.map((item, index) => (
+                  <div
+                    key={`${item.product.id}-${item.variant?.id || 'base'}-${index}`}
+                    className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    {/* Product Image */}
+                    <div className="w-12 h-12 bg-gray-50 rounded-md flex items-center justify-center overflow-hidden">
+                      {item.product.main_image_url ? (
+                        <img
+                          src={item.product.main_image_url}
+                          alt={item.displayName}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <PawPrint className="h-6 w-6 text-gray-400" />
+                      )}
+                    </div>
+
+                    {/* Product Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 text-sm line-clamp-1">
+                        {item.displayName}
+                      </p>
+                      <div className="flex items-center gap-1 mt-1">
+                        <p className="text-sm font-bold text-primary">
+                          {formatPrice(item.price * item.quantity)}
+                        </p>
+                        {item.quantity > 1 && (
+                          <span className="text-xs text-gray-500">
+                            ({formatPrice(item.price)} x {item.quantity})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Quantity Controls */}
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 rounded-full"
+                        onClick={() => updateQuantity(item.product.id, item.variant?.id || null, -1)}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="w-8 text-center font-semibold text-sm">
+                        {item.quantity}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 rounded-full"
+                        onClick={() => updateQuantity(item.product.id, item.variant?.id || null, 1)}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    {/* Delete Button */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-gray-400 hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => removeFromCart(item.product.id, item.variant?.id || null)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Footer - Order Summary & Checkout */}
+          <div className="border-t border-gray-200 bg-white p-4 space-y-3">
+            {/* Promo Applied */}
+            {appliedPromotion && discountAmount > 0 && (
+              <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg border border-green-200">
+                <div className="flex items-center gap-2">
+                  <Tag className="h-4 w-4 text-green-600" />
+                  <span className="text-sm font-medium text-green-700">{appliedPromotion.code}</span>
+                </div>
+                <span className="text-sm font-bold text-green-600">-{formatPrice(discountAmount)}</span>
+              </div>
+            )}
+
+            {/* Summary */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>Subtotal ({cart.reduce((sum, item) => sum + item.quantity, 0)} items)</span>
+                <span className="font-medium">{formatPrice(subtotal)}</span>
+              </div>
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-sm text-green-600">
+                  <span>Discount</span>
+                  <span className="font-medium">-{formatPrice(discountAmount)}</span>
+                </div>
+              )}
+              <Separator />
+              <div className="flex justify-between items-center">
+                <div>
+                  <span className="text-base font-bold text-gray-900">Total</span>
+                </div>
+                <span className="text-xl font-bold text-primary">{formatPrice(total)}</span>
+              </div>
+            </div>
+
+            {/* Checkout Button */}
+            <Button
+              className="w-full h-12 text-base font-semibold shadow-lg"
+              disabled={cart.length === 0}
+              onClick={() => setCheckoutOpen(true)}
+            >
+              <CreditCard className="h-5 w-5 mr-2" />
+              Checkout ({formatPrice(total)})
+            </Button>
           </div>
         </div>
+      );
+    }
+  };
 
-        {/* Category Tabs */}
-        <div className="mb-2 lg:mb-4 shrink-0 overflow-hidden">
-          <ScrollArea className="w-full" orientation="horizontal">
-            <div className="flex gap-1.5 lg:gap-2 pb-1.5 lg:pb-2 min-w-max">
-              <Button
-                variant={selectedCategory === 'all' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedCategory('all')}
-                className="whitespace-nowrap text-xs lg:text-sm h-8 lg:h-9 px-2 lg:px-3 transition-all duration-200"
-                type="button"
-              >
-                All Products
-              </Button>
-              {categoriesLoading ? (
-                <>
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="h-8 lg:h-9 w-20 lg:w-24 bg-brown-100 rounded-md animate-pulse"
-                    />
-                  ))}
-                </>
-              ) : (
-                activeCategories.map((cat) => (
-                  <Button
-                    key={cat.id}
-                    variant={selectedCategory === cat.id ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setSelectedCategory(cat.id)}
-                    className="whitespace-nowrap text-xs lg:text-sm h-8 lg:h-9 px-2 lg:px-3 transition-all duration-200"
-                    type="button"
-                  >
-                    {cat.name}
-                  </Button>
-                ))
-              )}
+  return (
+    <div className="flex flex-col h-[calc(100vh-4rem)] lg:flex-row lg:h-[calc(100vh-6rem)] bg-gray-50">
+      {/* Mobile Header */}
+      <div className="lg:hidden p-4 bg-white border-b flex items-center justify-between">
+        <h1 className="text-xl font-bold text-gray-900">POS System</h1>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={toggleOrderPanel}
+        >
+          {isOrderPanelOpen ? <X className="h-5 w-5" /> : <ShoppingCart className="h-5 w-5" />}
+        </Button>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Main Content Area */}
+        <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${isOrderPanelOpen && isMobileView ? 'hidden' : 'flex'} ${isOrderPanelOpen && !isMobileView ? 'lg:w-2/3' : 'w-full'}`}>
+          {/* Search & Filters */}
+          <div className="p-4 bg-white border-b">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-12 text-base"
+              />
             </div>
-          </ScrollArea>
-        </div>
+          </div>
 
-        {/* Products */}
-        <div className="flex-1 min-h-0 overflow-hidden">
-          <ScrollArea className="h-full">
+          {/* Category Tabs */}
+          <div className="p-4 bg-white border-b">
+            <ScrollArea className="w-full" orientation="horizontal">
+              <div className="flex gap-2 pb-1.5 min-w-max">
+                <Button
+                  variant={selectedCategory === 'all' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedCategory('all')}
+                  className="whitespace-nowrap text-base h-10 px-4"
+                >
+                  All Products
+                </Button>
+                {categoriesLoading ? (
+                  <>
+                    {[1, 2, 3, 4].map((i) => (
+                      <div
+                        key={i}
+                        className="h-10 w-32 bg-gray-100 rounded-md animate-pulse"
+                      />
+                    ))}
+                  </>
+                ) : (
+                  activeCategories.map((cat) => (
+                    <Button
+                      key={cat.id}
+                      variant={selectedCategory === cat.id ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedCategory(cat.id)}
+                      className="whitespace-nowrap text-base h-10 px-4"
+                    >
+                      {cat.name}
+                    </Button>
+                  ))
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+
+          {/* Products Grid */}
+          <div className="flex-1 overflow-y-auto p-4">
             {loading ? (
               <div className="flex items-center justify-center h-64">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : filteredProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64">
-                <PawPrint className="h-12 w-12 text-brown-300 mb-4" />
-                <p className="text-brown-600">No products found</p>
+                <PawPrint className="h-16 w-16 text-gray-300 mb-4" />
+                <p className="text-gray-600">No products found</p>
               </div>
             ) : (
-              <div className="grid grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-1.5 lg:gap-3 pb-2 lg:pb-4 pr-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                 {filteredProducts.map((product) => {
                   // Calculate total stock: variant stock + base stock for variant products
                   const variantStock = product.variants?.reduce((sum, v) => sum + v.stock_quantity, 0) || 0;
-                  const totalStock = product.has_variants 
+                  const totalStock = product.has_variants
                     ? variantStock + product.stock_quantity  // Include base stock for variant products
                     : product.stock_quantity;
                   const outOfStock = isProductOutOfStock(product);
-                  
+
                   return (
                     <button
                       key={product.id}
@@ -1000,21 +1375,21 @@ export default function KasirPOSPage() {
                         }
                         handleProductClick(product);
                       }}
-                      className={`bg-white border rounded-md lg:rounded-lg p-1.5 lg:p-3 text-left transition-all group relative ${
-                        outOfStock 
-                          ? 'border-red-200 opacity-75 cursor-not-allowed' 
-                          : 'border-brown-200 hover:shadow-md hover:border-primary'
+                      className={`bg-white border rounded-xl p-4 text-left transition-all group relative ${
+                        outOfStock
+                          ? 'border-red-200 opacity-75 cursor-not-allowed'
+                          : 'border-gray-200 hover:shadow-lg hover:border-primary'
                       }`}
                     >
                       {/* Out of Stock Overlay */}
                       {outOfStock && (
-                        <div className="absolute inset-0 bg-gray-900/40 rounded-md lg:rounded-lg flex items-center justify-center z-10">
-                          <div className="bg-red-500 text-white text-[8px] lg:text-[10px] font-bold px-2 py-1 rounded transform -rotate-12">
+                        <div className="absolute inset-0 bg-gray-900/40 rounded-xl flex items-center justify-center z-10">
+                          <div className="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded transform -rotate-12">
                             OUT OF STOCK
                           </div>
                         </div>
                       )}
-                      <div className="aspect-square bg-brown-50 rounded mb-1.5 lg:mb-2 flex items-center justify-center overflow-hidden relative">
+                      <div className="aspect-square bg-gray-50 rounded-lg mb-3 flex items-center justify-center overflow-hidden relative">
                         {product.main_image_url ? (
                           <img
                             src={product.main_image_url}
@@ -1022,42 +1397,42 @@ export default function KasirPOSPage() {
                             className={`w-full h-full object-cover ${outOfStock ? 'grayscale' : ''}`}
                           />
                         ) : (
-                          <PawPrint className="h-5 w-5 lg:h-8 lg:w-8 text-brown-300" />
+                          <PawPrint className="h-8 w-8 text-gray-300" />
                         )}
                         {product.has_variants && product.variants && product.variants.length > 0 && (
-                          <div className="absolute top-0.5 right-0.5 lg:top-1.5 lg:right-1.5 bg-primary text-white rounded-full p-0.5 lg:p-1">
-                            <Package className="h-2 w-2 lg:h-2.5 lg:w-2.5" />
+                          <div className="absolute top-2 right-2 bg-primary text-white rounded-full p-1">
+                            <Package className="h-3 w-3" />
                           </div>
                         )}
                       </div>
-                      <h3 className={`font-medium text-[10px] lg:text-xs line-clamp-2 mb-0.5 lg:mb-1 transition-colors ${
-                        outOfStock ? 'text-gray-500' : 'text-brown-900 group-hover:text-primary'
+                      <h3 className={`font-medium text-sm line-clamp-2 mb-2 transition-colors ${
+                        outOfStock ? 'text-gray-500' : 'text-gray-900 group-hover:text-primary'
                       }`}>
                         {product.name}
                       </h3>
-                      <div className="flex items-baseline gap-1 mb-1 lg:mb-1.5">
+                      <div className="flex items-baseline gap-1 mb-2">
                         {product.has_variants && product.variants && product.variants.length > 0 ? (
                           <>
-                            <p className={`font-bold text-[10px] lg:text-xs ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
+                            <p className={`font-bold text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
                               {formatPrice(product.base_price)}
                             </p>
-                            <span className="text-[8px] lg:text-[10px] text-brown-500">+ var</span>
+                            <span className="text-sm text-gray-500">+ var</span>
                           </>
                         ) : (
-                          <p className={`font-bold text-[10px] lg:text-xs ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
+                          <p className={`font-bold text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
                             {formatPrice(product.base_price)}
                           </p>
                         )}
                       </div>
                       <div className="flex items-center justify-between gap-1">
-                        <Badge 
-                          variant={outOfStock ? "destructive" : "secondary"} 
-                          className="text-[8px] lg:text-[10px] px-1 lg:px-1.5 py-0.5"
+                        <Badge
+                          variant={outOfStock ? "destructive" : "secondary"}
+                          className="text-xs px-2 py-1"
                         >
                           {outOfStock ? 'No Stock' : `Stock: ${totalStock}`}
                         </Badge>
                         {product.has_variants && product.variants && product.variants.length > 0 && (
-                          <Badge variant="outline" className="text-[8px] lg:text-[10px] px-1 lg:px-1.5 py-0.5">
+                          <Badge variant="outline" className="text-xs px-2 py-1">
                             {product.variants.length} var
                           </Badge>
                         )}
@@ -1067,177 +1442,12 @@ export default function KasirPOSPage() {
                 })}
               </div>
             )}
-          </ScrollArea>
+          </div>
         </div>
-      </div>
 
-      {/* Cart - Mobile: Fixed bottom panel, Desktop: Side panel */}
-      {showCurrentOrder && (
-        <div className="fixed inset-x-0 bottom-0 z-40 lg:relative lg:inset-auto lg:z-auto lg:w-96 lg:h-full flex flex-col bg-white border-t lg:border-t-0 lg:border-l border-brown-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] lg:shadow-none">
-          {/* Mobile drag handle */}
-          <div className="lg:hidden flex justify-center py-2 bg-white border-b border-brown-100">
-            <div className="w-10 h-1 bg-brown-300 rounded-full" />
-          </div>
-          
-          {/* Header */}
-          <div className="flex items-center justify-between px-3 lg:px-4 py-2 lg:py-3 bg-gradient-to-r from-primary/5 to-primary/10 border-b border-brown-100">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center justify-center w-7 h-7 lg:w-8 lg:h-8 bg-primary rounded-lg">
-                <ShoppingCart className="h-3.5 w-3.5 lg:h-4 lg:w-4 text-white" />
-              </div>
-              <div>
-                <h3 className="text-sm lg:text-base font-semibold text-brown-900">Current Order</h3>
-                <p className="text-[10px] lg:text-xs text-brown-500">
-                  {cart.length === 0 ? 'No items' : `${cart.reduce((sum, item) => sum + item.quantity, 0)} items`}
-                </p>
-              </div>
-            </div>
-            {cart.length > 0 && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={clearCart} 
-                className="h-7 lg:h-8 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
-              >
-                <Trash2 className="h-3 w-3 mr-1" />
-                Clear
-              </Button>
-            )}
-          </div>
-          
-          {/* Cart Items - Scrollable */}
-          <div className="flex-1 min-h-0 max-h-[35vh] lg:max-h-none overflow-y-auto">
-            {cart.length === 0 ? (
-              <div className="flex flex-col items-center justify-center text-brown-500 px-4 py-6 lg:py-12">
-                <div className="w-16 h-16 lg:w-20 lg:h-20 bg-brown-100 rounded-full flex items-center justify-center mb-3">
-                  <ShoppingCart className="h-8 w-8 lg:h-10 lg:w-10 text-brown-300" />
-                </div>
-                <p className="text-sm lg:text-base font-medium text-brown-700">Cart is empty</p>
-                <p className="text-xs text-brown-400 mt-1">Tap products to add them here</p>
-              </div>
-            ) : (
-              <div className="p-2 lg:p-3 space-y-2">
-                {cart.map((item, index) => (
-                  <div
-                    key={`${item.product.id}-${item.variant?.id || 'base'}-${index}`}
-                    className="flex items-center gap-2 lg:gap-3 p-2 lg:p-3 bg-white rounded-lg border border-brown-100 shadow-sm hover:shadow-md transition-shadow"
-                  >
-                    {/* Product Image */}
-                    <div className="w-10 h-10 lg:w-12 lg:h-12 bg-brown-50 rounded-md flex items-center justify-center overflow-hidden shrink-0">
-                      {item.product.main_image_url ? (
-                        <img
-                          src={item.product.main_image_url}
-                          alt={item.displayName}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <PawPrint className="h-5 w-5 lg:h-6 lg:w-6 text-brown-300" />
-                      )}
-                    </div>
-                    
-                    {/* Product Info */}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-brown-900 text-xs lg:text-sm line-clamp-1">
-                        {item.displayName}
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <p className="text-xs lg:text-sm text-primary font-bold">
-                          {formatPrice(item.price * item.quantity)}
-                        </p>
-                        {item.quantity > 1 && (
-                          <span className="text-[10px] lg:text-xs text-brown-400">
-                            ({formatPrice(item.price)} x {item.quantity})
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Quantity Controls */}
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-7 w-7 lg:h-8 lg:w-8 rounded-full border-brown-200"
-                        onClick={() => updateQuantity(item.product.id, item.variant?.id || null, -1)}
-                      >
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <span className="w-6 lg:w-8 text-center font-semibold text-xs lg:text-sm">
-                        {item.quantity}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-7 w-7 lg:h-8 lg:w-8 rounded-full border-brown-200"
-                        onClick={() => updateQuantity(item.product.id, item.variant?.id || null, 1)}
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    </div>
-                    
-                    {/* Delete Button */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 lg:h-8 lg:w-8 text-brown-400 hover:text-destructive hover:bg-destructive/10 shrink-0"
-                      onClick={() => removeFromCart(item.product.id, item.variant?.id || null)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          
-          {/* Footer - Order Summary & Checkout */}
-          <div className="border-t border-brown-200 bg-white px-3 lg:px-4 py-3 lg:py-4 space-y-3">
-            {/* Promo Applied */}
-            {appliedPromotion && discountAmount > 0 && (
-              <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg border border-green-200">
-                <div className="flex items-center gap-2">
-                  <Tag className="h-4 w-4 text-green-600" />
-                  <span className="text-xs lg:text-sm font-medium text-green-700">{appliedPromotion.code}</span>
-                </div>
-                <span className="text-xs lg:text-sm font-bold text-green-600">-{formatPrice(discountAmount)}</span>
-              </div>
-            )}
-            
-            {/* Summary */}
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-xs lg:text-sm text-brown-600">
-                <span>Subtotal ({cart.reduce((sum, item) => sum + item.quantity, 0)} items)</span>
-                <span className="font-medium">{formatPrice(subtotal)}</span>
-              </div>
-              {discountAmount > 0 && (
-                <div className="flex justify-between text-xs lg:text-sm text-green-600">
-                  <span>Discount</span>
-                  <span className="font-medium">-{formatPrice(discountAmount)}</span>
-                </div>
-              )}
-              <Separator className="my-2" />
-              <div className="flex justify-between items-center">
-                <div>
-                  <span className="text-sm lg:text-base font-bold text-brown-900">Total</span>
-                  <p className="text-[10px] lg:text-xs text-brown-400">+ shipping at checkout</p>
-                </div>
-                <span className="text-lg lg:text-xl font-bold text-primary">{formatPrice(total)}</span>
-              </div>
-            </div>
-            
-            {/* Checkout Button */}
-            <Button
-              className="w-full h-10 lg:h-12 text-sm lg:text-base font-semibold shadow-lg"
-              size="lg"
-              disabled={cart.length === 0}
-              onClick={() => setCheckoutOpen(true)}
-            >
-              <CreditCard className="h-4 w-4 lg:h-5 lg:w-5 mr-2" />
-              Proceed to Checkout
-            </Button>
-          </div>
-        </div>
-      )}
+        {/* Order Panel - Desktop sidebar or mobile overlay */}
+        {renderOrderPanel()}
+      </div>
 
       {/* Checkout Dialog */}
       <Dialog open={checkoutOpen} onOpenChange={(open) => {
@@ -1247,13 +1457,13 @@ export default function KasirPOSPage() {
           setCheckoutStep('details');
         }
       }}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] overflow-y-auto max-w-2xl">
           <DialogHeader>
             <DialogTitle>
               {checkoutStep === 'details' ? 'Recipient & Shipping Details' : 'Complete Payment'}
             </DialogTitle>
             <DialogDescription>
-              {checkoutStep === 'details' 
+              {checkoutStep === 'details'
                 ? 'Enter recipient and shipping courier information'
                 : `Total amount: ${formatPrice(total)}`
               }
@@ -1291,7 +1501,7 @@ export default function KasirPOSPage() {
                     ) : (
                       <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     )}
-                    
+
                     {/* Profile Dropdown */}
                     {showProfileDropdown && searchedProfiles.length > 0 && (
                       <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
@@ -1384,8 +1594,8 @@ export default function KasirPOSPage() {
                   <h4 className="font-medium text-sm">Shipping Courier</h4>
                   <div>
                     <label className="text-sm font-medium">Select Courier *</label>
-                    <Select 
-                      value={shippingCourier} 
+                    <Select
+                      value={shippingCourier}
                       onValueChange={(value) => {
                         setShippingCourier(value);
                         if (value !== 'custom') {
@@ -1407,7 +1617,7 @@ export default function KasirPOSPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   {shippingCourier === 'custom' && (
                     <div>
                       <label className="text-sm font-medium">Courier Name *</label>
@@ -1420,14 +1630,14 @@ export default function KasirPOSPage() {
                       />
                     </div>
                   )}
-                  
+
                   {/* Total Weight Display */}
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm font-medium text-blue-900">Total Package Weight</p>
                     <p className="text-2xl font-bold text-blue-700">{totalWeightKg} kg</p>
                     <p className="text-xs text-blue-600 mt-1">({totalWeightGrams} grams)</p>
                   </div>
-                  
+
                   {/* Shipping Cost Input */}
                   <div>
                     <label className="text-sm font-medium">
@@ -1443,7 +1653,7 @@ export default function KasirPOSPage() {
                       className="mt-1"
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      {totalWeightGrams < 1000 
+                      {totalWeightGrams < 1000
                         ? `Under 1kg - using base rate for ${recipientProvince ? provinces.find(p => p.id.toString() === recipientProvince)?.province_name : 'selected province'}`
                         : `${totalWeightKg} kg - calculated per kg rate`
                       }
@@ -1493,7 +1703,7 @@ export default function KasirPOSPage() {
                 {/* Order Summary */}
                 <div className="space-y-2 py-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-brown-600">Subtotal</span>
+                    <span className="text-gray-600">Subtotal</span>
                     <span>{formatPrice(subtotal)}</span>
                   </div>
                   {discountAmount > 0 && appliedPromotion && (
@@ -1513,7 +1723,7 @@ export default function KasirPOSPage() {
                   )}
                   <div className="flex justify-between text-sm">
                     <div className="flex items-center gap-1">
-                      <span className="text-brown-600">Shipping ({totalWeightKg} kg)</span>
+                      <span className="text-gray-600">Shipping ({totalWeightKg} kg)</span>
                       {shippingCourier !== 'custom' && shippingCourier !== 'pickup' && recipientProvince && shippingCostAmount > 0 && (
                         <span className="text-xs text-green-600">✓ Auto</span>
                       )}
@@ -1549,7 +1759,7 @@ export default function KasirPOSPage() {
                       <Banknote className="mr-2 h-4 w-4" />
                       Cash
                     </Button>
-                    
+
                     {/* Bank Transfer - Only if enabled */}
                     {storeSettings.payment.bankTransferEnabled && (
                       <Button
@@ -1562,7 +1772,7 @@ export default function KasirPOSPage() {
                         Bank Transfer
                       </Button>
                     )}
-                    
+
                     {/* E-Wallet - Only if enabled */}
                     {storeSettings.payment.ewalletEnabled && (
                       <Button
@@ -1575,7 +1785,7 @@ export default function KasirPOSPage() {
                         E-Wallet
                       </Button>
                     )}
-                    
+
                     {/* QRIS - Only if enabled */}
                     {storeSettings.payment.qrisEnabled && (
                       <Button
@@ -1669,18 +1879,18 @@ export default function KasirPOSPage() {
                       <QrCode className="h-5 w-5 text-orange-600" />
                       <h4 className="font-semibold text-orange-900">QRIS Payment</h4>
                     </div>
-                    
+
                     {/* QRIS Image */}
                     {storeSettings.payment.qrisImage && (
                       <div className="flex justify-center">
-                        <img 
-                          src={storeSettings.payment.qrisImage} 
+                        <img
+                          src={storeSettings.payment.qrisImage}
                           alt="QRIS Code"
                           className="w-40 h-40 object-contain border border-orange-200 rounded-lg bg-white p-2"
                         />
                       </div>
                     )}
-                    
+
                     <div className="space-y-2 text-sm">
                       {storeSettings.payment.qrisName && (
                         <div className="flex justify-between">
@@ -1768,7 +1978,7 @@ export default function KasirPOSPage() {
 
       {/* Variant Selection Dialog */}
       <Dialog open={variantDialogOpen} onOpenChange={setVariantDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Select Variant</DialogTitle>
             <DialogDescription>
@@ -1777,7 +1987,7 @@ export default function KasirPOSPage() {
           </DialogHeader>
 
           <ScrollArea className="max-h-96">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               {/* Base Product Option - Only show if product does NOT have variants */}
               {selectedProduct && !selectedProduct.has_variants && (
                 <button
@@ -1791,11 +2001,11 @@ export default function KasirPOSPage() {
                   className={`border rounded-lg p-4 text-left transition-all relative ${
                     selectedProduct.stock_quantity <= 0
                       ? 'border-red-200 opacity-75 cursor-not-allowed'
-                      : 'border-brown-200 hover:border-primary hover:shadow-md'
+                      : 'border-gray-200 hover:border-primary hover:shadow-md'
                   }`}
                 >
                   {selectedProduct.stock_quantity <= 0 && (
-                    <div className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded">
+                    <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
                       OUT OF STOCK
                     </div>
                   )}
@@ -1807,19 +2017,19 @@ export default function KasirPOSPage() {
                         className={`w-16 h-16 object-cover rounded-lg ${selectedProduct.stock_quantity <= 0 ? 'grayscale' : ''}`}
                       />
                     ) : (
-                      <div className="w-16 h-16 bg-brown-50 rounded-lg flex items-center justify-center">
-                        <PawPrint className="h-8 w-8 text-brown-300" />
+                      <div className="w-16 h-16 bg-gray-50 rounded-lg flex items-center justify-center">
+                        <PawPrint className="h-8 w-8 text-gray-400" />
                       </div>
                     )}
                     <div className="flex-1">
-                      <p className={`font-medium text-sm mb-1 ${selectedProduct.stock_quantity <= 0 ? 'text-gray-500' : 'text-brown-900'}`}>
+                      <p className={`font-medium text-sm mb-1 ${selectedProduct.stock_quantity <= 0 ? 'text-gray-500' : 'text-gray-900'}`}>
                         Base Product (No Variant)
                       </p>
                       <p className={`font-bold ${selectedProduct.stock_quantity <= 0 ? 'text-gray-400' : 'text-primary'}`}>
                         {formatPrice(selectedProduct.base_price)}
                       </p>
-                      <Badge 
-                        variant={selectedProduct.stock_quantity > 0 ? "secondary" : "destructive"} 
+                      <Badge
+                        variant={selectedProduct.stock_quantity > 0 ? "secondary" : "destructive"}
                         className="mt-1 text-xs"
                       >
                         {selectedProduct.stock_quantity > 0 ? `Stock: ${selectedProduct.stock_quantity}` : 'No Stock'}
@@ -1843,11 +2053,11 @@ export default function KasirPOSPage() {
                   className={`border rounded-lg p-4 text-left transition-all relative ${
                     variant.stock_quantity <= 0
                       ? 'border-red-200 opacity-75 cursor-not-allowed'
-                      : 'border-brown-200 hover:border-primary hover:shadow-md'
+                      : 'border-gray-200 hover:border-primary hover:shadow-md'
                   }`}
                 >
                   {variant.stock_quantity <= 0 && (
-                    <div className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded">
+                    <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded">
                       OUT OF STOCK
                     </div>
                   )}
@@ -1859,22 +2069,22 @@ export default function KasirPOSPage() {
                         className={`w-16 h-16 object-cover rounded-lg ${variant.stock_quantity <= 0 ? 'grayscale' : ''}`}
                       />
                     ) : (
-                      <div className="w-16 h-16 bg-brown-50 rounded-lg flex items-center justify-center">
-                        <Package className="h-8 w-8 text-brown-300" />
+                      <div className="w-16 h-16 bg-gray-50 rounded-lg flex items-center justify-center">
+                        <Package className="h-8 w-8 text-gray-400" />
                       </div>
                     )}
                     <div className="flex-1">
-                      <p className={`font-medium text-sm mb-1 ${variant.stock_quantity <= 0 ? 'text-gray-500' : 'text-brown-900'}`}>
+                      <p className={`font-medium text-sm mb-1 ${variant.stock_quantity <= 0 ? 'text-gray-500' : 'text-gray-900'}`}>
                         {variant.variant_name}
                       </p>
                       {variant.unit_label && (
-                        <p className="text-xs text-brown-600 mb-1">{variant.unit_label}</p>
+                        <p className="text-xs text-gray-600 mb-1">{variant.unit_label}</p>
                       )}
                       <p className={`font-bold ${variant.stock_quantity <= 0 ? 'text-gray-400' : 'text-primary'}`}>
                         {formatPrice(selectedProduct.base_price + variant.price_adjustment)}
                       </p>
-                      <Badge 
-                        variant={variant.stock_quantity > 0 ? "secondary" : "destructive"} 
+                      <Badge
+                        variant={variant.stock_quantity > 0 ? "secondary" : "destructive"}
                         className="mt-1 text-xs"
                       >
                         {variant.stock_quantity > 0 ? `Stock: ${variant.stock_quantity}` : 'No Stock'}
@@ -1883,15 +2093,15 @@ export default function KasirPOSPage() {
                   </div>
                 </button>
               ))}
-              
+
               {/* Empty state when no options available */}
-              {selectedProduct && 
-               selectedProduct.stock_quantity <= 0 && 
+              {selectedProduct &&
+               selectedProduct.stock_quantity <= 0 &&
                (!selectedProduct.variants || selectedProduct.variants.length === 0) && (
                 <div className="col-span-2 text-center py-8">
-                  <Package className="h-12 w-12 text-brown-300 mx-auto mb-3" />
-                  <p className="text-brown-600 font-medium">No stock available</p>
-                  <p className="text-sm text-brown-400 mt-1">All variants are out of stock</p>
+                  <Package className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-600 font-medium">No stock available</p>
+                  <p className="text-sm text-gray-400 mt-1">All variants are out of stock</p>
                 </div>
               )}
             </div>
