@@ -431,9 +431,9 @@ export default function AboutPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="max-w-2xl mx-auto text-center flex flex-col items-center"
+              className="max-w-lg mx-auto text-center flex flex-col items-center"
             >
-              <div className="mb-0.5">
+              <div className="mb-2">
                 <StoreLogo
                   className="mx-auto rounded-full bg-white p-2 shadow-lg scale-50"
                   iconClassName="h-14 w-14 text-[#ff911d]"
@@ -442,36 +442,36 @@ export default function AboutPage() {
               </div>
 
               <motion.div
-                className="w-full -mt-1"
+                className="w-full mt-1"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
                 <h1
-                  className="text-2xl md:text-4xl font-bold text-white mb-3 leading-tight"
+                  className="text-xl md:text-2xl font-bold text-white mb-2 leading-tight"
                 >
                   {sections.hero?.title || "Dedicated to Pet Wellness & Happiness"}
                 </h1>
                 <p
-                  className="text-base md:text-lg text-white/90 max-w-xl mx-auto mb-6 leading-relaxed"
+                  className="text-sm md:text-base text-white/90 max-w-md mx-auto mb-3 leading-relaxed"
                 >
                   {sections.hero?.content || "At ShortTail.id, we believe every pet deserves the best care, nutrition, and love. Founded in 2020 with a passion for animal welfare, we've grown into Indonesia's premier destination for premium pet supplies."}
                 </p>
               </motion.div>
 
               <motion.div
-                className="mt-2"
+                className="mt-1"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
               >
                 <Button
-                  size="default"
-                  className="bg-[#ff911d] hover:bg-[#e6821a] text-white px-8 py-3 rounded-full shadow-xl transition-all duration-300 transform hover:scale-105"
+                  size="sm"
+                  className="bg-[#ff911d] hover:bg-[#e6821a] text-white px-6 py-2 rounded-full shadow-xl transition-all duration-300 transform hover:scale-105"
                   onClick={() => scrollToSection('mission')}
                 >
                   Discover Our Journey
-                  <ChevronDown className="ml-2 h-5 w-5 animate-bounce" />
+                  <ChevronDown className="ml-2 h-4 w-4 animate-bounce" />
                 </Button>
               </motion.div>
             </motion.div>
