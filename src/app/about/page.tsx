@@ -433,7 +433,7 @@ export default function AboutPage() {
               transition={{ duration: 0.8 }}
               className="max-w-lg mx-auto text-center flex flex-col items-center"
             >
-              <div className="mb-1">
+              <div className="mb-3">
                 <div className="mx-auto rounded-full bg-white border-2 border-white shadow-lg w-16 h-16 flex items-center justify-center">
                   <StoreLogo
                     className="scale-75"
@@ -444,7 +444,7 @@ export default function AboutPage() {
               </div>
 
               <motion.div
-                className="w-full mt-0"
+                className="w-full mb-2"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
@@ -455,7 +455,7 @@ export default function AboutPage() {
                   {sections.hero?.title || "Dedicated to Pet Wellness & Happiness"}
                 </h1>
                 <p
-                  className="text-sm md:text-base text-white/90 max-w-md mx-auto mb-2 leading-relaxed"
+                  className="text-sm md:text-base text-white/90 max-w-md mx-auto mb-3 leading-relaxed"
                 >
                   {sections.hero?.content || "At ShortTail.id, we believe every pet deserves the best care, nutrition, and love. Founded in 2020 with a passion for animal welfare, we've grown into Indonesia's premier destination for premium pet supplies."}
                 </p>
