@@ -26,6 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
+import { StoreLogo } from '@/components/ui/store-logo';
 import { createClient } from '@/lib/supabase/client';
 
 // Types for About Us page data
@@ -432,12 +433,13 @@ export default function AboutPage() {
               transition={{ duration: 0.8 }}
               className="max-w-4xl mx-auto text-center"
             >
-              <Badge 
-                className="bg-[#ff911d]/20 text-[#ff911d] border-[#ff911d]/30 mb-6 backdrop-blur-sm"
-                style={{ backgroundColor: 'rgba(255, 145, 29, 0.2)', borderColor: 'rgba(255, 145, 29, 0.3)', color: '#ff911d' }}
-              >
-                Our Story
-              </Badge>
+              <div className="mb-6">
+                <StoreLogo
+                  className="mx-auto rounded-full bg-white p-3"
+                  iconClassName="h-12 w-12 text-[#ff911d]"
+                  fallbackSize="lg"
+                />
+              </div>
               <motion.h1 
                 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight"
                 initial={{ opacity: 0, y: 30 }}
