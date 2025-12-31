@@ -433,7 +433,7 @@ export default function AboutPage() {
               transition={{ duration: 0.8 }}
               className="max-w-2xl mx-auto text-center flex flex-col items-center"
             >
-              <div className="mb-4">
+              <div className="mb-1">
                 <StoreLogo
                   className="mx-auto rounded-full bg-white p-3 shadow-lg scale-60"
                   iconClassName="h-14 w-14 text-[#ff911d]"
@@ -442,7 +442,7 @@ export default function AboutPage() {
               </div>
 
               <motion.div
-                className="w-full"
+                className="w-full -mt-2"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
