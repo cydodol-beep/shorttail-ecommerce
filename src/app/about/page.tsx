@@ -444,18 +444,18 @@ export default function AboutPage() {
               </div>
 
               <motion.div
-                className="w-full mt-1"
+                className="w-full mt-0"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
                 <h1
-                  className="text-xl md:text-2xl font-bold text-white mb-2 leading-tight"
+                  className="text-xl md:text-2xl font-bold text-white mb-1 leading-tight"
                 >
                   {sections.hero?.title || "Dedicated to Pet Wellness & Happiness"}
                 </h1>
                 <p
-                  className="text-sm md:text-base text-white/90 max-w-md mx-auto mb-3 leading-relaxed"
+                  className="text-sm md:text-base text-white/90 max-w-md mx-auto mb-2 leading-relaxed"
                 >
                   {sections.hero?.content || "At ShortTail.id, we believe every pet deserves the best care, nutrition, and love. Founded in 2020 with a passion for animal welfare, we've grown into Indonesia's premier destination for premium pet supplies."}
                 </p>
