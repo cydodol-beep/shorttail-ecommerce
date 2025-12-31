@@ -433,7 +433,7 @@ export default function AboutPage() {
               transition={{ duration: 0.8 }}
               className="max-w-2xl mx-auto text-center flex flex-col items-center"
             >
-              <div className="mb-1">
+              <div className="mb-0.5">
                 <StoreLogo
                   className="mx-auto rounded-full bg-white p-3 shadow-lg scale-60"
                   iconClassName="h-14 w-14 text-[#ff911d]"
@@ -442,13 +442,13 @@ export default function AboutPage() {
               </div>
 
               <motion.div
-                className="w-full -mt-2"
+                className="w-full -mt-1"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
                 <h1
-                  className="text-2xl md:text-4xl font-bold text-white mb-4 leading-tight"
+                  className="text-2xl md:text-4xl font-bold text-white mb-3 leading-tight"
                 >
                   {sections.hero?.title || "Dedicated to Pet Wellness & Happiness"}
                 </h1>
