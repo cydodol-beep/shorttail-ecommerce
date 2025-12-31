@@ -433,7 +433,7 @@ export default function AboutPage() {
               transition={{ duration: 0.8 }}
               className="max-w-4xl mx-auto text-center"
             >
-              <div className="mb-6">
+              <div className="mb-2">
                 <StoreLogo
                   className="mx-auto rounded-full bg-white p-3 scale-40"
                   iconClassName="h-12 w-12 text-[#ff911d]"
