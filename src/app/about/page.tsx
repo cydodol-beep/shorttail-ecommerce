@@ -426,16 +426,16 @@ export default function AboutPage() {
 
           <div className="absolute inset-0 bg-[#006d77]/80"></div>
 
-          <div className="container mx-auto px-4 py-8 relative z-10">
+          <div className="container mx-auto px-4 py-4 relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="max-w-3xl mx-auto text-center flex flex-col items-center"
+              className="max-w-2xl mx-auto text-center flex flex-col items-center"
             >
-              <div className="mb-6">
+              <div className="mb-4">
                 <StoreLogo
-                  className="mx-auto rounded-full bg-white p-4 shadow-lg scale-60"
+                  className="mx-auto rounded-full bg-white p-3 shadow-lg scale-60"
                   iconClassName="h-14 w-14 text-[#ff911d]"
                   fallbackSize="xl"
                 />
@@ -448,26 +448,26 @@ export default function AboutPage() {
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
                 <h1
-                  className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight"
+                  className="text-2xl md:text-4xl font-bold text-white mb-4 leading-tight"
                 >
                   {sections.hero?.title || "Dedicated to Pet Wellness & Happiness"}
                 </h1>
                 <p
-                  className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-8 leading-relaxed"
+                  className="text-base md:text-lg text-white/90 max-w-xl mx-auto mb-6 leading-relaxed"
                 >
                   {sections.hero?.content || "At ShortTail.id, we believe every pet deserves the best care, nutrition, and love. Founded in 2020 with a passion for animal welfare, we've grown into Indonesia's premier destination for premium pet supplies."}
                 </p>
               </motion.div>
 
               <motion.div
-                className="mt-4"
+                className="mt-2"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
               >
                 <Button
-                  size="lg"
-                  className="bg-[#ff911d] hover:bg-[#e6821a] text-white text-lg px-10 py-4 rounded-full shadow-xl transition-all duration-300 transform hover:scale-105"
+                  size="default"
+                  className="bg-[#ff911d] hover:bg-[#e6821a] text-white px-8 py-3 rounded-full shadow-xl transition-all duration-300 transform hover:scale-105"
                   onClick={() => scrollToSection('mission')}
                 >
                   Discover Our Journey
