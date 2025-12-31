@@ -435,7 +435,7 @@ export default function AboutPage() {
             >
               <div className="mb-6">
                 <StoreLogo
-                  className="mx-auto rounded-full bg-white p-3"
+                  className="mx-auto rounded-full bg-white p-3 scale-40"
                   iconClassName="h-12 w-12 text-[#ff911d]"
                   fallbackSize="lg"
                 />
