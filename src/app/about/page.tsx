@@ -438,7 +438,7 @@ export default function AboutPage() {
                   <StoreLogo
                     className="scale-75"
                     iconClassName="h-10 w-10 text-[#ff911d]"
-                    fallbackSize="default"
+                    fallbackSize="md"
                   />
                 </div>
               </div>
