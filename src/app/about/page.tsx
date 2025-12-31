@@ -433,12 +433,12 @@ export default function AboutPage() {
               transition={{ duration: 0.8 }}
               className="max-w-lg mx-auto text-center flex flex-col items-center"
             >
-              <div className="mb-2">
-                <div className="mx-auto rounded-full bg-white border-2 border-white shadow-lg w-20 h-20 flex items-center justify-center">
+              <div className="mb-1">
+                <div className="mx-auto rounded-full bg-white border-2 border-white shadow-lg w-16 h-16 flex items-center justify-center">
                   <StoreLogo
-                    className="scale-50"
-                    iconClassName="h-14 w-14 text-[#ff911d]"
-                    fallbackSize="lg"
+                    className="scale-75"
+                    iconClassName="h-10 w-10 text-[#ff911d]"
+                    fallbackSize="default"
                   />
                 </div>
               </div>
