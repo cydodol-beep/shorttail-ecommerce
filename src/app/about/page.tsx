@@ -434,7 +434,7 @@ export default function AboutPage() {
               className="max-w-lg mx-auto text-center flex flex-col items-center"
             >
               <div className="mb-2">
-                <div className="mx-auto rounded-full bg-white p-2 shadow-lg w-20 h-20 flex items-center justify-center">
+                <div className="mx-auto rounded-full bg-white border-2 border-white shadow-lg w-20 h-20 flex items-center justify-center">
                   <StoreLogo
                     className="scale-50"
                     iconClassName="h-14 w-14 text-[#ff911d]"
