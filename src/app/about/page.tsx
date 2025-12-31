@@ -426,56 +426,60 @@ export default function AboutPage() {
 
           <div className="absolute inset-0 bg-[#006d77]/80"></div>
 
-          <div className="container mx-auto px-4 py-4 relative z-10">
+          <div className="container mx-auto px-4 py-8 relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="max-w-lg mx-auto text-center flex flex-col items-center"
+              className="max-w-lg mx-auto"
             >
-              <div className="mb-3">
-                <div className="mx-auto rounded-full bg-white border-2 border-white shadow-lg w-16 h-16 flex items-center justify-center">
-                  <StoreLogo
-                    className="scale-75"
-                    iconClassName="h-10 w-10 text-[#ff911d]"
-                    fallbackSize="md"
-                  />
+              <div className="flex flex-col items-center">
+                {/* Store Logo */}
+                <div className="mb-4">
+                  <div className="mx-auto rounded-full bg-white border-2 border-white shadow-lg w-16 h-16 flex items-center justify-center">
+                    <StoreLogo
+                      className="scale-75"
+                      iconClassName="h-10 w-10 text-[#ff911d]"
+                      fallbackSize="md"
+                    />
+                  </div>
                 </div>
+
+                {/* Title and Content */}
+                <motion.div
+                  className="text-center mb-6"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.2 }}
+                >
+                  <h1
+                    className="text-xl md:text-2xl font-bold text-white mb-3 leading-tight"
+                  >
+                    {sections.hero?.title || "Dedicated to Pet Wellness & Happiness"}
+                  </h1>
+                  <p
+                    className="text-sm md:text-base text-white/90 max-w-md mx-auto leading-relaxed"
+                  >
+                    {sections.hero?.content || "At ShortTail.id, we believe every pet deserves the best care, nutrition, and love. Founded in 2020 with a passion for animal welfare, we've grown into Indonesia's premier destination for premium pet supplies."}
+                  </p>
+                </motion.div>
+
+                {/* CTA Button */}
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.4 }}
+                >
+                  <Button
+                    size="sm"
+                    className="bg-[#ff911d] hover:bg-[#e6821a] text-white px-6 py-2 rounded-full shadow-xl transition-all duration-300 transform hover:scale-105"
+                    onClick={() => scrollToSection('mission')}
+                  >
+                    Discover Our Journey
+                    <ChevronDown className="ml-2 h-4 w-4 animate-bounce" />
+                  </Button>
+                </motion.div>
               </div>
-
-              <motion.div
-                className="w-full mb-2"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-              >
-                <h1
-                  className="text-xl md:text-2xl font-bold text-white mb-1 leading-tight"
-                >
-                  {sections.hero?.title || "Dedicated to Pet Wellness & Happiness"}
-                </h1>
-                <p
-                  className="text-sm md:text-base text-white/90 max-w-md mx-auto mb-3 leading-relaxed"
-                >
-                  {sections.hero?.content || "At ShortTail.id, we believe every pet deserves the best care, nutrition, and love. Founded in 2020 with a passion for animal welfare, we've grown into Indonesia's premier destination for premium pet supplies."}
-                </p>
-              </motion.div>
-
-              <motion.div
-                className="mt-1"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-              >
-                <Button
-                  size="sm"
-                  className="bg-[#ff911d] hover:bg-[#e6821a] text-white px-6 py-2 rounded-full shadow-xl transition-all duration-300 transform hover:scale-105"
-                  onClick={() => scrollToSection('mission')}
-                >
-                  Discover Our Journey
-                  <ChevronDown className="ml-2 h-4 w-4 animate-bounce" />
-                </Button>
-              </motion.div>
             </motion.div>
           </div>
         </section>
