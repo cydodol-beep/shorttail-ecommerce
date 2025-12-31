@@ -433,9 +433,9 @@ export default function AboutPage() {
               transition={{ duration: 0.8 }}
               className="max-w-4xl mx-auto"
             >
-              <div className="flex flex-col items-center gap-8">
-                {/* Store Logo Container (Stacks on mobile) */}
-                <div className="flex justify-center">
+              <div className="flex flex-col md:flex-row items-center gap-8">
+                {/* Left Column - Store Logo Container */}
+                <div className="md:w-1/2 flex justify-center">
                   <div className="p-4">
                     <div className="rounded-full bg-white border-2 border-white shadow-lg w-40 h-40 flex items-center justify-center">
                       <StoreLogo
@@ -447,10 +447,11 @@ export default function AboutPage() {
                   </div>
                 </div>
 
-                {/* Title and Content Container (Stacks on mobile) */}
-                <div className="text-center">
+                {/* Right Column - Title and Content Container */}
+                <div className="md:w-1/2 text-center md:text-left">
                   <div className="p-4">
                     <motion.div
+                      className="mb-6"
                       initial={{ opacity: 0, y: 30 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.8, delay: 0.2 }}
