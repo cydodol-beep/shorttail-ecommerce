@@ -431,54 +431,55 @@ export default function AboutPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="max-w-lg mx-auto"
+              className="max-w-4xl mx-auto"
             >
-              <div className="flex flex-col items-center">
-                {/* Store Logo */}
-                <div className="mb-4">
-                  <div className="mx-auto rounded-full bg-white border-2 border-white shadow-lg w-16 h-16 flex items-center justify-center">
+              <div className="flex flex-col md:flex-row items-center gap-8">
+                {/* Left Column - Store Logo */}
+                <div className="md:w-1/2 flex justify-center">
+                  <div className="rounded-full bg-white border-2 border-white shadow-lg w-40 h-40 flex items-center justify-center">
                     <StoreLogo
-                      className="scale-75"
-                      iconClassName="h-10 w-10 text-[#ff911d]"
-                      fallbackSize="md"
+                      className="scale-100"
+                      iconClassName="h-24 w-24 text-[#ff911d]"
+                      fallbackSize="xl"
                     />
                   </div>
                 </div>
 
-                {/* Title and Content */}
-                <motion.div
-                  className="text-center mb-6"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.2 }}
-                >
-                  <h1
-                    className="text-xl md:text-2xl font-bold text-white mb-3 leading-tight"
+                {/* Right Column - Title and Content */}
+                <div className="md:w-1/2 text-center md:text-left">
+                  <motion.div
+                    className="mb-6"
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 0.2 }}
                   >
-                    {sections.hero?.title || "Dedicated to Pet Wellness & Happiness"}
-                  </h1>
-                  <p
-                    className="text-sm md:text-base text-white/90 max-w-md mx-auto leading-relaxed"
-                  >
-                    {sections.hero?.content || "At ShortTail.id, we believe every pet deserves the best care, nutrition, and love. Founded in 2020 with a passion for animal welfare, we've grown into Indonesia's premier destination for premium pet supplies."}
-                  </p>
-                </motion.div>
+                    <h1
+                      className="text-2xl md:text-4xl font-bold text-white mb-4 leading-tight"
+                    >
+                      {sections.hero?.title || "Dedicated to Pet Wellness & Happiness"}
+                    </h1>
+                    <p
+                      className="text-base md:text-lg text-white/90 mb-6 leading-relaxed"
+                    >
+                      {sections.hero?.content || "At ShortTail.id, we believe every pet deserves the best care, nutrition, and love. Founded in 2020 with a passion for animal welfare, we've grown into Indonesia's premier destination for premium pet supplies."}
+                    </p>
+                  </motion.div>
 
-                {/* CTA Button */}
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.4 }}
-                >
-                  <Button
-                    size="sm"
-                    className="bg-[#ff911d] hover:bg-[#e6821a] text-white px-6 py-2 rounded-full shadow-xl transition-all duration-300 transform hover:scale-105"
-                    onClick={() => scrollToSection('mission')}
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 0.4 }}
                   >
-                    Discover Our Journey
-                    <ChevronDown className="ml-2 h-4 w-4 animate-bounce" />
-                  </Button>
-                </motion.div>
+                    <Button
+                      size="default"
+                      className="bg-[#ff911d] hover:bg-[#e6821a] text-white px-8 py-3 rounded-full shadow-xl transition-all duration-300 transform hover:scale-105"
+                      onClick={() => scrollToSection('mission')}
+                    >
+                      Discover Our Journey
+                      <ChevronDown className="ml-2 h-5 w-5 animate-bounce" />
+                    </Button>
+                  </motion.div>
+                </div>
               </div>
             </motion.div>
           </div>
