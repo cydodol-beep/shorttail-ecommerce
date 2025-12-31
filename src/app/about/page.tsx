@@ -434,11 +434,14 @@ export default function AboutPage() {
               className="max-w-2xl mx-auto text-center flex flex-col items-center"
             >
               <div className="mb-0.5">
-                <StoreLogo
-                  className="mx-auto rounded-full bg-white p-2 shadow-lg scale-50"
-                  iconClassName="h-14 w-14 text-[#ff911d]"
-                  fallbackSize="lg"
-                />
+                <div className="relative inline-block">
+                  <div className="absolute inset-0 rounded-full bg-[#ff911d] animate-pulse opacity-30 scale-110"></div>
+                  <StoreLogo
+                    className="mx-auto rounded-full bg-white p-2 shadow-lg scale-50 relative z-10"
+                    iconClassName="h-14 w-14 text-[#ff911d]"
+                    fallbackSize="lg"
+                  />
+                </div>
               </div>
 
               <motion.div
