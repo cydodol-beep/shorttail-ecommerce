@@ -11,15 +11,13 @@ export interface Advertisement {
 export async function GET() {
   try {
     const supabase = await createClient();
-    const now = new Date().toISOString();
 
     // Fetch active advertisements
+    // RLS policy already filters by is_active, start_date, and end_date
     const { data, error } = await supabase
       .from('advertisements')
       .select('id, image_url, redirect_link, alt_text')
       .eq('is_active', true)
-      .or(`start_date.is.null,start_date.lte.${now}`)
-      .or(`end_date.is.null,end_date.gte.${now}`)
       .order('display_order', { ascending: true });
 
     if (error) {
@@ -27,8 +25,18 @@ export async function GET() {
       return NextResponse.json({ ads: [] }, { status: 200 });
     }
 
+    // Filter by date on server side as well (belt and suspenders with RLS)
+    const now = new Date();
+    const filteredData = (data || []).filter((ad: any) => {
+      // Check start_date: ad should show if start_date is null or in the past
+      if (ad.start_date && new Date(ad.start_date) > now) return false;
+      // Check end_date: ad should show if end_date is null or in the future
+      if (ad.end_date && new Date(ad.end_date) < now) return false;
+      return true;
+    });
+
     // Transform to camelCase for frontend
-    const ads: Advertisement[] = (data || []).map((ad) => ({
+    const ads: Advertisement[] = filteredData.map((ad: any) => ({
       id: ad.id,
       imageUrl: ad.image_url,
       redirectLink: ad.redirect_link,
