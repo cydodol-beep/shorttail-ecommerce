@@ -394,35 +394,10 @@ export function FlashSale() {
 
   console.log('FlashSale - Products count:', products.length, 'Loading state:', loading);
 
+  // Hide the section completely when there are no promotions available
   if (products.length === 0 && !loading) {
-    console.log('FlashSale - Showing no promotions message...');
-    return (
-      <section className="py-12 bg-gradient-to-r from-red-500 to-orange-500">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3 text-white">
-              <div className="p-2 bg-white/20 rounded-lg animate-pulse">
-                <Zap className="h-6 w-6" />
-              </div>
-              <div>
-                <h2 className="text-2xl lg:text-3xl font-bold">{settings.title}</h2>
-                <p className="text-white/80 text-sm">Limited time offers!</p>
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col items-center justify-center py-12 text-center bg-white/10 rounded-xl">
-            <Zap className="h-16 w-16 text-white/60 mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">No Promotions Available</h3>
-            <p className="text-white/80 mb-4">Currently there are no active promotions for products</p>
-            <Link href="/products">
-              <Button variant="secondary" size="lg" className="bg-white text-red-500 hover:bg-white/90">
-                Browse Products
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-    );
+    console.log('FlashSale - No promotions available, hiding section');
+    return null;
   }
 
   return (

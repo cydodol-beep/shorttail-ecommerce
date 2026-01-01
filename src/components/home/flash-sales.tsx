@@ -310,31 +310,9 @@ export function FlashSales({ className = '' }: { className?: string }) {
     );
   }
 
+  // Hide the section completely when there are no promotions available
   if (products.length === 0) {
-    return (
-      <section className={`py-12 bg-gradient-to-r from-red-500 to-orange-500 ${className}`}>
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3 text-white">
-              <div className="p-2 bg-white/20 rounded-lg">
-                <Zap className="h-6 w-6" />
-              </div>
-              <div>
-                <h2 className="text-2xl lg:text-3xl font-bold">{settings.title}</h2>
-                <p className="text-white/80 text-sm">Limited time offers!</p>
-              </div>
-            </div>
-          </div>
-          <div className="text-center py-12">
-            <div className="inline-block p-4 bg-white/10 rounded-full mb-4">
-              <Zap className="h-12 w-12 text-white" />
-            </div>
-            <h3 className="text-xl font-bold text-white mb-2">No Flash Sales Available</h3>
-            <p className="text-white/80">Check back later for exciting deals and promotions!</p>
-          </div>
-        </div>
-      </section>
-    );
+    return null;
   }
 
   return (
