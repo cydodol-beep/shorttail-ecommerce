@@ -467,7 +467,7 @@ export default function AdvertisementsPage() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {selectedAd ? 'Edit Advertisement' : 'Create Advertisement'}
@@ -494,18 +494,22 @@ export default function AdvertisementsPage() {
             {/* Image Upload */}
             <div className="space-y-2">
               <Label>Image * (400×400px, WebP)</Label>
-              <div className="border-2 border-dashed border-brown-200 rounded-lg p-4">
+              <div className="border-2 border-dashed border-brown-200 rounded-lg p-3">
                 {imagePreview ? (
-                  <div className="relative">
+                  <div className="relative flex items-center gap-3">
                     <img
                       src={imagePreview}
                       alt="Preview"
-                      className="w-full aspect-square object-cover rounded-lg"
+                      className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
                     />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-brown-700 truncate">Image uploaded</p>
+                      <p className="text-xs text-brown-500">400×400px WebP</p>
+                    </div>
                     <Button
                       variant="destructive"
                       size="icon"
-                      className="absolute top-2 right-2"
+                      className="flex-shrink-0 h-8 w-8"
                       onClick={() => {
                         setImagePreview(null);
                         setFormData({ ...formData, image_url: '' });
@@ -515,15 +519,15 @@ export default function AdvertisementsPage() {
                     </Button>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center py-8 cursor-pointer">
+                  <label className="flex flex-col items-center justify-center py-6 cursor-pointer">
                     {uploadingImage ? (
                       <>
-                        <Loader2 className="h-10 w-10 text-brown-400 animate-spin mb-2" />
+                        <Loader2 className="h-8 w-8 text-brown-400 animate-spin mb-2" />
                         <span className="text-sm text-brown-600">Processing image...</span>
                       </>
                     ) : (
                       <>
-                        <Upload className="h-10 w-10 text-brown-400 mb-2" />
+                        <Upload className="h-8 w-8 text-brown-400 mb-2" />
                         <span className="text-sm text-brown-600">Click to upload image</span>
                         <span className="text-xs text-brown-400 mt-1">Max 2MB, any format</span>
                       </>
