@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Plus, PawPrint, Pencil, Trash2, MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
+import { RecommendedProducts } from '@/components/products/recommended-products';
 import type { Pet } from '@/types/database';
 
 export default function PetsPage() {
@@ -84,6 +85,12 @@ export default function PetsPage() {
     }
     return `${years} year${years > 1 ? 's' : ''}`;
   };
+
+  // Extract unique pet types for product recommendations
+  const petTypes = useMemo(() => {
+    const types = pets.map(pet => pet.pet_type).filter(Boolean);
+    return [...new Set(types)];
+  }, [pets]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -193,6 +200,19 @@ export default function PetsPage() {
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Recommended Products Section */}
+      {!loading && (
+        <RecommendedProducts
+          petTypes={petTypes}
+          title="Recommended Products"
+          subtitle={petTypes.length > 0 
+            ? `Products perfect for your ${petTypes.join(' & ').toLowerCase()}` 
+            : 'Products we think your pets will love'}
+          limit={8}
+          className="mt-12 border-t border-brown-200 pt-8"
+        />
       )}
 
       {/* Delete Confirmation Dialog */}
