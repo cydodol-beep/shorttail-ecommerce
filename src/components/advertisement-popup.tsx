@@ -42,22 +42,31 @@ export function AdvertisementPopup() {
 
   // Fetch active advertisements
   const fetchAds = useCallback(async () => {
+    console.log('[AdPopup] Fetching advertisements...');
     try {
       const response = await fetch('/api/active-ads');
       if (!response.ok) throw new Error('Failed to fetch ads');
       
       const data = await response.json();
+      console.log('[AdPopup] Fetched ads:', data.ads?.length || 0, 'ads');
+      
       if (data.ads && data.ads.length > 0) {
         setAds(data.ads);
         
         // Only show popup if not hidden
-        if (shouldShowPopup()) {
+        const canShow = shouldShowPopup();
+        console.log('[AdPopup] Can show popup:', canShow);
+        
+        if (canShow) {
           // Small delay for better UX
-          setTimeout(() => setIsOpen(true), 1500);
+          setTimeout(() => {
+            console.log('[AdPopup] Opening popup...');
+            setIsOpen(true);
+          }, 1500);
         }
       }
     } catch (error) {
-      console.error('Error fetching advertisements:', error);
+      console.error('[AdPopup] Error fetching advertisements:', error);
     } finally {
       setLoading(false);
     }

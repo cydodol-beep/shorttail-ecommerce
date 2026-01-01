@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export interface Advertisement {
   id: string;
@@ -10,22 +10,22 @@ export interface Advertisement {
 
 export async function GET() {
   try {
-    const supabase = await createClient();
+    // Use admin client to bypass RLS - advertisements are public data
+    const supabase = createAdminClient();
 
     // Fetch active advertisements
-    // RLS policy already filters by is_active, start_date, and end_date
     const { data, error } = await supabase
       .from('advertisements')
-      .select('id, image_url, redirect_link, alt_text')
+      .select('id, image_url, redirect_link, alt_text, start_date, end_date')
       .eq('is_active', true)
       .order('display_order', { ascending: true });
 
     if (error) {
       console.error('Error fetching advertisements:', error);
-      return NextResponse.json({ ads: [] }, { status: 200 });
+      return NextResponse.json({ ads: [], error: error.message }, { status: 200 });
     }
 
-    // Filter by date on server side as well (belt and suspenders with RLS)
+    // Filter by date on server side
     const now = new Date();
     const filteredData = (data || []).filter((ad: any) => {
       // Check start_date: ad should show if start_date is null or in the past

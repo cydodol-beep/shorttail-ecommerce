@@ -20,6 +20,10 @@ CREATE TABLE IF NOT EXISTS public.advertisements (
 -- Enable RLS
 ALTER TABLE public.advertisements ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist (for re-running migration)
+DROP POLICY IF EXISTS "Anyone can view active advertisements" ON public.advertisements;
+DROP POLICY IF EXISTS "Admins can manage advertisements" ON public.advertisements;
+
 -- Public can view active advertisements
 CREATE POLICY "Anyone can view active advertisements" ON public.advertisements
   FOR SELECT USING (
@@ -42,7 +46,8 @@ CREATE POLICY "Admins can manage advertisements" ON public.advertisements
 CREATE INDEX IF NOT EXISTS idx_advertisements_active ON public.advertisements(is_active, start_date, end_date);
 CREATE INDEX IF NOT EXISTS idx_advertisements_display_order ON public.advertisements(display_order);
 
--- Add updated_at trigger
+-- Add updated_at trigger (drop first if exists)
+DROP TRIGGER IF EXISTS update_advertisements_updated_at ON public.advertisements;
 CREATE TRIGGER update_advertisements_updated_at
   BEFORE UPDATE ON public.advertisements
   FOR EACH ROW
