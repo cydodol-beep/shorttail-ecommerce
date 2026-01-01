@@ -415,7 +415,7 @@ export default function AboutPage() {
         {/* Hero Section */}
         <section
           id="hero"
-          className="min-h-screen flex items-start md:items-center justify-center pt-24 md:pt-20 relative overflow-hidden"
+          className="min-h-screen flex items-center justify-center relative overflow-hidden"
           style={{ backgroundColor: 'linear-gradient(to bottom, #008a90, #006d77)' }}
         >
           {/* Animated background elements */}
@@ -426,15 +426,15 @@ export default function AboutPage() {
 
           <div className="absolute inset-0 bg-[#006d77]/80"></div>
 
-          <div className="container mx-auto px-4 py-6 md:py-4 relative z-10">
+          <div className="container mx-auto px-4 py-6 md:py-4 relative z-10 flex items-center justify-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="max-w-6xl mx-auto"
+              className="max-w-6xl mx-auto w-full"
             >
               {/* Mobile Layout: Stack vertically with logo on top */}
-              <div className="flex flex-col items-center gap-4 md:hidden">
+              <div className="flex flex-col items-center justify-center gap-4 md:hidden">
                 {/* Logo - Mobile */}
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
@@ -486,8 +486,8 @@ export default function AboutPage() {
                 </div>
               </div>
 
-              {/* Desktop Layout: Side by side */}
-              <div className="hidden md:flex md:flex-row items-center gap-10 lg:gap-14 xl:gap-16">
+              {/* Desktop Layout: Side by side, centered */}
+              <div className="hidden md:flex md:flex-row items-center justify-center gap-10 lg:gap-14 xl:gap-16">
                 {/* Left Column - Store Logo Container (scales up to 400x400 on xl) */}
                 <motion.div 
                   className="flex-shrink-0"
@@ -508,7 +508,7 @@ export default function AboutPage() {
                 </motion.div>
 
                 {/* Right Column - Title and Content Container */}
-                <div className="flex-1 text-left">
+                <div className="flex-1 max-w-xl text-center md:text-left">
                   <motion.div
                     className="mb-6"
                     initial={{ opacity: 0, y: 30 }}
@@ -518,7 +518,7 @@ export default function AboutPage() {
                     <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-4 leading-tight">
                       {sections.hero?.title || "Dedicated to Pet Wellness & Happiness"}
                     </h1>
-                    <p className="text-base lg:text-lg text-white/90 mb-6 leading-relaxed max-w-xl">
+                    <p className="text-base lg:text-lg text-white/90 mb-6 leading-relaxed">
                       {sections.hero?.content || "At ShortTail.id, we believe every pet deserves the best care, nutrition, and love. Founded in 2020 with a passion for animal welfare, we've grown into Indonesia's premier destination for premium pet supplies."}
                     </p>
                   </motion.div>
