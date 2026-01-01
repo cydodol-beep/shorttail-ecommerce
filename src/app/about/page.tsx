@@ -415,7 +415,7 @@ export default function AboutPage() {
         {/* Hero Section */}
         <section
           id="hero"
-          className="min-h-screen flex items-center justify-center pt-20 md:pt-16 relative overflow-hidden"
+          className="min-h-screen flex items-start md:items-center justify-center pt-24 md:pt-20 relative overflow-hidden"
           style={{ backgroundColor: 'linear-gradient(to bottom, #008a90, #006d77)' }}
         >
           {/* Animated background elements */}
@@ -426,15 +426,15 @@ export default function AboutPage() {
 
           <div className="absolute inset-0 bg-[#006d77]/80"></div>
 
-          <div className="container mx-auto px-4 py-12 md:py-8 relative z-10">
+          <div className="container mx-auto px-4 py-6 md:py-4 relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="max-w-5xl mx-auto"
+              className="max-w-6xl mx-auto"
             >
               {/* Mobile Layout: Stack vertically with logo on top */}
-              <div className="flex flex-col items-center gap-6 md:hidden">
+              <div className="flex flex-col items-center gap-4 md:hidden">
                 {/* Logo - Mobile */}
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
@@ -442,11 +442,14 @@ export default function AboutPage() {
                   transition={{ duration: 0.6 }}
                   className="flex-shrink-0"
                 >
-                  <div className="rounded-full bg-white border-4 border-white shadow-2xl w-28 h-28 sm:w-32 sm:h-32 flex items-center justify-center overflow-hidden">
+                  <div 
+                    className="rounded-full bg-white shadow-2xl flex items-center justify-center overflow-hidden p-3"
+                    style={{ width: '180px', height: '180px' }}
+                  >
                     <StoreLogo
-                      className="scale-100"
-                      iconClassName="h-16 w-16 sm:h-20 sm:w-20 text-[#ff911d]"
-                      fallbackSize="lg"
+                      className="w-full h-full"
+                      iconClassName="h-24 w-24 text-[#ff911d]"
+                      fallbackSize="xl"
                     />
                   </div>
                 </motion.div>
@@ -458,10 +461,10 @@ export default function AboutPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.2 }}
                   >
-                    <h1 className="text-2xl sm:text-3xl font-bold text-white mb-4 leading-tight">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-white mb-3 leading-tight">
                       {sections.hero?.title || "Dedicated to Pet Wellness & Happiness"}
                     </h1>
-                    <p className="text-sm sm:text-base text-white/90 mb-6 leading-relaxed max-w-md mx-auto">
+                    <p className="text-sm sm:text-base text-white/90 mb-5 leading-relaxed max-w-md mx-auto">
                       {sections.hero?.content || "At ShortTail.id, we believe every pet deserves the best care, nutrition, and love. Founded in 2020 with a passion for animal welfare, we've grown into Indonesia's premier destination for premium pet supplies."}
                     </p>
                   </motion.div>
@@ -484,19 +487,22 @@ export default function AboutPage() {
               </div>
 
               {/* Desktop Layout: Side by side */}
-              <div className="hidden md:flex md:flex-row items-center gap-12 lg:gap-16">
-                {/* Left Column - Store Logo Container */}
+              <div className="hidden md:flex md:flex-row items-center gap-10 lg:gap-14 xl:gap-16">
+                {/* Left Column - Store Logo Container (scales up to 400x400 on xl) */}
                 <motion.div 
                   className="flex-shrink-0"
                   initial={{ opacity: 0, x: -30 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.8 }}
                 >
-                  <div className="rounded-full bg-white border-4 border-white shadow-2xl w-44 h-44 lg:w-52 lg:h-52 flex items-center justify-center overflow-hidden">
+                  {/* Responsive logo container: 280px on md, 340px on lg, 400px on xl */}
+                  <div 
+                    className="rounded-full bg-white shadow-2xl flex items-center justify-center overflow-hidden w-[280px] h-[280px] lg:w-[340px] lg:h-[340px] xl:w-[400px] xl:h-[400px] p-4 lg:p-5 xl:p-6"
+                  >
                     <StoreLogo
-                      className="scale-100"
-                      iconClassName="h-28 w-28 lg:h-32 lg:w-32 text-[#ff911d]"
-                      fallbackSize="xl"
+                      className="w-full h-full"
+                      iconClassName="h-40 w-40 lg:h-48 lg:w-48 xl:h-56 xl:w-56 text-[#ff911d]"
+                      fallbackSize="2xl"
                     />
                   </div>
                 </motion.div>
