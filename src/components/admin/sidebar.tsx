@@ -17,7 +17,8 @@ import {
   ChevronRight,
   FolderOpen,
   LogOut,
-  Layout
+  Layout,
+  Megaphone
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -37,6 +38,7 @@ const menuItems = [
   { icon: Star, label: 'Reviews', href: '/admin/reviews' },
   { icon: PawPrint, label: 'About Page', href: '/admin/about-page' },
   { icon: Layout, label: 'Landing Page', href: '/admin/landing-page' },
+  { icon: Megaphone, label: 'Advertisements', href: '/admin/advertisements' },
   { icon: Bell, label: 'Notifications', href: '/admin/notifications' },
   { icon: Settings, label: 'Settings', href: '/admin/settings' },
 ];

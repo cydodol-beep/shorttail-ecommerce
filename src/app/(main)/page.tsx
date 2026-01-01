@@ -9,6 +9,7 @@ import { FeaturedProducts } from '@/components/home/featured-products';
 import { NewArrivals } from '@/components/home/new-arrivals';
 import { TestimonialsSection } from '@/components/home/testimonials-section';
 import { NewsletterSection } from '@/components/home/newsletter-section';
+import { AdvertisementPopup } from '@/components/advertisement-popup';
 import { useLandingSections } from '@/hooks/use-landing-sections';
 
 export default function HomePage() {
@@ -16,6 +17,9 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
+      {/* Advertisement Popup */}
+      <AdvertisementPopup />
+      
       {/* Hero Section with Store Info */}
       {isSectionVisible('hero') && <HeroSection />}
       
