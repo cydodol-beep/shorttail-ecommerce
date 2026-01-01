@@ -46,6 +46,42 @@ The platform consists of five main user interfaces:
 - **Viewport Optimization**: Used intersection observer for lazy loading and optimized rendering
 - **Resource Optimization**: Added proper resource cleanup to prevent memory accumulation
 
+## 🆕 Recent Updates (January 1, 2026)
+
+### Dynamic Advertisement Pop-up System 📢
+- **Complete Advertisement Management System**:
+  - **Database Schema**: New `advertisements` table with fields for title, image URL, redirect link, alt text, active status, display order, and date scheduling
+  - **Admin Panel**: Full CRUD interface at `/admin/advertisements` for managing pop-up advertisements
+  - **Image Processing**: Automatic image resizing to 400×400px and conversion to WebP format for optimal performance
+  - **Carousel Support**: Multiple advertisements display in a carousel with auto-slide (5-second interval)
+  - **Smart Scheduling**: Optional start/end dates for time-limited campaigns
+  - **"Don't Show Again" Feature**: 48-hour localStorage persistence when users opt out
+  - **Responsive Design**: Popup adapts to all screen sizes with smooth Framer Motion animations
+
+- **Technical Implementation**:
+  - **Migration**: `029_advertisements.sql` - Table schema with RLS policies for public read and admin management
+  - **API Endpoint**: `/api/active-ads` - Fetches active advertisements filtered by date range
+  - **Admin Route**: `/admin/advertisements` - Management interface with image upload, toggle active, and scheduling
+  - **Component**: `AdvertisementPopup` - Client-side carousel with localStorage integration
+  - **Sidebar Update**: Added "Advertisements" menu item with Megaphone icon in admin sidebar
+
+- **Features**:
+  - Toggle ads on/off with a switch
+  - Set display order for carousel sequence
+  - Schedule ads with start and end dates
+  - Clickable images that redirect to specified links
+  - Automatic popup delay (1.5 seconds after page load)
+  - Navigation arrows and dot indicators for multiple ads
+  - Close button with optional "Don't show for 48 hours" checkbox
+
+### UI/UX Improvements 🎨
+- **About Page Hero Section**: Fixed logo and content alignment, created responsive layouts for mobile/desktop
+- **Category Section**: Complete UI redesign with gradients, animations, and professional styling
+- **Flash Sale Component**: Modified to auto-hide when no active promotions available
+- **Recommended Products**: New component integrated into dashboard pets page
+
+---
+
 ## 🆕 Recent Updates (December 12, 2025)
 
 ### Profile & Province Integration Enhancement 💼

@@ -158,7 +158,7 @@ export function AdvertisementPopup() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="relative bg-white rounded-2xl shadow-2xl overflow-hidden max-w-md w-full"
+            className="relative bg-accent rounded-2xl shadow-2xl overflow-hidden max-w-md w-full"
           >
             {/* Close Button */}
             <Button
@@ -167,7 +167,7 @@ export function AdvertisementPopup() {
               className="absolute top-2 right-2 z-10 bg-white/90 hover:bg-white shadow-md rounded-full h-8 w-8"
               onClick={handleClose}
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4 text-teal" />
             </Button>
 
             {/* Carousel Container */}
@@ -216,7 +216,7 @@ export function AdvertisementPopup() {
                       className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white shadow-md rounded-full h-10 w-10"
                       onClick={handlePrevious}
                     >
-                      <ChevronLeft className="h-5 w-5" />
+                      <ChevronLeft className="h-5 w-5 text-teal" />
                     </Button>
                     <Button
                       variant="ghost"
@@ -224,7 +224,7 @@ export function AdvertisementPopup() {
                       className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white shadow-md rounded-full h-10 w-10"
                       onClick={handleNext}
                     >
-                      <ChevronRight className="h-5 w-5" />
+                      <ChevronRight className="h-5 w-5 text-teal" />
                     </Button>
                   </>
                 )}
@@ -239,7 +239,7 @@ export function AdvertisementPopup() {
                       onClick={() => handleDotClick(index)}
                       className={`w-2 h-2 rounded-full transition-all duration-300 ${
                         index === currentIndex
-                          ? 'bg-white w-6 shadow-md'
+                          ? 'bg-white/90 w-6 shadow-md'
                           : 'bg-white/60 hover:bg-white/80'
                       }`}
                       aria-label={`Go to slide ${index + 1}`}
@@ -250,28 +250,29 @@ export function AdvertisementPopup() {
             </div>
 
             {/* Footer */}
-            <div className="p-4 bg-gradient-to-t from-brown-50 to-white">
+            <div className="p-4 bg-gradient-to-t from-brown-100/30 to-white/30">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="dont-show"
                     checked={dontShowAgain}
                     onCheckedChange={(checked) => setDontShowAgain(checked === true)}
+                    className="border-white data-[state=checked]:bg-white data-[state=checked]:text-teal"
                   />
                   <Label
                     htmlFor="dont-show"
-                    className="text-sm text-brown-600 cursor-pointer"
+                    className="text-sm text-white cursor-pointer"
                   >
                     Don&apos;t show again for 48 hours
                   </Label>
                 </div>
-                
+
                 {currentAd.redirectLink && (
                   <Link
                     href={currentAd.redirectLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                    className="inline-flex items-center gap-1 text-sm font-medium text-white hover:underline"
                     onClick={handleClose}
                   >
                     <ExternalLink className="h-3 w-3" />
@@ -282,7 +283,7 @@ export function AdvertisementPopup() {
 
               {/* Ad Counter */}
               {ads.length > 1 && (
-                <div className="mt-2 text-center text-xs text-brown-400">
+                <div className="mt-2 text-center text-xs text-white/80">
                   {currentIndex + 1} of {ads.length}
                 </div>
               )}
