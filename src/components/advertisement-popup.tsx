@@ -20,6 +20,8 @@ const STORAGE_KEY = 'shorttail_ad_popup_hidden';
 const HIDE_DURATION_MS = 48 * 60 * 60 * 1000; // 48 hours in milliseconds
 
 export function AdvertisementPopup() {
+  console.log('[AdPopup] Component mounted');
+  
   const [ads, setAds] = useState<Advertisement[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isOpen, setIsOpen] = useState(false);

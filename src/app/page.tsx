@@ -20,6 +20,7 @@ import type { ExtendedProduct } from '@/hooks/use-product-data';
 import { CategorySection } from '@/components/home/category-section';
 import HeroSection from '@/components/home/hero-section';
 import { FlashSales } from '@/components/home/flash-sales';
+import { AdvertisementPopup } from '@/components/advertisement-popup';
 
 
 
@@ -350,6 +351,9 @@ export default function HomePage() {
 
       <div className="min-h-screen font-sans text-teal">
         <Header />
+        
+        {/* Advertisement Popup */}
+        <AdvertisementPopup />
 
         <main>
           {/* Hero Section - Always visible */}
