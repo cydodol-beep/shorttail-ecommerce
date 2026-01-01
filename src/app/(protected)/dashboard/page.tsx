@@ -239,94 +239,6 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Referral Code */}
-          <Card className="border-brown-200">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Gift className="h-5 w-5 text-primary" />
-                Referral Program
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-brown-600 mb-3">
-                Share your code and earn points when friends join!
-              </p>
-              <div className="p-3 bg-brown-50 rounded-lg text-center">
-                <code className="text-lg font-mono font-bold text-primary">
-                  {referralCode || profile?.referral_code || 'Generating...'}
-                </code>
-              </div>
-              <Button
-                className="w-full mt-3"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const code = referralCode || profile?.referral_code;
-                  if (code) {
-                    navigator.clipboard.writeText(`${window.location.origin}/register?ref=${code}`);
-                  }
-                }}
-                disabled={!referralCode && !profile?.referral_code}
-              >
-                Copy Referral Link
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* My Pets */}
-          <Card className="border-brown-200">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>My Pets</CardTitle>
-                <CardDescription>Your registered companions</CardDescription>
-              </div>
-              <Link href="/dashboard/pets">
-                <Button variant="ghost" size="sm">
-                  Manage
-                  <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
-              </Link>
-            </CardHeader>
-            <CardContent>
-              {pets.length === 0 ? (
-                <div className="text-center py-8">
-                  <PawPrint className="h-12 w-12 text-brown-300 mx-auto mb-3" />
-                  <p className="text-brown-600">No pets registered yet</p>
-                  <Link href="/dashboard/pets/new">
-                    <Button className="mt-4">Add Your Pet</Button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-4">
-                  {pets.map((pet) => (
-                    <div
-                      key={pet.id}
-                      className="flex items-center gap-3 p-4 bg-brown-50 rounded-lg"
-                    >
-                      <div className="h-12 w-12 bg-brown-200 rounded-full flex items-center justify-center">
-                        {pet.pet_image_url ? (
-                          <img
-                            src={pet.pet_image_url}
-                            alt={pet.pet_name}
-                            className="h-full w-full rounded-full object-cover"
-                          />
-                        ) : (
-                          <PawPrint className="h-6 w-6 text-brown-500" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-medium text-brown-900">{pet.pet_name}</p>
-                        <p className="text-sm text-brown-600 capitalize">{pet.pet_type}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
           {/* Membership Progress */}
           <Card className="border-brown-200">
             <CardHeader>
@@ -399,6 +311,94 @@ export default function DashboardPage() {
                   </p>
                 )}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Referral Code */}
+          <Card className="border-brown-200">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Gift className="h-5 w-5 text-primary" />
+                Referral Program
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-brown-600 mb-3">
+                Share your code and earn points when friends join!
+              </p>
+              <div className="p-3 bg-brown-50 rounded-lg text-center">
+                <code className="text-lg font-mono font-bold text-primary">
+                  {referralCode || profile?.referral_code || 'Generating...'}
+                </code>
+              </div>
+              <Button
+                className="w-full mt-3"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const code = referralCode || profile?.referral_code;
+                  if (code) {
+                    navigator.clipboard.writeText(`${window.location.origin}/register?ref=${code}`);
+                  }
+                }}
+                disabled={!referralCode && !profile?.referral_code}
+              >
+                Copy Referral Link
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-6">
+          {/* My Pets */}
+          <Card className="border-brown-200">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>My Pets</CardTitle>
+                <CardDescription>Your registered companions</CardDescription>
+              </div>
+              <Link href="/dashboard/pets">
+                <Button variant="ghost" size="sm">
+                  Manage
+                  <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
+            </CardHeader>
+            <CardContent>
+              {pets.length === 0 ? (
+                <div className="text-center py-8">
+                  <PawPrint className="h-12 w-12 text-brown-300 mx-auto mb-3" />
+                  <p className="text-brown-600">No pets registered yet</p>
+                  <Link href="/dashboard/pets/new">
+                    <Button className="mt-4">Add Your Pet</Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  {pets.map((pet) => (
+                    <div
+                      key={pet.id}
+                      className="flex items-center gap-3 p-4 bg-brown-50 rounded-lg"
+                    >
+                      <div className="h-12 w-12 bg-brown-200 rounded-full flex items-center justify-center">
+                        {pet.pet_image_url ? (
+                          <img
+                            src={pet.pet_image_url}
+                            alt={pet.pet_name}
+                            className="h-full w-full rounded-full object-cover"
+                          />
+                        ) : (
+                          <PawPrint className="h-6 w-6 text-brown-500" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium text-brown-900">{pet.pet_name}</p>
+                        <p className="text-sm text-brown-600 capitalize">{pet.pet_type}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
