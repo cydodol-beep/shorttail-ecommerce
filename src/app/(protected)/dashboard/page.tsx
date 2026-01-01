@@ -140,8 +140,8 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Quick Actions - Now just below the header */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+      {/* Quick Actions - Single column layout */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
         <Link href="/dashboard/orders">
           <Card className="border-brown-200 hover:shadow-md transition-shadow cursor-pointer">
             <CardContent className="pt-6 text-center">
@@ -186,457 +186,461 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      {/* Single column layout - Profile & Membership Cards below the quick actions */}
-      <div className="space-y-6">
-        {/* Profile Card */}
-        <Card className="border-brown-200">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center text-center">
-              <Avatar className="h-20 w-20 mb-4">
-                {(() => {
-                  const avatarUrl = profile?.user_avatar_url;
-                  const avatarInfo = getAvatarDataInfo(avatarUrl);
+      {/* Two column layout for other content sections */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-6">
+          {/* Profile Card */}
+          <Card className="border-brown-200">
+            <CardContent className="pt-6">
+              <div className="flex flex-col items-center text-center">
+                <Avatar className="h-20 w-20 mb-4">
+                  {(() => {
+                    const avatarUrl = profile?.user_avatar_url;
+                    const avatarInfo = getAvatarDataInfo(avatarUrl);
 
-                  console.debug('Dashboard Avatar Info:', {
-                    urlExists: !!avatarUrl,
-                    isValid: avatarInfo.isValid,
-                    length: avatarInfo.length,
-                    prefix: avatarInfo.prefix
-                  });
+                    console.debug('Dashboard Avatar Info:', {
+                      urlExists: !!avatarUrl,
+                      isValid: avatarInfo.isValid,
+                      length: avatarInfo.length,
+                      prefix: avatarInfo.prefix
+                    });
 
-                  return (
-                    <>
-                      <AvatarImage
-                        src={avatarUrl && isValidWebPDataUrl(avatarUrl) ? avatarUrl : undefined}
-                        onError={(e) => {
-                          console.error('Dashboard Avatar image failed to load:', avatarUrl);
-                          console.error('Error object:', e);
-                        }}
-                        className="object-cover"
-                        onLoad={() => {
-                          console.debug('Dashboard Avatar image loaded successfully');
-                        }}
-                      />
-                      <AvatarFallback className="bg-primary text-white text-xl">
-                        {profile?.user_name?.charAt(0).toUpperCase() || 'U'}
-                      </AvatarFallback>
-                    </>
-                  );
-                })()}
-              </Avatar>
-              <h2 className="text-xl font-bold text-brown-900">
-                {profile?.user_name || 'User'}
-              </h2>
-              <p className="text-sm text-brown-600">{profile?.user_email}</p>
-              <Badge
-                className={`mt-2 ${tierColors[profile?.tier || 'Newborn']} text-white`}
-              >
-                <Trophy className="h-3 w-3 mr-1" />
-                {profile?.tier || 'Newborn'}
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Membership Progress */}
-        <Card className="border-brown-200">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              Membership Progress
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-brown-900">Membership Level</span>
-                <span className="text-xs text-brown-600">
-                  {profile?.points_balance || 0} / {getNextTier() ? tierThresholds[getNextTier()!] : tierThresholds.Adulthood} pts
-                </span>
+                    return (
+                      <>
+                        <AvatarImage
+                          src={avatarUrl && isValidWebPDataUrl(avatarUrl) ? avatarUrl : undefined}
+                          onError={(e) => {
+                            console.error('Dashboard Avatar image failed to load:', avatarUrl);
+                            console.error('Error object:', e);
+                          }}
+                          className="object-cover"
+                          onLoad={() => {
+                            console.debug('Dashboard Avatar image loaded successfully');
+                          }}
+                        />
+                        <AvatarFallback className="bg-primary text-white text-xl">
+                          {profile?.user_name?.charAt(0).toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </>
+                    );
+                  })()}
+                </Avatar>
+                <h2 className="text-xl font-bold text-brown-900">
+                  {profile?.user_name || 'User'}
+                </h2>
+                <p className="text-sm text-brown-600">{profile?.user_email}</p>
+                <Badge
+                  className={`mt-2 ${tierColors[profile?.tier || 'Newborn']} text-white`}
+                >
+                  <Trophy className="h-3 w-3 mr-1" />
+                  {profile?.tier || 'Newborn'}
+                </Badge>
               </div>
+            </CardContent>
+          </Card>
 
-              {/* Tier Progress Bar */}
-              <div className="relative">
-                {/* Background track */}
-                <div className="h-3 bg-brown-100 rounded-full overflow-hidden">
-                  {/* Progress fill */}
-                  <div
-                    className={`h-full ${tierColors[profile?.tier || 'Newborn']} transition-all duration-500`}
-                    style={{
-                      width: `${Math.min(100, ((profile?.points_balance || 0) / (getNextTier() ? tierThresholds[getNextTier()!] : tierThresholds.Adulthood)) * 100)}%`
-                    }}
-                  />
+          {/* Referral Code */}
+          <Card className="border-brown-200">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Gift className="h-5 w-5 text-primary" />
+                Referral Program
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-brown-600 mb-3">
+                Share your code and earn points when friends join!
+              </p>
+              <div className="p-3 bg-brown-50 rounded-lg text-center">
+                <code className="text-lg font-mono font-bold text-primary">
+                  {referralCode || profile?.referral_code || 'Generating...'}
+                </code>
+              </div>
+              <Button
+                className="w-full mt-3"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const code = referralCode || profile?.referral_code;
+                  if (code) {
+                    navigator.clipboard.writeText(`${window.location.origin}/register?ref=${code}`);
+                  }
+                }}
+                disabled={!referralCode && !profile?.referral_code}
+              >
+                Copy Referral Link
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* My Pets */}
+          <Card className="border-brown-200">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>My Pets</CardTitle>
+                <CardDescription>Your registered companions</CardDescription>
+              </div>
+              <Link href="/dashboard/pets">
+                <Button variant="ghost" size="sm">
+                  Manage
+                  <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
+            </CardHeader>
+            <CardContent>
+              {pets.length === 0 ? (
+                <div className="text-center py-8">
+                  <PawPrint className="h-12 w-12 text-brown-300 mx-auto mb-3" />
+                  <p className="text-brown-600">No pets registered yet</p>
+                  <Link href="/dashboard/pets/new">
+                    <Button className="mt-4">Add Your Pet</Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  {pets.map((pet) => (
+                    <div
+                      key={pet.id}
+                      className="flex items-center gap-3 p-4 bg-brown-50 rounded-lg"
+                    >
+                      <div className="h-12 w-12 bg-brown-200 rounded-full flex items-center justify-center">
+                        {pet.pet_image_url ? (
+                          <img
+                            src={pet.pet_image_url}
+                            alt={pet.pet_name}
+                            className="h-full w-full rounded-full object-cover"
+                          />
+                        ) : (
+                          <PawPrint className="h-6 w-6 text-brown-500" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium text-brown-900">{pet.pet_name}</p>
+                        <p className="text-sm text-brown-600 capitalize">{pet.pet_type}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-6">
+          {/* Membership Progress */}
+          <Card className="border-brown-200">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                Membership Progress
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-brown-900">Membership Level</span>
+                  <span className="text-xs text-brown-600">
+                    {profile?.points_balance || 0} / {getNextTier() ? tierThresholds[getNextTier()!] : tierThresholds.Adulthood} pts
+                  </span>
                 </div>
 
-                {/* Tier markers */}
-                <div className="relative mt-2">
-                  <div className="flex justify-between">
-                    {Object.entries(tierThresholds).map(([tier, points], index) => {
-                      const currentPoints = profile?.points_balance || 0;
-                      const isAchieved = currentPoints >= points;
-                      const isCurrent = profile?.tier === tier;
+                {/* Tier Progress Bar */}
+                <div className="relative">
+                  {/* Background track */}
+                  <div className="h-3 bg-brown-100 rounded-full overflow-hidden">
+                    {/* Progress fill */}
+                    <div
+                      className={`h-full ${tierColors[profile?.tier || 'Newborn']} transition-all duration-500`}
+                      style={{
+                        width: `${Math.min(100, ((profile?.points_balance || 0) / (getNextTier() ? tierThresholds[getNextTier()!] : tierThresholds.Adulthood)) * 100)}%`
+                      }}
+                    />
+                  </div>
 
-                      return (
-                        <div key={tier} className="flex flex-col items-center" style={{ width: '20%' }}>
-                          <div
-                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mb-1 transition-all ${
-                              isAchieved
-                                ? `${tierColors[tier as keyof typeof tierColors]} border-transparent`
-                                : 'bg-white border-brown-300'
-                            } ${isCurrent ? 'ring-2 ring-primary ring-offset-2' : ''}`}
-                          >
-                            {isAchieved && (
-                              <Trophy className="h-3 w-3 text-white" />
-                            )}
+                  {/* Tier markers */}
+                  <div className="relative mt-2">
+                    <div className="flex justify-between">
+                      {Object.entries(tierThresholds).map(([tier, points], index) => {
+                        const currentPoints = profile?.points_balance || 0;
+                        const isAchieved = currentPoints >= points;
+                        const isCurrent = profile?.tier === tier;
+
+                        return (
+                          <div key={tier} className="flex flex-col items-center" style={{ width: '20%' }}>
+                            <div
+                              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mb-1 transition-all ${
+                                isAchieved
+                                  ? `${tierColors[tier as keyof typeof tierColors]} border-transparent`
+                                  : 'bg-white border-brown-300'
+                              } ${isCurrent ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+                            >
+                              {isAchieved && (
+                                <Trophy className="h-3 w-3 text-white" />
+                              )}
+                            </div>
+                            <span className={`text-[10px] font-medium text-center leading-tight ${
+                              isCurrent ? 'text-primary' : isAchieved ? 'text-brown-900' : 'text-brown-400'
+                            }`}>
+                              {tier}
+                            </span>
+                            <span className="text-[9px] text-brown-500">
+                              {points.toLocaleString()}
+                            </span>
                           </div>
-                          <span className={`text-[10px] font-medium text-center leading-tight ${
-                            isCurrent ? 'text-primary' : isAchieved ? 'text-brown-900' : 'text-brown-400'
-                          }`}>
-                            {tier}
-                          </span>
-                          <span className="text-[9px] text-brown-500">
-                            {points.toLocaleString()}
-                          </span>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
+
+                {getNextTier() && (
+                  <p className="text-xs text-brown-600 text-center">
+                    <span className="font-medium">{tierThresholds[getNextTier()!] - (profile?.points_balance || 0)} points</span> needed to reach <span className="font-semibold">{getNextTier()}</span>
+                  </p>
+                )}
               </div>
+            </CardContent>
+          </Card>
 
-              {getNextTier() && (
-                <p className="text-xs text-brown-600 text-center">
-                  <span className="font-medium">{tierThresholds[getNextTier()!] - (profile?.points_balance || 0)} points</span> needed to reach <span className="font-semibold">{getNextTier()}</span>
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Referral Code */}
-        <Card className="border-brown-200">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Gift className="h-5 w-5 text-primary" />
-              Referral Program
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-brown-600 mb-3">
-              Share your code and earn points when friends join!
-            </p>
-            <div className="p-3 bg-brown-50 rounded-lg text-center">
-              <code className="text-lg font-mono font-bold text-primary">
-                {referralCode || profile?.referral_code || 'Generating...'}
-              </code>
-            </div>
-            <Button
-              className="w-full mt-3"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const code = referralCode || profile?.referral_code;
-                if (code) {
-                  navigator.clipboard.writeText(`${window.location.origin}/register?ref=${code}`);
-                }
-              }}
-              disabled={!referralCode && !profile?.referral_code}
-            >
-              Copy Referral Link
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Recent Orders */}
-        <Card className="border-brown-200">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Recent Orders</CardTitle>
-              <CardDescription>Your latest purchases</CardDescription>
-            </div>
-            <Link href="/dashboard/orders">
-              <Button variant="ghost" size="sm">
-                View All
-                <ChevronRight className="ml-1 h-4 w-4" />
-              </Button>
-            </Link>
-          </CardHeader>
-          <CardContent>
-            {orders.length === 0 ? (
-              <div className="text-center py-8">
-                <ShoppingBag className="h-12 w-12 text-brown-300 mx-auto mb-3" />
-                <p className="text-brown-600">No orders yet</p>
-                <Link href="/products">
-                  <Button className="mt-4">Start Shopping</Button>
-                </Link>
+          {/* Recent Orders */}
+          <Card className="border-brown-200">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Recent Orders</CardTitle>
+                <CardDescription>Your latest purchases</CardDescription>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {orders.map((order) => (
-                  <div
-                    key={order.id}
-                    className="p-4 bg-brown-50 rounded-lg border border-brown-100"
-                  >
-                    {/* Order Info - Stack on mobile, flex row on larger screens */}
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
-                          <p className="font-medium text-brown-900 truncate">
-                            Order #{order.id.slice(0, 8)}
-                          </p>
-                          <Badge variant="outline" className="capitalize text-xs px-2.5 py-0.5 h-6 flex-shrink-0">
-                            {order.status}
-                          </Badge>
+              <Link href="/dashboard/orders">
+                <Button variant="ghost" size="sm">
+                  View All
+                  <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
+            </CardHeader>
+            <CardContent>
+              {orders.length === 0 ? (
+                <div className="text-center py-8">
+                  <ShoppingBag className="h-12 w-12 text-brown-300 mx-auto mb-3" />
+                  <p className="text-brown-600">No orders yet</p>
+                  <Link href="/products">
+                    <Button className="mt-4">Start Shopping</Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {orders.map((order) => (
+                    <div
+                      key={order.id}
+                      className="p-4 bg-brown-50 rounded-lg border border-brown-100"
+                    >
+                      {/* Order Info - Stack on mobile, flex row on larger screens */}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
+                            <p className="font-medium text-brown-900 truncate">
+                              Order #{order.id.slice(0, 8)}
+                            </p>
+                            <Badge variant="outline" className="capitalize text-xs px-2.5 py-0.5 h-6 flex-shrink-0">
+                              {order.status}
+                            </Badge>
+                          </div>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-brown-600">
+                            <span>
+                              {new Date(order.created_at).toLocaleDateString('id-ID', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                              })}
+                            </span>
+                            <span className="hidden sm:block">•</span>
+                            <span>
+                              {new Date(order.created_at).toLocaleTimeString('id-ID', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-brown-600">
-                          <span>
-                            {new Date(order.created_at).toLocaleDateString('id-ID', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                            })}
-                          </span>
-                          <span className="hidden sm:block">•</span>
-                          <span>
-                            {new Date(order.created_at).toLocaleTimeString('id-ID', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                        </div>
-                      </div>
 
-                      {/* Price and Actions - Stack on mobile, stay inline on larger screens */}
-                      <div className="w-full sm:w-auto sm:text-right">
-                        <div className="font-bold text-primary text-lg mb-3 sm:mb-2 sm:mr-0 sm:text-right">
-                          {formatPrice(order.total_amount)}
-                        </div>
+                        {/* Price and Actions - Stack on mobile, stay inline on larger screens */}
+                        <div className="w-full sm:w-auto sm:text-right">
+                          <div className="font-bold text-primary text-lg mb-3 sm:mb-2 sm:mr-0 sm:text-right">
+                            {formatPrice(order.total_amount)}
+                          </div>
 
-                        {/* Action buttons - Stack vertically on mobile */}
-                        <div className="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0 sm:items-center">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-9 text-sm flex-1 sm:flex-none w-full sm:w-auto"
-                            onClick={async () => {
-                              // Generate invoice preview
-                              try {
-                                const supabase = createClient();
-
-                                // Fetch the order with items to generate invoice
-                                // First get the order
-                                const { data: orderData, error: orderError } = await supabase
-                                  .from('orders')
-                                  .select('id, user_id, cashier_id, source, status, subtotal, shipping_fee, discount_amount, total_amount, recipient_name, recipient_phone, recipient_address, recipient_province, shipping_courier, shipping_courier_name, shipping_address_snapshot, customer_notes, created_at, updated_at')
-                                  .eq('id', order.id)
-                                  .single();
-
-                                if (orderError) throw orderError;
-
-                                // Then get the order items
-                                const { data: itemsData, error: itemsError } = await supabase
-                                  .from('order_items')
-                                  .select('product_id, variant_id, quantity, price_at_purchase')
-                                  .eq('order_id', order.id);
-
-                                if (itemsError) throw itemsError;
-
-                                // For each item, get product and variant details
-                                let itemsWithDetails = [];
-                                if (itemsData && itemsData.length > 0) {
-                                  for (const item of itemsData) {
-                                    // Get product details
-                                    const { data: productData, error: productError } = await supabase
-                                      .from('products')
-                                      .select('name, sku')
-                                      .eq('id', item.product_id)
-                                      .single();
-
-                                    let productDetails = {
-                                      name: 'Unknown Product',
-                                      sku: undefined
-                                    };
-
-                                    if (!productError && productData) {
-                                      productDetails = {
-                                        name: productData.name,
-                                        sku: productData.sku
-                                      };
-                                    }
-
-                                    // Get variant details if exists
-                                    let variantDetails = {
-                                      name: null,
-                                      sku: null
-                                    };
-
-                                    if (item.variant_id) {
-                                      const { data: variantData, error: variantError } = await supabase
-                                        .from('product_variants')
-                                        .select('variant_name, sku')
-                                        .eq('id', item.variant_id)
-                                        .single();
-
-                                      if (!variantError && variantData) {
-                                        variantDetails = {
-                                          name: variantData.variant_name,
-                                          sku: variantData.sku
-                                        };
-                                      }
-                                    }
-
-                                    itemsWithDetails.push({
-                                      product_id: item.product_id,
-                                      product_name: productDetails.name,
-                                      product_sku: productDetails.sku,
-                                      variant_id: item.variant_id,
-                                      variant_name: variantDetails.name || undefined,
-                                      variant_sku: variantDetails.sku || undefined,
-                                      quantity: item.quantity,
-                                      price_at_purchase: item.price_at_purchase,
-                                    });
-                                  }
-                                }
-
-                                // Get user profile to get the user name
-                                let userName = '';
-                                if (orderData.user_id) {
-                                  const { data: profileData, error: profileError } = await supabase
-                                    .from('profiles')
-                                    .select('user_name')
-                                    .eq('id', orderData.user_id)
-                                    .single();
-
-                                  if (!profileError && profileData) {
-                                    userName = profileData.user_name || '';
-                                  }
-                                }
-
-                                // Get store settings for invoice generation
-                                const { allSettings } = useStoreSettingsStore.getState();
-                                const storeSettings = {
-                                  store_name: allSettings?.store?.storeName || 'ShortTail.id',
-                                  store_logo: allSettings?.store?.storeLogo || '',
-                                  store_address: allSettings?.store?.storeAddress || '',
-                                  store_phone: allSettings?.store?.storePhone || '',
-                                  store_email: allSettings?.store?.storeEmail || '',
-                                };
-
-                                // Format the order data to match the expected structure for the invoice generator
-                                const orderForInvoice = {
-                                  id: orderData.id,
-                                  user_id: orderData.user_id || undefined,
-                                  cashier_id: orderData.cashier_id || undefined,
-                                  user_name: userName,
-                                  source: orderData.source,
-                                  status: orderData.status,
-                                  subtotal: orderData.subtotal,
-                                  shipping_fee: orderData.shipping_fee,
-                                  discount_amount: orderData.discount_amount,
-                                  total_amount: orderData.total_amount,
-                                  recipient_name: orderData.recipient_name || (orderData.shipping_address_snapshot as any)?.recipient_name || undefined,
-                                  recipient_phone: orderData.recipient_phone || (orderData.shipping_address_snapshot as any)?.phone || undefined,
-                                  recipient_address: orderData.recipient_address || (orderData.shipping_address_snapshot as any)?.address_line1 || undefined,
-                                  recipient_province: orderData.recipient_province || (orderData.shipping_address_snapshot as any)?.province || undefined,
-                                  shipping_courier: orderData.shipping_courier || orderData.shipping_courier_name || undefined,
-                                  shipping_courier_name: orderData.shipping_courier_name || undefined,
-                                  shipping_address_snapshot: orderData.shipping_address_snapshot,
-                                  customer_notes: orderData.customer_notes || undefined,
-                                  items_count: itemsWithDetails.length,
-                                  items: itemsWithDetails,
-                                  created_at: orderData.created_at,
-                                  updated_at: orderData.updated_at,
-                                };
-
-                                // Generate the invoice
-                                const invoiceBlob = await generateInvoiceJPEG(orderForInvoice, storeSettings);
-
-                                // Create a temporary URL for the preview
-                                const url = URL.createObjectURL(invoiceBlob);
-
-                                // Open the invoice in a new tab
-                                window.open(url, '_blank');
-
-                                // Clean up the object URL after a delay
-                                setTimeout(() => URL.revokeObjectURL(url), 10000);
-                              } catch (error) {
-                                console.error('Error generating invoice:', error);
-                                alert('Error generating invoice. Please try again.');
-                              }
-                            }}
-                          >
-                            Invoice
-                          </Button>
-                          <Link href={`/dashboard/orders/${order.id}`}>
+                          {/* Action buttons - Stack vertically on mobile */}
+                          <div className="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0 sm:items-center">
                             <Button
                               variant="outline"
                               size="sm"
-                              className="h-9 text-sm w-full sm:w-auto"
+                              className="h-9 text-sm flex-1 sm:flex-none w-full sm:w-auto"
+                              onClick={async () => {
+                                // Generate invoice preview
+                                try {
+                                  const supabase = createClient();
+
+                                  // Fetch the order with items to generate invoice
+                                  // First get the order
+                                  const { data: orderData, error: orderError } = await supabase
+                                    .from('orders')
+                                    .select('id, user_id, cashier_id, source, status, subtotal, shipping_fee, discount_amount, total_amount, recipient_name, recipient_phone, recipient_address, recipient_province, shipping_courier, shipping_courier_name, shipping_address_snapshot, customer_notes, created_at, updated_at')
+                                    .eq('id', order.id)
+                                    .single();
+
+                                  if (orderError) throw orderError;
+
+                                  // Then get the order items
+                                  const { data: itemsData, error: itemsError } = await supabase
+                                    .from('order_items')
+                                    .select('product_id, variant_id, quantity, price_at_purchase')
+                                    .eq('order_id', order.id);
+
+                                  if (itemsError) throw itemsError;
+
+                                  // For each item, get product and variant details
+                                  let itemsWithDetails = [];
+                                  if (itemsData && itemsData.length > 0) {
+                                    for (const item of itemsData) {
+                                      // Get product details
+                                      const { data: productData, error: productError } = await supabase
+                                        .from('products')
+                                        .select('name, sku')
+                                        .eq('id', item.product_id)
+                                        .single();
+
+                                      let productDetails = {
+                                        name: 'Unknown Product',
+                                        sku: undefined
+                                      };
+
+                                      if (!productError && productData) {
+                                        productDetails = {
+                                          name: productData.name,
+                                          sku: productData.sku
+                                        };
+                                      }
+
+                                      // Get variant details if exists
+                                      let variantDetails = {
+                                        name: null,
+                                        sku: null
+                                      };
+
+                                      if (item.variant_id) {
+                                        const { data: variantData, error: variantError } = await supabase
+                                          .from('product_variants')
+                                          .select('variant_name, sku')
+                                          .eq('id', item.variant_id)
+                                          .single();
+
+                                        if (!variantError && variantData) {
+                                          variantDetails = {
+                                            name: variantData.variant_name,
+                                            sku: variantData.sku
+                                          };
+                                        }
+                                      }
+
+                                      itemsWithDetails.push({
+                                        product_id: item.product_id,
+                                        product_name: productDetails.name,
+                                        product_sku: productDetails.sku,
+                                        variant_id: item.variant_id,
+                                        variant_name: variantDetails.name || undefined,
+                                        variant_sku: variantDetails.sku || undefined,
+                                        quantity: item.quantity,
+                                        price_at_purchase: item.price_at_purchase,
+                                      });
+                                    }
+                                  }
+
+                                  // Get user profile to get the user name
+                                  let userName = '';
+                                  if (orderData.user_id) {
+                                    const { data: profileData, error: profileError } = await supabase
+                                      .from('profiles')
+                                      .select('user_name')
+                                      .eq('id', orderData.user_id)
+                                      .single();
+
+                                    if (!profileError && profileData) {
+                                      userName = profileData.user_name || '';
+                                    }
+                                  }
+
+                                  // Get store settings for invoice generation
+                                  const { allSettings } = useStoreSettingsStore.getState();
+                                  const storeSettings = {
+                                    store_name: allSettings?.store?.storeName || 'ShortTail.id',
+                                    store_logo: allSettings?.store?.storeLogo || '',
+                                    store_address: allSettings?.store?.storeAddress || '',
+                                    store_phone: allSettings?.store?.storePhone || '',
+                                    store_email: allSettings?.store?.storeEmail || '',
+                                  };
+
+                                  // Format the order data to match the expected structure for the invoice generator
+                                  const orderForInvoice = {
+                                    id: orderData.id,
+                                    user_id: orderData.user_id || undefined,
+                                    cashier_id: orderData.cashier_id || undefined,
+                                    user_name: userName,
+                                    source: orderData.source,
+                                    status: orderData.status,
+                                    subtotal: orderData.subtotal,
+                                    shipping_fee: orderData.shipping_fee,
+                                    discount_amount: orderData.discount_amount,
+                                    total_amount: orderData.total_amount,
+                                    recipient_name: orderData.recipient_name || (orderData.shipping_address_snapshot as any)?.recipient_name || undefined,
+                                    recipient_phone: orderData.recipient_phone || (orderData.shipping_address_snapshot as any)?.phone || undefined,
+                                    recipient_address: orderData.recipient_address || (orderData.shipping_address_snapshot as any)?.address_line1 || undefined,
+                                    recipient_province: orderData.recipient_province || (orderData.shipping_address_snapshot as any)?.province || undefined,
+                                    shipping_courier: orderData.shipping_courier || orderData.shipping_courier_name || undefined,
+                                    shipping_courier_name: orderData.shipping_courier_name || undefined,
+                                    shipping_address_snapshot: orderData.shipping_address_snapshot,
+                                    customer_notes: orderData.customer_notes || undefined,
+                                    items_count: itemsWithDetails.length,
+                                    items: itemsWithDetails,
+                                    created_at: orderData.created_at,
+                                    updated_at: orderData.updated_at,
+                                  };
+
+                                  // Generate the invoice
+                                  const invoiceBlob = await generateInvoiceJPEG(orderForInvoice, storeSettings);
+
+                                  // Create a temporary URL for the preview
+                                  const url = URL.createObjectURL(invoiceBlob);
+
+                                  // Open the invoice in a new tab
+                                  window.open(url, '_blank');
+
+                                  // Clean up the object URL after a delay
+                                  setTimeout(() => URL.revokeObjectURL(url), 10000);
+                                } catch (error) {
+                                  console.error('Error generating invoice:', error);
+                                  alert('Error generating invoice. Please try again.');
+                                }
+                              }}
                             >
-                              View Details
+                              Invoice
                             </Button>
-                          </Link>
+                            <Link href={`/dashboard/orders/${order.id}`}>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-9 text-sm w-full sm:w-auto"
+                              >
+                                View Details
+                              </Button>
+                            </Link>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* My Pets */}
-        <Card className="border-brown-200">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>My Pets</CardTitle>
-              <CardDescription>Your registered companions</CardDescription>
-            </div>
-            <Link href="/dashboard/pets">
-              <Button variant="ghost" size="sm">
-                Manage
-                <ChevronRight className="ml-1 h-4 w-4" />
-              </Button>
-            </Link>
-          </CardHeader>
-          <CardContent>
-            {pets.length === 0 ? (
-              <div className="text-center py-8">
-                <PawPrint className="h-12 w-12 text-brown-300 mx-auto mb-3" />
-                <p className="text-brown-600">No pets registered yet</p>
-                <Link href="/dashboard/pets/new">
-                  <Button className="mt-4">Add Your Pet</Button>
-                </Link>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-4">
-                {pets.map((pet) => (
-                  <div
-                    key={pet.id}
-                    className="flex items-center gap-3 p-4 bg-brown-50 rounded-lg"
-                  >
-                    <div className="h-12 w-12 bg-brown-200 rounded-full flex items-center justify-center">
-                      {pet.pet_image_url ? (
-                        <img
-                          src={pet.pet_image_url}
-                          alt={pet.pet_name}
-                          className="h-full w-full rounded-full object-cover"
-                        />
-                      ) : (
-                        <PawPrint className="h-6 w-6 text-brown-500" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium text-brown-900">{pet.pet_name}</p>
-                      <p className="text-sm text-brown-600 capitalize">{pet.pet_type}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
