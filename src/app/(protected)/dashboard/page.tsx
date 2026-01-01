@@ -140,224 +140,220 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-3xl font-bold text-brown-900">Dashboard</h1>
         <p className="text-brown-600">Welcome back, {profile?.user_name || 'User'}!</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Profile & Membership */}
-        <div className="space-y-6">
-          {/* Profile Card */}
-          <Card className="border-brown-200">
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center text-center">
-                <Avatar className="h-20 w-20 mb-4">
-                  {(() => {
-                    const avatarUrl = profile?.user_avatar_url;
-                    const avatarInfo = getAvatarDataInfo(avatarUrl);
-
-                    console.debug('Dashboard Avatar Info:', {
-                      urlExists: !!avatarUrl,
-                      isValid: avatarInfo.isValid,
-                      length: avatarInfo.length,
-                      prefix: avatarInfo.prefix
-                    });
-
-                    return (
-                      <>
-                        <AvatarImage
-                          src={avatarUrl && isValidWebPDataUrl(avatarUrl) ? avatarUrl : undefined}
-                          onError={(e) => {
-                            console.error('Dashboard Avatar image failed to load:', avatarUrl);
-                            console.error('Error object:', e);
-                          }}
-                          className="object-cover"
-                          onLoad={() => {
-                            console.debug('Dashboard Avatar image loaded successfully');
-                          }}
-                        />
-                        <AvatarFallback className="bg-primary text-white text-xl">
-                          {profile?.user_name?.charAt(0).toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </>
-                    );
-                  })()}
-                </Avatar>
-                <h2 className="text-xl font-bold text-brown-900">
-                  {profile?.user_name || 'User'}
-                </h2>
-                <p className="text-sm text-brown-600">{profile?.user_email}</p>
-                <Badge 
-                  className={`mt-2 ${tierColors[profile?.tier || 'Newborn']} text-white`}
-                >
-                  <Trophy className="h-3 w-3 mr-1" />
-                  {profile?.tier || 'Newborn'}
-                </Badge>
-              </div>
+      {/* Quick Actions - Now just below the header */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+        <Link href="/dashboard/orders">
+          <Card className="border-brown-200 hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="pt-6 text-center">
+              <ShoppingBag className="h-8 w-8 text-primary mx-auto mb-2" />
+              <p className="font-medium text-brown-900">Orders</p>
             </CardContent>
           </Card>
-
-          {/* Membership Progress */}
-          <Card className="border-brown-200">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                Membership Progress
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-brown-900">Membership Level</span>
-                  <span className="text-xs text-brown-600">
-                    {profile?.points_balance || 0} / {getNextTier() ? tierThresholds[getNextTier()!] : tierThresholds.Adulthood} pts
-                  </span>
-                </div>
-                
-                {/* Tier Progress Bar */}
-                <div className="relative">
-                  {/* Background track */}
-                  <div className="h-3 bg-brown-100 rounded-full overflow-hidden">
-                    {/* Progress fill */}
-                    <div 
-                      className={`h-full ${tierColors[profile?.tier || 'Newborn']} transition-all duration-500`}
-                      style={{ 
-                        width: `${Math.min(100, ((profile?.points_balance || 0) / (getNextTier() ? tierThresholds[getNextTier()!] : tierThresholds.Adulthood)) * 100)}%` 
-                      }}
-                    />
-                  </div>
-                  
-                  {/* Tier markers */}
-                  <div className="relative mt-2">
-                    <div className="flex justify-between">
-                      {Object.entries(tierThresholds).map(([tier, points], index) => {
-                        const currentPoints = profile?.points_balance || 0;
-                        const isAchieved = currentPoints >= points;
-                        const isCurrent = profile?.tier === tier;
-                        
-                        return (
-                          <div key={tier} className="flex flex-col items-center" style={{ width: '20%' }}>
-                            <div 
-                              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mb-1 transition-all ${
-                                isAchieved 
-                                  ? `${tierColors[tier as keyof typeof tierColors]} border-transparent` 
-                                  : 'bg-white border-brown-300'
-                              } ${isCurrent ? 'ring-2 ring-primary ring-offset-2' : ''}`}
-                            >
-                              {isAchieved && (
-                                <Trophy className="h-3 w-3 text-white" />
-                              )}
-                            </div>
-                            <span className={`text-[10px] font-medium text-center leading-tight ${
-                              isCurrent ? 'text-primary' : isAchieved ? 'text-brown-900' : 'text-brown-400'
-                            }`}>
-                              {tier}
-                            </span>
-                            <span className="text-[9px] text-brown-500">
-                              {points.toLocaleString()}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-                
-                {getNextTier() && (
-                  <p className="text-xs text-brown-600 text-center">
-                    <span className="font-medium">{tierThresholds[getNextTier()!] - (profile?.points_balance || 0)} points</span> needed to reach <span className="font-semibold">{getNextTier()}</span>
-                  </p>
-                )}
+        </Link>
+        <Link href="/dashboard/pets">
+          <Card className="border-brown-200 hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="pt-6 text-center">
+              <div className="w-8 h-8 mx-auto mb-2">
+                <StoreLogo className="w-full h-full" iconClassName="h-8 w-8 text-primary" fallbackSize="lg" />
               </div>
+              <p className="font-medium text-brown-900">My Pets</p>
             </CardContent>
           </Card>
+        </Link>
+        <Link href="/dashboard/wishlist">
+          <Card className="border-brown-200 hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="pt-6 text-center">
+              <Heart className="h-8 w-8 text-primary mx-auto mb-2" />
+              <p className="font-medium text-brown-900">Wishlist</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/dashboard/notifications">
+          <Card className="border-brown-200 hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="pt-6 text-center">
+              <Bell className="h-8 w-8 text-primary mx-auto mb-2" />
+              <p className="font-medium text-brown-900">Notifications</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/game">
+          <Card className="border-brown-200 hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="pt-6 text-center">
+              <Trophy className="h-8 w-8 text-primary mx-auto mb-2" />
+              <p className="font-medium text-brown-900">Game</p>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
 
-          {/* Referral Code */}
-          <Card className="border-brown-200">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Gift className="h-5 w-5 text-primary" />
-                Referral Program
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-brown-600 mb-3">
-                Share your code and earn points when friends join!
-              </p>
-              <div className="p-3 bg-brown-50 rounded-lg text-center">
-                <code className="text-lg font-mono font-bold text-primary">
-                  {referralCode || profile?.referral_code || 'Generating...'}
-                </code>
-              </div>
-              <Button 
-                className="w-full mt-3" 
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  const code = referralCode || profile?.referral_code;
-                  if (code) {
-                    navigator.clipboard.writeText(`${window.location.origin}/register?ref=${code}`);
-                  }
-                }}
-                disabled={!referralCode && !profile?.referral_code}
+      {/* Single column layout - Profile & Membership Cards below the quick actions */}
+      <div className="space-y-6">
+        {/* Profile Card */}
+        <Card className="border-brown-200">
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center text-center">
+              <Avatar className="h-20 w-20 mb-4">
+                {(() => {
+                  const avatarUrl = profile?.user_avatar_url;
+                  const avatarInfo = getAvatarDataInfo(avatarUrl);
+
+                  console.debug('Dashboard Avatar Info:', {
+                    urlExists: !!avatarUrl,
+                    isValid: avatarInfo.isValid,
+                    length: avatarInfo.length,
+                    prefix: avatarInfo.prefix
+                  });
+
+                  return (
+                    <>
+                      <AvatarImage
+                        src={avatarUrl && isValidWebPDataUrl(avatarUrl) ? avatarUrl : undefined}
+                        onError={(e) => {
+                          console.error('Dashboard Avatar image failed to load:', avatarUrl);
+                          console.error('Error object:', e);
+                        }}
+                        className="object-cover"
+                        onLoad={() => {
+                          console.debug('Dashboard Avatar image loaded successfully');
+                        }}
+                      />
+                      <AvatarFallback className="bg-primary text-white text-xl">
+                        {profile?.user_name?.charAt(0).toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </>
+                  );
+                })()}
+              </Avatar>
+              <h2 className="text-xl font-bold text-brown-900">
+                {profile?.user_name || 'User'}
+              </h2>
+              <p className="text-sm text-brown-600">{profile?.user_email}</p>
+              <Badge
+                className={`mt-2 ${tierColors[profile?.tier || 'Newborn']} text-white`}
               >
-                Copy Referral Link
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+                <Trophy className="h-3 w-3 mr-1" />
+                {profile?.tier || 'Newborn'}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Right Column - Orders & Pets */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Quick Actions */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Link href="/dashboard/orders">
-              <Card className="border-brown-200 hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="pt-6 text-center">
-                  <ShoppingBag className="h-8 w-8 text-primary mx-auto mb-2" />
-                  <p className="font-medium text-brown-900">Orders</p>
-                </CardContent>
-              </Card>
-            </Link>
-            <Link href="/dashboard/pets">
-              <Card className="border-brown-200 hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="pt-6 text-center">
-                  <div className="w-8 h-8 mx-auto mb-2">
-                    <StoreLogo className="w-full h-full" iconClassName="h-8 w-8 text-primary" fallbackSize="lg" />
+        {/* Membership Progress */}
+        <Card className="border-brown-200">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Membership Progress
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-brown-900">Membership Level</span>
+                <span className="text-xs text-brown-600">
+                  {profile?.points_balance || 0} / {getNextTier() ? tierThresholds[getNextTier()!] : tierThresholds.Adulthood} pts
+                </span>
+              </div>
+
+              {/* Tier Progress Bar */}
+              <div className="relative">
+                {/* Background track */}
+                <div className="h-3 bg-brown-100 rounded-full overflow-hidden">
+                  {/* Progress fill */}
+                  <div
+                    className={`h-full ${tierColors[profile?.tier || 'Newborn']} transition-all duration-500`}
+                    style={{
+                      width: `${Math.min(100, ((profile?.points_balance || 0) / (getNextTier() ? tierThresholds[getNextTier()!] : tierThresholds.Adulthood)) * 100)}%`
+                    }}
+                  />
+                </div>
+
+                {/* Tier markers */}
+                <div className="relative mt-2">
+                  <div className="flex justify-between">
+                    {Object.entries(tierThresholds).map(([tier, points], index) => {
+                      const currentPoints = profile?.points_balance || 0;
+                      const isAchieved = currentPoints >= points;
+                      const isCurrent = profile?.tier === tier;
+
+                      return (
+                        <div key={tier} className="flex flex-col items-center" style={{ width: '20%' }}>
+                          <div
+                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mb-1 transition-all ${
+                              isAchieved
+                                ? `${tierColors[tier as keyof typeof tierColors]} border-transparent`
+                                : 'bg-white border-brown-300'
+                            } ${isCurrent ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+                          >
+                            {isAchieved && (
+                              <Trophy className="h-3 w-3 text-white" />
+                            )}
+                          </div>
+                          <span className={`text-[10px] font-medium text-center leading-tight ${
+                            isCurrent ? 'text-primary' : isAchieved ? 'text-brown-900' : 'text-brown-400'
+                          }`}>
+                            {tier}
+                          </span>
+                          <span className="text-[9px] text-brown-500">
+                            {points.toLocaleString()}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <p className="font-medium text-brown-900">My Pets</p>
-                </CardContent>
-              </Card>
-            </Link>
-            <Link href="/dashboard/wishlist">
-              <Card className="border-brown-200 hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="pt-6 text-center">
-                  <Heart className="h-8 w-8 text-primary mx-auto mb-2" />
-                  <p className="font-medium text-brown-900">Wishlist</p>
-                </CardContent>
-              </Card>
-            </Link>
-            <Link href="/dashboard/notifications">
-              <Card className="border-brown-200 hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="pt-6 text-center">
-                  <Bell className="h-8 w-8 text-primary mx-auto mb-2" />
-                  <p className="font-medium text-brown-900">Notifications</p>
-                </CardContent>
-              </Card>
-            </Link>
-            <Link href="/game">
-              <Card className="border-brown-200 hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="pt-6 text-center">
-                  <Trophy className="h-8 w-8 text-primary mx-auto mb-2" />
-                  <p className="font-medium text-brown-900">Game</p>
-                </CardContent>
-              </Card>
-            </Link>
-          </div>
+                </div>
+              </div>
 
-          {/* Recent Orders */}
-          <Card className="border-brown-200">
+              {getNextTier() && (
+                <p className="text-xs text-brown-600 text-center">
+                  <span className="font-medium">{tierThresholds[getNextTier()!] - (profile?.points_balance || 0)} points</span> needed to reach <span className="font-semibold">{getNextTier()}</span>
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Referral Code */}
+        <Card className="border-brown-200">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Gift className="h-5 w-5 text-primary" />
+              Referral Program
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-brown-600 mb-3">
+              Share your code and earn points when friends join!
+            </p>
+            <div className="p-3 bg-brown-50 rounded-lg text-center">
+              <code className="text-lg font-mono font-bold text-primary">
+                {referralCode || profile?.referral_code || 'Generating...'}
+              </code>
+            </div>
+            <Button
+              className="w-full mt-3"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const code = referralCode || profile?.referral_code;
+                if (code) {
+                  navigator.clipboard.writeText(`${window.location.origin}/register?ref=${code}`);
+                }
+              }}
+              disabled={!referralCode && !profile?.referral_code}
+            >
+              Copy Referral Link
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Recent Orders */}
+        <Card className="border-brown-200">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle>Recent Orders</CardTitle>
