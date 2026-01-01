@@ -140,11 +140,6 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-brown-900">Dashboard</h1>
-        <p className="text-brown-600">Welcome back, {profile?.user_name || 'User'}!</p>
-      </div>
-
       {/* Quick Actions - Now just below the header */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         <Link href="/dashboard/orders">
