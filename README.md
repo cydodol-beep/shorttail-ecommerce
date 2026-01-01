@@ -2268,6 +2268,19 @@ When working with Zustand stores and caching:
 
 ---
 
+## 🔄 Recent Updates (December 31, 2025)
+
+### About Us Page Hero Section Enhancements 🎨
+- **Restructured Hero Layout**: Changed from single column to responsive two-column layout on desktop
+- **Store Logo Positioning**: Moved store logo to left column with dedicated container
+- **Content Organization**: Title and description now in right column with proper container
+- **Responsive Design**: Columns stack vertically on mobile devices for better mobile experience
+- **Visual Improvements**: Enhanced spacing, typography, and element positioning for better visual hierarchy
+- **Container Separation**: Store logo, title, and content now have separate containers for better organization
+- **Improved Structure**: Clean and organized layout that maintains visual appeal across all device sizes
+
+---
+
 ## License
 
 Private project - All rights reserved.

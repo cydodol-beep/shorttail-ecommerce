@@ -415,7 +415,7 @@ export default function AboutPage() {
         {/* Hero Section */}
         <section
           id="hero"
-          className="min-h-screen flex items-center justify-center pt-16 relative overflow-hidden"
+          className="min-h-screen flex items-center justify-center pt-20 md:pt-16 relative overflow-hidden"
           style={{ backgroundColor: 'linear-gradient(to bottom, #008a90, #006d77)' }}
         >
           {/* Animated background elements */}
@@ -426,63 +426,111 @@ export default function AboutPage() {
 
           <div className="absolute inset-0 bg-[#006d77]/80"></div>
 
-          <div className="container mx-auto px-4 py-8 relative z-10">
+          <div className="container mx-auto px-4 py-12 md:py-8 relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="max-w-4xl mx-auto"
+              className="max-w-5xl mx-auto"
             >
-              <div className="flex flex-col md:flex-row items-center gap-8">
-                {/* Left Column - Store Logo Container */}
-                <div className="md:w-1/2 flex justify-center">
-                  <div className="p-4">
-                    <div className="rounded-full bg-white border-2 border-white shadow-lg w-40 h-40 flex items-center justify-center">
-                      <StoreLogo
-                        className="scale-100"
-                        iconClassName="h-24 w-24 text-[#ff911d]"
-                        fallbackSize="xl"
-                      />
-                    </div>
+              {/* Mobile Layout: Stack vertically with logo on top */}
+              <div className="flex flex-col items-center gap-6 md:hidden">
+                {/* Logo - Mobile */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.6 }}
+                  className="flex-shrink-0"
+                >
+                  <div className="rounded-full bg-white border-4 border-white shadow-2xl w-28 h-28 sm:w-32 sm:h-32 flex items-center justify-center overflow-hidden">
+                    <StoreLogo
+                      className="scale-100"
+                      iconClassName="h-16 w-16 sm:h-20 sm:w-20 text-[#ff911d]"
+                      fallbackSize="lg"
+                    />
                   </div>
+                </motion.div>
+
+                {/* Content - Mobile */}
+                <div className="text-center px-2">
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 0.2 }}
+                  >
+                    <h1 className="text-2xl sm:text-3xl font-bold text-white mb-4 leading-tight">
+                      {sections.hero?.title || "Dedicated to Pet Wellness & Happiness"}
+                    </h1>
+                    <p className="text-sm sm:text-base text-white/90 mb-6 leading-relaxed max-w-md mx-auto">
+                      {sections.hero?.content || "At ShortTail.id, we believe every pet deserves the best care, nutrition, and love. Founded in 2020 with a passion for animal welfare, we've grown into Indonesia's premier destination for premium pet supplies."}
+                    </p>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 0.4 }}
+                  >
+                    <Button
+                      size="default"
+                      className="bg-[#ff911d] hover:bg-[#e6821a] text-white px-6 py-2.5 rounded-full shadow-xl transition-all duration-300 transform hover:scale-105"
+                      onClick={() => scrollToSection('mission')}
+                    >
+                      Discover Our Journey
+                      <ChevronDown className="ml-2 h-4 w-4 animate-bounce" />
+                    </Button>
+                  </motion.div>
                 </div>
+              </div>
+
+              {/* Desktop Layout: Side by side */}
+              <div className="hidden md:flex md:flex-row items-center gap-12 lg:gap-16">
+                {/* Left Column - Store Logo Container */}
+                <motion.div 
+                  className="flex-shrink-0"
+                  initial={{ opacity: 0, x: -30 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.8 }}
+                >
+                  <div className="rounded-full bg-white border-4 border-white shadow-2xl w-44 h-44 lg:w-52 lg:h-52 flex items-center justify-center overflow-hidden">
+                    <StoreLogo
+                      className="scale-100"
+                      iconClassName="h-28 w-28 lg:h-32 lg:w-32 text-[#ff911d]"
+                      fallbackSize="xl"
+                    />
+                  </div>
+                </motion.div>
 
                 {/* Right Column - Title and Content Container */}
-                <div className="md:w-1/2 text-center md:text-left">
-                  <div className="p-4">
-                    <motion.div
-                      className="mb-6"
-                      initial={{ opacity: 0, y: 30 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.8, delay: 0.2 }}
-                    >
-                      <h1
-                        className="text-2xl md:text-4xl font-bold text-white mb-4 leading-tight"
-                      >
-                        {sections.hero?.title || "Dedicated to Pet Wellness & Happiness"}
-                      </h1>
-                      <p
-                        className="text-base md:text-lg text-white/90 mb-6 leading-relaxed"
-                      >
-                        {sections.hero?.content || "At ShortTail.id, we believe every pet deserves the best care, nutrition, and love. Founded in 2020 with a passion for animal welfare, we've grown into Indonesia's premier destination for premium pet supplies."}
-                      </p>
-                    </motion.div>
+                <div className="flex-1 text-left">
+                  <motion.div
+                    className="mb-6"
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 0.2 }}
+                  >
+                    <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-4 leading-tight">
+                      {sections.hero?.title || "Dedicated to Pet Wellness & Happiness"}
+                    </h1>
+                    <p className="text-base lg:text-lg text-white/90 mb-6 leading-relaxed max-w-xl">
+                      {sections.hero?.content || "At ShortTail.id, we believe every pet deserves the best care, nutrition, and love. Founded in 2020 with a passion for animal welfare, we've grown into Indonesia's premier destination for premium pet supplies."}
+                    </p>
+                  </motion.div>
 
-                    <motion.div
-                      initial={{ opacity: 0, y: 30 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.8, delay: 0.4 }}
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 0.4 }}
+                  >
+                    <Button
+                      size="lg"
+                      className="bg-[#ff911d] hover:bg-[#e6821a] text-white px-8 py-3 rounded-full shadow-xl transition-all duration-300 transform hover:scale-105"
+                      onClick={() => scrollToSection('mission')}
                     >
-                      <Button
-                        size="default"
-                        className="bg-[#ff911d] hover:bg-[#e6821a] text-white px-8 py-3 rounded-full shadow-xl transition-all duration-300 transform hover:scale-105"
-                        onClick={() => scrollToSection('mission')}
-                      >
-                        Discover Our Journey
-                        <ChevronDown className="ml-2 h-5 w-5 animate-bounce" />
-                      </Button>
-                    </motion.div>
-                  </div>
+                      Discover Our Journey
+                      <ChevronDown className="ml-2 h-5 w-5 animate-bounce" />
+                    </Button>
+                  </motion.div>
                 </div>
               </div>
             </motion.div>
