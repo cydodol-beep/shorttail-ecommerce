@@ -30,7 +30,7 @@ interface TempCustData {
 }
 
 export default function TempCustDataPage() {
-  const { profile } = useAuth();
+  const { profile, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<TempCustData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -105,10 +105,12 @@ export default function TempCustDataPage() {
     }
   }, [searchTerm, data]);
 
-  // Load data on component mount
+  // Load data on component mount after auth is ready
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (!authLoading && profile) {
+      fetchData();
+    }
+  }, [authLoading, profile]);
 
   // Handle form submission for create/update
   const handleSubmit = async (e: React.FormEvent) => {
@@ -116,16 +118,18 @@ export default function TempCustDataPage() {
 
     if (!currentRecord) return;
 
+    // Check if user has admin access before attempting operation
+    if (!profile || !profile.id) {
+      toast.error('Authentication required');
+      return;
+    }
+
+    if (profile.role !== 'master_admin' && profile.role !== 'normal_admin') {
+      toast.error('Unauthorized access');
+      return;
+    }
+
     try {
-      // Check if user has admin access using the auth hook
-      if (!profile || !profile.id) {
-        throw new Error('Authentication failed');
-      }
-
-      if (profile.role !== 'master_admin' && profile.role !== 'normal_admin') {
-        throw new Error('Unauthorized access');
-      }
-
       if (isEditing) {
         // Update existing record
         const { error } = await withTimeout(
@@ -183,16 +187,18 @@ export default function TempCustDataPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this record?')) return;
 
+    // Check if user has admin access before attempting operation
+    if (!profile || !profile.id) {
+      toast.error('Authentication required');
+      return;
+    }
+
+    if (profile.role !== 'master_admin' && profile.role !== 'normal_admin') {
+      toast.error('Unauthorized access');
+      return;
+    }
+
     try {
-      // Check if user has admin access using the auth hook
-      if (!profile || !profile.id) {
-        throw new Error('Authentication failed');
-      }
-
-      if (profile.role !== 'master_admin' && profile.role !== 'normal_admin') {
-        throw new Error('Unauthorized access');
-      }
-
       const { error } = await withTimeout(
         supabase
           .from('temp_custdata')
