@@ -57,30 +57,12 @@ export default function TempCustDataPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // First verify the user is authenticated
-      const { data: { user }, error: authError } = await withTimeout(
-        supabase.auth.getUser(),
-        15000 // 15 seconds timeout
-      );
-      if (authError || !user) {
+      // First verify the user is authenticated using the auth hook
+      if (!profile || !profile.id) {
         throw new Error('Authentication failed');
       }
 
-      // Then check if user has admin access
-      const { data: profileData, error: profileError } = await withTimeout(
-        supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single(),
-        15000 // 15 seconds timeout
-      );
-
-      if (profileError || !profileData) {
-        throw new Error('Profile access error');
-      }
-
-      if (profileData.role !== 'master_admin' && profileData.role !== 'normal_admin') {
+      if (profile.role !== 'master_admin' && profile.role !== 'normal_admin') {
         throw new Error('Unauthorized access');
       }
 
@@ -135,30 +117,12 @@ export default function TempCustDataPage() {
     if (!currentRecord) return;
 
     try {
-      // First verify the user is authenticated
-      const { data: { user }, error: authError } = await withTimeout(
-        supabase.auth.getUser(),
-        15000 // 15 seconds timeout
-      );
-      if (authError || !user) {
+      // Check if user has admin access using the auth hook
+      if (!profile || !profile.id) {
         throw new Error('Authentication failed');
       }
 
-      // Then check if user has admin access
-      const { data: profileData, error: profileError } = await withTimeout(
-        supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single(),
-        15000 // 15 seconds timeout
-      );
-
-      if (profileError || !profileData) {
-        throw new Error('Profile access error');
-      }
-
-      if (profileData.role !== 'master_admin' && profileData.role !== 'normal_admin') {
+      if (profile.role !== 'master_admin' && profile.role !== 'normal_admin') {
         throw new Error('Unauthorized access');
       }
 
@@ -220,30 +184,12 @@ export default function TempCustDataPage() {
     if (!confirm('Are you sure you want to delete this record?')) return;
 
     try {
-      // First verify the user is authenticated
-      const { data: { user }, error: authError } = await withTimeout(
-        supabase.auth.getUser(),
-        15000 // 15 seconds timeout
-      );
-      if (authError || !user) {
+      // Check if user has admin access using the auth hook
+      if (!profile || !profile.id) {
         throw new Error('Authentication failed');
       }
 
-      // Then check if user has admin access
-      const { data: profileData, error: profileError } = await withTimeout(
-        supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single(),
-        15000 // 15 seconds timeout
-      );
-
-      if (profileError || !profileData) {
-        throw new Error('Profile access error');
-      }
-
-      if (profileData.role !== 'master_admin' && profileData.role !== 'normal_admin') {
+      if (profile.role !== 'master_admin' && profile.role !== 'normal_admin') {
         throw new Error('Unauthorized access');
       }
 
