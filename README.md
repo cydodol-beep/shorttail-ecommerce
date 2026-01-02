@@ -46,6 +46,32 @@ The platform consists of five main user interfaces:
 - **Viewport Optimization**: Used intersection observer for lazy loading and optimized rendering
 - **Resource Optimization**: Added proper resource cleanup to prevent memory accumulation
 
+## 🆕 Recent Updates (January 2, 2026)
+
+### POS Promotion Selection System 🎫
+- **Enhanced Kasir/POS Checkout with Promotion Support**:
+  - **Promotion Filtering**: Only promotions with `available_for_pos = true` are displayed in POS checkout
+  - **Single Promotion Policy**: Promotions do NOT stack - only one promotion can be applied per order
+  - **Smart Auto-Apply**: System automatically finds and applies the best promotion (highest discount) on page load
+  - **Manual Selection Override**: Users can manually select a different promotion, which locks in their choice
+  - **Promo Code Input**: Staff can enter promo codes manually to apply specific promotions
+  - **Skip Promotions Option**: Checkbox to skip all promotions if customer doesn't want any discount
+
+- **Technical Implementation**:
+  - **State Management**: Added `manualPromoSelection` state to track user's manual selection
+  - **Auto-Apply Logic**: `useEffect` automatically applies best promotion unless user has manually selected one
+  - **Selection Priority**: Manual selection takes precedence over auto-apply algorithm
+  - **Reset Behavior**: Manual selection resets when cart is cleared, promo is removed, or order is completed
+
+- **Promotion Features in POS**:
+  - Displays all available promotions with discount type (percentage/fixed) and value
+  - Shows eligibility status based on minimum purchase requirements
+  - Visual indicators for ineligible promotions (opacity, disabled state)
+  - Applied promotion shows discount amount in order summary
+  - One-click promotion application with toast notifications
+
+---
+
 ## 🆕 Recent Updates (January 1, 2026)
 
 ### Dynamic Advertisement Pop-up System 📢
@@ -2327,6 +2353,15 @@ When working with Zustand stores and caching:
   - Left Column: Profile Card → Membership Progress → Referral Program
   - Right Column: My Pets → Recent Orders
 - **Improved User Experience**: Enhanced layout hierarchy to prioritize most important user information and actions
+
+### Admin Panel Enhancement - Temporary Customer Data Management 🛠️
+- **New Admin Section**: Added 'Temp Customer Data' section to admin panel sidebar
+- **CRUD Operations**: Full Create, Read, Update, and Delete functionality for temp_custdata table
+- **Bulk Import Feature**: CSV import functionality with validation for required fields
+- **Bulk Export Feature**: CSV export functionality with formatted date columns
+- **Search Capability**: Added search functionality to filter records by various fields
+- **API Endpoints**: Created secure API routes for import/export operations with proper authentication and authorization
+- **User Interface**: Clean, responsive UI with form validation and user feedback through toast notifications
 
 ---
 

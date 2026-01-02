@@ -83,6 +83,7 @@ export default function KasirPOSPage() {
   const [selectedProduct, setSelectedProduct] = useState<ProductWithVariants | null>(null);
   const [availablePromotions, setAvailablePromotions] = useState<Promotion[]>([]);
   const [appliedPromotion, setAppliedPromotion] = useState<Promotion | null>(null);
+  const [manualPromoSelection, setManualPromoSelection] = useState(false); // Track if user manually selected a promotion
   const [showCurrentOrder, setShowCurrentOrder] = useState(true);
   const [promoCode, setPromoCode] = useState('');
   const [validatingPromo, setValidatingPromo] = useState(false);
@@ -378,6 +379,7 @@ export default function KasirPOSPage() {
   const clearCart = () => {
     setCart([]);
     setAppliedPromotion(null);
+    setManualPromoSelection(false); // Reset manual selection when cart is cleared
   };
 
   const subtotal = cart.reduce(
@@ -523,10 +525,16 @@ export default function KasirPOSPage() {
     calculateShipping();
   }, [shippingCourier, recipientProvince, totalWeightGrams]);
 
-  // Automatically find and apply the best promotion
+  // Automatically find and apply the best promotion (only if user hasn't manually selected)
   useEffect(() => {
     if (cart.length === 0 || skipPromotions) {
       setAppliedPromotion(null);
+      setManualPromoSelection(false);
+      return;
+    }
+
+    // Skip auto-apply if user has manually selected a promotion
+    if (manualPromoSelection) {
       return;
     }
 
@@ -585,7 +593,7 @@ export default function KasirPOSPage() {
     };
 
     findBestPromotion();
-  }, [cart, availablePromotions, subtotal, skipPromotions]);
+  }, [cart, availablePromotions, subtotal, skipPromotions, manualPromoSelection]);
 
   const applyPromoCode = async () => {
     if (!promoCode.trim()) {
@@ -643,6 +651,7 @@ export default function KasirPOSPage() {
       }
 
       setAppliedPromotion(data);
+      setManualPromoSelection(true); // User manually entered a promo code
       toast.success(`Promo "${data.code}" applied successfully!`);
     } catch (err) {
       console.error('Error applying promo:', err);
@@ -654,6 +663,7 @@ export default function KasirPOSPage() {
 
   const removePromoCode = () => {
     setAppliedPromotion(null);
+    setManualPromoSelection(false); // Reset manual selection to allow auto-apply again
     setPromoCode('');
     toast.info('Promo code removed');
   };
@@ -898,6 +908,7 @@ export default function KasirPOSPage() {
     // Reset all form data
     setCart([]);
     setAppliedPromotion(null);
+    setManualPromoSelection(false); // Reset manual selection
     setCheckoutOpen(false);
     setCheckoutStep('details');
     setCashReceived('');
@@ -1868,6 +1879,7 @@ export default function KasirPOSPage() {
                                     onClick={() => {
                                       if (isEligible) {
                                         setAppliedPromotion(promo);
+                                        setManualPromoSelection(true); // User manually selected
                                         setPromoCode(promo.code);
                                         toast.success(`Promo "${promo.code}" applied!`);
                                       } else {

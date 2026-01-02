@@ -39,6 +39,7 @@ const menuItems = [
   { icon: PawPrint, label: 'About Page', href: '/admin/about-page' },
   { icon: Layout, label: 'Landing Page', href: '/admin/landing-page' },
   { icon: Megaphone, label: 'Advertisements', href: '/admin/advertisements' },
+  { icon: FolderOpen, label: 'Temp Customer Data', href: '/admin/temp-custdata' },
   { icon: Bell, label: 'Notifications', href: '/admin/notifications' },
   { icon: Settings, label: 'Settings', href: '/admin/settings' },
 ];
