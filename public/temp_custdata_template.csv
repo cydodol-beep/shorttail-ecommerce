@@ -1,0 +1,4 @@
+user_name,user_phoneno,recipient_name,recipient_phoneno,recipient_address_line1,recipient_city,recipient_region,recipient_postal_code
+John Doe,081234567890,Jane Doe,081234567891,Jl. Merdeka No. 10,Kota Jakarta,Jakarta Pusat,10110
+,Sarah Smith,081234567892,Sarah Smith,081234567893,123 Oak Street,Sydney,NSW,2000
+Bob Johnson,081234567894,,081234567895,456 Pine Road,Melbourne,Victoria,3000

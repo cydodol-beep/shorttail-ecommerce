@@ -359,13 +359,21 @@ export default function TempCustDataPage() {
               accept=".csv"
               onChange={handleFileImport}
             />
-            <Button 
-              variant="outline" 
-              onClick={() => fileInputRef.current?.click()} 
+            <Button
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
               className="flex items-center gap-2"
             >
               <Upload className="h-4 w-4" />
               Import CSV
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => window.open('/temp_custdata_template.csv', '_blank')}
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Download Template
             </Button>
             
             <Button 
