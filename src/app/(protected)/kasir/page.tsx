@@ -1788,6 +1788,143 @@ export default function KasirPOSPage() {
                   </div>
                 </div>
 
+                {/* Promotion Section - Only show if POS promotions available */}
+                {availablePromotions.length > 0 && (
+                  <>
+                    <Separator />
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium text-sm flex items-center gap-2">
+                          <Tag className="h-4 w-4 text-orange-600" />
+                          Apply Promotion
+                        </h4>
+                        {appliedPromotion && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={removePromoCode}
+                            className="text-red-600 hover:text-red-700 h-7 px-2"
+                          >
+                            <X className="h-3 w-3 mr-1" />
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+
+                      {/* Applied Promotion Display */}
+                      {appliedPromotion ? (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-green-600">{appliedPromotion.code}</Badge>
+                            <span className="text-sm font-medium text-green-800">
+                              {appliedPromotion.discount_type === 'percentage' 
+                                ? `${appliedPromotion.discount_value}% OFF`
+                                : formatPrice(appliedPromotion.discount_value) + ' OFF'}
+                            </span>
+                          </div>
+                          {appliedPromotion.description && (
+                            <p className="text-xs text-green-700 mt-1">{appliedPromotion.description}</p>
+                          )}
+                          {appliedPromotion.min_purchase_amount && (
+                            <p className="text-xs text-green-600 mt-1">
+                              Min. purchase: {formatPrice(appliedPromotion.min_purchase_amount)}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <>
+                          {/* Promo Code Input */}
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Enter promo code"
+                              value={promoCode}
+                              onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                              className="flex-1"
+                            />
+                            <Button
+                              onClick={applyPromoCode}
+                              disabled={validatingPromo || !promoCode.trim()}
+                              size="sm"
+                              className="px-4"
+                            >
+                              {validatingPromo ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                'Apply'
+                              )}
+                            </Button>
+                          </div>
+
+                          {/* Available Promotions List */}
+                          <div className="space-y-2">
+                            <p className="text-xs text-gray-500">Or select from available promotions:</p>
+                            <div className="max-h-32 overflow-y-auto space-y-1">
+                              {availablePromotions.map((promo) => {
+                                const isEligible = !promo.min_purchase_amount || subtotal >= promo.min_purchase_amount;
+                                return (
+                                  <button
+                                    key={promo.id}
+                                    type="button"
+                                    onClick={() => {
+                                      if (isEligible) {
+                                        setAppliedPromotion(promo);
+                                        setPromoCode(promo.code);
+                                        toast.success(`Promo "${promo.code}" applied!`);
+                                      } else {
+                                        toast.error(`Min. purchase ${formatPrice(promo.min_purchase_amount!)} required`);
+                                      }
+                                    }}
+                                    className={`w-full text-left p-2 rounded-lg border transition-colors ${
+                                      isEligible 
+                                        ? 'hover:bg-orange-50 hover:border-orange-300 cursor-pointer' 
+                                        : 'opacity-50 cursor-not-allowed bg-gray-50'
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-2">
+                                        <Badge variant="outline" className="text-xs">
+                                          {promo.code}
+                                        </Badge>
+                                        <span className="text-sm font-medium">
+                                          {promo.discount_type === 'percentage' 
+                                            ? `${promo.discount_value}% OFF`
+                                            : formatPrice(promo.discount_value) + ' OFF'}
+                                        </span>
+                                      </div>
+                                      {!isEligible && (
+                                        <span className="text-xs text-red-500">
+                                          Min. {formatPrice(promo.min_purchase_amount!)}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {promo.description && (
+                                      <p className="text-xs text-gray-500 mt-1 truncate">{promo.description}</p>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Skip Promotion Option */}
+                          <div className="flex items-center gap-2 pt-1">
+                            <input
+                              type="checkbox"
+                              id="skipPromo"
+                              checked={skipPromotions}
+                              onChange={(e) => setSkipPromotions(e.target.checked)}
+                              className="rounded border-gray-300"
+                            />
+                            <label htmlFor="skipPromo" className="text-xs text-gray-600">
+                              Don't apply any promotion
+                            </label>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
+
                 <Separator />
 
                 {/* Shipping Courier */}
