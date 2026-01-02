@@ -41,16 +41,56 @@ export default function TempCustDataPage() {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Helper function to implement timeout for async operations
+  const withTimeout = (promise: Promise<any>, timeoutMs: number) => {
+    return Promise.race([
+      promise,
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`Operation timed out after ${timeoutMs}ms`)), timeoutMs)
+      )
+    ]);
+  };
+
   const supabase = createClient();
 
   // Fetch all temp customer data
   const fetchData = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('temp_custdata')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // First verify the user is authenticated
+      const { data: { user }, error: authError } = await withTimeout(
+        supabase.auth.getUser(),
+        15000 // 15 seconds timeout
+      );
+      if (authError || !user) {
+        throw new Error('Authentication failed');
+      }
+
+      // Then check if user has admin access
+      const { data: profileData, error: profileError } = await withTimeout(
+        supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single(),
+        15000 // 15 seconds timeout
+      );
+
+      if (profileError || !profileData) {
+        throw new Error('Profile access error');
+      }
+
+      if (profileData.role !== 'master_admin' && profileData.role !== 'normal_admin') {
+        throw new Error('Unauthorized access');
+      }
+
+      const { data, error } = await withTimeout(
+        supabase
+          .from('temp_custdata')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        15000 // 15 seconds timeout
+      );
 
       if (error) throw error;
 
@@ -91,42 +131,75 @@ export default function TempCustDataPage() {
   // Handle form submission for create/update
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!currentRecord) return;
-    
+
     try {
+      // First verify the user is authenticated
+      const { data: { user }, error: authError } = await withTimeout(
+        supabase.auth.getUser(),
+        15000 // 15 seconds timeout
+      );
+      if (authError || !user) {
+        throw new Error('Authentication failed');
+      }
+
+      // Then check if user has admin access
+      const { data: profileData, error: profileError } = await withTimeout(
+        supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single(),
+        15000 // 15 seconds timeout
+      );
+
+      if (profileError || !profileData) {
+        throw new Error('Profile access error');
+      }
+
+      if (profileData.role !== 'master_admin' && profileData.role !== 'normal_admin') {
+        throw new Error('Unauthorized access');
+      }
+
       if (isEditing) {
         // Update existing record
-        const { error } = await supabase
-          .from('temp_custdata')
-          .update({
-            user_name: currentRecord.user_name,
-            user_phoneno: currentRecord.user_phoneno,
-            recipient_name: currentRecord.recipient_name,
-            recipient_phoneno: currentRecord.recipient_phoneno,
-            recipient_address_line1: currentRecord.recipient_address_line1,
-            recipient_city: currentRecord.recipient_city,
-            recipient_region: currentRecord.recipient_region,
-            recipient_postal_code: currentRecord.recipient_postal_code,
-          })
-          .eq('id', currentRecord.id);
+        const { error } = await withTimeout(
+          supabase
+            .from('temp_custdata')
+            .update({
+              user_name: currentRecord.user_name,
+              user_phoneno: currentRecord.user_phoneno,
+              recipient_name: currentRecord.recipient_name,
+              recipient_phoneno: currentRecord.recipient_phoneno,
+              recipient_address_line1: currentRecord.recipient_address_line1,
+              recipient_city: currentRecord.recipient_city,
+              recipient_region: currentRecord.recipient_region,
+              recipient_postal_code: currentRecord.recipient_postal_code,
+            })
+            .eq('id', currentRecord.id),
+          15000 // 15 seconds timeout
+        );
 
         if (error) throw error;
         toast.success('Record updated successfully');
       } else {
         // Create new record
-        const { error } = await supabase
-          .from('temp_custdata')
-          .insert([{
-            user_name: currentRecord.user_name,
-            user_phoneno: currentRecord.user_phoneno,
-            recipient_name: currentRecord.recipient_name,
-            recipient_phoneno: currentRecord.recipient_phoneno,
-            recipient_address_line1: currentRecord.recipient_address_line1,
-            recipient_city: currentRecord.recipient_city,
-            recipient_region: currentRecord.recipient_region,
-            recipient_postal_code: currentRecord.recipient_postal_code,
-          }]);
+        const { error } = await withTimeout(
+          supabase
+            .from('temp_custdata')
+            .insert([{
+              user_name: currentRecord.user_name,
+              user_phoneno: currentRecord.user_phoneno,
+              recipient_name: currentRecord.recipient_name,
+              recipient_phoneno: currentRecord.recipient_phoneno,
+              recipient_address_line1: currentRecord.recipient_address_line1,
+              recipient_city: currentRecord.recipient_city,
+              recipient_region: currentRecord.recipient_region,
+              recipient_postal_code: currentRecord.recipient_postal_code,
+            }]),
+          15000 // 15 seconds timeout
+        );
 
         if (error) throw error;
         toast.success('Record created successfully');
@@ -147,10 +220,40 @@ export default function TempCustDataPage() {
     if (!confirm('Are you sure you want to delete this record?')) return;
 
     try {
-      const { error } = await supabase
-        .from('temp_custdata')
-        .delete()
-        .eq('id', id);
+      // First verify the user is authenticated
+      const { data: { user }, error: authError } = await withTimeout(
+        supabase.auth.getUser(),
+        15000 // 15 seconds timeout
+      );
+      if (authError || !user) {
+        throw new Error('Authentication failed');
+      }
+
+      // Then check if user has admin access
+      const { data: profileData, error: profileError } = await withTimeout(
+        supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single(),
+        15000 // 15 seconds timeout
+      );
+
+      if (profileError || !profileData) {
+        throw new Error('Profile access error');
+      }
+
+      if (profileData.role !== 'master_admin' && profileData.role !== 'normal_admin') {
+        throw new Error('Unauthorized access');
+      }
+
+      const { error } = await withTimeout(
+        supabase
+          .from('temp_custdata')
+          .delete()
+          .eq('id', id),
+        15000 // 15 seconds timeout
+      );
 
       if (error) throw error;
 
