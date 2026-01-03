@@ -305,7 +305,7 @@ export default function KasirPOSPage() {
     setShowProfileDropdown(false);
   };
 
-  // Search temp_custdata with debouncing
+  // Search temp_custdata with debouncing - uses API route for efficiency and RLS bypass
   const searchTempCustData = useCallback((query: string) => {
     // Clear previous timeout
     if (tempCustDebounceRef.current) {
@@ -321,25 +321,22 @@ export default function KasirPOSPage() {
 
     setSearchingTempCust(true);
 
-    // Debounce the actual search by 300ms
+    // Debounce the actual search by 500ms for efficiency with large datasets
     tempCustDebounceRef.current = setTimeout(async () => {
       try {
-        const supabase = createClient();
+        // Use API route instead of direct Supabase query
+        // This bypasses RLS (kasir role doesn't have direct access) and uses server-side search
+        const response = await fetch(`/api/kasir/search-temp-custdata?q=${encodeURIComponent(query)}`);
+        const result = await response.json();
 
-        const { data, error } = await supabase
-          .from('temp_custdata')
-          .select('id, user_name, user_phoneno, recipient_name, recipient_phoneno, recipient_address_line1, recipient_city, recipient_region, recipient_postal_code')
-          .or(`user_name.ilike.%${query}%,user_phoneno.ilike.%${query}%,recipient_name.ilike.%${query}%,recipient_phoneno.ilike.%${query}%`)
-          .limit(10);
-
-        if (error) {
-          console.error('Temp custdata search error:', error);
+        if (result.error) {
+          console.error('Temp custdata search error:', result.error);
           setSearchingTempCust(false);
           return;
         }
 
-        if (data && data.length > 0) {
-          setSearchedTempCust(data);
+        if (result.data && result.data.length > 0) {
+          setSearchedTempCust(result.data);
           setShowTempCustDropdown(true);
         } else {
           setSearchedTempCust([]);
@@ -351,7 +348,7 @@ export default function KasirPOSPage() {
         console.error('Exception searching temp custdata:', err);
         setSearchingTempCust(false);
       }
-    }, 300);
+    }, 500);
   }, []);
 
   // Auto-fill customer and recipient data from selected temp_custdata record
