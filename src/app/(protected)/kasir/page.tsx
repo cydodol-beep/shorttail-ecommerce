@@ -100,6 +100,10 @@ export default function KasirPOSPage() {
   const [customerNotes, setCustomerNotes] = useState('');
   const [checkoutStep, setCheckoutStep] = useState<'details' | 'payment'>('details');
 
+  // Customer information (separate from recipient)
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+
   // Profile search
   const [profileSearchQuery, setProfileSearchQuery] = useState('');
   const [searchedProfiles, setSearchedProfiles] = useState<any[]>([]);
@@ -246,7 +250,7 @@ export default function KasirPOSPage() {
         const { data, error } = await supabase
           .from('profiles')
           .select('id, user_name, user_phoneno, user_email, recipient_name, recipient_phoneno, recipient_address_line1, recipient_province_id, address_line1, province_id')
-          .or(`user_name.ilike.%${query}%,user_phoneno.ilike.%${query}%`)
+          .or(`user_name.ilike.%${query}%,user_phoneno.ilike.%${query}%,recipient_name.ilike.%${query}%,recipient_phoneno.ilike.%${query}%`)
           .limit(10);
 
         if (error) {
@@ -271,10 +275,15 @@ export default function KasirPOSPage() {
     }, 300);
   }, []);
 
-  // Auto-fill recipient data from selected profile
+  // Auto-fill customer and recipient data from selected profile
   const selectProfile = (profile: any) => {
+    // Fill customer information (user_name and user_phoneno)
+    setCustomerName(profile.user_name || '');
+    setCustomerPhone(profile.user_phoneno || '');
+
+    // Fill recipient information (use recipient fields if available, otherwise fall back to user fields)
     setRecipientName(profile.recipient_name || profile.user_name || '');
-    setRecipientPhone(profile.user_phoneno || '');
+    setRecipientPhone(profile.recipient_phoneno || profile.user_phoneno || '');
     setRecipientAddress(profile.recipient_address_line1 || profile.address_line1 || '');
 
     // Directly use province_id from profile (no matching needed)
@@ -774,7 +783,7 @@ export default function KasirPOSPage() {
       .from('orders')
       .insert({
         user_id: null, // Walk-in customer
-        user_name: null, // Walk-in customer has no user name
+        user_name: customerName || null, // Customer name from POS checkout
         cashier_id: user?.id,
         cashier_name: profile?.user_name, // Store cashier's name
         source: 'pos',
@@ -792,6 +801,8 @@ export default function KasirPOSPage() {
         shipping_weight_grams: totalWeightGrams,
         payment_method: paymentMethod,
         customer_notes: customerNotes || null,
+        // Store customer phone in shipping_address_snapshot for reference
+        shipping_address_snapshot: customerPhone ? { customer_phone: customerPhone } : null,
       })
       .select('id, custom_order_id') // Include custom_order_id in the response
       .single();
@@ -914,6 +925,10 @@ export default function KasirPOSPage() {
     setCashReceived('');
     setPaymentMethod('cash');
 
+    // Reset customer information
+    setCustomerName('');
+    setCustomerPhone('');
+
     // Reset shipping details
     setRecipientName('');
     setRecipientPhone('');
@@ -924,6 +939,7 @@ export default function KasirPOSPage() {
     setShippingCost('');
     setProfileSearchQuery('');
     setSearchedProfiles([]);
+    setCustomerNotes('');
 
     fetchProducts(); // Refresh stock
     setProcessing(false);
@@ -1726,6 +1742,9 @@ export default function KasirPOSPage() {
                           >
                             <div className="font-medium text-sm">{profile.user_name || 'No Name'}</div>
                             <div className="text-xs text-gray-600">{profile.user_phoneno}</div>
+                            {profile.recipient_name && profile.recipient_name !== profile.user_name && (
+                              <div className="text-xs text-gray-500 mt-0.5">Recipient: {profile.recipient_name}</div>
+                            )}
                             {profile.recipient_address_line1 && (
                               <div className="text-xs text-gray-500 mt-0.5 truncate">{profile.recipient_address_line1}</div>
                             )}
@@ -1735,8 +1754,37 @@ export default function KasirPOSPage() {
                     )}
                   </div>
                   <p className="text-xs text-blue-600">
-                    {searchingProfiles ? 'Searching...' : 'Search existing customer to auto-fill recipient details (type at least 2 characters)'}
+                    {searchingProfiles ? 'Searching...' : 'Search by customer name, phone, recipient name, or recipient phone (type at least 2 characters)'}
                   </p>
+                </div>
+
+                <Separator />
+
+                {/* Customer Information */}
+                <div className="space-y-3">
+                  <h4 className="font-medium text-sm">Customer Information</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-sm font-medium">Customer Name</label>
+                      <Input
+                        type="text"
+                        placeholder="Enter customer name"
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Customer Phone</label>
+                      <Input
+                        type="tel"
+                        placeholder="Enter customer phone"
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <Separator />

@@ -72,6 +72,27 @@ The platform consists of five main user interfaces:
 - **Admin Panel Enhancement**:
   - Added record count display showing total number of customer records in the database
 
+### Server-Side Pagination & Search for Large Datasets ⚡
+- **Optimized for 2000+ Records**:
+  - **Server-Side Pagination**: Only fetches 50 records per page from database instead of loading all records
+  - **Server-Side Search**: Database-level filtering using PostgreSQL `ilike` for instant search across 6 fields
+  - **Debounced Search Input**: 500ms debounce prevents excessive API calls while typing
+  - **Memory Efficient**: Constant memory usage (~50 records) regardless of total dataset size
+
+- **Performance Improvements**:
+  | Metric | Before | After |
+  |--------|--------|-------|
+  | Initial Load | Fetches ALL records (slow for 2000+) | Fetches only 50 records (fast) |
+  | Search | Client-side JavaScript filtering | Database-level filtering |
+  | Memory | Grows with record count | Constant (~50 records) |
+  | API Calls | Single large request | Small paginated requests |
+
+- **Technical Implementation**:
+  - Uses Supabase `.range()` for efficient offset-based pagination
+  - Uses `.or()` with `ilike` filters for multi-column search
+  - Tracks both filtered count and total count separately
+  - Loading indicators during search debounce and data fetching
+
 ---
 
 ## 🆕 Recent Updates (January 2, 2026)
