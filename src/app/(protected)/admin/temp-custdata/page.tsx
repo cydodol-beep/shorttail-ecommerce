@@ -92,16 +92,41 @@ export default function TempCustDataPage() {
       if (countError) throw countError;
       setTotalRecords(count || 0);
 
-      // Get actual data
-      const { data, error } = await withTimeout(
-        supabase
-          .from('temp_custdata')
-          .select('*')
-          .order('created_at', { ascending: false }),
-        15000 // 15 seconds timeout
-      );
+      // Get actual data - fetch all records using pagination if needed
+      let allData: TempCustData[] = [];
+      let offset = 0;
+      const batchSize = 1000; // Supabase default max per request
+      let hasMore = true;
 
-      if (error) throw error;
+      while (hasMore) {
+        const { data: batchData, error: batchError, count } = await withTimeout(
+          supabase
+            .from('temp_custdata')
+            .select('*', {
+              limit: batchSize,
+              offset: offset,
+              count: 'exact'
+            })
+            .order('created_at', { ascending: false }),
+          15000 // 15 seconds timeout
+        );
+
+        if (batchError) throw batchError;
+
+        if (batchData && batchData.length > 0) {
+          allData = allData.concat(batchData);
+          offset += batchSize;
+
+          // Stop if we've retrieved all records
+          if (batchData.length < batchSize) {
+            hasMore = false;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+
+      const data = allData;
 
       setData(data || []);
       setFilteredData(data || []);
