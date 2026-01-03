@@ -46,6 +46,34 @@ The platform consists of five main user interfaces:
 - **Viewport Optimization**: Used intersection observer for lazy loading and optimized rendering
 - **Resource Optimization**: Added proper resource cleanup to prevent memory accumulation
 
+## 🆕 Recent Updates (January 3, 2026)
+
+### Enhanced CSV Import/Export for Temp Customer Data 📊
+- **Fixed Critical CSV Parsing Bug**:
+  - **Multiline Cell Support**: CSV cells containing line breaks (e.g., multi-line addresses) are now correctly parsed
+  - **Robust CSV Parser**: Implemented RFC 4180-compliant parser that properly handles:
+    - Quoted fields with embedded newlines
+    - Quoted fields with embedded commas
+    - Escaped quotes (`""` inside quoted fields)
+    - Mixed quoted and unquoted fields
+    - Windows (`\r\n`), Unix (`\n`), and old Mac (`\r`) line endings
+
+- **Import Improvements** (`/api/admin/import-temp-custdata`):
+  - **Batch Processing**: Inserts records in batches of 100 for better performance with large files
+  - **Better Error Reporting**: Shows row numbers and specific error details for failed rows
+  - **Validation**: Ensures at least some key fields have data before inserting
+  - **Header Validation**: Reports all missing required columns at once with helpful hints
+
+- **Export Improvements** (`/api/admin/export-temp-custdata`):
+  - **Proper CSV Escaping**: Internal quotes are correctly escaped by doubling (`"` → `""`)
+  - **Null Handling**: Gracefully handles null/undefined values
+  - **Consistent Formatting**: All values wrapped in quotes for Excel/spreadsheet compatibility
+
+- **Admin Panel Enhancement**:
+  - Added record count display showing total number of customer records in the database
+
+---
+
 ## 🆕 Recent Updates (January 2, 2026)
 
 ### POS Promotion Selection System 🎫

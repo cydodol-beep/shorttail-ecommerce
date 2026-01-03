@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/use-auth';
@@ -11,9 +11,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Upload, Download, Plus, Edit, Trash2, Search, X } from 'lucide-react';
+import { Upload, Download, Plus, Edit, Trash2, Search, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
+
+const RECORDS_PER_PAGE = 50;
 
 interface TempCustData {
   id: string;
@@ -39,8 +41,23 @@ export default function TempCustDataPage() {
   const [currentRecord, setCurrentRecord] = useState<TempCustData | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Calculate pagination
+  const totalPages = useMemo(() => Math.ceil(filteredData.length / RECORDS_PER_PAGE), [filteredData.length]);
+  
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * RECORDS_PER_PAGE;
+    const endIndex = startIndex + RECORDS_PER_PAGE;
+    return filteredData.slice(startIndex, endIndex);
+  }, [filteredData, currentPage]);
+
+  // Reset to first page when search/filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   // Helper function to implement timeout for async operations
   const withTimeout = (promise: Promise<any>, timeoutMs: number) => {
@@ -338,7 +355,8 @@ export default function TempCustDataPage() {
           <div>
             <CardTitle>Customer Data Management</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Showing {filteredData.length} of {totalRecords} records
+              Showing {paginatedData.length} of {filteredData.length} filtered records (Total: {totalRecords})
+              {totalPages > 1 && ` • Page ${currentPage} of ${totalPages}`}
             </p>
           </div>
           <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
@@ -422,8 +440,8 @@ export default function TempCustDataPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredData.length > 0 ? (
-                    filteredData.map((record) => (
+                  {paginatedData.length > 0 ? (
+                    paginatedData.map((record) => (
                       <TableRow key={record.id}>
                         <TableCell className="font-medium">{record.user_name || '-'}</TableCell>
                         <TableCell>{record.user_phoneno || '-'}</TableCell>
@@ -467,6 +485,95 @@ export default function TempCustDataPage() {
                   )}
                 </TableBody>
               </Table>
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {!loading && totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6 pt-4 border-t">
+              <div className="text-sm text-muted-foreground">
+                Showing {((currentPage - 1) * RECORDS_PER_PAGE) + 1} to {Math.min(currentPage * RECORDS_PER_PAGE, filteredData.length)} of {filteredData.length} records
+              </div>
+              <div className="flex items-center gap-2">
+                {/* First Page */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  className="hidden sm:flex"
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                
+                {/* Previous Page */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span className="hidden sm:inline ml-1">Previous</span>
+                </Button>
+
+                {/* Page Numbers */}
+                <div className="hidden md:flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(page => {
+                      // Show first page, last page, current page, and 2 pages around current
+                      return page === 1 || 
+                             page === totalPages || 
+                             Math.abs(page - currentPage) <= 2;
+                    })
+                    .map((page, index, array) => {
+                      // Add ellipsis if there's a gap
+                      const showEllipsisBefore = index > 0 && page - array[index - 1] > 1;
+                      return (
+                        <div key={page} className="flex items-center">
+                          {showEllipsisBefore && (
+                            <span className="px-2 text-muted-foreground">...</span>
+                          )}
+                          <Button
+                            variant={currentPage === page ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCurrentPage(page)}
+                            className="min-w-[40px]"
+                          >
+                            {page}
+                          </Button>
+                        </div>
+                      );
+                    })}
+                </div>
+
+                {/* Mobile Page Indicator */}
+                <span className="md:hidden text-sm font-medium">
+                  {currentPage} / {totalPages}
+                </span>
+
+                {/* Next Page */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  <span className="hidden sm:inline mr-1">Next</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+
+                {/* Last Page */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  className="hidden sm:flex"
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
