@@ -38,6 +38,7 @@ export default function TempCustDataPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentRecord, setCurrentRecord] = useState<TempCustData | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [totalRecords, setTotalRecords] = useState(0);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -66,6 +67,15 @@ export default function TempCustDataPage() {
         throw new Error('Unauthorized access');
       }
 
+      // Get total record count
+      const { count, error: countError } = await supabase
+        .from('temp_custdata')
+        .select('*', { count: 'exact', head: true });
+
+      if (countError) throw countError;
+      setTotalRecords(count || 0);
+
+      // Get actual data
       const { data, error } = await withTimeout(
         supabase
           .from('temp_custdata')
@@ -327,6 +337,9 @@ export default function TempCustDataPage() {
         <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle>Customer Data Management</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Showing {filteredData.length} of {totalRecords} records
+            </p>
           </div>
           <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
             <div className="relative">
@@ -346,12 +359,12 @@ export default function TempCustDataPage() {
                 </button>
               )}
             </div>
-            
+
             <Button onClick={handleAddNew} className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
               Add New
             </Button>
-            
+
             <input
               type="file"
               ref={fileInputRef}
@@ -375,10 +388,10 @@ export default function TempCustDataPage() {
               <Download className="h-4 w-4" />
               Download Template
             </Button>
-            
-            <Button 
-              variant="outline" 
-              onClick={handleExport} 
+
+            <Button
+              variant="outline"
+              onClick={handleExport}
               className="flex items-center gap-2"
             >
               <Download className="h-4 w-4" />
