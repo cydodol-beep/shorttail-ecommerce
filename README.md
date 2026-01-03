@@ -93,6 +93,22 @@ The platform consists of five main user interfaces:
   - Tracks both filtered count and total count separately
   - Loading indicators during search debounce and data fetching
 
+### Enhanced Kasir/POS Checkout with Customer Data Integration 🛒
+- **Dual Customer Search Options**:
+  - **Profile Search (Blue)**: Search registered customer profiles by name, phone, or recipient details
+  - **Temp Customer Data Search (Amber)**: Search imported CSV customer data for quick order entry
+
+- **Auto-Fill Capabilities**:
+  - **From Profiles**: Auto-fills customer name, phone, recipient name, phone, address, and province
+  - **From Temp Customer Data**: Auto-fills all customer and recipient fields from imported CSV records
+  - **Province Matching**: Intelligently matches province names from temp data to existing province records
+
+- **UI Improvements**:
+  - Customer information fields (name, phone) in checkout dialog
+  - Color-coded search boxes for easy differentiation
+  - Search results show recipient info preview for quick identification
+  - Debounced search with loading indicators
+
 ---
 
 ## 🆕 Recent Updates (January 2, 2026)

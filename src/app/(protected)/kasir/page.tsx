@@ -112,8 +112,15 @@ export default function KasirPOSPage() {
   const [provinces, setProvinces] = useState<any[]>([]);
   const [couriers, setCouriers] = useState<any[]>([]);
 
+  // Temp customer data search
+  const [tempCustSearchQuery, setTempCustSearchQuery] = useState('');
+  const [searchedTempCust, setSearchedTempCust] = useState<any[]>([]);
+  const [showTempCustDropdown, setShowTempCustDropdown] = useState(false);
+  const [searchingTempCust, setSearchingTempCust] = useState(false);
+
   // Debounce ref for profile search
   const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const tempCustDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // New states for mobile responsiveness
   const [isOrderPanelOpen, setIsOrderPanelOpen] = useState(true);
@@ -296,6 +303,88 @@ export default function KasirPOSPage() {
 
     setProfileSearchQuery(profile.user_name || profile.user_phoneno);
     setShowProfileDropdown(false);
+  };
+
+  // Search temp_custdata with debouncing
+  const searchTempCustData = useCallback((query: string) => {
+    // Clear previous timeout
+    if (tempCustDebounceRef.current) {
+      clearTimeout(tempCustDebounceRef.current);
+    }
+
+    if (!query || query.length < 2) {
+      setSearchedTempCust([]);
+      setShowTempCustDropdown(false);
+      setSearchingTempCust(false);
+      return;
+    }
+
+    setSearchingTempCust(true);
+
+    // Debounce the actual search by 300ms
+    tempCustDebounceRef.current = setTimeout(async () => {
+      try {
+        const supabase = createClient();
+
+        const { data, error } = await supabase
+          .from('temp_custdata')
+          .select('id, user_name, user_phoneno, recipient_name, recipient_phoneno, recipient_address_line1, recipient_city, recipient_region, recipient_postal_code')
+          .or(`user_name.ilike.%${query}%,user_phoneno.ilike.%${query}%,recipient_name.ilike.%${query}%,recipient_phoneno.ilike.%${query}%`)
+          .limit(10);
+
+        if (error) {
+          console.error('Temp custdata search error:', error);
+          setSearchingTempCust(false);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          setSearchedTempCust(data);
+          setShowTempCustDropdown(true);
+        } else {
+          setSearchedTempCust([]);
+          setShowTempCustDropdown(false);
+        }
+
+        setSearchingTempCust(false);
+      } catch (err) {
+        console.error('Exception searching temp custdata:', err);
+        setSearchingTempCust(false);
+      }
+    }, 300);
+  }, []);
+
+  // Auto-fill customer and recipient data from selected temp_custdata record
+  const selectTempCustData = (record: any) => {
+    // Fill customer information
+    setCustomerName(record.user_name || '');
+    setCustomerPhone(record.user_phoneno || '');
+
+    // Fill recipient information
+    setRecipientName(record.recipient_name || record.user_name || '');
+    setRecipientPhone(record.recipient_phoneno || record.user_phoneno || '');
+    
+    // Build full address from temp_custdata fields
+    const addressParts = [
+      record.recipient_address_line1,
+      record.recipient_city,
+      record.recipient_region,
+      record.recipient_postal_code
+    ].filter(Boolean);
+    setRecipientAddress(addressParts.join(', ') || '');
+
+    // Try to match province by name
+    if (record.recipient_region) {
+      const matchedProvince = provinces.find(
+        p => p.province_name.toLowerCase() === record.recipient_region.toLowerCase()
+      );
+      if (matchedProvince) {
+        setRecipientProvince(matchedProvince.id.toString());
+      }
+    }
+
+    setTempCustSearchQuery(record.user_name || record.user_phoneno);
+    setShowTempCustDropdown(false);
   };
 
   const handleProductClick = (product: ProductWithVariants) => {
@@ -939,6 +1028,8 @@ export default function KasirPOSPage() {
     setShippingCost('');
     setProfileSearchQuery('');
     setSearchedProfiles([]);
+    setTempCustSearchQuery('');
+    setSearchedTempCust([]);
     setCustomerNotes('');
 
     fetchProducts(); // Refresh stock
@@ -1755,6 +1846,66 @@ export default function KasirPOSPage() {
                   </div>
                   <p className="text-xs text-blue-600">
                     {searchingProfiles ? 'Searching...' : 'Search by customer name, phone, recipient name, or recipient phone (type at least 2 characters)'}
+                  </p>
+                </div>
+
+                {/* Temp Customer Data Search */}
+                <div className="space-y-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <label className="text-sm font-medium text-amber-900">Search Imported Customer Data (Optional)</label>
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      placeholder="Search imported data by name or phone..."
+                      value={tempCustSearchQuery}
+                      onChange={(e) => {
+                        setTempCustSearchQuery(e.target.value);
+                        searchTempCustData(e.target.value);
+                      }}
+                      onFocus={() => {
+                        if (tempCustSearchQuery.length >= 2 && searchedTempCust.length > 0) {
+                          setShowTempCustDropdown(true);
+                        }
+                      }}
+                      onBlur={() => {
+                        // Delay to allow click on dropdown item
+                        setTimeout(() => setShowTempCustDropdown(false), 200);
+                      }}
+                      className="pr-10"
+                    />
+                    {searchingTempCust ? (
+                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-600 animate-spin" />
+                    ) : (
+                      <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    )}
+
+                    {/* Temp Customer Data Dropdown */}
+                    {showTempCustDropdown && searchedTempCust.length > 0 && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {searchedTempCust.map((record) => (
+                          <button
+                            key={record.id}
+                            type="button"
+                            onClick={() => selectTempCustData(record)}
+                            className="w-full px-3 py-2 text-left hover:bg-amber-50 border-b last:border-b-0 transition-colors"
+                          >
+                            <div className="font-medium text-sm">{record.user_name || 'No Name'}</div>
+                            <div className="text-xs text-gray-600">{record.user_phoneno}</div>
+                            {record.recipient_name && record.recipient_name !== record.user_name && (
+                              <div className="text-xs text-gray-500 mt-0.5">Recipient: {record.recipient_name}</div>
+                            )}
+                            {record.recipient_address_line1 && (
+                              <div className="text-xs text-gray-500 mt-0.5 truncate">
+                                {record.recipient_address_line1}
+                                {record.recipient_city && `, ${record.recipient_city}`}
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-amber-600">
+                    {searchingTempCust ? 'Searching...' : 'Search from imported CSV customer data (type at least 2 characters)'}
                   </p>
                 </div>
 
