@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,11 +11,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Upload, Download, Plus, Edit, Trash2, Search, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { Upload, Download, Plus, Edit, Trash2, Search, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 
 const RECORDS_PER_PAGE = 50;
+const SEARCH_DEBOUNCE_MS = 500; // Debounce search to avoid too many requests
 
 interface TempCustData {
   id: string;
@@ -34,29 +35,41 @@ interface TempCustData {
 export default function TempCustDataPage() {
   const { profile, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<TempCustData[]>([]);
+  const [paginatedData, setPaginatedData] = useState<TempCustData[]>([]); // Only current page data
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredData, setFilteredData] = useState<TempCustData[]>([]);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(''); // Debounced search for API calls
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentRecord, setCurrentRecord] = useState<TempCustData | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [totalRecords, setTotalRecords] = useState(0);
+  const [totalRecords, setTotalRecords] = useState(0); // Total matching records (filtered count)
+  const [totalAllRecords, setTotalAllRecords] = useState(0); // Grand total of all records
   const [currentPage, setCurrentPage] = useState(1);
+  const [isSearching, setIsSearching] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Calculate pagination
-  const totalPages = useMemo(() => Math.ceil(filteredData.length / RECORDS_PER_PAGE), [filteredData.length]);
-  
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * RECORDS_PER_PAGE;
-    const endIndex = startIndex + RECORDS_PER_PAGE;
-    return filteredData.slice(startIndex, endIndex);
-  }, [filteredData, currentPage]);
+  // Calculate total pages based on server-side count
+  const totalPages = Math.ceil(totalRecords / RECORDS_PER_PAGE);
 
-  // Reset to first page when search/filter changes
+  // Debounce search input
   useEffect(() => {
-    setCurrentPage(1);
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+    
+    setIsSearching(searchTerm !== debouncedSearchTerm);
+    
+    searchDebounceRef.current = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setCurrentPage(1); // Reset to first page on new search
+    }, SEARCH_DEBOUNCE_MS);
+    
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    };
   }, [searchTerm]);
 
   // Helper function to implement timeout for async operations
@@ -71,8 +84,8 @@ export default function TempCustDataPage() {
 
   const supabase = createClient();
 
-  // Fetch all temp customer data
-  const fetchData = async () => {
+  // Fetch data with server-side pagination and search
+  const fetchData = useCallback(async (page: number, search: string) => {
     setLoading(true);
     try {
       // First verify the user is authenticated using the auth hook
@@ -84,82 +97,70 @@ export default function TempCustDataPage() {
         throw new Error('Unauthorized access');
       }
 
-      // Get total record count
-      const { count, error: countError } = await supabase
-        .from('temp_custdata')
-        .select('*', { count: 'exact', head: true });
+      // Calculate offset for pagination
+      const offset = (page - 1) * RECORDS_PER_PAGE;
+      const searchTrimmed = search.trim().toLowerCase();
 
-      if (countError) throw countError;
+      // Build the query with server-side search
+      let query = supabase
+        .from('temp_custdata')
+        .select('*', { count: 'exact' });
+
+      // Add search filter if search term exists (server-side search using ilike)
+      if (searchTrimmed) {
+        // Use OR conditions for searching across multiple columns
+        query = query.or(
+          `user_name.ilike.%${searchTrimmed}%,` +
+          `user_phoneno.ilike.%${searchTrimmed}%,` +
+          `recipient_name.ilike.%${searchTrimmed}%,` +
+          `recipient_phoneno.ilike.%${searchTrimmed}%,` +
+          `recipient_city.ilike.%${searchTrimmed}%,` +
+          `recipient_region.ilike.%${searchTrimmed}%`
+        );
+      }
+
+      // Add ordering, pagination
+      query = query
+        .order('created_at', { ascending: false })
+        .range(offset, offset + RECORDS_PER_PAGE - 1);
+
+      const { data, count, error } = await withTimeout(query, 15000);
+
+      if (error) throw error;
+
+      // Set paginated data (only current page records)
+      setPaginatedData(data || []);
+      // Set filtered count (total matching search)
       setTotalRecords(count || 0);
 
-      // Get actual data - fetch all records using pagination if needed
-      let allData: TempCustData[] = [];
-      let offset = 0;
-      const batchSize = 1000; // Supabase default max per request
-      let hasMore = true;
-
-      while (hasMore) {
-        const { data: batchData, error: batchError, count } = await withTimeout(
-          supabase
+      // Also get grand total (without search filter) for display purposes
+      if (!searchTrimmed) {
+        setTotalAllRecords(count || 0);
+      } else {
+        // If searching, we need to get the unfiltered total separately (but only once)
+        if (totalAllRecords === 0) {
+          const { count: allCount } = await supabase
             .from('temp_custdata')
-            .select('*', {
-              limit: batchSize,
-              offset: offset,
-              count: 'exact'
-            })
-            .order('created_at', { ascending: false }),
-          15000 // 15 seconds timeout
-        );
-
-        if (batchError) throw batchError;
-
-        if (batchData && batchData.length > 0) {
-          allData = allData.concat(batchData);
-          offset += batchSize;
-
-          // Stop if we've retrieved all records
-          if (batchData.length < batchSize) {
-            hasMore = false;
-          }
-        } else {
-          hasMore = false;
+            .select('*', { count: 'exact', head: true });
+          setTotalAllRecords(allCount || 0);
         }
       }
 
-      const data = allData;
-
-      setData(data || []);
-      setFilteredData(data || []);
     } catch (error) {
       console.error('Error fetching temp customer data:', error);
       toast.error('Failed to fetch data');
     } finally {
       setLoading(false);
+      setIsSearching(false);
     }
-  };
+  }, [profile, totalAllRecords]);
 
-  // Handle search
-  useEffect(() => {
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase().trim();
-      const filtered = data.filter(item =>
-        item.user_name?.toLowerCase().includes(term) ||
-        item.user_phoneno?.toLowerCase().includes(term) ||
-        item.recipient_name?.toLowerCase().includes(term) ||
-        item.recipient_phoneno?.toLowerCase().includes(term)
-      );
-      setFilteredData(filtered);
-    } else {
-      setFilteredData(data);
-    }
-  }, [searchTerm, data]);
-
-  // Load data on component mount after auth is ready
+  // Fetch data when page, search term, or auth changes
   useEffect(() => {
     if (!authLoading && profile) {
-      fetchData();
+      fetchData(currentPage, debouncedSearchTerm);
     }
-  }, [authLoading, profile]);
+  }, [authLoading, profile, currentPage, debouncedSearchTerm, fetchData]);
 
   // Handle form submission for create/update
   const handleSubmit = async (e: React.FormEvent) => {
@@ -225,7 +226,9 @@ export default function TempCustDataPage() {
       setIsDialogOpen(false);
       setCurrentRecord(null);
       setIsEditing(false);
-      fetchData(); // Refresh the list
+      // Refresh data and reset total count
+      setTotalAllRecords(0); // Reset so it refetches
+      fetchData(currentPage, debouncedSearchTerm);
     } catch (error) {
       console.error('Error saving record:', error);
       toast.error(isEditing ? 'Failed to update record' : 'Failed to create record');
@@ -259,7 +262,9 @@ export default function TempCustDataPage() {
       if (error) throw error;
 
       toast.success('Record deleted successfully');
-      fetchData(); // Refresh the list
+      // Refresh data and reset total count
+      setTotalAllRecords(0); // Reset so it refetches
+      fetchData(currentPage, debouncedSearchTerm);
     } catch (error) {
       console.error('Error deleting record:', error);
       toast.error('Failed to delete record');
@@ -324,7 +329,10 @@ export default function TempCustDataPage() {
         }
 
         toast.success(result.message);
-        fetchData(); // Refresh the list
+        // Refresh data and reset counts
+        setTotalAllRecords(0); // Reset so it refetches
+        setCurrentPage(1); // Go to first page to see new imports
+        fetchData(1, debouncedSearchTerm);
       } catch (error) {
         console.error('Error importing data:', error);
         toast.error('Error importing data: ' + (error as Error).message);
@@ -377,8 +385,18 @@ export default function TempCustDataPage() {
           <div>
             <CardTitle>Customer Data Management</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Showing {((currentPage - 1) * 50) + 1}-{Math.min(currentPage * 50, filteredData.length)} of {filteredData.length} matching records (Total: {totalRecords})
-              {totalPages > 1 && ` • Page ${currentPage} of ${totalPages}`}
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Loading...
+                </span>
+              ) : (
+                <>
+                  Showing {paginatedData.length > 0 ? ((currentPage - 1) * RECORDS_PER_PAGE) + 1 : 0}-{Math.min(currentPage * RECORDS_PER_PAGE, totalRecords)} of {totalRecords.toLocaleString()} {debouncedSearchTerm ? 'matching' : ''} records
+                  {totalAllRecords > 0 && debouncedSearchTerm && ` (Total: ${totalAllRecords.toLocaleString()})`}
+                  {totalPages > 1 && ` • Page ${currentPage} of ${totalPages}`}
+                  {isSearching && <Loader2 className="inline h-3 w-3 animate-spin ml-2" />}
+                </>
+              )}
             </p>
             <div className="flex flex-wrap gap-2 mt-2">
               <Badge variant="secondary" className="text-xs">
@@ -392,6 +410,12 @@ export default function TempCustDataPage() {
               </Badge>
               <Badge variant="secondary" className="text-xs">
                 Recipient Phone
+              </Badge>
+              <Badge variant="secondary" className="text-xs">
+                City
+              </Badge>
+              <Badge variant="secondary" className="text-xs">
+                Region
               </Badge>
             </div>
           </div>
@@ -528,7 +552,7 @@ export default function TempCustDataPage() {
           {!loading && totalPages > 1 && (
             <div className="flex items-center justify-between mt-6 pt-4 border-t">
               <div className="text-sm text-muted-foreground">
-                Showing {((currentPage - 1) * RECORDS_PER_PAGE) + 1} to {Math.min(currentPage * RECORDS_PER_PAGE, filteredData.length)} of {filteredData.length} records
+                Showing {((currentPage - 1) * RECORDS_PER_PAGE) + 1} to {Math.min(currentPage * RECORDS_PER_PAGE, totalRecords)} of {totalRecords.toLocaleString()} records
               </div>
               <div className="flex items-center gap-2">
                 {/* First Page */}
