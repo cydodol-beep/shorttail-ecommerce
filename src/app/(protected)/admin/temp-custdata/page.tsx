@@ -116,15 +116,12 @@ export default function TempCustDataPage() {
   // Handle search
   useEffect(() => {
     if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      const filtered = data.filter(item => 
+      const term = searchTerm.toLowerCase().trim();
+      const filtered = data.filter(item =>
         item.user_name?.toLowerCase().includes(term) ||
         item.user_phoneno?.toLowerCase().includes(term) ||
         item.recipient_name?.toLowerCase().includes(term) ||
-        item.recipient_phoneno?.toLowerCase().includes(term) ||
-        item.recipient_city?.toLowerCase().includes(term) ||
-        item.recipient_region?.toLowerCase().includes(term) ||
-        item.recipient_postal_code?.toLowerCase().includes(term)
+        item.recipient_phoneno?.toLowerCase().includes(term)
       );
       setFilteredData(filtered);
     } else {
@@ -355,15 +352,29 @@ export default function TempCustDataPage() {
           <div>
             <CardTitle>Customer Data Management</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Showing {paginatedData.length} of {filteredData.length} filtered records (Total: {totalRecords})
+              Showing {((currentPage - 1) * 50) + 1}-{Math.min(currentPage * 50, filteredData.length)} of {filteredData.length} matching records (Total: {totalRecords})
               {totalPages > 1 && ` • Page ${currentPage} of ${totalPages}`}
             </p>
+            <div className="flex flex-wrap gap-2 mt-2">
+              <Badge variant="secondary" className="text-xs">
+                Searchable: User Name
+              </Badge>
+              <Badge variant="secondary" className="text-xs">
+                User Phone
+              </Badge>
+              <Badge variant="secondary" className="text-xs">
+                Recipient Name
+              </Badge>
+              <Badge variant="secondary" className="text-xs">
+                Recipient Phone
+              </Badge>
+            </div>
           </div>
           <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
             <div className="relative">
               <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-brown-500 h-4 w-4" />
               <Input
-                placeholder="Search records..."
+                placeholder="Search by user name, phone, recipient name, or phone..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8 w-full sm:w-64"
