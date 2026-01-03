@@ -2,6 +2,31 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
 
+/**
+ * Properly escape a value for CSV format
+ * - Wraps in quotes if contains comma, quote, or newline
+ * - Escapes internal quotes by doubling them
+ */
+function escapeCSVValue(value: string | null | undefined): string {
+  if (value === null || value === undefined) {
+    return '""';
+  }
+  
+  const str = String(value);
+  
+  // Check if the value needs quoting (contains comma, quote, newline, or carriage return)
+  const needsQuoting = str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r');
+  
+  if (needsQuoting) {
+    // Escape internal quotes by doubling them, then wrap in quotes
+    const escaped = str.replace(/"/g, '""');
+    return `"${escaped}"`;
+  }
+  
+  // Always wrap in quotes for consistency
+  return `"${str}"`;
+}
+
 export async function GET(request: NextRequest) {
   // Create Supabase client for server-side operations
   const cookieStore = await cookies();
@@ -81,17 +106,17 @@ export async function GET(request: NextRequest) {
     const csvContent = [
       headers.join(','),
       ...data.map(item => [
-        `"${item.id}"`,
-        `"${item.user_name || ''}"`,
-        `"${item.user_phoneno || ''}"`,
-        `"${item.recipient_name || ''}"`,
-        `"${item.recipient_phoneno || ''}"`,
-        `"${item.recipient_address_line1 || ''}"`,
-        `"${item.recipient_city || ''}"`,
-        `"${item.recipient_region || ''}"`,
-        `"${item.recipient_postal_code || ''}"`,
-        `"${item.created_at}"`,
-        `"${item.updated_at}"`
+        escapeCSVValue(item.id),
+        escapeCSVValue(item.user_name),
+        escapeCSVValue(item.user_phoneno),
+        escapeCSVValue(item.recipient_name),
+        escapeCSVValue(item.recipient_phoneno),
+        escapeCSVValue(item.recipient_address_line1),
+        escapeCSVValue(item.recipient_city),
+        escapeCSVValue(item.recipient_region),
+        escapeCSVValue(item.recipient_postal_code),
+        escapeCSVValue(item.created_at),
+        escapeCSVValue(item.updated_at)
       ].join(','))
     ].join('\n');
 
