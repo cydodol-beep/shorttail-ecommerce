@@ -129,7 +129,8 @@ export async function POST(request: Request) {
       }
     }
 
-    // Create the order
+    // Create the order - start WITHOUT user_name/cashier_name to avoid column errors
+    // These columns may not exist if migration 024 hasn't been applied
     const orderData: Record<string, any> = {
       user_id: null, // Walk-in customer
       cashier_id: user.id,
@@ -148,18 +149,14 @@ export async function POST(request: Request) {
       shipping_weight_grams: totalWeightGrams,
       payment_method: paymentMethod,
       customer_notes: customerNotes,
-      shipping_address_snapshot: customerPhone ? { customer_phone: customerPhone } : null,
+      // Store customer info in shipping_address_snapshot for reference
+      shipping_address_snapshot: (customerPhone || customerName) ? { 
+        customer_phone: customerPhone || null,
+        customer_name: customerName || null 
+      } : null,
     };
 
-    // Only add user_name and cashier_name if the columns exist
-    // These columns are added in migration 024
-    try {
-      orderData.user_name = customerName || null;
-      orderData.cashier_name = profile.user_name || null;
-    } catch (e) {
-      // Columns might not exist, that's okay
-    }
-
+    // First attempt: try inserting without user_name/cashier_name columns
     const { data: order, error: orderError } = await adminClient
       .from('orders')
       .insert(orderData)
@@ -168,33 +165,6 @@ export async function POST(request: Request) {
 
     if (orderError) {
       console.error('Order creation error:', JSON.stringify(orderError, null, 2));
-      
-      // If error is about unknown columns, try again without user_name/cashier_name
-      if (orderError.message?.includes('user_name') || orderError.message?.includes('cashier_name')) {
-        console.log('Retrying without user_name/cashier_name columns...');
-        delete orderData.user_name;
-        delete orderData.cashier_name;
-        
-        const { data: orderRetry, error: orderRetryError } = await adminClient
-          .from('orders')
-          .insert(orderData)
-          .select('*')
-          .single();
-
-        if (orderRetryError) {
-          console.error('Order creation retry error:', JSON.stringify(orderRetryError, null, 2));
-          return NextResponse.json({ 
-            error: 'Failed to create order', 
-            details: orderRetryError.message,
-            code: orderRetryError.code,
-            hint: orderRetryError.hint
-          }, { status: 500 });
-        }
-
-        // Continue with the retry order
-        return await processOrderItems(adminClient, orderRetry, cart, total);
-      }
-
       return NextResponse.json({ 
         error: 'Failed to create order', 
         details: orderError.message,
