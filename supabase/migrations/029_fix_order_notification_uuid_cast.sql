@@ -1,9 +1,13 @@
 -- Fix: Cast UUID to TEXT before using SUBSTRING function
 -- This fixes the error "function substring(uuid, integer, integer) does not exist"
 
--- Drop existing trigger first
-DROP TRIGGER IF EXISTS notify_staff_on_order_create ON orders;
-DROP TRIGGER IF EXISTS notify_staff_on_order_update ON orders;
+-- Drop ALL existing order-related notification triggers first to prevent conflicts
+DROP TRIGGER IF EXISTS notify_staff_on_order_create ON public.orders;
+DROP TRIGGER IF EXISTS notify_staff_on_order_update ON public.orders;
+DROP TRIGGER IF EXISTS on_new_order_notify ON public.orders;
+
+-- Drop the old functions that might have UUID issues
+DROP FUNCTION IF EXISTS notify_staff_of_order_change() CASCADE;
 
 -- Recreate function with proper UUID to TEXT casting
 CREATE OR REPLACE FUNCTION notify_staff_of_order_change()
@@ -19,15 +23,15 @@ BEGIN
     -- New order created
     notification_title := 'New Order Placed';
     -- Fix: Cast UUID to TEXT before using SUBSTRING
-    notification_message := 'New order #' || SUBSTRING(NEW.id::TEXT, 1, 8) || ' placed by ' || COALESCE((SELECT user_name FROM profiles WHERE id = NEW.user_id), 'Customer') || ' with total amount of ' || NEW.total_amount::TEXT;
-    action_path := '/admin/orders/' || NEW.id;
+    notification_message := 'New order #' || COALESCE(NEW.custom_order_id, SUBSTRING(NEW.id::TEXT, 1, 8)) || ' placed by ' || COALESCE((SELECT user_name FROM profiles WHERE id = NEW.user_id), 'Customer') || ' with total amount of ' || NEW.total_amount::TEXT;
+    action_path := '/admin/orders/' || NEW.id::TEXT;
   ELSIF TG_OP = 'UPDATE' THEN
     -- Order status updated
     IF OLD.status != NEW.status THEN
       notification_title := 'Order Status Updated';
       -- Fix: Cast UUID to TEXT before using SUBSTRING
-      notification_message := 'Order #' || SUBSTRING(NEW.id::TEXT, 1, 8) || ' status changed from ' || OLD.status || ' to ' || NEW.status || ' with total amount of ' || NEW.total_amount::TEXT;
-      action_path := '/admin/orders/' || NEW.id;
+      notification_message := 'Order #' || COALESCE(NEW.custom_order_id, SUBSTRING(NEW.id::TEXT, 1, 8)) || ' status changed from ' || OLD.status || ' to ' || NEW.status || ' with total amount of ' || NEW.total_amount::TEXT;
+      action_path := '/admin/orders/' || NEW.id::TEXT;
     ELSE
       -- No significant change, return early
       RETURN NEW;
@@ -50,13 +54,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Recreate triggers
+-- Recreate triggers (only one set of triggers)
 CREATE TRIGGER notify_staff_on_order_create
-  AFTER INSERT ON orders
+  AFTER INSERT ON public.orders
   FOR EACH ROW
   EXECUTE FUNCTION notify_staff_of_order_change();
 
 CREATE TRIGGER notify_staff_on_order_update
-  AFTER UPDATE ON orders
+  AFTER UPDATE ON public.orders
   FOR EACH ROW
   EXECUTE FUNCTION notify_staff_of_order_change();
