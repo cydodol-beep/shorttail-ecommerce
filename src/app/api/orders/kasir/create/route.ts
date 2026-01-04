@@ -37,6 +37,9 @@ interface CreateOrderRequest {
   customerNotes: string | null;
   customerName: string | null;
   customerPhone: string | null;
+  // Customer tracking - from profiles or temp_custdata
+  selectedCustomerId: string | null;
+  selectedCustomerSource: 'profile' | 'temp_custdata' | null;
 }
 
 export async function POST(request: Request) {
@@ -91,6 +94,8 @@ export async function POST(request: Request) {
       customerNotes,
       customerName,
       customerPhone,
+      selectedCustomerId,
+      selectedCustomerSource,
     } = body;
 
     if (!cart || cart.length === 0) {
@@ -129,11 +134,16 @@ export async function POST(request: Request) {
       }
     }
 
-    // Create the order - start WITHOUT user_name/cashier_name to avoid column errors
-    // These columns may not exist if migration 024 hasn't been applied
+    // Create the order with proper customer tracking
+    // user_id is set only if customer was selected from profiles table
+    // user_name and cashier_name are stored for display purposes
     const orderData: Record<string, any> = {
-      user_id: null, // Walk-in customer
+      // Set user_id only if customer was selected from profiles (not temp_custdata)
+      user_id: selectedCustomerSource === 'profile' ? selectedCustomerId : null,
       cashier_id: user.id,
+      // Store user_name and cashier_name for display (from migration 024)
+      user_name: customerName || null,
+      cashier_name: profile.user_name || null,
       source: 'pos',
       status: 'paid',
       subtotal,
@@ -149,12 +159,17 @@ export async function POST(request: Request) {
       shipping_weight_grams: totalWeightGrams,
       payment_method: paymentMethod,
       customer_notes: customerNotes,
-      // Store customer info in shipping_address_snapshot for reference
-      shipping_address_snapshot: (customerPhone || customerName) ? { 
+      // Store additional customer info in shipping_address_snapshot for reference
+      shipping_address_snapshot: { 
         customer_phone: customerPhone || null,
-        customer_name: customerName || null 
-      } : null,
+        customer_name: customerName || null,
+        customer_source: selectedCustomerSource || 'walk-in',
+        temp_custdata_id: selectedCustomerSource === 'temp_custdata' ? selectedCustomerId : null,
+      },
     };
+
+    // Log the order data being inserted for debugging
+    console.log('Attempting to insert order with data:', JSON.stringify(orderData, null, 2));
 
     // First attempt: try inserting without user_name/cashier_name columns
     const { data: order, error: orderError } = await adminClient
@@ -165,11 +180,13 @@ export async function POST(request: Request) {
 
     if (orderError) {
       console.error('Order creation error:', JSON.stringify(orderError, null, 2));
+      console.error('Full error object:', orderError);
       return NextResponse.json({ 
         error: 'Failed to create order', 
         details: orderError.message,
         code: orderError.code,
-        hint: orderError.hint
+        hint: orderError.hint,
+        orderData: orderData // Include what we tried to insert
       }, { status: 500 });
     }
 

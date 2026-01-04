@@ -103,6 +103,9 @@ export default function KasirPOSPage() {
   // Customer information (separate from recipient)
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  // Track selected customer source (profile user_id or temp_custdata id)
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [selectedCustomerSource, setSelectedCustomerSource] = useState<'profile' | 'temp_custdata' | null>(null);
 
   // Profile search
   const [profileSearchQuery, setProfileSearchQuery] = useState('');
@@ -284,6 +287,10 @@ export default function KasirPOSPage() {
 
   // Auto-fill customer and recipient data from selected profile
   const selectProfile = (profile: any) => {
+    // Track selected customer from profiles table
+    setSelectedCustomerId(profile.id);
+    setSelectedCustomerSource('profile');
+    
     // Fill customer information (user_name and user_phoneno)
     setCustomerName(profile.user_name || '');
     setCustomerPhone(profile.user_phoneno || '');
@@ -353,6 +360,10 @@ export default function KasirPOSPage() {
 
   // Auto-fill customer and recipient data from selected temp_custdata record
   const selectTempCustData = (record: any) => {
+    // Track selected customer from temp_custdata table
+    setSelectedCustomerId(record.id);
+    setSelectedCustomerSource('temp_custdata');
+    
     // Fill customer information
     setCustomerName(record.user_name || '');
     setCustomerPhone(record.user_phoneno || '');
@@ -872,14 +883,22 @@ export default function KasirPOSPage() {
           customerNotes: customerNotes || null,
           customerName: customerName || null,
           customerPhone: customerPhone || null,
+          // Customer tracking - either from profiles (user_id) or temp_custdata
+          selectedCustomerId: selectedCustomerId || null,
+          selectedCustomerSource: selectedCustomerSource || null,
         }),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        console.error('Order creation error:', result);
-        toast.error(result.error || 'Failed to create order');
+        console.error('Order creation error - Full Response:', JSON.stringify(result, null, 2));
+        console.error('Details:', result.details);
+        console.error('Code:', result.code);
+        console.error('Hint:', result.hint);
+        console.error('Order Data that failed:', result.orderData);
+        const errorMessage = result.details || result.error || 'Failed to create order';
+        toast.error(`Order failed: ${errorMessage}`);
         setProcessing(false);
         return;
       }
@@ -899,6 +918,8 @@ export default function KasirPOSPage() {
       // Reset customer information
       setCustomerName('');
       setCustomerPhone('');
+      setSelectedCustomerId(null);
+      setSelectedCustomerSource(null);
 
       // Reset shipping details
       setRecipientName('');
