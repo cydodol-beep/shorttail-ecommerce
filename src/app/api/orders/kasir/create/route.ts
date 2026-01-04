@@ -41,6 +41,12 @@ interface CreateOrderRequest {
 
 export async function POST(request: Request) {
   try {
+    // Check if service role key is configured
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('SUPABASE_SERVICE_ROLE_KEY is not configured');
+      return NextResponse.json({ error: 'Server configuration error: Service role key missing' }, { status: 500 });
+    }
+
     // Authenticate the user first
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -161,7 +167,7 @@ export async function POST(request: Request) {
       .single();
 
     if (orderError) {
-      console.error('Order creation error:', orderError);
+      console.error('Order creation error:', JSON.stringify(orderError, null, 2));
       
       // If error is about unknown columns, try again without user_name/cashier_name
       if (orderError.message?.includes('user_name') || orderError.message?.includes('cashier_name')) {
@@ -176,15 +182,25 @@ export async function POST(request: Request) {
           .single();
 
         if (orderRetryError) {
-          console.error('Order creation retry error:', orderRetryError);
-          return NextResponse.json({ error: 'Failed to create order', details: orderRetryError.message }, { status: 500 });
+          console.error('Order creation retry error:', JSON.stringify(orderRetryError, null, 2));
+          return NextResponse.json({ 
+            error: 'Failed to create order', 
+            details: orderRetryError.message,
+            code: orderRetryError.code,
+            hint: orderRetryError.hint
+          }, { status: 500 });
         }
 
         // Continue with the retry order
         return await processOrderItems(adminClient, orderRetry, cart, total);
       }
 
-      return NextResponse.json({ error: 'Failed to create order', details: orderError.message }, { status: 500 });
+      return NextResponse.json({ 
+        error: 'Failed to create order', 
+        details: orderError.message,
+        code: orderError.code,
+        hint: orderError.hint
+      }, { status: 500 });
     }
 
     return await processOrderItems(adminClient, order, cart, total);
