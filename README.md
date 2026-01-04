@@ -81,6 +81,30 @@ The platform consists of five main user interfaces:
 - **Checkout Payload**: Enhanced to include customer source information for proper database storage
 - **Error Handling**: Improved error logging with full details (error code, hint, attempted data) for easier debugging
 
+### Automatic Order Status Update on Packing List Download 📦
+
+#### Feature Overview
+- **Auto-Status Change**: When kasir downloads a packing list PDF, the order status automatically changes to "Packed"
+- **Status Validation**: Only updates status if order is currently "pending" or "paid" (doesn't override shipped/delivered orders)
+
+#### Technical Implementation
+- **New API Route**: Created `/api/orders/kasir/update-status` endpoint using admin client to bypass RLS
+  - Validates user has kasir/admin permissions
+  - Validates status is one of: pending, paid, packed, shipped, delivered, cancelled, returned
+  - Returns updated order data on success
+- **Store Update**: Modified `updateOrderStatus` in `orders-store.ts` to use API route instead of direct Supabase calls
+- **Trigger Fix**: Updated `notify_staff_of_order_change()` function with `SECURITY DEFINER` to allow notification creation during status updates
+
+#### Database Migration Required
+```sql
+-- Fix notification trigger to bypass RLS
+CREATE OR REPLACE FUNCTION notify_staff_of_order_change()
+RETURNS TRIGGER 
+SECURITY DEFINER
+SET search_path = public
+AS $$ ... $$;
+```
+
 ---
 
 ## 🆕 Recent Updates (January 3, 2026)

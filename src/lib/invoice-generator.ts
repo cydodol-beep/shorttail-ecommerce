@@ -168,6 +168,22 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
       </div>
       ` : ''}
 
+      <!-- Payment Method -->
+      ${order.payment_method ? `
+      <div style="margin-top: 30px; text-align: center;">
+        <p style="margin: 0; font-size: 14px; font-weight: bold; color: #8B4513;">
+          Payment Method: ${(() => {
+            const method = order.payment_method;
+            if (method === 'cash') return 'Cash';
+            if (method === 'bank_transfer') return 'Bank Transfer';
+            if (method === 'ewallet') return 'E-Wallet';
+            if (method === 'qris') return 'QRIS';
+            return method.charAt(0).toUpperCase() + method.slice(1).replace(/_/g, ' ');
+          })()}
+        </p>
+      </div>
+      ` : ''}
+
       <!-- Footer -->
       <div style="margin-top: 40px; text-align: center; font-size: 12px; color: #666;">
         <p>Thank you for your purchase!</p>

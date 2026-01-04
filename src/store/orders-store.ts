@@ -34,6 +34,7 @@ export interface Order {
   shipping_courier?: string;
   shipping_courier_name?: string;
   shipping_address_snapshot?: any;
+  payment_method?: string;
   customer_notes?: string;
   invoice_url?: string;
   packing_list_url?: string;
