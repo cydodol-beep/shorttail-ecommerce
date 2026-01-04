@@ -178,6 +178,8 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
         const paymentMethod = order.payment_method?.toLowerCase();
         const payment = storeInfo?.payment;
         
+        console.log('Invoice Payment Debug:', { paymentMethod, payment });
+        
         // Determine what to show
         let paymentTitle = '';
         let paymentDetails = '';
@@ -187,42 +189,35 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
           paymentDetails = '<p style="margin: 0; font-size: 13px; color: #666;">Payment received in cash</p>';
         } else if (paymentMethod === 'bank_transfer') {
           paymentTitle = 'Bank Transfer';
-          if (payment?.bankName || payment?.bankAccountNumber) {
-            paymentDetails = '<div style="background-color: #e8f4fc; padding: 15px; border-radius: 6px; display: inline-block;">' +
-              '<p style="margin: 0 0 8px 0; font-size: 13px;"><strong>Bank:</strong> ' + (payment?.bankName || '-') + '</p>' +
-              '<p style="margin: 0 0 8px 0; font-size: 15px; font-family: monospace;"><strong>Account No:</strong> ' + (payment?.bankAccountNumber || '-') + '</p>' +
-              '<p style="margin: 0; font-size: 13px;"><strong>Account Name:</strong> ' + (payment?.bankAccountName || '-') + '</p>' +
-              '</div>';
-          }
+          // Always show bank details section for bank_transfer payment method
+          paymentDetails = '<div style="background-color: #e8f4fc; padding: 15px; border-radius: 6px; display: inline-block; text-align: left;">' +
+            '<p style="margin: 0 0 8px 0; font-size: 13px;"><strong>Bank:</strong> ' + (payment?.bankName || '-') + '</p>' +
+            '<p style="margin: 0 0 8px 0; font-size: 15px; font-family: monospace;"><strong>Account No:</strong> ' + (payment?.bankAccountNumber || '-') + '</p>' +
+            '<p style="margin: 0; font-size: 13px;"><strong>Account Name:</strong> ' + (payment?.bankAccountName || '-') + '</p>' +
+            '</div>';
         } else if (paymentMethod === 'ewallet') {
           paymentTitle = 'E-Wallet';
-          if (payment?.ewalletProvider || payment?.ewalletNumber) {
-            paymentDetails = '<div style="background-color: #f3e8fc; padding: 15px; border-radius: 6px; display: inline-block;">' +
-              '<p style="margin: 0 0 8px 0; font-size: 13px;"><strong>Provider:</strong> ' + (payment?.ewalletProvider || '-') + '</p>' +
-              '<p style="margin: 0; font-size: 15px; font-family: monospace;"><strong>Number:</strong> ' + (payment?.ewalletNumber || '-') + '</p>' +
-              '</div>';
-          }
+          // Always show ewallet details section for ewallet payment method
+          paymentDetails = '<div style="background-color: #f3e8fc; padding: 15px; border-radius: 6px; display: inline-block; text-align: left;">' +
+            '<p style="margin: 0 0 8px 0; font-size: 13px;"><strong>Provider:</strong> ' + (payment?.ewalletProvider || '-') + '</p>' +
+            '<p style="margin: 0; font-size: 15px; font-family: monospace;"><strong>Number:</strong> ' + (payment?.ewalletNumber || '-') + '</p>' +
+            '</div>';
         } else if (paymentMethod === 'qris') {
           paymentTitle = 'QRIS';
+          // Always show QRIS section for qris payment method
           let qrisContent = '';
           if (payment?.qrisImage) {
             qrisContent += '<img src="' + payment.qrisImage + '" alt="QRIS Code" style="max-width: 150px; max-height: 150px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />';
           }
-          if (payment?.qrisName) {
-            qrisContent += '<p style="margin: 0 0 5px 0; font-size: 13px;"><strong>Name:</strong> ' + payment.qrisName + '</p>';
-          }
-          if (payment?.qrisNmid) {
-            qrisContent += '<p style="margin: 0; font-size: 12px; font-family: monospace; color: #666;">NMID: ' + payment.qrisNmid + '</p>';
-          }
-          if (qrisContent) {
-            paymentDetails = '<div style="background-color: #fff8e8; padding: 15px; border-radius: 6px; display: inline-block;">' + qrisContent + '</div>';
-          }
+          qrisContent += '<p style="margin: 0 0 5px 0; font-size: 13px;"><strong>Name:</strong> ' + (payment?.qrisName || '-') + '</p>';
+          qrisContent += '<p style="margin: 0; font-size: 12px; font-family: monospace; color: #666;">NMID: ' + (payment?.qrisNmid || '-') + '</p>';
+          paymentDetails = '<div style="background-color: #fff8e8; padding: 15px; border-radius: 6px; display: inline-block; text-align: left;">' + qrisContent + '</div>';
         }
         
         // If no payment method but bank transfer is enabled, show bank details as default
         if (!paymentMethod && payment?.bankTransferEnabled && payment?.bankAccountNumber) {
           paymentTitle = 'Payment Information';
-          paymentDetails = '<div style="background-color: #e8f4fc; padding: 15px; border-radius: 6px; display: inline-block;">' +
+          paymentDetails = '<div style="background-color: #e8f4fc; padding: 15px; border-radius: 6px; display: inline-block; text-align: left;">' +
             '<p style="margin: 0 0 8px 0; font-size: 13px;"><strong>Bank:</strong> ' + (payment?.bankName || '-') + '</p>' +
             '<p style="margin: 0 0 8px 0; font-size: 15px; font-family: monospace;"><strong>Account No:</strong> ' + (payment?.bankAccountNumber || '-') + '</p>' +
             '<p style="margin: 0; font-size: 13px;"><strong>Account Name:</strong> ' + (payment?.bankAccountName || '-') + '</p>' +
