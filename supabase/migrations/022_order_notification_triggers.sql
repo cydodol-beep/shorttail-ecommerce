@@ -11,13 +11,13 @@ BEGIN
   IF TG_OP = 'INSERT' THEN
     -- New order created
     notification_title := 'New Order Placed';
-    notification_message := 'New order #' || SUBSTRING(NEW.id, 1, 8) || ' placed by ' || COALESCE((SELECT user_name FROM profiles WHERE id = NEW.user_id), 'Customer') || ' with total amount of ' || NEW.total_amount::TEXT;
+    notification_message := 'New order #' || SUBSTRING(NEW.id::TEXT, 1, 8) || ' placed by ' || COALESCE((SELECT user_name FROM profiles WHERE id = NEW.user_id), 'Customer') || ' with total amount of ' || NEW.total_amount::TEXT;
     action_path := '/admin/orders/' || NEW.id;
   ELSIF TG_OP = 'UPDATE' THEN
     -- Order status updated
     IF OLD.status != NEW.status THEN
       notification_title := 'Order Status Updated';
-      notification_message := 'Order #' || SUBSTRING(NEW.id, 1, 8) || ' status changed from ' || OLD.status || ' to ' || NEW.status || ' with total amount of ' || NEW.total_amount::TEXT;
+      notification_message := 'Order #' || SUBSTRING(NEW.id::TEXT, 1, 8) || ' status changed from ' || OLD.status || ' to ' || NEW.status || ' with total amount of ' || NEW.total_amount::TEXT;
       action_path := '/admin/orders/' || NEW.id;
     ELSE
       -- No significant change, return early
