@@ -185,11 +185,11 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
         let paymentTitle = '';
         let paymentDetails = '';
 
-        // Handle each payment method with comprehensive checks
-        if (paymentMethod === 'cash' || rawPaymentMethod?.toLowerCase?.() === 'cash') {
+        // Handle each payment method with comprehensive checks - PRIORITIZE the actual payment method used
+        if (rawPaymentMethod && paymentMethod === 'cash') {
           paymentTitle = 'Cash Payment';
           paymentDetails = '<p style="margin: 0; font-size: 13px; color: #666;">Payment received in cash</p>';
-        } else if (paymentMethod === 'bank_transfer' || rawPaymentMethod?.toLowerCase?.() === 'bank_transfer') {
+        } else if (rawPaymentMethod && paymentMethod === 'bank_transfer') {
           paymentTitle = 'Bank Transfer';
           // Always show bank details section for bank_transfer payment method
           paymentDetails = '<div style="background-color: #e8f4fc; padding: 15px; border-radius: 6px; display: inline-block; text-align: left; width: 100%;">' +
@@ -197,14 +197,14 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
             '<p style="margin: 0 0 8px 0; font-size: 15px; font-family: monospace;"><strong>Account No:</strong> ' + (payment?.bankAccountNumber || '-') + '</p>' +
             '<p style="margin: 0; font-size: 13px;"><strong>Account Name:</strong> ' + (payment?.bankAccountName || '-') + '</p>' +
             '</div>';
-        } else if (paymentMethod === 'ewallet' || rawPaymentMethod?.toLowerCase?.() === 'ewallet') {
+        } else if (rawPaymentMethod && paymentMethod === 'ewallet') {
           paymentTitle = 'E-Wallet';
           // Always show ewallet details section for ewallet payment method
           paymentDetails = '<div style="background-color: #f3e8fc; padding: 15px; border-radius: 6px; display: inline-block; text-align: left; width: 100%;">' +
             '<p style="margin: 0 0 8px 0; font-size: 13px;"><strong>Provider:</strong> ' + (payment?.ewalletProvider || '-') + '</p>' +
             '<p style="margin: 0; font-size: 15px; font-family: monospace;"><strong>Number:</strong> ' + (payment?.ewalletNumber || '-') + '</p>' +
             '</div>';
-        } else if (paymentMethod === 'qris' || rawPaymentMethod?.toLowerCase?.() === 'qris') {
+        } else if (rawPaymentMethod && paymentMethod === 'qris') {
           paymentTitle = 'QRIS';
           // Always show QRIS section for qris payment method
           let qrisContent = '';
@@ -216,14 +216,9 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
           paymentDetails = '<div style="background-color: #fff8e8; padding: 15px; border-radius: 6px; display: inline-block; text-align: left; width: 100%;">' + qrisContent + '</div>';
         }
 
-        // If no specific payment method match was found but we have order payment_method, show basic info
-        if (!paymentTitle && !paymentDetails && rawPaymentMethod) {
-          paymentTitle = 'Payment Method';
-          paymentDetails = '<p style="margin: 0; font-size: 14px; color: #666;"><strong>Type:</strong> ' + rawPaymentMethod + '</p>';
-        }
-
-        // If still no payment details but we have store payment info, show available payment options
-        if (!paymentTitle && !paymentDetails && payment) {
+        // Only show available payment methods if NO specific payment method was used
+        if (!rawPaymentMethod && payment) {
+          // The order has no specific payment method used, so show available options
           const availableMethods = [];
           if (payment.bankTransferEnabled) availableMethods.push('Bank Transfer');
           if (payment.ewalletEnabled) availableMethods.push('E-Wallet');
@@ -237,10 +232,11 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
           }
         }
 
-        // If we have the payment field but no store info, just show the payment method
-        if (!paymentTitle && rawPaymentMethod) {
-          paymentTitle = 'Payment Method';
-          paymentDetails = '<p style="margin: 0; font-size: 14px; color: #666;"><strong>Type:</strong> ' + (rawPaymentMethod || 'Not specified') + '</p>';
+        // If we have a payment method but no details were generated, at least show the method used
+        if (rawPaymentMethod && !paymentDetails) {
+          paymentTitle = 'Payment Method Used';
+          paymentDetails = '<p style="margin: 0; font-size: 14px; color: #666;"><strong>Type:</strong> ' + rawPaymentMethod + '</p>';
+          console.log('No specific details found for payment method:', rawPaymentMethod);
         }
 
         // Display the payment section if we have any title or details
