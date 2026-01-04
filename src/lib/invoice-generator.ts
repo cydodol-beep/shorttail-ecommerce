@@ -176,7 +176,8 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
       ${(() => {
         // Normalize payment method to lowercase for comparison
         const rawPaymentMethod = order.payment_method;  // Store original for debugging
-        const paymentMethod = order.payment_method?.toLowerCase?.() || order.payment_method;
+        // Fixed method to avoid potential undefined issue with optional chaining
+        const paymentMethod = order.payment_method ? order.payment_method.toLowerCase?.() || order.payment_method.toLowerCase() : null;
         const payment = storeInfo?.payment;
 
         console.log('Invoice Payment Debug:', { rawPaymentMethod, paymentMethod, payment });
@@ -236,7 +237,7 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
         if (rawPaymentMethod && !paymentDetails) {
           paymentTitle = 'Payment Method Used';
           paymentDetails = '<p style="margin: 0; font-size: 14px; color: #666;"><strong>Type:</strong> ' + rawPaymentMethod + '</p>';
-          console.log('No specific details found for payment method:', rawPaymentMethod);
+          console.log('No specific details found for payment method:', rawPaymentMethod, 'Payment object:', payment);
         }
 
         // Display the payment section if we have any title or details
@@ -244,6 +245,15 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
           return '<div style="margin-top: 30px; text-align: center; padding: 20px; background-color: #f8f8f8; border-radius: 8px; width: 100%;">' +
             '<p style="margin: 0 0 15px 0; font-size: 16px; font-weight: bold; color: #8B4513;">' + (paymentTitle || 'Payment Information') + '</p>' +
             paymentDetails +
+            '</div>';
+        }
+
+        // If we have payment method but no section was created, ensure at least basic info shows
+        if (rawPaymentMethod) {
+          console.log('Payment method exists but no section created - raw value:', rawPaymentMethod, 'processed:', paymentMethod);
+          return '<div style="margin-top: 30px; text-align: center; padding: 20px; background-color: #f8f8f8; border-radius: 8px; width: 100%;">' +
+            '<p style="margin: 0 0 15px 0; font-size: 16px; font-weight: bold; color: #8B4513;">Payment Method Used</p>' +
+            '<p style="margin: 0; font-size: 14px; color: #666;"><strong>Type:</strong> ' + rawPaymentMethod + '</p>' +
             '</div>';
         }
 
