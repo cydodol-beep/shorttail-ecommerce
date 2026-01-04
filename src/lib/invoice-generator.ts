@@ -173,34 +173,69 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
       ` : ''}
 
       <!-- Payment Method -->
-      ${order.payment_method ? `
-      <div style="margin-top: 30px; text-align: center; padding: 20px; background-color: #f8f8f8; border-radius: 8px;">
-        <p style="margin: 0 0 15px 0; font-size: 16px; font-weight: bold; color: #8B4513;">
-          Payment Method: ${order.payment_method === 'cash' ? 'Cash' : order.payment_method === 'bank_transfer' ? 'Bank Transfer' : order.payment_method === 'ewallet' ? 'E-Wallet' : order.payment_method === 'qris' ? 'QRIS' : order.payment_method}
-        </p>
-        ${order.payment_method === 'cash' ? '<p style="margin: 0; font-size: 13px; color: #666;">Payment received in cash</p>' : ''}
-        ${order.payment_method === 'bank_transfer' && storeInfo?.payment ? `
-          <div style="background-color: #e8f4fc; padding: 15px; border-radius: 6px; display: inline-block;">
-            <p style="margin: 0 0 8px 0; font-size: 13px;"><strong>Bank:</strong> ${storeInfo.payment.bankName || '-'}</p>
-            <p style="margin: 0 0 8px 0; font-size: 15px; font-family: monospace;"><strong>Account No:</strong> ${storeInfo.payment.bankAccountNumber || '-'}</p>
-            <p style="margin: 0; font-size: 13px;"><strong>Account Name:</strong> ${storeInfo.payment.bankAccountName || '-'}</p>
-          </div>
-        ` : ''}
-        ${order.payment_method === 'ewallet' && storeInfo?.payment ? `
-          <div style="background-color: #f3e8fc; padding: 15px; border-radius: 6px; display: inline-block;">
-            <p style="margin: 0 0 8px 0; font-size: 13px;"><strong>Provider:</strong> ${storeInfo.payment.ewalletProvider || '-'}</p>
-            <p style="margin: 0; font-size: 15px; font-family: monospace;"><strong>Number:</strong> ${storeInfo.payment.ewalletNumber || '-'}</p>
-          </div>
-        ` : ''}
-        ${order.payment_method === 'qris' && storeInfo?.payment ? `
-          <div style="background-color: #fff8e8; padding: 15px; border-radius: 6px; display: inline-block;">
-            ${storeInfo.payment.qrisImage ? `<img src="${storeInfo.payment.qrisImage}" alt="QRIS Code" style="max-width: 150px; max-height: 150px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />` : ''}
-            ${storeInfo.payment.qrisName ? `<p style="margin: 0 0 5px 0; font-size: 13px;"><strong>Name:</strong> ${storeInfo.payment.qrisName}</p>` : ''}
-            ${storeInfo.payment.qrisNmid ? `<p style="margin: 0; font-size: 12px; font-family: monospace; color: #666;">NMID: ${storeInfo.payment.qrisNmid}</p>` : ''}
-          </div>
-        ` : ''}
-      </div>
-      ` : ''}
+      ${(() => {
+        const paymentMethod = order.payment_method;
+        const payment = storeInfo?.payment;
+        
+        // Determine what to show
+        let paymentTitle = '';
+        let paymentDetails = '';
+        
+        if (paymentMethod === 'cash') {
+          paymentTitle = 'Cash';
+          paymentDetails = '<p style="margin: 0; font-size: 13px; color: #666;">Payment received in cash</p>';
+        } else if (paymentMethod === 'bank_transfer' || (!paymentMethod && payment?.bankTransferEnabled)) {
+          paymentTitle = 'Bank Transfer';
+          if (payment?.bankName || payment?.bankAccountNumber) {
+            paymentDetails = '<div style="background-color: #e8f4fc; padding: 15px; border-radius: 6px; display: inline-block;">' +
+              '<p style="margin: 0 0 8px 0; font-size: 13px;"><strong>Bank:</strong> ' + (payment?.bankName || '-') + '</p>' +
+              '<p style="margin: 0 0 8px 0; font-size: 15px; font-family: monospace;"><strong>Account No:</strong> ' + (payment?.bankAccountNumber || '-') + '</p>' +
+              '<p style="margin: 0; font-size: 13px;"><strong>Account Name:</strong> ' + (payment?.bankAccountName || '-') + '</p>' +
+              '</div>';
+          }
+        } else if (paymentMethod === 'ewallet') {
+          paymentTitle = 'E-Wallet';
+          if (payment?.ewalletProvider || payment?.ewalletNumber) {
+            paymentDetails = '<div style="background-color: #f3e8fc; padding: 15px; border-radius: 6px; display: inline-block;">' +
+              '<p style="margin: 0 0 8px 0; font-size: 13px;"><strong>Provider:</strong> ' + (payment?.ewalletProvider || '-') + '</p>' +
+              '<p style="margin: 0; font-size: 15px; font-family: monospace;"><strong>Number:</strong> ' + (payment?.ewalletNumber || '-') + '</p>' +
+              '</div>';
+          }
+        } else if (paymentMethod === 'qris') {
+          paymentTitle = 'QRIS';
+          let qrisContent = '';
+          if (payment?.qrisImage) {
+            qrisContent += '<img src="' + payment.qrisImage + '" alt="QRIS Code" style="max-width: 150px; max-height: 150px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />';
+          }
+          if (payment?.qrisName) {
+            qrisContent += '<p style="margin: 0 0 5px 0; font-size: 13px;"><strong>Name:</strong> ' + payment.qrisName + '</p>';
+          }
+          if (payment?.qrisNmid) {
+            qrisContent += '<p style="margin: 0; font-size: 12px; font-family: monospace; color: #666;">NMID: ' + payment.qrisNmid + '</p>';
+          }
+          if (qrisContent) {
+            paymentDetails = '<div style="background-color: #fff8e8; padding: 15px; border-radius: 6px; display: inline-block;">' + qrisContent + '</div>';
+          }
+        }
+        
+        // If no payment method but bank transfer is enabled, show bank details as default
+        if (!paymentMethod && payment?.bankTransferEnabled && payment?.bankAccountNumber) {
+          paymentTitle = 'Payment Information';
+          paymentDetails = '<div style="background-color: #e8f4fc; padding: 15px; border-radius: 6px; display: inline-block;">' +
+            '<p style="margin: 0 0 8px 0; font-size: 13px;"><strong>Bank:</strong> ' + (payment?.bankName || '-') + '</p>' +
+            '<p style="margin: 0 0 8px 0; font-size: 15px; font-family: monospace;"><strong>Account No:</strong> ' + (payment?.bankAccountNumber || '-') + '</p>' +
+            '<p style="margin: 0; font-size: 13px;"><strong>Account Name:</strong> ' + (payment?.bankAccountName || '-') + '</p>' +
+            '</div>';
+        }
+        
+        if (paymentTitle || paymentDetails) {
+          return '<div style="margin-top: 30px; text-align: center; padding: 20px; background-color: #f8f8f8; border-radius: 8px;">' +
+            '<p style="margin: 0 0 15px 0; font-size: 16px; font-weight: bold; color: #8B4513;">' + paymentTitle + '</p>' +
+            paymentDetails +
+            '</div>';
+        }
+        return '';
+      })()}
 
       <!-- Footer -->
       <div style="margin-top: 40px; text-align: center; font-size: 12px; color: #666;">
