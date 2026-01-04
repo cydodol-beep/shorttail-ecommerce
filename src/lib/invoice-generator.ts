@@ -175,10 +175,11 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
       <!-- Payment Method -->
       ${(() => {
         // Normalize payment method to lowercase for comparison
-        const paymentMethod = order.payment_method?.toLowerCase();
+        const rawPaymentMethod = order.payment_method;  // Store original for debugging
+        const paymentMethod = order.payment_method?.toLowerCase?.() || order.payment_method;
         const payment = storeInfo?.payment;
 
-        console.log('Invoice Payment Debug:', { paymentMethod, payment });
+        console.log('Invoice Payment Debug:', { rawPaymentMethod, paymentMethod, payment });
 
         // Determine what to show
         let paymentTitle = '';
@@ -187,7 +188,7 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
         if (paymentMethod === 'cash') {
           paymentTitle = 'Cash';
           paymentDetails = '<p style="margin: 0; font-size: 13px; color: #666;">Payment received in cash</p>';
-        } else if (paymentMethod === 'bank_transfer') {
+        } else if (paymentMethod === 'bank_transfer' || rawPaymentMethod?.toLowerCase?.() === 'bank_transfer') {
           paymentTitle = 'Bank Transfer';
           // Always show bank details section for bank_transfer payment method
           paymentDetails = '<div style="background-color: #e8f4fc; padding: 15px; border-radius: 6px; display: inline-block; text-align: left;">' +
@@ -195,14 +196,14 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
             '<p style="margin: 0 0 8px 0; font-size: 15px; font-family: monospace;"><strong>Account No:</strong> ' + (payment?.bankAccountNumber || '-') + '</p>' +
             '<p style="margin: 0; font-size: 13px;"><strong>Account Name:</strong> ' + (payment?.bankAccountName || '-') + '</p>' +
             '</div>';
-        } else if (paymentMethod === 'ewallet') {
+        } else if (paymentMethod === 'ewallet' || rawPaymentMethod?.toLowerCase?.() === 'ewallet') {
           paymentTitle = 'E-Wallet';
           // Always show ewallet details section for ewallet payment method
           paymentDetails = '<div style="background-color: #f3e8fc; padding: 15px; border-radius: 6px; display: inline-block; text-align: left;">' +
             '<p style="margin: 0 0 8px 0; font-size: 13px;"><strong>Provider:</strong> ' + (payment?.ewalletProvider || '-') + '</p>' +
             '<p style="margin: 0; font-size: 15px; font-family: monospace;"><strong>Number:</strong> ' + (payment?.ewalletNumber || '-') + '</p>' +
             '</div>';
-        } else if (paymentMethod === 'qris') {
+        } else if (paymentMethod === 'qris' || rawPaymentMethod?.toLowerCase?.() === 'qris') {
           paymentTitle = 'QRIS';
           // Always show QRIS section for qris payment method
           let qrisContent = '';
@@ -241,6 +242,12 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
               '<p style="margin: 0 0 5px 0; font-size: 13px;">Available methods: ' + availableMethods.join(', ') + '</p>' +
               '</div>';
           }
+        }
+
+        // If we still don't have a payment title but we have payment method info, create a section anyway
+        if (!paymentTitle && !paymentDetails && rawPaymentMethod) {
+          paymentTitle = 'Payment Method';
+          paymentDetails = '<p style="margin: 0; font-size: 14px; color: #666;"><strong>Type:</strong> ' + rawPaymentMethod + '</p>';
         }
 
         if (paymentTitle || paymentDetails) {
