@@ -2,6 +2,10 @@ import html2canvas from 'html2canvas';
 import type { Order } from '@/store/orders-store';
 
 export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise<Blob> {
+  // Debug log to verify data is being passed
+  console.log('Invoice Generator - Order payment_method:', order.payment_method);
+  console.log('Invoice Generator - StoreInfo payment:', storeInfo?.payment);
+  
   // Create a temporary div to render the invoice
   const invoiceDiv = document.createElement('div');
   invoiceDiv.style.position = 'absolute';
@@ -175,20 +179,20 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
           Payment Method: ${order.payment_method === 'cash' ? 'Cash' : order.payment_method === 'bank_transfer' ? 'Bank Transfer' : order.payment_method === 'ewallet' ? 'E-Wallet' : order.payment_method === 'qris' ? 'QRIS' : order.payment_method}
         </p>
         ${order.payment_method === 'cash' ? '<p style="margin: 0; font-size: 13px; color: #666;">Payment received in cash</p>' : ''}
-        ${order.payment_method === 'bank_transfer' && storeInfo?.payment?.bankTransferEnabled ? `
+        ${order.payment_method === 'bank_transfer' && storeInfo?.payment ? `
           <div style="background-color: #e8f4fc; padding: 15px; border-radius: 6px; display: inline-block;">
             <p style="margin: 0 0 8px 0; font-size: 13px;"><strong>Bank:</strong> ${storeInfo.payment.bankName || '-'}</p>
             <p style="margin: 0 0 8px 0; font-size: 15px; font-family: monospace;"><strong>Account No:</strong> ${storeInfo.payment.bankAccountNumber || '-'}</p>
             <p style="margin: 0; font-size: 13px;"><strong>Account Name:</strong> ${storeInfo.payment.bankAccountName || '-'}</p>
           </div>
         ` : ''}
-        ${order.payment_method === 'ewallet' && storeInfo?.payment?.ewalletEnabled ? `
+        ${order.payment_method === 'ewallet' && storeInfo?.payment ? `
           <div style="background-color: #f3e8fc; padding: 15px; border-radius: 6px; display: inline-block;">
             <p style="margin: 0 0 8px 0; font-size: 13px;"><strong>Provider:</strong> ${storeInfo.payment.ewalletProvider || '-'}</p>
             <p style="margin: 0; font-size: 15px; font-family: monospace;"><strong>Number:</strong> ${storeInfo.payment.ewalletNumber || '-'}</p>
           </div>
         ` : ''}
-        ${order.payment_method === 'qris' && storeInfo?.payment?.qrisEnabled ? `
+        ${order.payment_method === 'qris' && storeInfo?.payment ? `
           <div style="background-color: #fff8e8; padding: 15px; border-radius: 6px; display: inline-block;">
             ${storeInfo.payment.qrisImage ? `<img src="${storeInfo.payment.qrisImage}" alt="QRIS Code" style="max-width: 150px; max-height: 150px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />` : ''}
             ${storeInfo.payment.qrisName ? `<p style="margin: 0 0 5px 0; font-size: 13px;"><strong>Name:</strong> ${storeInfo.payment.qrisName}</p>` : ''}
