@@ -331,19 +331,20 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
 
   updateOrderStatus: async (orderId: string, status: string) => {
     try {
-      const supabase = createClient();
+      // Use API route to bypass RLS restrictions for kasir users
+      const response = await fetch('/api/orders/kasir/update-status', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ orderId, status }),
+      });
 
-      const { error } = await supabase
-        .from('orders')
-        .update({
-          status,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', orderId);
+      const result = await response.json();
 
-      if (error) {
-        console.error('Error updating order status:', error);
-        console.error('Error details:', JSON.stringify(error, null, 2));
+      if (!response.ok) {
+        console.error('Error updating order status:', result);
+        console.error('Error details:', result.details);
         return false;
       }
 

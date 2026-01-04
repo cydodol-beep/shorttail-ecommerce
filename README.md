@@ -46,6 +46,43 @@ The platform consists of five main user interfaces:
 - **Viewport Optimization**: Used intersection observer for lazy loading and optimized rendering
 - **Resource Optimization**: Added proper resource cleanup to prevent memory accumulation
 
+## 🆕 Recent Updates (January 4, 2026)
+
+### POS Checkout System Overhaul 🛒
+
+#### Fixed Critical POS Order Creation Issues
+- **API Route for Order Creation**: Created dedicated `/api/orders/kasir/create` endpoint using Supabase service role to bypass RLS restrictions that were blocking kasir users from creating orders directly
+- **Profile Timeout Fix**: Increased profile fetching timeout from 15 seconds to 2 hours to prevent timeout errors during long POS sessions; added automatic logout with redirect on timeout
+
+#### Customer Tracking Enhancement
+- **Dual Customer Source Support**: Orders now properly track whether customer was selected from:
+  - **Profiles table**: Stores `user_id` linking to registered customer profiles
+  - **Temp Customer Data**: Stores `temp_custdata_id` in `shipping_address_snapshot` for imported CSV customers
+- **Customer Information Storage**: 
+  - `user_name` - Customer name stored for display purposes
+  - `cashier_name` - Cashier name who processed the order
+  - `shipping_address_snapshot` - JSON object containing customer source, phone, name, and temp_custdata_id if applicable
+
+#### Database Migrations Required
+- **Migration 024**: Adds `user_name` and `cashier_name` columns to orders table
+- **Migration 027**: Adds `custom_order_id` column with auto-generation trigger (e.g., `POSST202601040001`)
+- **Migration 029**: Fixes UUID casting issue in notification triggers (`NEW.id::TEXT` instead of `NEW.id`)
+
+#### Custom Order ID System
+- **Auto-Generated Order IDs**: Orders now receive human-readable IDs:
+  - POS Orders: `POSST` + `YYYYMMDD` + `0001` (e.g., `POSST202601040001`)
+  - Marketplace Orders: `MKSTP` + `YYYYMMDD` + `0001` (e.g., `MKSTP202601040001`)
+- **Daily Sequence**: Counter resets each day, maintaining sequential order per source type
+
+#### Technical Implementation
+- **State Tracking**: Added `selectedCustomerId` and `selectedCustomerSource` states in kasir page
+- **Profile Selection**: `selectProfile()` now tracks profile ID and sets source to `'profile'`
+- **Temp Custdata Selection**: `selectTempCustData()` now tracks record ID and sets source to `'temp_custdata'`
+- **Checkout Payload**: Enhanced to include customer source information for proper database storage
+- **Error Handling**: Improved error logging with full details (error code, hint, attempted data) for easier debugging
+
+---
+
 ## 🆕 Recent Updates (January 3, 2026)
 
 ### Enhanced CSV Import/Export for Temp Customer Data 📊
