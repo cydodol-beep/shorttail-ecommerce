@@ -50,7 +50,7 @@ import {
 } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { useOrders, updateOrderStatus, type Order } from '@/hooks/use-orders';
-import { useStoreSettings } from '@/hooks/use-store-settings';
+import { useAllSettings } from '@/hooks/use-store-settings';
 import { generateInvoiceJPEG, downloadInvoice } from '@/lib/invoice-generator';
 import { generatePackingListPDF, downloadPackingList } from '@/lib/packing-list-generator';
 
@@ -69,7 +69,7 @@ type OrderStatus = keyof typeof STATUS_CONFIG;
 export default function KasirOrdersPage() {
   const { user } = useAuth();
   const { orders, loading, refresh } = useOrders();
-  const { settings } = useStoreSettings();
+  const { settings: allSettings } = useAllSettings();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
@@ -140,11 +140,25 @@ export default function KasirOrdersPage() {
     setGenerating(order.id);
     try {
       const storeInfo = {
-        store_name: settings?.storeName || 'shorttail.id',
-        store_logo: settings?.storeLogo || '',
-        store_address: settings?.storeAddress || '',
-        store_phone: settings?.storePhone || '',
-        store_email: settings?.storeEmail || '',
+        store_name: allSettings?.store?.storeName || 'shorttail.id',
+        store_logo: allSettings?.store?.storeLogo || '',
+        store_address: allSettings?.store?.storeAddress || '',
+        store_phone: allSettings?.store?.storePhone || '',
+        store_email: allSettings?.store?.storeEmail || '',
+        // Payment settings for invoice
+        payment: {
+          bankTransferEnabled: allSettings?.payment?.bankTransferEnabled || false,
+          bankName: allSettings?.payment?.bankName || '',
+          bankAccountNumber: allSettings?.payment?.bankAccountNumber || '',
+          bankAccountName: allSettings?.payment?.bankAccountName || '',
+          ewalletEnabled: allSettings?.payment?.ewalletEnabled || false,
+          ewalletProvider: allSettings?.payment?.ewalletProvider || '',
+          ewalletNumber: allSettings?.payment?.ewalletNumber || '',
+          qrisEnabled: allSettings?.payment?.qrisEnabled || false,
+          qrisImage: allSettings?.payment?.qrisImage || '',
+          qrisName: allSettings?.payment?.qrisName || '',
+          qrisNmid: allSettings?.payment?.qrisNmid || '',
+        },
       };
 
       const blob = await generateInvoiceJPEG(order, storeInfo);
@@ -163,13 +177,13 @@ export default function KasirOrdersPage() {
     setGenerating(order.id);
     try {
       const storeInfo = {
-        store_name: settings?.storeName || 'shorttail.id',
-        store_logo: settings?.storeLogo || '',
-        store_address: settings?.storeAddress || '',
-        store_phone: settings?.storePhone || '',
-        store_email: settings?.storeEmail || '',
-        store_province: settings?.storeProvince || '',
-        store_postal_code: settings?.storePostalCode || '',
+        store_name: allSettings?.store?.storeName || 'shorttail.id',
+        store_logo: allSettings?.store?.storeLogo || '',
+        store_address: allSettings?.store?.storeAddress || '',
+        store_phone: allSettings?.store?.storePhone || '',
+        store_email: allSettings?.store?.storeEmail || '',
+        store_province: allSettings?.store?.storeProvince || '',
+        store_postal_code: allSettings?.store?.storePostalCode || '',
       };
 
       const pdf = generatePackingListPDF(order, storeInfo);

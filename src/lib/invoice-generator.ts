@@ -170,8 +170,8 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
 
       <!-- Payment Method -->
       ${order.payment_method ? `
-      <div style="margin-top: 30px; text-align: center;">
-        <p style="margin: 0; font-size: 14px; font-weight: bold; color: #8B4513;">
+      <div style="margin-top: 30px; text-align: center; padding: 20px; background-color: #f8f8f8; border-radius: 8px;">
+        <p style="margin: 0 0 15px 0; font-size: 16px; font-weight: bold; color: #8B4513;">
           Payment Method: ${(() => {
             const method = order.payment_method;
             if (method === 'cash') return 'Cash';
@@ -181,6 +181,46 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
             return method.charAt(0).toUpperCase() + method.slice(1).replace(/_/g, ' ');
           })()}
         </p>
+        
+        ${(() => {
+          const method = order.payment_method;
+          const payment = storeInfo?.payment;
+          
+          if (method === 'cash') {
+            return '<p style="margin: 0; font-size: 13px; color: #666;">Payment received in cash</p>';
+          }
+          
+          if (method === 'bank_transfer' && payment?.bankTransferEnabled) {
+            return \`
+              <div style="background-color: #e8f4fc; padding: 15px; border-radius: 6px; display: inline-block;">
+                <p style="margin: 0 0 8px 0; font-size: 13px;"><strong>Bank:</strong> \${payment.bankName || '-'}</p>
+                <p style="margin: 0 0 8px 0; font-size: 15px; font-family: monospace;"><strong>Account No:</strong> \${payment.bankAccountNumber || '-'}</p>
+                <p style="margin: 0; font-size: 13px;"><strong>Account Name:</strong> \${payment.bankAccountName || '-'}</p>
+              </div>
+            \`;
+          }
+          
+          if (method === 'ewallet' && payment?.ewalletEnabled) {
+            return \`
+              <div style="background-color: #f3e8fc; padding: 15px; border-radius: 6px; display: inline-block;">
+                <p style="margin: 0 0 8px 0; font-size: 13px;"><strong>Provider:</strong> \${payment.ewalletProvider || '-'}</p>
+                <p style="margin: 0; font-size: 15px; font-family: monospace;"><strong>Number:</strong> \${payment.ewalletNumber || '-'}</p>
+              </div>
+            \`;
+          }
+          
+          if (method === 'qris' && payment?.qrisEnabled) {
+            return \`
+              <div style="background-color: #fff8e8; padding: 15px; border-radius: 6px; display: inline-block;">
+                \${payment.qrisImage ? \`<img src="\${payment.qrisImage}" alt="QRIS Code" style="max-width: 150px; max-height: 150px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />\` : ''}
+                \${payment.qrisName ? \`<p style="margin: 0 0 5px 0; font-size: 13px;"><strong>Name:</strong> \${payment.qrisName}</p>\` : ''}
+                \${payment.qrisNmid ? \`<p style="margin: 0; font-size: 12px; font-family: monospace; color: #666;">NMID: \${payment.qrisNmid}</p>\` : ''}
+              </div>
+            \`;
+          }
+          
+          return '';
+        })()}
       </div>
       ` : ''}
 
