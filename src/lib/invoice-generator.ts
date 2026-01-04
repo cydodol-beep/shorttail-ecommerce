@@ -177,13 +177,13 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
         // Normalize payment method to lowercase for comparison
         const paymentMethod = order.payment_method?.toLowerCase();
         const payment = storeInfo?.payment;
-        
+
         console.log('Invoice Payment Debug:', { paymentMethod, payment });
-        
+
         // Determine what to show
         let paymentTitle = '';
         let paymentDetails = '';
-        
+
         if (paymentMethod === 'cash') {
           paymentTitle = 'Cash';
           paymentDetails = '<p style="margin: 0; font-size: 13px; color: #666;">Payment received in cash</p>';
@@ -212,8 +212,11 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
           qrisContent += '<p style="margin: 0 0 5px 0; font-size: 13px;"><strong>Name:</strong> ' + (payment?.qrisName || '-') + '</p>';
           qrisContent += '<p style="margin: 0; font-size: 12px; font-family: monospace; color: #666;">NMID: ' + (payment?.qrisNmid || '-') + '</p>';
           paymentDetails = '<div style="background-color: #fff8e8; padding: 15px; border-radius: 6px; display: inline-block; text-align: left;">' + qrisContent + '</div>';
+        } else {
+          // If we have payment info but no specific method, still display the general payment info
+          console.log('No specific payment method matched, showing fallback');
         }
-        
+
         // If no payment method but bank transfer is enabled, show bank details as default
         if (!paymentMethod && payment?.bankTransferEnabled && payment?.bankAccountNumber) {
           paymentTitle = 'Payment Information';
@@ -223,10 +226,26 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
             '<p style="margin: 0; font-size: 13px;"><strong>Account Name:</strong> ' + (payment?.bankAccountName || '-') + '</p>' +
             '</div>';
         }
-        
+
+        // Even if we don't have a specific payment title, show the general info if we have payment details available
+        if (!paymentTitle && !paymentDetails && payment) {
+          // Create a fallback section showing all available payment options
+          const availableMethods = [];
+          if (payment.bankTransferEnabled) availableMethods.push('Bank Transfer');
+          if (payment.ewalletEnabled) availableMethods.push('E-Wallet');
+          if (payment.qrisEnabled) availableMethods.push('QRIS');
+
+          if (availableMethods.length > 0) {
+            paymentTitle = 'Payment Options';
+            paymentDetails = '<div style="background-color: #f0f0f0; padding: 15px; border-radius: 6px; display: inline-block; text-align: left;">' +
+              '<p style="margin: 0 0 5px 0; font-size: 13px;">Available methods: ' + availableMethods.join(', ') + '</p>' +
+              '</div>';
+          }
+        }
+
         if (paymentTitle || paymentDetails) {
           return '<div style="margin-top: 30px; text-align: center; padding: 20px; background-color: #f8f8f8; border-radius: 8px;">' +
-            '<p style="margin: 0 0 15px 0; font-size: 16px; font-weight: bold; color: #8B4513;">' + paymentTitle + '</p>' +
+            '<p style="margin: 0 0 15px 0; font-size: 16px; font-weight: bold; color: #8B4513;">' + (paymentTitle || 'Payment Information') + '</p>' +
             paymentDetails +
             '</div>';
         }
