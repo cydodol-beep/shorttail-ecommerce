@@ -815,38 +815,6 @@ export default function KasirPOSPage() {
       return;
     }
 
-    // Check stock availability for all items in cart before proceeding
-    const supabase = createClient();
-    for (const item of cart) {
-      if (item.variant) {
-        // Check variant stock
-        const { data: variantData, error: variantError } = await supabase
-          .from('product_variants')
-          .select('stock_quantity')
-          .eq('id', item.variant.id)
-          .single();
-
-        if (variantError || !variantData || variantData.stock_quantity < item.quantity) {
-          toast.error(`Not enough stock for ${item.product.name} - ${item.variant.variant_name || 'Variant'}. Only ${variantData?.stock_quantity || 0} available.`);
-          setProcessing(false);
-          return;
-        }
-      } else {
-        // Check product stock
-        const { data: productData, error: productError } = await supabase
-          .from('products')
-          .select('stock_quantity')
-          .eq('id', item.product.id)
-          .single();
-
-        if (productError || !productData || productData.stock_quantity < item.quantity) {
-          toast.error(`Not enough stock for ${item.product.name}. Only ${productData?.stock_quantity || 0} available.`);
-          setProcessing(false);
-          return;
-        }
-      }
-    }
-
     setProcessing(true);
 
     // Get selected courier name
@@ -864,176 +832,95 @@ export default function KasirPOSPage() {
     const selectedProvince = provinces.find(p => p.id.toString() === recipientProvince);
     const provinceName = selectedProvince?.province_name || '';
 
-    // Create order with shipping details
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .insert({
-        user_id: null, // Walk-in customer
-        user_name: customerName || null, // Customer name from POS checkout
-        cashier_id: user?.id,
-        cashier_name: profile?.user_name, // Store cashier's name
-        source: 'pos',
-        status: 'paid',
-        subtotal,
-        shipping_fee: shippingCostAmount,
-        discount_amount: discountAmount,
-        total_amount: total,
-        recipient_name: recipientName,
-        recipient_phone: recipientPhone,
-        recipient_address: recipientAddress,
-        recipient_province: provinceName,
-        recipient_province_id: recipientProvince ? parseInt(recipientProvince) : null,
-        shipping_courier: courierName,
-        shipping_weight_grams: totalWeightGrams,
-        payment_method: paymentMethod,
-        customer_notes: customerNotes || null,
-        // Store customer phone in shipping_address_snapshot for reference
-        shipping_address_snapshot: customerPhone ? { customer_phone: customerPhone } : null,
-      })
-      .select('*') // Select all fields
-      .single();
-
-    // Extract order from response data
-    const order = orderData;
-
-    if (orderError) {
-      console.error('Order creation error:', orderError);
-      toast.error('Failed to create order');
-      setProcessing(false);
-      return;
-    }
-
-    // Create order items
-    const orderItems = cart.map((item) => ({
-      order_id: order.id,
-      product_id: item.product.id,
-      variant_id: item.variant?.id || null,
-      quantity: item.quantity,
-      price_at_purchase: item.price,
-    }));
-
-    const { error: itemsError } = await supabase
-      .from('order_items')
-      .insert(orderItems);
-
-    if (itemsError) {
-      toast.error('Failed to create order items');
-      setProcessing(false);
-      return;
-    }
-
-    // Update stock
-    for (const item of cart) {
-      if (item.variant) {
-        // Update variant stock - fetch current stock first to ensure accuracy
-        const { data: variantData, error: variantError } = await supabase
-          .from('product_variants')
-          .select('stock_quantity')
-          .eq('id', item.variant.id)
-          .single();
-
-        if (variantError) {
-          console.error('Error fetching variant stock:', variantError);
-          toast.error(`Failed to update stock for variant: ${item.displayName || 'Unknown'}`);
-          setProcessing(false);
-          return; // Stop processing if stock update fails
-        }
-
-        if (variantData) {
-          const newVariantStock = variantData.stock_quantity - item.quantity;
-          const { error: updateError } = await supabase
-            .from('product_variants')
-            .update({ stock_quantity: newVariantStock })
-            .eq('id', item.variant.id);
-
-          if (updateError) {
-            console.error('Error updating variant stock:', updateError);
-            toast.error(`Failed to update stock for variant: ${item.displayName || 'Unknown'}`);
-            setProcessing(false);
-            return; // Stop processing if stock update fails
-          }
-        }
-      } else {
-        // Update product stock - fetch current stock first to ensure accuracy
-        const { data: productData, error: productError } = await supabase
-          .from('products')
-          .select('stock_quantity')
-          .eq('id', item.product.id)
-          .single();
-
-        if (productError) {
-          console.error('Error fetching product stock:', productError);
-          toast.error(`Failed to update stock for product: ${item.displayName || 'Unknown'}`);
-          setProcessing(false);
-          return; // Stop processing if stock update fails
-        }
-
-        if (productData) {
-          const newStock = productData.stock_quantity - item.quantity;
-          const { error: updateError } = await supabase
-            .from('products')
-            .update({ stock_quantity: newStock })
-            .eq('id', item.product.id);
-
-          if (updateError) {
-            console.error('Error updating product stock:', updateError);
-            toast.error(`Failed to update stock for product: ${item.displayName || 'Unknown'}`);
-            setProcessing(false);
-            return; // Stop processing if stock update fails
-          }
-        }
-      }
-    }
-
-    // Create notification for new POS order
     try {
-      const { error: notificationError } = await supabase
-        .from('notifications')
-        .insert({
-          user_id: null, // System notification to all admins
-          title: 'New POS Order Placed!',
-          message: `Order #${order.custom_order_id || order.id.slice(0, 8)} has been placed via POS with total amount of ${formatPrice(total)}.`,
-          action_link: `/admin/orders/${order.id}`,
-        });
+      // Use API route to create order (bypasses RLS issues)
+      const response = await fetch('/api/orders/kasir/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cart: cart.map(item => ({
+            product: {
+              id: item.product.id,
+              name: item.product.name,
+              base_price: item.product.base_price,
+              stock_quantity: item.product.stock_quantity,
+            },
+            variant: item.variant ? {
+              id: item.variant.id,
+              variant_name: item.variant.variant_name,
+              price_adjustment: item.variant.price_adjustment,
+              stock_quantity: item.variant.stock_quantity,
+            } : null,
+            quantity: item.quantity,
+            price: item.price,
+            displayName: item.displayName,
+          })),
+          subtotal,
+          shippingCostAmount,
+          discountAmount,
+          total,
+          recipientName,
+          recipientPhone,
+          recipientAddress,
+          provinceName,
+          provinceId: recipientProvince ? parseInt(recipientProvince) : null,
+          courierName,
+          totalWeightGrams,
+          paymentMethod,
+          customerNotes: customerNotes || null,
+          customerName: customerName || null,
+          customerPhone: customerPhone || null,
+        }),
+      });
 
-      if (notificationError) {
-        console.error('Error creating POS order notification:', notificationError);
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error('Order creation error:', result);
+        toast.error(result.error || 'Failed to create order');
+        setProcessing(false);
+        return;
       }
+
+      const order = result.order;
+      toast.success(`Order #${order.custom_order_id || order.id.slice(0, 8)} completed!`);
+
+      // Reset all form data
+      setCart([]);
+      setAppliedPromotion(null);
+      setManualPromoSelection(false); // Reset manual selection
+      setCheckoutOpen(false);
+      setCheckoutStep('details');
+      setCashReceived('');
+      setPaymentMethod('cash');
+
+      // Reset customer information
+      setCustomerName('');
+      setCustomerPhone('');
+
+      // Reset shipping details
+      setRecipientName('');
+      setRecipientPhone('');
+      setRecipientAddress('');
+      setRecipientProvince('');
+      setShippingCourier('');
+      setCustomCourier('');
+      setShippingCost('');
+      setProfileSearchQuery('');
+      setSearchedProfiles([]);
+      setTempCustSearchQuery('');
+      setSearchedTempCust([]);
+      setCustomerNotes('');
+
+      fetchProducts(); // Refresh stock
     } catch (error) {
-      console.error('Error creating POS order notification:', error);
+      console.error('Checkout error:', error);
+      toast.error('An unexpected error occurred during checkout');
+    } finally {
+      setProcessing(false);
     }
-
-    toast.success(`Order #${order.custom_order_id || order.id.slice(0, 8)} completed!`);
-
-    // Reset all form data
-    setCart([]);
-    setAppliedPromotion(null);
-    setManualPromoSelection(false); // Reset manual selection
-    setCheckoutOpen(false);
-    setCheckoutStep('details');
-    setCashReceived('');
-    setPaymentMethod('cash');
-
-    // Reset customer information
-    setCustomerName('');
-    setCustomerPhone('');
-
-    // Reset shipping details
-    setRecipientName('');
-    setRecipientPhone('');
-    setRecipientAddress('');
-    setRecipientProvince('');
-    setShippingCourier('');
-    setCustomCourier('');
-    setShippingCost('');
-    setProfileSearchQuery('');
-    setSearchedProfiles([]);
-    setTempCustSearchQuery('');
-    setSearchedTempCust([]);
-    setCustomerNotes('');
-
-    fetchProducts(); // Refresh stock
-    setProcessing(false);
   };
 
   const filteredProducts = useMemo(() => {

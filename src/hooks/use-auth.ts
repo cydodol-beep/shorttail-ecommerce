@@ -4,9 +4,15 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { User, AuthChangeEvent, Session } from '@supabase/supabase-js';
 import type { Profile } from '@/types/database';
+import { toast } from 'sonner';
 
 // Get singleton client instance outside component to prevent re-renders
 const supabase = createClient();
+
+// Timeout duration for operations (2 hours in milliseconds)
+// This is set to a long duration to accommodate slow network conditions
+// If timeout occurs, user will be logged out with a clear message
+const OPERATION_TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 hours
 
 // Create a Zustand store to make the auth state accessible globally
 import { create } from 'zustand';
@@ -109,11 +115,25 @@ export function useAuth() {
             `)
             .eq('id', userId)
             .single() as Promise<{ data: Profile | null; error: any }>,
-          15000 // 15 second timeout - increasing to prevent timeout error
+          OPERATION_TIMEOUT_MS // 2 hour timeout for slow network conditions
         );
 
         if (error) {
           console.error('Error fetching profile:', error.message || error);
+          // Check if this is a timeout error
+          if (error.message?.includes('timed out')) {
+            toast.error('Session expired due to network timeout. Please login again.');
+            // Logout user on timeout
+            try {
+              await supabase.auth.signOut({ scope: 'global' });
+            } catch (signOutError) {
+              console.error('Error signing out after timeout:', signOutError);
+            }
+            // Redirect to login page
+            if (typeof window !== 'undefined') {
+              window.location.href = '/login';
+            }
+          }
           setProfile(null);
           useAuthStore.setState({ profile: null, role: null });
           return;
@@ -151,7 +171,7 @@ export function useAuth() {
 
         const sessionResult = await withTimeoutEffect(
           getSessionPromise,
-          15000  // Increase this from 10000 to 15000 to prevent timeout error
+          OPERATION_TIMEOUT_MS  // 2 hour timeout for slow network conditions
         ) as SessionResult;
 
         const { data: { session }, error: sessionError } = sessionResult;
@@ -231,7 +251,7 @@ export function useAuth() {
 
         const sessionResult = await withTimeoutEffect(
           getSessionPromise,
-          15000  // Increase to 15000 to prevent timeout error
+          OPERATION_TIMEOUT_MS  // 2 hour timeout for slow network conditions
         ) as SessionResult;
 
         const { data: { session }, error } = sessionResult;
@@ -256,7 +276,7 @@ export function useAuth() {
 
             const refreshResult = await withTimeoutEffect(
               refreshPromise,
-              15000  // Increase to 15000 to prevent timeout error
+              OPERATION_TIMEOUT_MS  // 2 hour timeout for slow network conditions
             ) as RefreshResult;
 
             const { error: refreshError, data: refreshData } = refreshResult;
@@ -440,11 +460,25 @@ export function useAuth() {
           `)
           .eq('id', user.id)
           .single() as Promise<{ data: Profile | null; error: any }>,
-        15000 // 15 second timeout - increasing to prevent timeout error
+        OPERATION_TIMEOUT_MS // 2 hour timeout for slow network conditions
       );
 
       if (error) {
         console.error('Error refetching profile:', error.message || error);
+        // Check if this is a timeout error
+        if (error.message?.includes('timed out')) {
+          toast.error('Session expired due to network timeout. Please login again.');
+          // Logout user on timeout
+          try {
+            await supabase.auth.signOut({ scope: 'global' });
+          } catch (signOutError) {
+            console.error('Error signing out after timeout:', signOutError);
+          }
+          // Redirect to login page
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
+        }
         return;
       }
 
