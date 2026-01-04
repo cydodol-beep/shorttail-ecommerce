@@ -103,6 +103,14 @@ The platform consists of five main user interfaces:
   - **From Temp Customer Data**: Auto-fills all customer and recipient fields from imported CSV records
   - **Province Matching**: Intelligently matches province names from temp data to existing province records
 
+- **Technical Implementation** (`/api/kasir/search-temp-custdata`):
+  - **API Route for RLS Bypass**: Kasir role users can search temp_custdata via dedicated API endpoint
+  - **Service Role Client**: Uses Supabase service role to bypass RLS restrictions
+  - **Role Validation**: Validates user has `kasir`, `normal_admin`, or `master_admin` role
+  - **Server-Side Search**: Database-level `ilike` filtering for efficiency with 2000+ records
+  - **500ms Debounce**: Prevents excessive API calls while typing
+  - **Limited Results**: Returns max 15 results, ordered alphabetically
+
 - **UI Improvements**:
   - Customer information fields (name, phone) in checkout dialog
   - Color-coded search boxes for easy differentiation

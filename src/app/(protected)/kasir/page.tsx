@@ -865,7 +865,7 @@ export default function KasirPOSPage() {
     const provinceName = selectedProvince?.province_name || '';
 
     // Create order with shipping details
-    const { data: order, error: orderError } = await supabase
+    const { data: orderData, error: orderError } = await supabase
       .from('orders')
       .insert({
         user_id: null, // Walk-in customer
@@ -890,8 +890,11 @@ export default function KasirPOSPage() {
         // Store customer phone in shipping_address_snapshot for reference
         shipping_address_snapshot: customerPhone ? { customer_phone: customerPhone } : null,
       })
-      .select('id, custom_order_id') // Include custom_order_id in the response
+      .select('*') // Select all fields
       .single();
+
+    // Extract order from response data
+    const order = orderData;
 
     if (orderError) {
       console.error('Order creation error:', orderError);
