@@ -174,7 +174,8 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
 
       <!-- Payment Method -->
       ${(() => {
-        const paymentMethod = order.payment_method;
+        // Normalize payment method to lowercase for comparison
+        const paymentMethod = order.payment_method?.toLowerCase();
         const payment = storeInfo?.payment;
         
         // Determine what to show
@@ -184,7 +185,7 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
         if (paymentMethod === 'cash') {
           paymentTitle = 'Cash';
           paymentDetails = '<p style="margin: 0; font-size: 13px; color: #666;">Payment received in cash</p>';
-        } else if (paymentMethod === 'bank_transfer' || (!paymentMethod && payment?.bankTransferEnabled)) {
+        } else if (paymentMethod === 'bank_transfer') {
           paymentTitle = 'Bank Transfer';
           if (payment?.bankName || payment?.bankAccountNumber) {
             paymentDetails = '<div style="background-color: #e8f4fc; padding: 15px; border-radius: 6px; display: inline-block;">' +
