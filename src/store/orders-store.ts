@@ -36,6 +36,7 @@ export interface Order {
   shipping_address_snapshot?: any;
   payment_method?: string;
   customer_notes?: string;
+  payment_details?: any;
   invoice_url?: string;
   packing_list_url?: string;
   items_count?: number;
@@ -178,6 +179,7 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
               shipping_address_snapshot: order.shipping_address_snapshot,
               payment_method: order.payment_method,
               customer_notes: order.customer_notes || undefined,
+              payment_details: order.payment_details || undefined,
               invoice_url: order.invoice_url,
               packing_list_url: order.packing_list_url,
               items_count: itemsWithDetails.length,
@@ -310,6 +312,7 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
               shipping_address_snapshot: order.shipping_address_snapshot,
               payment_method: order.payment_method,
               customer_notes: order.customer_notes || undefined,
+              payment_details: order.payment_details || undefined,
               invoice_url: order.invoice_url,
               packing_list_url: order.packing_list_url,
               items_count: itemsWithDetails.length,

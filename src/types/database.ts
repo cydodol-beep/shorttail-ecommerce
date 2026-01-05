@@ -126,6 +126,7 @@ export interface Order {
   shipping_courier: string | null;
   shipping_weight_grams: number | null;
   customer_notes: string | null;
+  payment_details: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 }
