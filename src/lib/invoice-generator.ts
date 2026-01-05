@@ -180,9 +180,10 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
         const paymentMethod = order.payment_method ? order.payment_method.toLowerCase?.() || order.payment_method.toLowerCase() : null;
 
         // First, try to get payment details from the order itself (snapshot at time of order)
-        // These could be stored in the shipping_address_snapshot or other fields
-        let orderPaymentDetails = null;
-        if (order.shipping_address_snapshot && typeof order.shipping_address_snapshot === 'object') {
+        // Check the dedicated payment_details field first, then fallback to shipping_address_snapshot
+        let orderPaymentDetails = order.payment_details || null;
+
+        if (!orderPaymentDetails && order.shipping_address_snapshot && typeof order.shipping_address_snapshot === 'object') {
           orderPaymentDetails = order.shipping_address_snapshot.payment_details ||
                                order.shipping_address_snapshot.payment_info;
         }

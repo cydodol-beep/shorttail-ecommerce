@@ -727,7 +727,17 @@ export default function CheckoutPage() {
     const supabase = createClient();
 
     try {
-      // Create order
+      // First, fetch store settings to get payment details at time of order
+      const { data: storeSettingsData, error: settingsError } = await supabase
+        .from('store_settings')
+        .select('payment')
+        .single();
+
+      if (settingsError) {
+        console.warn('Could not fetch store settings for payment details:', settingsError);
+      }
+
+      // Create order with payment details included
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -743,6 +753,8 @@ export default function CheckoutPage() {
           customer_notes: previewOrderData.customer_notes,
           shipping_address_snapshot: previewOrderData.shipping_address_snapshot,
           payment_method: previewOrderData.payment_method,
+          // Include payment details for invoice generation
+          payment_details: storeSettingsData?.payment || null,
           total_weight_grams: previewOrderData.total_weight_grams,
         })
         .select('id, custom_order_id') // Include custom_order_id in the response

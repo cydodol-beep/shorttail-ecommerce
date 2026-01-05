@@ -105,6 +105,16 @@ export async function POST(request: Request) {
     // Use admin client to bypass RLS for order creation
     const adminClient = createAdminClient();
 
+    // Get current store settings to store payment details with the order
+    const { data: storeSettings, error: settingsError } = await adminClient
+      .from('store_settings')
+      .select('payment')
+      .single();
+
+    if (settingsError) {
+      console.warn('Could not fetch store settings for payment details:', settingsError);
+    }
+
     // Verify stock availability for all items
     for (const item of cart) {
       if (item.variant) {
@@ -137,6 +147,7 @@ export async function POST(request: Request) {
     // Create the order with proper customer tracking
     // user_id is set only if customer was selected from profiles table
     // user_name and cashier_name are stored for display purposes
+    // Also capture payment details to preserve the payment information at order time
     const orderData: Record<string, any> = {
       // Set user_id only if customer was selected from profiles (not temp_custdata)
       user_id: selectedCustomerSource === 'profile' ? selectedCustomerId : null,
@@ -159,8 +170,10 @@ export async function POST(request: Request) {
       shipping_weight_grams: totalWeightGrams,
       payment_method: paymentMethod,
       customer_notes: customerNotes,
+      // Store payment details for invoice generation at the time of order
+      payment_details: storeSettings?.payment || null,
       // Store additional customer info in shipping_address_snapshot for reference
-      shipping_address_snapshot: { 
+      shipping_address_snapshot: {
         customer_phone: customerPhone || null,
         customer_name: customerName || null,
         customer_source: selectedCustomerSource || 'walk-in',
