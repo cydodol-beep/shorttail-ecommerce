@@ -178,9 +178,19 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
         const rawPaymentMethod = order.payment_method;  // Store original for debugging
         // Fixed method to avoid potential undefined issue with optional chaining
         const paymentMethod = order.payment_method ? order.payment_method.toLowerCase?.() || order.payment_method.toLowerCase() : null;
-        const payment = storeInfo?.payment;
 
-        console.log('Invoice Payment Debug:', { rawPaymentMethod, paymentMethod, payment });
+        // First, try to get payment details from the order itself (snapshot at time of order)
+        // These could be stored in the shipping_address_snapshot or other fields
+        let orderPaymentDetails = null;
+        if (order.shipping_address_snapshot && typeof order.shipping_address_snapshot === 'object') {
+          orderPaymentDetails = order.shipping_address_snapshot.payment_details ||
+                               order.shipping_address_snapshot.payment_info;
+        }
+
+        // Fallback to storeInfo payment details (current settings)
+        const payment = orderPaymentDetails || storeInfo?.payment || {};
+
+        console.log('Invoice Payment Debug:', { rawPaymentMethod, paymentMethod, payment, orderPaymentDetails });
 
         // Determine what to show - always display payment section if we have payment data
         let paymentTitle = '';
@@ -218,7 +228,7 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
         }
 
         // Only show available payment methods if NO specific payment method was used
-        if (!rawPaymentMethod && payment) {
+        if (!rawPaymentMethod && payment && !orderPaymentDetails) {
           // The order has no specific payment method used, so show available options
           const availableMethods = [];
           if (payment.bankTransferEnabled) availableMethods.push('Bank Transfer');
