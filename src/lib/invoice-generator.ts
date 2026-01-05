@@ -179,6 +179,10 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
         // Fixed method to avoid potential undefined issue with optional chaining
         const paymentMethod = order.payment_method ? order.payment_method.toLowerCase?.() || order.payment_method.toLowerCase() : null;
 
+        console.log('Invoice Generator - Order payment_method:', rawPaymentMethod);
+        console.log('Invoice Generator - Order payment_details:', order.payment_details);
+        console.log('Invoice Generator - StoreInfo payment:', storeInfo?.payment);
+
         // First, try to get payment details from the order itself (snapshot at time of order)
         // Check the dedicated payment_details field first, then fallback to shipping_address_snapshot
         let orderPaymentDetails = order.payment_details || null;

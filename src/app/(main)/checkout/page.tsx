@@ -737,26 +737,29 @@ export default function CheckoutPage() {
 
         if (settingsError) {
           console.warn('Could not fetch store settings for payment details:', settingsError);
+          console.error('SettingsError details:', settingsError);
         } else {
+          console.log('Fetched store settings for payment details:', data);
           // Format payment details to match the expected structure
           storeSettingsData = {
             payment: {
-              bankTransferEnabled: data?.bank_transfer_enabled,
-              bankName: data?.bank_name,
-              bankAccountNumber: data?.bank_account_number,
-              bankAccountName: data?.bank_account_name,
-              ewalletEnabled: data?.ewallet_enabled,
-              ewalletProvider: data?.ewallet_provider,
-              ewalletNumber: data?.ewallet_number,
-              qrisEnabled: data?.qris_enabled,
-              qrisImage: data?.qris_image,
-              qrisName: data?.qris_name,
-              qrisNmid: data?.qris_nmid,
+              bankTransferEnabled: data?.bank_transfer_enabled ?? null,
+              bankName: data?.bank_name ?? null,
+              bankAccountNumber: data?.bank_account_number ?? null,
+              bankAccountName: data?.bank_account_name ?? null,
+              ewalletEnabled: data?.ewallet_enabled ?? null,
+              ewalletProvider: data?.ewallet_provider ?? null,
+              ewalletNumber: data?.ewallet_number ?? null,
+              qrisEnabled: data?.qris_enabled ?? null,
+              qrisImage: data?.qris_image ?? null,
+              qrisName: data?.qris_name ?? null,
+              qrisNmid: data?.qris_nmid ?? null,
             }
           };
+          console.log('Formatted payment details for checkout:', storeSettingsData);
         }
       } catch (error) {
-        console.warn('Error fetching store settings for payment details:', error);
+        console.error('Error fetching store settings for payment details:', error);
       }
 
       // Create order with payment details included
