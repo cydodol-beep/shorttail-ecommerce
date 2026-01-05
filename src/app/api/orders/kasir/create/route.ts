@@ -105,8 +105,8 @@ export async function POST(request: Request) {
     // Use admin client to bypass RLS for order creation
     const adminClient = createAdminClient();
 
-    // Get current store settings to store payment details with the order
-    let storeSettings = null;
+    // Get current store settings to store ONLY the relevant payment details with the order
+    let paymentDetailsToStore = null;
     try {
       const { data, error: settingsError } = await adminClient
         .from('store_settings')
@@ -118,23 +118,45 @@ export async function POST(request: Request) {
         console.error('SettingsError details:', settingsError);
       } else {
         console.log('Fetched store settings for payment details:', data);
-        // Format payment details to match the expected structure
-        storeSettings = {
-          payment: {
+        console.log('Processing payment method for order:', paymentMethod);
+
+        // Only store the payment details for the payment method that was actually selected
+        if (paymentMethod?.toLowerCase() === 'bank_transfer') {
+          // Only include bank transfer details if that's the selected method
+          paymentDetailsToStore = {
             bankTransferEnabled: data?.bank_transfer_enabled ?? null,
             bankName: data?.bank_name ?? null,
             bankAccountNumber: data?.bank_account_number ?? null,
             bankAccountName: data?.bank_account_name ?? null,
+          };
+        } else if (paymentMethod?.toLowerCase() === 'ewallet') {
+          // Only include ewallet details if that's the selected method
+          paymentDetailsToStore = {
             ewalletEnabled: data?.ewallet_enabled ?? null,
             ewalletProvider: data?.ewallet_provider ?? null,
             ewalletNumber: data?.ewallet_number ?? null,
+          };
+        } else if (paymentMethod?.toLowerCase() === 'qris') {
+          // Only include QRIS details if that's the selected method
+          paymentDetailsToStore = {
             qrisEnabled: data?.qris_enabled ?? null,
             qrisImage: data?.qris_image ?? null,
             qrisName: data?.qris_name ?? null,
             qrisNmid: data?.qris_nmid ?? null,
-          }
-        };
-        console.log('Formatted payment details:', storeSettings);
+          };
+        } else if (paymentMethod?.toLowerCase() === 'cash') {
+          // For cash, we don't need to store specific details, just the method
+          paymentDetailsToStore = {
+            paymentMethod: 'cash'
+          };
+        } else {
+          // If no known payment method, store basic info
+          paymentDetailsToStore = {
+            paymentMethod: paymentMethod
+          };
+        }
+
+        console.log('Payment details to be stored for this order:', paymentDetailsToStore);
       }
     } catch (error) {
       console.error('Error fetching store settings for payment details:', error);
@@ -172,7 +194,7 @@ export async function POST(request: Request) {
     // Create the order with proper customer tracking
     // user_id is set only if customer was selected from profiles table
     // user_name and cashier_name are stored for display purposes
-    // Also capture payment details to preserve the payment information at order time
+    // Also capture payment details to preserve only the selected payment method details at order time
     const orderData: Record<string, any> = {
       // Set user_id only if customer was selected from profiles (not temp_custdata)
       user_id: selectedCustomerSource === 'profile' ? selectedCustomerId : null,
@@ -195,8 +217,8 @@ export async function POST(request: Request) {
       shipping_weight_grams: totalWeightGrams,
       payment_method: paymentMethod,
       customer_notes: customerNotes,
-      // Store payment details for invoice generation at the time of order
-      payment_details: storeSettings?.payment || null,
+      // Store ONLY the payment details for the selected payment method for invoice generation
+      payment_details: paymentDetailsToStore,
       // Store additional customer info in shipping_address_snapshot for reference
       shipping_address_snapshot: {
         customer_phone: customerPhone || null,

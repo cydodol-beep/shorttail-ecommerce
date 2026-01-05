@@ -762,7 +762,56 @@ export default function CheckoutPage() {
         console.error('Error fetching store settings for payment details:', error);
       }
 
-      // Create order with payment details included
+      // First, get store settings to determine which payment details to store based on selected method
+      let paymentDetailsToStore = null;
+      try {
+        const { data: storeData, error: settingsError } = await supabase
+          .from('store_settings')
+          .select('bank_transfer_enabled, bank_name, bank_account_number, bank_account_name, ewallet_enabled, ewallet_provider, ewallet_number, qris_enabled, qris_image, qris_name, qris_nmid')
+          .single();
+
+        if (settingsError) {
+          console.warn('Could not fetch store settings for payment details:', settingsError);
+        } else {
+          const selectedPaymentMethod = previewOrderData.payment_method?.toLowerCase?.() || previewOrderData.payment_method;
+
+          // Only store payment details that match the selected payment method
+          if (selectedPaymentMethod === 'bank_transfer') {
+            paymentDetailsToStore = {
+              bankTransferEnabled: storeData?.bank_transfer_enabled ?? null,
+              bankName: storeData?.bank_name ?? null,
+              bankAccountNumber: storeData?.bank_account_number ?? null,
+              bankAccountName: storeData?.bank_account_name ?? null,
+            };
+          } else if (selectedPaymentMethod === 'ewallet') {
+            paymentDetailsToStore = {
+              ewalletEnabled: storeData?.ewallet_enabled ?? null,
+              ewalletProvider: storeData?.ewallet_provider ?? null,
+              ewalletNumber: storeData?.ewallet_number ?? null,
+            };
+          } else if (selectedPaymentMethod === 'qris') {
+            paymentDetailsToStore = {
+              qrisEnabled: storeData?.qris_enabled ?? null,
+              qrisImage: storeData?.qris_image ?? null,
+              qrisName: storeData?.qris_name ?? null,
+              qrisNmid: storeData?.qris_nmid ?? null,
+            };
+          } else if (selectedPaymentMethod === 'cash') {
+            paymentDetailsToStore = {
+              paymentMethod: 'cash'
+            };
+          } else {
+            // For other methods or unknown, store basic information
+            paymentDetailsToStore = {
+              paymentMethod: previewOrderData.payment_method
+            };
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching store settings for payment details:', error);
+      }
+
+      // Create order with only the relevant payment details
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -778,8 +827,8 @@ export default function CheckoutPage() {
           customer_notes: previewOrderData.customer_notes,
           shipping_address_snapshot: previewOrderData.shipping_address_snapshot,
           payment_method: previewOrderData.payment_method,
-          // Include payment details for invoice generation
-          payment_details: storeSettingsData?.payment || null,
+          // Include ONLY the payment details for the selected payment method
+          payment_details: paymentDetailsToStore,
           total_weight_grams: previewOrderData.total_weight_grams,
         })
         .select('id, custom_order_id') // Include custom_order_id in the response
