@@ -106,13 +106,35 @@ export async function POST(request: Request) {
     const adminClient = createAdminClient();
 
     // Get current store settings to store payment details with the order
-    const { data: storeSettings, error: settingsError } = await adminClient
-      .from('store_settings')
-      .select('payment')
-      .single();
+    let storeSettings = null;
+    try {
+      const { data, error: settingsError } = await adminClient
+        .from('store_settings')
+        .select('bank_transfer_enabled, bank_name, bank_account_number, bank_account_name, ewallet_enabled, ewallet_provider, ewallet_number, qris_enabled, qris_image, qris_name, qris_nmid')
+        .single();
 
-    if (settingsError) {
-      console.warn('Could not fetch store settings for payment details:', settingsError);
+      if (settingsError) {
+        console.warn('Could not fetch store settings for payment details:', settingsError);
+      } else {
+        // Format payment details to match the expected structure
+        storeSettings = {
+          payment: {
+            bankTransferEnabled: data?.bank_transfer_enabled,
+            bankName: data?.bank_name,
+            bankAccountNumber: data?.bank_account_number,
+            bankAccountName: data?.bank_account_name,
+            ewalletEnabled: data?.ewallet_enabled,
+            ewalletProvider: data?.ewallet_provider,
+            ewalletNumber: data?.ewallet_number,
+            qrisEnabled: data?.qris_enabled,
+            qrisImage: data?.qris_image,
+            qrisName: data?.qris_name,
+            qrisNmid: data?.qris_nmid,
+          }
+        };
+      }
+    } catch (error) {
+      console.warn('Error fetching store settings for payment details:', error);
     }
 
     // Verify stock availability for all items
