@@ -209,36 +209,37 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
           paymentTitle = 'Bank Transfer';
           // Always show bank details section for bank_transfer payment method
           paymentDetails = '<div style="background-color: #e8f4fc; padding: 15px; border-radius: 6px; display: inline-block; text-align: left; width: 100%;">' +
-            '<p style="margin: 0 0 8px 0; font-size: 13px;"><strong>Bank:</strong> ' + (payment?.bankName || '-') + '</p>' +
-            '<p style="margin: 0 0 8px 0; font-size: 15px; font-family: monospace;"><strong>Account No:</strong> ' + (payment?.bankAccountNumber || '-') + '</p>' +
-            '<p style="margin: 0; font-size: 13px;"><strong>Account Name:</strong> ' + (payment?.bankAccountName || '-') + '</p>' +
+            '<p style="margin: 0 0 8px 0; font-size: 13px;"><strong>Bank:</strong> ' + (payment?.bank_name || payment?.bankName || '-') + '</p>' +
+            '<p style="margin: 0 0 8px 0; font-size: 15px; font-family: monospace;"><strong>Account No:</strong> ' + (payment?.bank_account_number || payment?.bankAccountNumber || '-') + '</p>' +
+            '<p style="margin: 0; font-size: 13px;"><strong>Account Name:</strong> ' + (payment?.bank_account_name || payment?.bankAccountName || '-') + '</p>' +
             '</div>';
         } else if (rawPaymentMethod && paymentMethod === 'ewallet') {
           paymentTitle = 'E-Wallet';
           // Always show ewallet details section for ewallet payment method
           paymentDetails = '<div style="background-color: #f3e8fc; padding: 15px; border-radius: 6px; display: inline-block; text-align: left; width: 100%;">' +
-            '<p style="margin: 0 0 8px 0; font-size: 13px;"><strong>Provider:</strong> ' + (payment?.ewalletProvider || '-') + '</p>' +
-            '<p style="margin: 0; font-size: 15px; font-family: monospace;"><strong>Number:</strong> ' + (payment?.ewalletNumber || '-') + '</p>' +
+            '<p style="margin: 0 0 8px 0; font-size: 13px;"><strong>Provider:</strong> ' + (payment?.ewallet_provider || payment?.ewalletProvider || '-') + '</p>' +
+            '<p style="margin: 0; font-size: 15px; font-family: monospace;"><strong>Number:</strong> ' + (payment?.ewallet_number || payment?.ewalletNumber || '-') + '</p>' +
             '</div>';
         } else if (rawPaymentMethod && paymentMethod === 'qris') {
           paymentTitle = 'QRIS';
           // Always show QRIS section for qris payment method
           let qrisContent = '';
-          if (payment?.qrisImage) {
-            qrisContent += '<img src="' + payment.qrisImage + '" alt="QRIS Code" style="max-width: 150px; max-height: 150px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />';
+          if (payment?.qris_image || payment?.qrisImage) {
+            const qrisImageUrl = payment?.qris_image || payment?.qrisImage;
+            qrisContent += '<img src="' + qrisImageUrl + '" alt="QRIS Code" style="max-width: 150px; max-height: 150px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;" />';
           }
-          qrisContent += '<p style="margin: 0 0 5px 0; font-size: 13px;"><strong>Name:</strong> ' + (payment?.qrisName || '-') + '</p>';
-          qrisContent += '<p style="margin: 0; font-size: 12px; font-family: monospace; color: #666;">NMID: ' + (payment?.qrisNmid || '-') + '</p>';
+          qrisContent += '<p style="margin: 0 0 5px 0; font-size: 13px;"><strong>Name:</strong> ' + (payment?.qris_name || payment?.qrisName || '-') + '</p>';
+          qrisContent += '<p style="margin: 0; font-size: 12px; font-family: monospace; color: #666;">NMID: ' + (payment?.qris_nmid || payment?.qrisNmid || '-') + '</p>';
           paymentDetails = '<div style="background-color: #fff8e8; padding: 15px; border-radius: 6px; display: inline-block; text-align: left; width: 100%;">' + qrisContent + '</div>';
         }
 
         // Only show available payment methods if NO specific payment method was used
-        if (!rawPaymentMethod && payment && !orderPaymentDetails) {
+        if (!rawPaymentMethod && payment) {
           // The order has no specific payment method used, so show available options
           const availableMethods = [];
-          if (payment.bankTransferEnabled) availableMethods.push('Bank Transfer');
-          if (payment.ewalletEnabled) availableMethods.push('E-Wallet');
-          if (payment.qrisEnabled) availableMethods.push('QRIS');
+          if (payment.bank_transfer_enabled || payment.bankTransferEnabled) availableMethods.push('Bank Transfer');
+          if (payment.ewallet_enabled || payment.ewalletEnabled) availableMethods.push('E-Wallet');
+          if (payment.qris_enabled || payment.qrisEnabled) availableMethods.push('QRIS');
 
           if (availableMethods.length > 0) {
             paymentTitle = 'Available Payment Methods';
