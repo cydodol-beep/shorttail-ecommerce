@@ -115,7 +115,9 @@ export async function POST(request: Request) {
 
       if (settingsError) {
         console.warn('Could not fetch store settings for payment details:', settingsError);
+        console.log('SettingsError details:', settingsError);
       } else {
+        console.log('Fetched store settings for payment details:', data);
         // Format payment details to match the expected structure
         storeSettings = {
           payment: {
@@ -132,6 +134,7 @@ export async function POST(request: Request) {
             qrisNmid: data?.qris_nmid,
           }
         };
+        console.log('Formatted payment details:', storeSettings);
       }
     } catch (error) {
       console.warn('Error fetching store settings for payment details:', error);
