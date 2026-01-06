@@ -355,14 +355,15 @@ export default function KasirOrdersPage() {
               <p className="text-brown-600">No orders found</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-auto max-h-[500px] relative">
               <Table>
-                <TableHeader>
+                <TableHeader className="sticky top-0 bg-white z-10 shadow-sm">
                   <TableRow>
                     <TableHead>Order ID</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Customer</TableHead>
                     <TableHead>Source</TableHead>
+                    <TableHead>Payment</TableHead>
                     <TableHead className="min-w-[250px]">Order Items</TableHead>
                     <TableHead>Total</TableHead>
                     <TableHead>Status</TableHead>
@@ -373,6 +374,11 @@ export default function KasirOrdersPage() {
                   {filteredOrders.map((order: Order) => {
                     const StatusIcon = STATUS_CONFIG[order.status as OrderStatus]?.icon || Clock;
                     const statusConfig = STATUS_CONFIG[order.status as OrderStatus] || STATUS_CONFIG.pending;
+                    
+                    // Format payment method from snake_case to Title Case
+                    const paymentDisplay = order.payment_method 
+                      ? order.payment_method.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+                      : '-';
 
                     return (
                       <TableRow key={order.id}>
@@ -405,6 +411,11 @@ export default function KasirOrdersPage() {
                           <Badge variant={order.source === 'pos' ? 'default' : 'outline'} className="text-xs">
                             {order.source.toUpperCase()}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm font-medium text-brown-800">
+                            {paymentDisplay}
+                          </span>
                         </TableCell>
                         <TableCell>
                           <div className="space-y-1 max-w-[300px]">
