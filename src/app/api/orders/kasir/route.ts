@@ -52,7 +52,38 @@ export async function GET(request: Request) {
     // Using admin client to bypass RLS and get all orders
     const { data: ordersData, error: ordersError } = await adminClient
       .from('orders')
-      .select('*')
+      .select(`
+        id,
+        custom_order_id,
+        user_id,
+        user_name,
+        user_email,
+        cashier_id,
+        cashier_name,
+        source,
+        status,
+        subtotal,
+        shipping_fee,
+        discount_amount,
+        total_amount,
+        shipping_courier_name,
+        shipping_courier,
+        shipping_address_snapshot,
+        invoice_url,
+        packing_list_url,
+        is_packing_list_downloaded,
+        created_at,
+        updated_at,
+        payment_method,
+        recipient_name,
+        recipient_phone,
+        recipient_address,
+        recipient_province,
+        recipient_province_id,
+        shipping_weight_grams,
+        customer_notes,
+        payment_details
+      `)
       .order('created_at', { ascending: false });
 
     if (ordersError) {

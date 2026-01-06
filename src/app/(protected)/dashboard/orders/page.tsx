@@ -71,6 +71,7 @@ export default function OrdersPage() {
       .from('orders')
       .select(`
         *,
+        payment_details,
         order_items (
           *,
           product:products (name, images, sku)

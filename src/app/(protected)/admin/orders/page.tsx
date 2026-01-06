@@ -213,6 +213,20 @@ export default function AdminOrdersPage() {
         store_address: settings?.storeAddress || '',
         store_phone: settings?.storePhone || '',
         store_email: settings?.storeEmail || '',
+        // Payment settings for invoice
+        payment: {
+          bankTransferEnabled: settings?.payment?.bankTransferEnabled || false,
+          bankName: settings?.payment?.bankName || '',
+          bankAccountNumber: settings?.payment?.bankAccountNumber || '',
+          bankAccountName: settings?.payment?.bankAccountName || '',
+          ewalletEnabled: settings?.payment?.ewalletEnabled || false,
+          ewalletProvider: settings?.payment?.ewalletProvider || '',
+          ewalletNumber: settings?.payment?.ewalletNumber || '',
+          qrisEnabled: settings?.payment?.qrisEnabled || false,
+          qrisImage: settings?.payment?.qrisImage || '',
+          qrisName: settings?.payment?.qrisName || '',
+          qrisNmid: settings?.payment?.qrisNmid || '',
+        },
       };
 
       const blob = await generateInvoiceJPEG(order, storeInfo);
