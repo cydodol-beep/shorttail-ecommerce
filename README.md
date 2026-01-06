@@ -2507,8 +2507,27 @@ When working with Zustand stores and caching:
 - **Download Template Feature**: Added a 'Download Template' button in the admin panel for temp customer data section
 - **Template Documentation**: Updated the template with example data to guide users on data format
 - **File Location**: Template is available at /public/temp_custdata_template.csv for direct access
-- **User Experience**: Added clear button in the UI to easily download the template before importing data
+## 🔄 Recent Updates (January 5, 2026)
 
+### Payment Details Display Fix for Invoice Generator 💳
+- **Fixed Invoice Generation Issue**: Resolved issue where payment method details were not showing in generated invoice (JPEG)
+- **Root Cause**: The invoice generator was not properly accessing payment details stored with the order
+- **Solution**: Updated the invoice generator to correctly map and display payment method details:
+  - **Bank Transfer**: Now properly shows bank name, account number, and account name
+  - **E-Wallet**: Displays provider name and account number
+  - **QRIS/QR**: Shows QR code image and merchant details
+  - **Cash**: Indicates payment was made in cash
+- **Enhanced Debugging**: Added comprehensive console logging to help troubleshoot payment display issues
+- **Field Mapping**: Fixed field name mappings to properly access payment data from the `payment_details` field in the orders table
+- **Fallback Mechanism**: Implemented fallback display to show payment method type even if specific details aren't available
+- **Case Handling**: Improved handling of different case variations for payment method names (bank_transfer, bank_transfer, etc.)
+
+### Invoice Generator Improvements 🧾
+- **Improved Data Access**: Enhanced access to order-specific payment details stored at time of order creation
+- **Better Error Handling**: Added more robust error handling and fallback mechanisms for missing payment data
+- **Visual Consistency**: Ensured consistent styling across all payment method types in generated invoices
+- **Payment Method Prioritization**: Correctly prioritizes displaying the specific payment method used rather than available methods
+- **Responsive Design**: Maintained responsive layout for payment details section across different invoice sizes
 ---
 
 ## License

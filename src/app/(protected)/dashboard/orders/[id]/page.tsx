@@ -86,7 +86,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         recipient_province,
         recipient_province_id,
         shipping_weight_grams,
-        customer_notes
+        customer_notes,
+        payment_details
       `)
       .eq('id', id)
       .eq('user_id', user.id)

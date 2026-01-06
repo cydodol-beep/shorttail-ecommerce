@@ -174,9 +174,9 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
 
       <!-- Payment Method -->
       ${(() => {
-        // Normalize payment method to lowercase for comparison
+        // Normalize payment method to lowercase for comparison, handling spaces as underscores
         const rawPaymentMethod = order.payment_method;  // Store original for debugging
-        const paymentMethod = order.payment_method?.toLowerCase?.() || order.payment_method;
+        const paymentMethod = order.payment_method?.toLowerCase?.().replace(/\s+/g, '_') || order.payment_method;
 
         console.log('Invoice Generator - Order payment_method:', rawPaymentMethod);
         console.log('Invoice Generator - Order payment_details:', order.payment_details);
