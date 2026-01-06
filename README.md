@@ -46,6 +46,19 @@ The platform consists of five main user interfaces:
 - **Viewport Optimization**: Used intersection observer for lazy loading and optimized rendering
 - **Resource Optimization**: Added proper resource cleanup to prevent memory accumulation
 
+## 🆕 Recent Updates (January 6, 2026)
+
+### Invoice Payment Details Fix 🧾
+
+#### Fixed Missing Payment Information in Invoice
+- **Resolved rendering issue**: Fixed a bug where payment details (Bank Name, Account Number, etc.) were missing from the generated JPEG invoice despite being present in the database.
+- **Improved Data Normalization**: Implemented robust handling for `snake_case` (DB) to `camelCase` (Application) property mapping in `invoice-generator.ts`.
+- **Enhanced Payment Method Matching**: Updated logic to handle variations in payment method strings (e.g., "Bank Transfer", "bank_transfer", "bank-transfer") using case-insensitive matching and normalization.
+
+#### Order Management & Types
+- **Admin & Dashboard Updates**: Updated `api/orders/kasir/route.ts` and `dashboard/orders/page.tsx` to explicitly fetch the `payment_details` column from Supabase.
+- **Type Safety**: Resolved TypeScript errors in Admin Orders page by correcting `StoreSettings` type usage in `useAllSettings`.
+
 ## 🆕 Recent Updates (January 4, 2026)
 
 ### POS Checkout System Overhaul 🛒
