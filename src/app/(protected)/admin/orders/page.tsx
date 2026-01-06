@@ -52,7 +52,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/hooks/use-auth';
 import { useOrders, updateOrderStatus, type Order } from '@/hooks/use-orders';
-import { useStoreSettings } from '@/hooks/use-store-settings';
+import { useStoreSettings, useAllSettings } from '@/hooks/use-store-settings';
 import { generateInvoiceJPEG, downloadInvoice } from '@/lib/invoice-generator';
 import { generatePackingListPDF, downloadPackingList } from '@/lib/packing-list-generator';
 
@@ -78,6 +78,7 @@ export default function AdminOrdersPage() {
   const [updating, setUpdating] = useState(false);
   const [generating, setGenerating] = useState<string | null>(null);
   const { settings } = useStoreSettings();
+  const { settings: allSettings } = useAllSettings();
   const [editForm, setEditForm] = useState({
     recipient_name: '',
     recipient_phone: '',
@@ -215,17 +216,17 @@ export default function AdminOrdersPage() {
         store_email: settings?.storeEmail || '',
         // Payment settings for invoice
         payment: {
-          bankTransferEnabled: settings?.payment?.bankTransferEnabled || false,
-          bankName: settings?.payment?.bankName || '',
-          bankAccountNumber: settings?.payment?.bankAccountNumber || '',
-          bankAccountName: settings?.payment?.bankAccountName || '',
-          ewalletEnabled: settings?.payment?.ewalletEnabled || false,
-          ewalletProvider: settings?.payment?.ewalletProvider || '',
-          ewalletNumber: settings?.payment?.ewalletNumber || '',
-          qrisEnabled: settings?.payment?.qrisEnabled || false,
-          qrisImage: settings?.payment?.qrisImage || '',
-          qrisName: settings?.payment?.qrisName || '',
-          qrisNmid: settings?.payment?.qrisNmid || '',
+          bankTransferEnabled: allSettings?.payment?.bankTransferEnabled || false,
+          bankName: allSettings?.payment?.bankName || '',
+          bankAccountNumber: allSettings?.payment?.bankAccountNumber || '',
+          bankAccountName: allSettings?.payment?.bankAccountName || '',
+          ewalletEnabled: allSettings?.payment?.ewalletEnabled || false,
+          ewalletProvider: allSettings?.payment?.ewalletProvider || '',
+          ewalletNumber: allSettings?.payment?.ewalletNumber || '',
+          qrisEnabled: allSettings?.payment?.qrisEnabled || false,
+          qrisImage: allSettings?.payment?.qrisImage || '',
+          qrisName: allSettings?.payment?.qrisName || '',
+          qrisNmid: allSettings?.payment?.qrisNmid || '',
         },
       };
 
