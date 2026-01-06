@@ -355,7 +355,7 @@ export default function KasirOrdersPage() {
               <p className="text-brown-600">No orders found</p>
             </div>
           ) : (
-            <div className="overflow-auto h-[calc(100vh-420px)] min-h-[300px] relative">
+            <div className="overflow-auto max-h-[55vh] w-full relative">
               <Table>
                 <TableHeader className="sticky top-0 bg-white z-10 shadow-sm">
                   <TableRow>
