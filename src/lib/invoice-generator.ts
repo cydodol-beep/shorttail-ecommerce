@@ -176,7 +176,7 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
       ${(() => {
         // Normalize payment method to lowercase for comparison, handling spaces as underscores
         const rawPaymentMethod = order.payment_method;  // Store original for debugging
-        const paymentMethod = order.payment_method?.toLowerCase?.().replace(/\s+/g, '_') || order.payment_method;
+        const paymentMethod = order.payment_method?.toLowerCase?.().trim().replace(/\s+/g, '_') || order.payment_method;
 
         console.log('Invoice Generator - Order payment_method:', rawPaymentMethod);
         console.log('Invoice Generator - Order payment_details:', order.payment_details);
@@ -193,7 +193,19 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
         }
 
         // Fallback to storeInfo payment details (current settings)
-        const paymentData = orderPaymentDetails || storeInfo?.payment || {};
+        // Ensure we handle both snake_case (DB) and camelCase (App) property names
+        const rawData = orderPaymentDetails || storeInfo?.payment || {};
+        const paymentData: any = { ...rawData };
+        
+        // Normalize keys to camelCase for consistent access
+        if (paymentData.bank_name) paymentData.bankName = paymentData.bank_name;
+        if (paymentData.bank_account_number) paymentData.bankAccountNumber = paymentData.bank_account_number;
+        if (paymentData.bank_account_name) paymentData.bankAccountName = paymentData.bank_account_name;
+        if (paymentData.ewallet_provider) paymentData.ewalletProvider = paymentData.ewallet_provider;
+        if (paymentData.ewallet_number) paymentData.ewalletNumber = paymentData.ewallet_number;
+        if (paymentData.qris_image) paymentData.qrisImage = paymentData.qris_image;
+        if (paymentData.qris_name) paymentData.qrisName = paymentData.qris_name;
+        if (paymentData.qris_nmid) paymentData.qrisNmid = paymentData.qris_nmid;
 
         console.log('Invoice Payment Debug:', {
           rawPaymentMethod,
@@ -208,10 +220,12 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
         let paymentDetailsContent = '';
 
         // Handle each payment method with comprehensive checks - PRIORITIZE the actual payment method used
-        if (rawPaymentMethod && paymentMethod === 'cash') {
+        const pm = paymentMethod?.replace(/-/g, '_') || '';
+        
+        if (rawPaymentMethod && pm.includes('cash')) {
           paymentTitle = 'Cash Payment';
           paymentDetailsContent = '<p style="margin: 0; font-size: 13px; color: #666;">Payment received in cash</p>';
-        } else if (rawPaymentMethod && paymentMethod === 'bank_transfer') {
+        } else if (rawPaymentMethod && (pm === 'bank_transfer' || pm.includes('bank'))) {
           paymentTitle = 'Bank Transfer';
           // Always show bank details section for bank_transfer payment method
           paymentDetailsContent = '<div style="background-color: #e8f4fc; padding: 15px; border-radius: 6px; display: inline-block; text-align: left; width: 100%;">' +
@@ -219,14 +233,14 @@ export async function generateInvoiceJPEG(order: Order, storeInfo: any): Promise
             '<p style="margin: 0 0 8px 0; font-size: 15px; font-family: monospace;"><strong>Account No:</strong> ' + (paymentData?.bankAccountNumber || '-') + '</p>' +
             '<p style="margin: 0; font-size: 13px;"><strong>Account Name:</strong> ' + (paymentData?.bankAccountName || '-') + '</p>' +
             '</div>';
-        } else if (rawPaymentMethod && paymentMethod === 'ewallet') {
+        } else if (rawPaymentMethod && (pm === 'ewallet' || pm.includes('wallet'))) {
           paymentTitle = 'E-Wallet';
           // Always show ewallet details section for ewallet payment method
           paymentDetailsContent = '<div style="background-color: #f3e8fc; padding: 15px; border-radius: 6px; display: inline-block; text-align: left; width: 100%;">' +
             '<p style="margin: 0 0 8px 0; font-size: 13px;"><strong>Provider:</strong> ' + (paymentData?.ewalletProvider || '-') + '</p>' +
             '<p style="margin: 0; font-size: 15px; font-family: monospace;"><strong>Number:</strong> ' + (paymentData?.ewalletNumber || '-') + '</p>' +
             '</div>';
-        } else if (rawPaymentMethod && paymentMethod === 'qris') {
+        } else if (rawPaymentMethod && (pm === 'qris' || pm.includes('qris'))) {
           paymentTitle = 'QRIS';
           // Always show QRIS section for qris payment method
           let qrisContent = '';
