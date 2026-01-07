@@ -59,6 +59,17 @@ The platform consists of five main user interfaces:
 - **Admin & Dashboard Updates**: Updated `api/orders/kasir/route.ts` and `dashboard/orders/page.tsx` to explicitly fetch the `payment_details` column from Supabase.
 - **Type Safety**: Resolved TypeScript errors in Admin Orders page by correcting `StoreSettings` type usage in `useAllSettings`.
 
+### Invoice & Kasir UI Enhancements 🎨
+
+#### Invoice Generator Layout Updates
+- **Simplified Payment Info**: Moved payment method display (e.g., "BANK TRANSFER", "QRIS", "CASH") to the invoice header summary for better visibility.
+- **Cleaner Footer**: Removed redundant detailed payment blocks (account numbers) from the footer to streamline the invoice design.
+
+#### Kasir Orders Table Improvements
+- **New Payment Column**: Added a dedicated "Payment" column to the `Kasir > Orders` table to quickly identify payment methods (Bank Transfer, Cash, Qris).
+- **Sticky Header**: Implemented a sticky table header (`TableHead`) that remains visible while scrolling through long order lists.
+- **Optimized Scrolling**: Adjusted the table container height calculation (`calc(100vh - 320px)`) to ensure the horizontal scrollbar is always visible at the bottom of the viewport, eliminating the need to scroll down to the last record to navigate sideways.
+
 ## 🆕 Recent Updates (January 4, 2026)
 
 ### POS Checkout System Overhaul 🛒

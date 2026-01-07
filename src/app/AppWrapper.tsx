@@ -2,6 +2,7 @@
 
 import { ReactNode, useEffect, useState } from 'react';
 import { IdleTimeoutProvider } from '@/components/IdleTimeoutProvider';
+import { ProfileCompletionGuide } from '@/components/ProfileCompletionGuide';
 
 interface AppWrapperProps {
   children: ReactNode;
@@ -21,6 +22,7 @@ export default function AppWrapper({ children }: AppWrapperProps) {
   return (
     <IdleTimeoutProvider>
       {children}
+      <ProfileCompletionGuide />
     </IdleTimeoutProvider>
   );
 }
