@@ -46,6 +46,19 @@ The platform consists of five main user interfaces:
 - **Viewport Optimization**: Used intersection observer for lazy loading and optimized rendering
 - **Resource Optimization**: Added proper resource cleanup to prevent memory accumulation
 
+## 🆕 Recent Updates (January 7, 2026)
+
+### User Onboarding & Profile Completion 👤
+
+#### Automated Profile Guide
+- **Smart Profile Detection**: Implemented a new `ProfileCompletionGuide` system that automatically detects when logged-in users have missing critical information (Phone, Address, City, etc.).
+- **Interactive Prompts**: Users with incomplete profiles now see a helpful modal dialog explaining the benefits of completing their data:
+  - **Faster Checkout**: Pre-filled shipping details.
+  - **Accurate Shipping**: Precise delivery cost calculations.
+  - **Member Rewards**: Access to points and tier benefits.
+- **Seamless Integration**: The guide is integrated globally via `AppWrapper` but intelligently hides itself on the Settings page to avoid interrupting the editing workflow.
+- **UX Improvement**: Helps new users (and existing users with missing data) get set up quickly, improving order success rates and shipping accuracy.
+
 ## 🆕 Recent Updates (January 6, 2026)
 
 ### Invoice Payment Details Fix 🧾

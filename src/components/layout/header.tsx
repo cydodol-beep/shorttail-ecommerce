@@ -23,13 +23,7 @@ import { useNotificationStore } from '@/store/notification-store';
 import { getAvatarDataInfo } from '@/lib/utils';
 
 // Navigation items
-const NAV_ITEMS = [
-  { label: 'Home', href: '/' },
-  { label: 'Shop', href: '/products' },
-  { label: 'Sale', href: '/products?on_sale=true' },
-  { label: 'New', href: '/products?new=true' },
-  { label: 'Contact', href: '/#footer' },
-];
+const NAV_ITEMS: { label: string; href: string }[] = [];
 
 export function Header() {
   const router = useRouter();

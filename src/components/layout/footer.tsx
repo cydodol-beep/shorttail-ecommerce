@@ -218,7 +218,7 @@ export function Footer() {
           style={{ borderTopColor: 'rgba(255, 145, 29, 0.3)' }}>
           <p className="text-[#fdf6ec]/80"  // 30% cream with transparency
             style={{ color: 'rgba(253, 246, 236, 0.8)' }}>
-            &copy; {new Date().getFullYear()} ShortTail.id. All rights reserved.
+            &copy; {new Date().getFullYear()} ShortTail.id - developed by Cydo Dev.
           </p>
         </div>
       </div>
