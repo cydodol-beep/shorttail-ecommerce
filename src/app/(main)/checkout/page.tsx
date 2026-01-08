@@ -1407,7 +1407,6 @@ export default function CheckoutPage() {
                         />
                       )}
                     />
-                  </div>
                 </CardContent>
               </Card>
 
