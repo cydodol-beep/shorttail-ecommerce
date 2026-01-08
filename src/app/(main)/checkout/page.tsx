@@ -81,46 +81,53 @@ async function fetchProvinces() {
 // Fetch cities for selected province using our API route
 async function fetchCitiesByProvinceId(supabaseProvinceId: string) {
   try {
-    // Map Supabase province ID to RajaOngkir province ID
-    // This mapping converts Supabase province IDs to RajaOngkir province IDs
-    const provinceIdMap: Record<string, string> = {
-      '6': '1',   // DKI Jakarta -> Jakarta
-      '7': '2',   // Jawa Barat -> Jawa Barat
-      '8': '3',   // Jawa Tengah -> Jawa Tengah
-      '9': '4',   // DI Yogyakarta -> DI Yogyakarta
-      '10': '5',  // Jawa Timur -> Jawa Timur
-      '11': '6',  // Aceh -> Aceh
-      '12': '7',  // Sumatera Utara -> Sumatera Utara
-      '13': '8',  // Sumatera Barat -> Sumatera Barat
-      '14': '9',  // Riau -> Riau
-      '15': '10', // Jambi -> Jambi
-      '16': '11', // Sumatera Selatan -> Sumatera Selatan
-      '17': '12', // Bengkulu -> Bengkulu
-      '18': '13', // Lampung -> Lampung
-      '19': '14', // Kepulauan Bangka Belitung -> Kepulauan Bangka Belitung
-      '20': '15', // Kepulauan Riau -> Kepulauan Riau
-      '21': '16', // Kalimantan Barat -> Kalimantan Barat
-      '22': '17', // Kalimantan Tengah -> Kalimantan Tengah
-      '23': '18', // Kalimantan Selatan -> Kalimantan Selatan
-      '24': '19', // Kalimantan Timur -> Kalimantan Timur
-      '25': '20', // Kalimantan Utara -> Kalimantan Utara
-      '26': '21', // Sulawesi Utara -> Sulawesi Utara
-      '27': '22', // Sulawesi Tengah -> Sulawesi Tengah
-      '28': '23', // Sulawesi Selatan -> Sulawesi Selatan
-      '29': '24', // Sulawesi Tenggara -> Sulawesi Tenggara
-      '30': '25', // Gorontalo -> Gorontalo
-      '31': '26', // Sulawesi Barat -> Sulawesi Barat
-      '32': '27', // Maluku -> Maluku
-      '33': '28', // Maluku Utara -> Maluku Utara
-      '34': '29', // Papua Barat -> Papua Barat
-      '35': '30', // Papua -> Papua
-      '36': '31', // Papua Pengunungan -> Papua Pengunungan
-      '37': '32', // Papua Selatan -> Papua Selatan
-      '38': '33', // Papua Tengah -> Papua Tengah
+    // First, let's try to match the Supabase province name to RajaOngkir
+    // instead of relying solely on ID mapping which might be inconsistent
+    const supabaseProvince = provinces.find(p => p.id.toString() === supabaseProvinceId);
+
+    if (!supabaseProvince) {
+      console.error(`Province ID ${supabaseProvinceId} not found in local database`);
+      return [];
+    }
+
+    // Try to get RajaOngkir province ID by name matching
+    // For demo purposes, we'll use a simpler approach that maps common names
+    let rajaOngkirProvinceId = supabaseProvinceId; // default fallback
+
+    // Map common province names to known RajaOngkir IDs for Starter plan
+    const provinceNameMap: Record<string, string> = {
+      'DKI Jakarta': '6',      // Jakarta
+      'Jawa Barat': '1',       // West Java
+      'Jawa Tengah': '2',      // Central Java
+      'Jawa Timur': '3',       // East Java
+      'DI Yogyakarta': '5',    // Yogyakarta
+      'Banten': '4',           // Banten
+      'Bali': '2',             // Bali
+      'Sumatera Utara': '1',   // North Sumatra
+      'Sumatera Barat': '2',   // West Sumatra
+      'Riau': '3',             // Riau
+      // Add more as needed
     };
 
-    // Map the Supabase province ID to RajaOngkir province ID
-    const rajaOngkirProvinceId = provinceIdMap[supabaseProvinceId] || supabaseProvinceId;
+    // Try name-based mapping first
+    if (supabaseProvince.name in provinceNameMap) {
+      rajaOngKirProvinceId = provinceNameMap[supabaseProvince.name];
+    } else {
+      // Use ID mapping as fallback
+      const idMap: Record<string, string> = {
+        '6': '6',   // DKI Jakarta
+        '7': '1',   // Jawa Barat (West Java in RajaOngkir)
+        '8': '2',   // Jawa Tengah (Central Java)
+        '9': '5',   // DI Yogyakarta
+        '10': '3',  // Jawa Timur (East Java)
+        '31': '4',  // Banten
+        '32': '2',  // Bali
+        '12': '1',  // Sumatera Utara (North Sumatra)
+        // Add more mappings as appropriate
+      };
+
+      rajaOngkirProvinceId = idMap[supabaseProvinceId] || supabaseProvinceId;
+    }
 
     const response = await fetch('/api/shipping/rajaongkir/cities', {
       method: 'POST',
@@ -133,7 +140,7 @@ async function fetchCitiesByProvinceId(supabaseProvinceId: string) {
     });
 
     if (!response.ok) {
-      console.error(`Error from RajaOngkir cities API route: ${response.status}`);
+      console.error(`Error from RajaOngkir cities API route: ${response.status}`, await response.text());
       return [];
     }
 
@@ -143,6 +150,7 @@ async function fetchCitiesByProvinceId(supabaseProvinceId: string) {
       return result.data;
     }
 
+    console.error('RajaOngkir API returned success=false or no data:', result);
     return [];
   } catch (error) {
     console.error('Error fetching cities by province:', error);
