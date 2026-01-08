@@ -1364,7 +1364,17 @@ export default function CheckoutPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Province</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <Select 
+                            onValueChange={(value) => {
+                              field.onChange(value);
+                              // Find the province ID based on the name selected
+                              const selectedProv = provinces.find(p => p.name === value);
+                              if (selectedProv) {
+                                setSelectedProvince(selectedProv.id.toString());
+                              }
+                            }} 
+                            value={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select Province" />
