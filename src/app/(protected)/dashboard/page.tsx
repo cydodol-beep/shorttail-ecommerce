@@ -142,6 +142,14 @@ export default function DashboardPage() {
     <div className="container mx-auto px-4 py-8">
       {/* Quick Actions - Single column layout */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+        <Link href="/products">
+          <Card className="border-brown-200 hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="pt-6 text-center">
+              <ShoppingBag className="h-8 w-8 text-primary mx-auto mb-2" />
+              <p className="font-medium text-brown-900">Marketplace</p>
+            </CardContent>
+          </Card>
+        </Link>
         <Link href="/dashboard/orders">
           <Card className="border-brown-200 hover:shadow-md transition-shadow cursor-pointer">
             <CardContent className="pt-6 text-center">
