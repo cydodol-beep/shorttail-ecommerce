@@ -87,38 +87,67 @@ function getRajaOngkirProvinceId(localProvinceId: string, provincesList: { id: n
     console.error(`Local province ID ${localProvinceId} not found in local database`);
     return localProvinceId; // return as-is as fallback
   }
+  
+  // Use fuzzy matching logic for names, as the local DB id might differ from RajaOngkir
+  const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
+  const targetName = normalize(localProvince.name);
 
-  // Map common province names to RajaOngkir IDs for Starter plan
+  // Expanded mapping for RajaOngkir V2 (Komerce) Province IDs
   const nameToRajaOngkirId: Record<string, string> = {
-    'DKI Jakarta': '6',
-    'Jawa Barat': '1',
-    'Jawa Tengah': '2',
-    'Jawa Timur': '3',
-    'DI Yogyakarta': '5',
-    'Banten': '4',
-    'Bali': '2',
-    'Sumatera Utara': '1',
-    'Sumatera Barat': '2',
-    'Riau': '3',
+    'bali': '16',
+    'bangkabelitung': '25',
+    'banten': '12',
+    'bengkulu': '7',
+    'diyogyakarta': '20',
+    'dkijakarta': '11',
+    'gorontalo': '18',
+    'jambi': '14',
+    'jawabarat': '6',
+    'jawatengah': '13',
+    'jawatimur': '19',
+    'kalimantanbarat': '29',
+    'kalimantanselatan': '4',
+    'kalimantantengah': '5',
+    'kalimantantimur': '8',
+    'kalimantanutara': '32',
+    'kepulauanriau': '9',
+    'lampung': '31',
+    'maluku': '3',
+    'malukuutara': '33',
+    'nanggroeacehdarussalamnad': '10', // Handles varies forms
+    'nanggroeacehdarussalam': '10',
+    'aceh': '10',
+    'nusatenggarabarat': '2',
+    'nusatenggarabaratntb': '1', // The API lists both, mapped to 1 safe bet? API says 1=NTB(NTB), 2=NTB. Let's try matching name string
+    'nusatenggaratimur': '22',
+    'nusatenggaratimurntt': '22',
+    'papua': '15',
+    'papuabarat': '30',
+    'riau': '26',
+    'sulawesibarat': '35',
+    'sulawesiselatan': '34',
+    'sulawesitengah': '28',
+    'sulawesitenggara': '21',
+    'sulawesiutara': '23',
+    'sumaterabarat': '24',
+    'sumateraselatan': '27',
+    'sumaterautara': '17',
   };
 
-  // Try name-based mapping first
-  if (localProvince.name in nameToRajaOngkirId) {
-    return nameToRajaOngkirId[localProvince.name];
+  // 1. Try exact match from map
+  if (targetName in nameToRajaOngkirId) {
+    return nameToRajaOngkirId[targetName];
   }
 
-  // Use ID mapping as fallback (basic mapping)
-  const idToRajaOngkirId: Record<string, string> = {
-    '6': '6',   // DKI Jakarta
-    '7': '1',   // Jawa Barat (maps to West Java)
-    '8': '2',   // Jawa Tengah (maps to Central Java)
-    '9': '5',   // DI Yogyakarta
-    '10': '3',  // Jawa Timur (maps to East Java)
-    '31': '4',  // Banten
-    '32': '2',  // Bali
-  };
+  // 2. Try partial match (e.g. "jakarta" in "dkijakarta")
+  for (const [key, val] of Object.entries(nameToRajaOngkirId)) {
+    if (key.includes(targetName) || targetName.includes(key)) {
+      return val;
+    }
+  }
 
-  return idToRajaOngkirId[localProvinceId] || localProvinceId;
+  // 3. Last fallback: return original ID (hope they match)
+  return localProvinceId;
 }
 
 // Fetch cities for selected province using our API route
@@ -176,8 +205,12 @@ async function calculateShippingRates(destinationCityId: string, totalWeightGram
 
   // Calculate shipping cost for each available courier using our server-side API
   const allCouriers: ShippingCourier[] = [];
+  
+  // Use a map to track unique services found
+  const servicesFound = new Set<string>();
 
-  for (const courier of AVAILABLE_COURIERS) {
+  // Use Promise.all to fetch couriers in parallel for better performance
+  const courierPromises = AVAILABLE_COURIERS.map(async (courier) => {
     try {
       // Get shipping costs from our server-side API that calls RajaOngkir
       const response = await fetch('/api/shipping/rajaongkir', {
@@ -194,27 +227,41 @@ async function calculateShippingRates(destinationCityId: string, totalWeightGram
 
       if (!response.ok) {
         console.error(`Error from RajaOngkir API route for ${courier.name}:`, response.status);
-        continue; // Continue with next courier
+        return [];
       }
 
       const result = await response.json();
 
       if (result.success && result.data) {
-        // Process each service offered by the courier
-        for (const res of result.data) {
-          if (res.costs) {
-            for (const cost of res.costs) {
-              const mappedCouriers = mapRajaOngkirToCourier(cost, courier.code);
-              allCouriers.push(...mappedCouriers);
-            }
-          }
+        // Handle result data which can be array of results (Standard/V2)
+        const results = Array.isArray(result.data) ? result.data : [result.data];
+        const courierRates: ShippingCourier[] = [];
+
+        // Process each result
+        for (const res of results) {
+           // Skip if no costs array
+           if (!res.costs) continue;
+
+           for (const cost of res.costs) {
+              const uniqueKey = `${courier.code}-${cost.service}`;
+              if (!servicesFound.has(uniqueKey)) {
+                 servicesFound.add(uniqueKey);
+                 const mapped = mapRajaOngkirToCourier(cost, courier.code);
+                 courierRates.push(...mapped);
+              }
+           }
         }
+        return courierRates;
       }
+      return [];
     } catch (error) {
-      console.error(`Error calculating shipping rates for ${courier.name}:`, error);
-      // Continue to the next courier even if one fails
+       console.error(`Error calculating shipping rates for ${courier.name}:`, error);
+       return [];
     }
-  }
+  });
+
+  const results = await Promise.all(courierPromises);
+  results.forEach(rates => allCouriers.push(...rates));
 
   // If no rates found from RajaOngkir, return static couriers as fallback
   if (allCouriers.length === 0) {
