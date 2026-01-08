@@ -47,8 +47,8 @@ export async function POST(req: NextRequest) {
       courier: courier.toLowerCase(),
     });
 
-    // Call RajaOngkir API
-    const response = await fetch('https://api.rajaongkir.com/starter/cost', {
+    // Call RajaOngkir API - updated to v2 endpoint as per documentation
+    const response = await fetch('https://api.rajaongkir.com/v2/cost', {
       method: 'POST',
       headers: {
         'key': rajaongkirApiKey,

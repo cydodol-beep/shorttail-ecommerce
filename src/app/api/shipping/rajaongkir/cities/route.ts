@@ -55,8 +55,8 @@ export async function POST(req: NextRequest) {
 
     console.log('Making request to RajaOngkir API with provinceId:', provinceId);
 
-    // Call RajaOngkir API
-    const response = await fetch(`https://api.rajaongkir.com/starter/city?province=${provinceId}`, {
+    // Call RajaOngkir API - updated to v2 endpoint as per documentation
+    const response = await fetch(`https://api.rajaongkir.com/v2/city?province=${provinceId}`, {
       method: 'GET',
       headers: {
         'key': rajaongkirApiKey,
