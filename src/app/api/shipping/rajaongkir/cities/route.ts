@@ -3,27 +3,52 @@ import { NextRequest } from 'next/server';
 
 export async function POST(req: NextRequest) {
   try {
-    const { provinceId } = await req.json();
-
-    // Validate required param
-    if (!provinceId) {
-      console.log('Missing provinceId in request');
+    console.log('RajaOngkir cities API route called');
+    
+    let body;
+    try {
+      body = await req.json();
+      console.log('Parsed request body:', body);
+    } catch (parseError) {
+      console.error('Error parsing request body:', parseError);
       return Response.json(
-        { error: 'Missing required parameter: provinceId' },
+        { error: 'Invalid JSON in request body', details: parseError instanceof Error ? parseError.message : String(parseError) },
         { status: 400 }
       );
     }
 
+    const { provinceId } = body;
+
+    // Validate required param
+    if (!provinceId) {
+      console.log('Missing provinceId in request body:', body);
+      return Response.json(
+        { error: 'Missing required parameter: provinceId', received: body },
+        { status: 400 }
+      );
+    }
+
+    console.log('Received provinceId:', provinceId);
+
     // Ensure we have the API key (try both public and private variables)
     const rajaongkirApiKey = process.env.RAJAONGKIR_API_KEY || process.env.NEXT_PUBLIC_RAJAONGKIR_API_KEY;
+    
+    console.log('Environment variables check:', {
+      hasRajaongkirApiKey: !!process.env.RAJAONGKIR_API_KEY,
+      hasNextPublicRajaongkirApiKey: !!process.env.NEXT_PUBLIC_RAJAONGKIR_API_KEY,
+      apiKeyValue: rajaongkirApiKey ? '[HIDDEN]' : null
+    });
+
     if (!rajaongkirApiKey) {
       console.error('RajaOngkir API key is not set in environment variables');
-      console.error('Available env vars (partial):', {
-        hasRajaongkirApiKey: !!process.env.RAJAONGKIR_API_KEY,
-        hasNextPublicRajaongkirApiKey: !!process.env.NEXT_PUBLIC_RAJAONGKIR_API_KEY,
-      });
       return Response.json(
-        { error: 'RajaOngkir API key is not configured' },
+        { 
+          error: 'RajaOngkir API key is not configured',
+          envVars: {
+            hasRajaongkirApiKey: !!process.env.RAJAONGKIR_API_KEY,
+            hasNextPublicRajaongkirApiKey: !!process.env.NEXT_PUBLIC_RAJAONGKIR_API_KEY,
+          }
+        },
         { status: 500 }
       );
     }
@@ -42,7 +67,7 @@ export async function POST(req: NextRequest) {
     
     // Get the response text first to see what the actual error is
     const responseBody = await response.text();
-    console.log('Raw RajaOngkir API response:', responseBody);
+    console.log('Raw RajaOngkir API response:', responseBody.substring(0, 200) + (responseBody.length > 200 ? '...' : ''));
 
     // Try parsing the response
     let result;
@@ -96,11 +121,12 @@ export async function POST(req: NextRequest) {
       data: result.rajaongkir.results,
     });
   } catch (error) {
-    console.error('Error in RajaOngkir cities API:', error);
+    console.error('Critical error in RajaOngkir cities API:', error);
     return Response.json(
       { 
-        error: 'Internal server error in RajaOngkir cities API', 
-        message: error instanceof Error ? error.message : String(error) 
+        error: 'Critical internal server error in RajaOngkir cities API', 
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : 'no stack trace'
       },
       { status: 500 }
     );
