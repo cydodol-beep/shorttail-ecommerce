@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server';
 export async function POST(req: NextRequest) {
   try {
     const { provinceId } = await req.json();
-    
+
     // Validate required param
     if (!provinceId) {
       return Response.json(
@@ -23,6 +23,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Debug: Log the parameters being sent
+    console.log('RajaOngkir cities API called with:', { provinceId, apiKeyExists: !!rajaongkirApiKey });
+
     // Call RajaOngkir API
     const response = await fetch(`https://api.rajaongkir.com/starter/city?province=${provinceId}`, {
       method: 'GET',
@@ -31,24 +34,36 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    console.log('RajaOngkir API response status:', response.status);
+
     if (!response.ok) {
       console.error(`RajaOngkir API returned error: ${response.status} ${response.statusText}`);
       return Response.json(
-        { error: `RajaOngkir API error: ${response.status}` },
+        { error: `RajaOngkir API error: ${response.status} - ${response.statusText}` },
         { status: response.status }
       );
     }
 
     const result = await response.json();
+    console.log('Full RajaOngkir API response:', result);
 
-    if (result.rajaongkir.status.code !== 200) {
+    if (result.rajaongkir && result.rajaongkir.status && result.rajaongkir.status.code !== 200) {
       console.error('RajaOngkir API returned error status:', result.rajaongkir.status);
       return Response.json(
-        { 
-          error: result.rajaongkir.status.description || 'RajaOngkir API error', 
-          details: result.rajaongkir.status 
+        {
+          error: result.rajaongkir.status.description || 'RajaOngkir API error',
+          details: result.rajaongkir.status
         },
         { status: 400 }
+      );
+    }
+
+    // Handle case where response format is different than expected
+    if (!result.rajaongkir || !result.rajaongkir.results) {
+      console.error('Unexpected RajaOngkir API response format:', result);
+      return Response.json(
+        { error: 'Unexpected response format from RajaOngkir API', details: result },
+        { status: 500 }
       );
     }
 
