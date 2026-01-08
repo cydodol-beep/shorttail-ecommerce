@@ -41,6 +41,7 @@ const checkoutSchema = z.object({
   address_line1: z.string().min(5, 'Address is required'),
   city: z.string().min(2, 'City is required'),
   province: z.string().min(2, 'Province is required'),
+  destination_city_id: z.string().min(2, 'Destination city is required'), // Add field for RajaOngkir city ID
   postal_code: z.string().min(5, 'Postal code is required'),
   courier: z.string().min(1, 'Please select a courier'),
   customer_notes: z.string().optional(),
@@ -77,6 +78,37 @@ async function fetchProvinces() {
   })) || [];
 }
 
+// Fetch cities for selected province using our API route
+async function fetchCitiesByProvinceId(provinceId: string) {
+  try {
+    const response = await fetch('/api/shipping/rajaongkir/cities', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        provinceId
+      }),
+    });
+
+    if (!response.ok) {
+      console.error(`Error from RajaOngkir cities API route: ${response.status}`);
+      return [];
+    }
+
+    const result = await response.json();
+
+    if (result.success && result.data) {
+      return result.data;
+    }
+
+    return [];
+  } catch (error) {
+    console.error('Error fetching cities by province:', error);
+    return [];
+  }
+}
+
 // Define shipping courier type
 type ShippingCourier = {
   id: string;
@@ -85,61 +117,65 @@ type ShippingCourier = {
   eta: string;
 };
 
-// Calculate shipping rates based on destination province and weight
-async function calculateShippingRates(destinationProvinceId: number, totalWeightGrams: number): Promise<ShippingCourier[]> {
-  const supabase = createClient();
+// Calculate shipping rates based on destination city and weight using RajaOngkir
+async function calculateShippingRates(destinationCityId: string, totalWeightGrams: number): Promise<ShippingCourier[]> {
+  // Import helper functions
+  const { mapRajaOngkirToCourier, AVAILABLE_COURIERS } = await import('@/lib/shipping/config');
 
-  // Get shipping rates that match the destination province, joining with couriers table
-  const { data: ratesData, error } = await supabase
-    .from('shipping_rates')
-    .select(`
-      id,
-      courier_id,
-      province_id,
-      cost,
-      estimated_days,
-      shipping_couriers!inner (
-        id,
-        courier_name,
-        is_active
-      )
-    `)
-    .eq('province_id', destinationProvinceId)
-    .eq('shipping_couriers.is_active', true); // Only get active couriers
-
-  if (error) {
-    console.error('Error calculating shipping rates:', error);
-    // Fallback to static rates if calculation fails
+  if (!destinationCityId) {
+    console.error('Missing destination city ID');
     return staticCouriers;
   }
 
-  // If no rates found for this province, return static couriers
-  if (!ratesData || ratesData.length === 0) {
-    return staticCouriers;
-  }
+  // Calculate shipping cost for each available courier using our server-side API
+  const allCouriers: ShippingCourier[] = [];
 
-  // Calculate rates based on weight (similar logic to POS)
-  const calculatedCouriers = ratesData.map((rate: any) => {
-    // Get base rate cost from shipping_rates table
-    let cost = parseFloat(rate.cost) || 0;
+  for (const courier of AVAILABLE_COURIERS) {
+    try {
+      // Get shipping costs from our server-side API that calls RajaOngkir
+      const response = await fetch('/api/shipping/rajaongkir', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          destinationCityId,
+          weight: totalWeightGrams,
+          courier: courier.code
+        }),
+      });
 
-    // If weight is more than 1kg, calculate per-kg rate
-    if (totalWeightGrams > 1000) {
-      const weightInKg = Math.ceil(totalWeightGrams / 1000);
-      cost = cost * weightInKg;
+      if (!response.ok) {
+        console.error(`Error from RajaOngkir API route for ${courier.name}:`, response.status);
+        continue; // Continue with next courier
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        // Process each service offered by the courier
+        for (const res of result.data) {
+          if (res.costs) {
+            for (const cost of res.costs) {
+              const mappedCouriers = mapRajaOngkirToCourier(cost, courier.code);
+              allCouriers.push(...mappedCouriers);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error(`Error calculating shipping rates for ${courier.name}:`, error);
+      // Continue to the next courier even if one fails
     }
-    // If under 1kg, use base rate (which is already set above)
+  }
 
-    // Return the correct structure for ShippingCourier type
-    return {
-      id: rate.shipping_couriers.id?.toString() || rate.courier_id?.toString() || '',
-      name: rate.shipping_couriers.courier_name || 'Unknown Courier',
-      price: cost,
-      eta: rate.estimated_days ? `${rate.estimated_days} days` : '1-2 days'
-    };
-  });
+  // If no rates found from RajaOngkir, return static couriers as fallback
+  if (allCouriers.length === 0) {
+    console.warn('RajaOngkir rates not available, using static couriers');
+    return staticCouriers;
+  }
 
-  return calculatedCouriers;
+  return allCouriers;
 }
 
 // Fetch available payment methods from payment_methods table
@@ -262,6 +298,8 @@ export default function CheckoutPage() {
   const [dynamicCouriers, setDynamicCouriers] = useState(staticCouriers);
   const [selectedCourier, setSelectedCourier] = useState<ShippingCourier | null>(null);
   const [selectedProvince, setSelectedProvince] = useState('');
+  const [selectedCityId, setSelectedCityId] = useState(''); // For RajaOngkir
+  const [cities, setCities] = useState<any[]>([]); // Cities for selected province
   const [provinces, setProvinces] = useState<{ id: number; name: string }[]>([]);
   const [shippingLoading, setShippingLoading] = useState(false);
   const [promotionCode, setPromotionCode] = useState('');
@@ -316,6 +354,7 @@ export default function CheckoutPage() {
         address_line1: profile.recipient_address_line1 || profile.address_line1 || '',
         city: profile.recipient_city || profile.city || '',
         province: profile.recipient_region || profile.region_state_province || '',
+        destination_city_id: '', // Will be populated after province selection
         postal_code: profile.recipient_postal_code || profile.postal_code || '',
         courier: '',
         customer_notes: '',
@@ -332,10 +371,45 @@ export default function CheckoutPage() {
         );
         if (matchedProvince) {
           setSelectedProvince(matchedProvince.id.toString());
+          // Trigger loading of cities for this province
+          loadCitiesForProvince(matchedProvince.id.toString());
         }
       }
     }
   }, [profile, form, provinces]);
+
+  // Load cities when province selection changes
+  // Function to load cities for a selected province
+  const loadCitiesForProvince = async (provinceId: string) => {
+    try {
+      const citiesData = await fetchCitiesByProvinceId(provinceId);
+      setCities(citiesData);
+
+      // If the user had previously selected a city, try to match it with the new city data
+      const currentCityValue = form.watch('city');
+      if (currentCityValue) {
+        const matchedCity = citiesData.find(
+          (city: any) =>
+            city.city_name.toLowerCase().includes(currentCityValue.toLowerCase()) ||
+            currentCityValue.toLowerCase().includes(city.city_name.toLowerCase())
+        );
+        if (matchedCity) {
+          setSelectedCityId(matchedCity.city_id);
+          // Update the hidden form field for destination_city_id
+          form.setValue('destination_city_id', matchedCity.city_id);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading cities for province:', error);
+      setCities([]);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedProvince) {
+      loadCitiesForProvince(selectedProvince);
+    }
+  }, [selectedProvince]);
 
   useEffect(() => {
     // Don't redirect while auth state is loading/stabilizing
@@ -511,10 +585,10 @@ export default function CheckoutPage() {
 
   // Calculate shipping rates when province or weight changes
   useEffect(() => {
-    if (selectedProvince) {
+    if (selectedCityId) {
       const calculateRates = async () => {
         setShippingLoading(true);
-        const rates = await calculateShippingRates(parseInt(selectedProvince), totalWeightGrams);
+        const rates = await calculateShippingRates(selectedCityId, totalWeightGrams);
         setDynamicCouriers(rates);
 
         // If the previously selected courier is no longer available, reset selection
@@ -1228,6 +1302,41 @@ export default function CheckoutPage() {
                     />
                     <FormField
                       control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>City</FormLabel>
+                          <Select
+                            onValueChange={(value) => {
+                              field.onChange(value);
+                              // Also find the corresponding city ID and update it
+                              const selectedCity = cities.find((city: any) => city.city_name === value);
+                              if (selectedCity) {
+                                setSelectedCityId(selectedCity.city_id);
+                                form.setValue('destination_city_id', selectedCity.city_id);
+                              }
+                            }}
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select City" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {cities.map((city: any) => (
+                                <SelectItem key={city.city_id} value={city.city_name}>
+                                  {city.city_name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
                       name="postal_code"
                       render={({ field }) => (
                         <FormItem>
@@ -1237,6 +1346,18 @@ export default function CheckoutPage() {
                           </FormControl>
                           <FormMessage />
                         </FormItem>
+                      )}
+                    />
+                    {/* Hidden field to store RajaOngkir city ID */}
+                    <FormField
+                      control={form.control}
+                      name="destination_city_id"
+                      render={({ field }) => (
+                        <input
+                          type="hidden"
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
                       )}
                     />
                   </div>

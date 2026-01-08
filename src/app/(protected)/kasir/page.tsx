@@ -504,7 +504,7 @@ export default function KasirPOSPage() {
   // Convert to kg for display
   const totalWeightKg = (totalWeightGrams / 1000).toFixed(2);
 
-  // Calculate shipping cost when courier, province, or weight changes
+  // Calculate shipping cost using RajaOngkir when courier, province, or weight changes
   useEffect(() => {
     const calculateShipping = async () => {
       // Reset shipping cost if conditions not met
@@ -520,23 +520,13 @@ export default function KasirPOSPage() {
 
       try {
         const supabase = createClient();
-        const courierId = parseInt(shippingCourier);
-        const provinceId = parseInt(recipientProvince);
 
-        console.log('=== SHIPPING CALCULATION ===');
-        console.log('Courier ID:', courierId, 'Type:', typeof courierId);
-        console.log('Province ID:', provinceId, 'Type:', typeof provinceId);
-        console.log('Total Weight (grams):', totalWeightGrams);
-        console.log('Total Weight (kg):', totalWeightKg);
-
-        // First check if courier is active
+        // Get courier details to map to RajaOngkir codes
         const { data: courierData } = await supabase
           .from('shipping_couriers')
-          .select('id, courier_name, is_active')
-          .eq('id', courierId)
+          .select('courier_name, id')
+          .eq('id', parseInt(shippingCourier))
           .single();
-
-        console.log('Courier data:', courierData);
 
         if (!courierData) {
           console.error('Courier not found in database');
@@ -545,84 +535,102 @@ export default function KasirPOSPage() {
           return;
         }
 
-        if (!courierData.is_active) {
-          console.warn('Courier is not active');
-          toast.warning('Selected courier is not active');
+        // Map the courier name to RajaOngkir code
+        let courierCode = '';
+        const name = courierData.courier_name.toLowerCase();
+        if (name.includes('jne')) courierCode = 'jne';
+        else if (name.includes('tiki')) courierCode = 'tiki';
+        else if (name.includes('pos')) courierCode = 'pos';
+        else {
+          console.error('Courier not supported by RajaOngkir');
+          toast.error('Selected courier is not supported by RajaOngkir');
           setShippingCost('');
           return;
         }
 
-        const { data, error } = await supabase
-          .from('shipping_rates')
-          .select('cost, estimated_days')
-          .eq('courier_id', courierId)
-          .eq('province_id', provinceId)
-          .maybeSingle();
+        // Convert province ID to city ID for RajaOngkir
+        // This mapping converts Supabase province IDs to RajaOngkir city IDs
+        // Common mapping for Indonesian provinces to major cities:
+        const provinceToCityMap: Record<string, string> = {
+          // Jakarta
+          '6': '151', // DKI Jakarta -> Jakarta Pusat
+          '7': '152', // Jawa Barat -> Bandung
+          '8': '153', // Jawa Tengah -> Semarang
+          '9': '155', // DI Yogyakarta -> Yogyakarta
+          '10': '156', // Jawa Timur -> Surabaya
+          '12': '161', // Sumatera Utara -> Medan
+          '18': '396', // Sulawesi Selatan -> Makassar
+          '24': '399', // Papua -> Jayapura
+          '31': '391', // Banten -> Tangerang
+          '32': '154', // Bali -> Denpasar
+          '37': '157', // Kalimantan Timur -> Samarinda
+          // Add more mappings as needed
+        };
 
-        console.log('Shipping rate query result:', data);
-        console.log('Shipping rate query error:', error);
+        // Get the corresponding city ID or use the province ID if no mapping exists
+        const mappedCityId = provinceToCityMap[recipientProvince] || recipientProvince;
+        const destinationCityId = mappedCityId;
 
-        // Debug: Try to fetch all rates for this courier to see what's available
-        const { data: allRates } = await supabase
-          .from('shipping_rates')
-          .select('province_id, cost')
-          .eq('courier_id', courierId);
+        // Call our secure API route for RajaOngkir shipping calculation
+        const response = await fetch('/api/shipping/rajaongkir', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            destinationCityId,
+            weight: totalWeightGrams,
+            courier: courierCode
+          }),
+        });
 
-        console.log('All rates for this courier:', allRates);
-
-        // Debug: Check if RLS is the issue by checking shipping_couriers join
-        const { data: rateWithJoin } = await supabase
-          .from('shipping_rates')
-          .select(`
-            cost,
-            estimated_days,
-            shipping_couriers!inner (
-              id,
-              courier_name,
-              is_active
-            )
-          `)
-          .eq('courier_id', courierId)
-          .eq('province_id', provinceId)
-          .maybeSingle();
-
-        console.log('Rate with courier join:', rateWithJoin);
-
-        if (error) {
-          console.error('Shipping rate query error:', error);
-          toast.error('Error fetching shipping rate. Please enter manually.');
+        if (!response.ok) {
+          const errorResult = await response.json();
+          console.error('RajaOngkir API route error:', errorResult);
+          toast.error('Error calculating shipping cost. Please enter manually.');
           setShippingCost('');
           return;
         }
 
-        if (!data) {
-          console.warn('No shipping rate found for courier:', courierId, 'province:', provinceId);
-          toast.warning('No shipping rate configured for this courier and province. Please enter manually.');
-          setShippingCost('');
-          return;
-        }
+        const result = await response.json();
 
-        // If weight < 1kg, use the base rate from shipping_rates
-        // If weight >= 1kg, calculate per-kg rate
-        const baseRate = parseFloat(data.cost.toString());
+        if (result.success && result.data) {
+          // Process the response to find the appropriate shipping cost
+          const shippingResults = Array.isArray(result.data) ? result.data : [result.data];
 
-        if (totalWeightGrams < 1000) {
-          // Under 1kg: use base rate
-          setShippingCost(baseRate.toString());
-          console.log('✓ Shipping cost (base rate):', baseRate);
-          toast.success(`Shipping cost auto-calculated: Rp ${baseRate.toLocaleString()}`);
+          // Find the specific service that matches the selected courier
+          const matchingResult = shippingResults.find(service =>
+            service.code.toLowerCase() === courierCode.toLowerCase()
+          );
+
+          if (matchingResult && matchingResult.costs && matchingResult.costs.length > 0) {
+            // Use the first cost option, typically the most economical or standard option
+            const firstCostService = matchingResult.costs[0];
+
+            if (firstCostService && firstCostService.cost && firstCostService.cost.length > 0) {
+              const costDetail = firstCostService.cost[0];
+
+              setShippingCost(costDetail.value.toString());
+
+              console.log(`✓ Shipping cost (${costDetail.etd}):`, costDetail.value);
+              toast.success(`Shipping cost calculated: Rp ${costDetail.value.toLocaleString()} (${costDetail.etd})`);
+            } else {
+              console.warn('No cost details found for selected service');
+              toast.warning('No shipping cost details available. Please enter manually.');
+              setShippingCost('');
+            }
+          } else {
+            console.warn('No matching shipping rates found for selected courier');
+            toast.warning('No shipping rates available for selected courier and destination. Please enter manually.');
+            setShippingCost('');
+          }
         } else {
-          // 1kg or more: calculate based on weight
-          const weightInKg = Math.ceil(totalWeightGrams / 1000);
-          const totalCost = baseRate * weightInKg;
-          setShippingCost(totalCost.toString());
-          console.log(`✓ Shipping cost (${weightInKg}kg x ${baseRate}):`, totalCost);
-          toast.success(`Shipping cost auto-calculated: Rp ${totalCost.toLocaleString()} (${weightInKg}kg)`);
+          console.error('RajaOngkir API did not return success:', result);
+          toast.error(`Error from shipping service: ${result.error || 'Unknown error'}`);
+          setShippingCost(result.error || '');
         }
-
-        console.log('=== CALCULATION COMPLETE ===');
       } catch (err) {
-        console.error('Error calculating shipping:', err);
+        console.error('Error calculating shipping with RajaOngkir:', err);
         setShippingCost('');
         toast.error('Error calculating shipping cost');
       }
