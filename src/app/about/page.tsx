@@ -397,8 +397,11 @@ export default function AboutPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#fdf6ec', color: '#006d77' }}>
-      <Header />
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#fdf6ec', color: '#006d77' }}
+         suppressHydrationWarning={true}>
+      <div className="disable-navigation" style={{ pointerEvents: 'none' }}>
+        <Header />
+      </div>
 
       <main className="flex-1">
         {loading && (
@@ -474,14 +477,13 @@ export default function AboutPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.4 }}
                   >
-                    <Button
-                      size="default"
-                      className="bg-[#ff911d] hover:bg-[#e6821a] text-white px-6 py-2.5 rounded-full shadow-xl transition-all duration-300 transform hover:scale-105"
-                      onClick={() => scrollToSection('mission')}
+                    <button
+                      disabled
+                      className="bg-[#ff911d] hover:bg-[#e6821a] text-white px-6 py-2.5 rounded-full shadow-xl transition-all duration-300 transform hover:scale-105 opacity-50 cursor-not-allowed"
                     >
                       Discover Our Journey
                       <ChevronDown className="ml-2 h-4 w-4 animate-bounce" />
-                    </Button>
+                    </button>
                   </motion.div>
                 </div>
               </div>
@@ -528,14 +530,13 @@ export default function AboutPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.4 }}
                   >
-                    <Button
-                      size="lg"
-                      className="bg-[#ff911d] hover:bg-[#e6821a] text-white px-8 py-3 rounded-full shadow-xl transition-all duration-300 transform hover:scale-105"
-                      onClick={() => scrollToSection('mission')}
+                    <button
+                      disabled
+                      className="bg-[#ff911d] hover:bg-[#e6821a] text-white px-8 py-3 rounded-full shadow-xl transition-all duration-300 transform hover:scale-105 opacity-50 cursor-not-allowed"
                     >
                       Discover Our Journey
                       <ChevronDown className="ml-2 h-5 w-5 animate-bounce" />
-                    </Button>
+                    </button>
                   </motion.div>
                 </div>
               </div>
@@ -1293,12 +1294,12 @@ export default function AboutPage() {
                 Join thousands of happy pet parents who trust ShortTail.id for premium pet care essentials.
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-4">
-                <Button size="lg" className="bg-[#ff911d] hover:bg-[#e6821a] text-white px-8 py-6 text-lg rounded-full">
+                <button disabled className="bg-[#ff911d] hover:bg-[#e6821a] text-white px-8 py-6 text-lg rounded-full opacity-50 cursor-not-allowed">
                   Shop Now
-                </Button>
-                <Button size="lg" variant="outline" className="border-[#ff911d] text-[#ff911d] hover:bg-[#ff911d]/5 px-8 py-6 text-lg rounded-full">
+                </button>
+                <button disabled className="border-[#ff911d] text-[#ff911d] hover:bg-[#ff911d]/5 px-8 py-6 text-lg rounded-full opacity-50 cursor-not-allowed">
                   Contact Us
-                </Button>
+                </button>
               </div>
             </motion.div>
           </div>

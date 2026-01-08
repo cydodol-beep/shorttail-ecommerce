@@ -59,6 +59,16 @@ The platform consists of five main user interfaces:
 - **Seamless Integration**: The guide is integrated globally via `AppWrapper` but intelligently hides itself on the Settings page to avoid interrupting the editing workflow.
 - **UX Improvement**: Helps new users (and existing users with missing data) get set up quickly, improving order success rates and shipping accuracy.
 
+### UI Cleanup & Branding Update 🧹
+
+#### Navigation Menu Refinement
+- **Simplified Header**: Removed text link menu items (Home, Shop, Sale, New, Contact) from the landing page header to provide a cleaner, more focused user interface.
+- **Icon-Driven Navigation**: Users can still access key features via existing icons (Cart, Search, User Profile), reducing visual clutter.
+
+#### Footer & Copyright Update
+- **Branding Attribution**: Updated the footer copyright text to specifically mention the developer credit: `© 2026 ShortTail.id - developed by Cydo Dev.`
+- **Dynamic Year**: Retained the dynamic year functionality to ensure the copyright notice stays current automatically.
+
 ## 🆕 Recent Updates (January 6, 2026)
 
 ### Invoice Payment Details Fix 🧾
