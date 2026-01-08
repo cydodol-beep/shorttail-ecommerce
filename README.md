@@ -46,6 +46,43 @@ The platform consists of five main user interfaces:
 - **Viewport Optimization**: Used intersection observer for lazy loading and optimized rendering
 - **Resource Optimization**: Added proper resource cleanup to prevent memory accumulation
 
+## 🆕 Recent Updates (January 10, 2026)
+
+### RajaOngkir API Integration Implemented 🚚
+
+#### Complete Shipping Solution
+- **User Checkout Process**: Implemented RajaOngkir API integration for accurate shipping cost calculations:
+  - Replaced static shipping rates with live RajaOngkir API calls
+  - Added province-to-city selection dropdowns for accurate destination input
+  - Implemented secure server-side API routes to protect the API key
+  - Added proper error handling and fallback mechanisms
+- **POS/Kasir System**: Updated to use live RajaOngkir shipping rates:
+  - Integrated real-time shipping calculation for POS orders
+  - Implemented secure server-side API calls to protect the API key
+  - Added error handling for connectivity issues
+- **Security Implementation**: All RajaOngkir API calls are now made through secure server-side routes to prevent API key exposure
+- **Enhanced UX**: Users can now select provinces and cities for precise shipping cost calculations
+
+#### API Infrastructure
+- **Secure API Routes**: Created `/api/shipping/rajaongkir` and `/api/shipping/rajaongkir/cities` server-side routes
+- **Environment Configuration**: Added support for `RAJAONGKIR_API_KEY` environment variable
+- **Database Updates**: Added `shipping_origin_city_id` column to `store_settings` table for origin location configuration
+- **Province Mapping**: Implemented mapping between local database province IDs and RajaOngkir province IDs
+
+### Dashboard Enhancement 📊
+
+#### Marketplace Quick Access
+- **New Dashboard Menu Item**: Added 'Marketplace' card as the first menu item in the user dashboard
+- **Direct Product Access**: Links directly to `/products` page for easy access to product catalog
+- **Improved Navigation**: Users can now quickly access the product marketplace from their dashboard
+
+### Homepage Redirection 🏠
+
+#### Landing Page Redirect
+- **Automatic Redirect**: Homepage now redirects users to the `/about` page instead of landing page
+- **Enhanced User Journey**: Directs visitors to company information and story first
+- **Streamlined Experience**: Creates a more focused user experience
+
 ## 🆕 Recent Updates (January 7, 2026)
 
 ### User Onboarding & Profile Completion 👤
