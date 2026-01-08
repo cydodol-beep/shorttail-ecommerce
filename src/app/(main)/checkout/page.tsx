@@ -78,56 +78,54 @@ async function fetchProvinces() {
   })) || [];
 }
 
+// Function to get RajaOngkir province ID based on local province ID
+function getRajaOngkirProvinceId(localProvinceId: string, provincesList: { id: number; name: string }[]): string {
+  // Find the local province by ID
+  const localProvince = provincesList.find(p => p.id.toString() === localProvinceId);
+
+  if (!localProvince) {
+    console.error(`Local province ID ${localProvinceId} not found in local database`);
+    return localProvinceId; // return as-is as fallback
+  }
+
+  // Map common province names to RajaOngkir IDs for Starter plan
+  const nameToRajaOngkirId: Record<string, string> = {
+    'DKI Jakarta': '6',
+    'Jawa Barat': '1',
+    'Jawa Tengah': '2',
+    'Jawa Timur': '3',
+    'DI Yogyakarta': '5',
+    'Banten': '4',
+    'Bali': '2',
+    'Sumatera Utara': '1',
+    'Sumatera Barat': '2',
+    'Riau': '3',
+  };
+
+  // Try name-based mapping first
+  if (localProvince.name in nameToRajaOngkirId) {
+    return nameToRajaOngkirId[localProvince.name];
+  }
+
+  // Use ID mapping as fallback (basic mapping)
+  const idToRajaOngkirId: Record<string, string> = {
+    '6': '6',   // DKI Jakarta
+    '7': '1',   // Jawa Barat (maps to West Java)
+    '8': '2',   // Jawa Tengah (maps to Central Java)
+    '9': '5',   // DI Yogyakarta
+    '10': '3',  // Jawa Timur (maps to East Java)
+    '31': '4',  // Banten
+    '32': '2',  // Bali
+  };
+
+  return idToRajaOngkirId[localProvinceId] || localProvinceId;
+}
+
 // Fetch cities for selected province using our API route
-async function fetchCitiesByProvinceId(supabaseProvinceId: string) {
+async function fetchCitiesByProvinceId(supabaseProvinceId: string, provincesList: { id: number; name: string }[]) {
   try {
-    // First, let's try to match the Supabase province name to RajaOngkir
-    // instead of relying solely on ID mapping which might be inconsistent
-    const supabaseProvince = provinces.find(p => p.id.toString() === supabaseProvinceId);
-
-    if (!supabaseProvince) {
-      console.error(`Province ID ${supabaseProvinceId} not found in local database`);
-      return [];
-    }
-
-    // Try to get RajaOngkir province ID by name matching
-    // For demo purposes, we'll use a simpler approach that maps common names
-    let rajaOngkirProvinceId = supabaseProvinceId; // default fallback
-
-    // Map common province names to known RajaOngkir IDs for Starter plan
-    const provinceNameMap: Record<string, string> = {
-      'DKI Jakarta': '6',      // Jakarta
-      'Jawa Barat': '1',       // West Java
-      'Jawa Tengah': '2',      // Central Java
-      'Jawa Timur': '3',       // East Java
-      'DI Yogyakarta': '5',    // Yogyakarta
-      'Banten': '4',           // Banten
-      'Bali': '2',             // Bali
-      'Sumatera Utara': '1',   // North Sumatra
-      'Sumatera Barat': '2',   // West Sumatra
-      'Riau': '3',             // Riau
-      // Add more as needed
-    };
-
-    // Try name-based mapping first
-    if (supabaseProvince.name in provinceNameMap) {
-      rajaOngKirProvinceId = provinceNameMap[supabaseProvince.name];
-    } else {
-      // Use ID mapping as fallback
-      const idMap: Record<string, string> = {
-        '6': '6',   // DKI Jakarta
-        '7': '1',   // Jawa Barat (West Java in RajaOngkir)
-        '8': '2',   // Jawa Tengah (Central Java)
-        '9': '5',   // DI Yogyakarta
-        '10': '3',  // Jawa Timur (East Java)
-        '31': '4',  // Banten
-        '32': '2',  // Bali
-        '12': '1',  // Sumatera Utara (North Sumatra)
-        // Add more mappings as appropriate
-      };
-
-      rajaOngkirProvinceId = idMap[supabaseProvinceId] || supabaseProvinceId;
-    }
+    // Get the corresponding RajaOngkir province ID
+    const rajaOngkirProvinceId = getRajaOngkirProvinceId(supabaseProvinceId, provincesList);
 
     const response = await fetch('/api/shipping/rajaongkir/cities', {
       method: 'POST',
@@ -431,7 +429,7 @@ export default function CheckoutPage() {
   // Function to load cities for a selected province
   const loadCitiesForProvince = async (provinceId: string) => {
     try {
-      const citiesData = await fetchCitiesByProvinceId(provinceId);
+      const citiesData = await fetchCitiesByProvinceId(provinceId, provinces);
       setCities(citiesData);
 
       // If the user had previously selected a city, try to match it with the new city data
@@ -439,8 +437,9 @@ export default function CheckoutPage() {
       if (currentCityValue) {
         const matchedCity = citiesData.find(
           (city: any) =>
-            city.city_name.toLowerCase().includes(currentCityValue.toLowerCase()) ||
-            currentCityValue.toLowerCase().includes(city.city_name.toLowerCase())
+            city.city_name &&
+            (city.city_name.toLowerCase().includes(currentCityValue.toLowerCase()) ||
+            currentCityValue.toLowerCase().includes(city.city_name.toLowerCase()))
         );
         if (matchedCity) {
           setSelectedCityId(matchedCity.city_id);
