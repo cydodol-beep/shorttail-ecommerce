@@ -15,10 +15,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Ensure we have the API key
-    const rajaongkirApiKey = process.env.NEXT_PUBLIC_RAJAONGKIR_API_KEY;
+    // Ensure we have the API key (try both public and private variables)
+    const rajaongkirApiKey = process.env.RAJAONGKIR_API_KEY || process.env.NEXT_PUBLIC_RAJAONGKIR_API_KEY;
     if (!rajaongkirApiKey) {
       console.error('RajaOngkir API key is not set in environment variables');
+      console.error('Available env vars (partial):', {
+        hasRajaongkirApiKey: !!process.env.RAJAONGKIR_API_KEY,
+        hasNextPublicRajaongkirApiKey: !!process.env.NEXT_PUBLIC_RAJAONGKIR_API_KEY,
+      });
       return Response.json(
         { error: 'Shipping calculation is temporarily unavailable' },
         { status: 500 }

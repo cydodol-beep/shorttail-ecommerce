@@ -7,24 +7,28 @@ export async function POST(req: NextRequest) {
 
     // Validate required param
     if (!provinceId) {
+      console.log('Missing provinceId in request');
       return Response.json(
         { error: 'Missing required parameter: provinceId' },
         { status: 400 }
       );
     }
 
-    // Ensure we have the API key
-    const rajaongkirApiKey = process.env.NEXT_PUBLIC_RAJAONGKIR_API_KEY;
+    // Ensure we have the API key (try both public and private variables)
+    const rajaongkirApiKey = process.env.RAJAONGKIR_API_KEY || process.env.NEXT_PUBLIC_RAJAONGKIR_API_KEY;
     if (!rajaongkirApiKey) {
       console.error('RajaOngkir API key is not set in environment variables');
+      console.error('Available env vars (partial):', {
+        hasRajaongkirApiKey: !!process.env.RAJAONGKIR_API_KEY,
+        hasNextPublicRajaongkirApiKey: !!process.env.NEXT_PUBLIC_RAJAONGKIR_API_KEY,
+      });
       return Response.json(
-        { error: 'Location data is temporarily unavailable' },
+        { error: 'RajaOngkir API key is not configured' },
         { status: 500 }
       );
     }
 
-    // Debug: Log the parameters being sent
-    console.log('RajaOngkir cities API called with:', { provinceId, apiKeyExists: !!rajaongkirApiKey });
+    console.log('Making request to RajaOngkir API with provinceId:', provinceId);
 
     // Call RajaOngkir API
     const response = await fetch(`https://api.rajaongkir.com/starter/city?province=${provinceId}`, {
@@ -35,17 +39,34 @@ export async function POST(req: NextRequest) {
     });
 
     console.log('RajaOngkir API response status:', response.status);
+    
+    // Get the response text first to see what the actual error is
+    const responseBody = await response.text();
+    console.log('Raw RajaOngkir API response:', responseBody);
+
+    // Try parsing the response
+    let result;
+    try {
+      result = JSON.parse(responseBody);
+    } catch (e) {
+      console.error('Could not parse RajaOngkir response as JSON:', e);
+      console.error('Raw response was:', responseBody);
+      return Response.json(
+        { error: 'Invalid response from RajaOngkir API', rawResponse: responseBody },
+        { status: 502 }
+      );
+    }
 
     if (!response.ok) {
       console.error(`RajaOngkir API returned error: ${response.status} ${response.statusText}`);
       return Response.json(
-        { error: `RajaOngkir API error: ${response.status} - ${response.statusText}` },
+        { 
+          error: `RajaOngkir API error: ${response.status}`, 
+          details: result || responseBody 
+        },
         { status: response.status }
       );
     }
-
-    const result = await response.json();
-    console.log('Full RajaOngkir API response:', result);
 
     if (result.rajaongkir && result.rajaongkir.status && result.rajaongkir.status.code !== 200) {
       console.error('RajaOngkir API returned error status:', result.rajaongkir.status);
@@ -67,6 +88,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    console.log('Successfully retrieved cities from RajaOngkir API');
+    
     // Return the cities data
     return Response.json({
       success: true,
@@ -75,7 +98,10 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('Error in RajaOngkir cities API:', error);
     return Response.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error in RajaOngkir cities API', 
+        message: error instanceof Error ? error.message : String(error) 
+      },
       { status: 500 }
     );
   }
