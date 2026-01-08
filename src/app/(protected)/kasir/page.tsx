@@ -599,16 +599,16 @@ export default function KasirPOSPage() {
           const shippingResults = Array.isArray(result.data) ? result.data : [result.data];
 
           // Find the specific service that matches the selected courier
-          const matchingResult = shippingResults.find(service =>
+          const matchingResult = shippingResults.find((service: any) =>
             service.code.toLowerCase() === courierCode.toLowerCase()
           );
 
           if (matchingResult && matchingResult.costs && matchingResult.costs.length > 0) {
             // Use the first cost option, typically the most economical or standard option
-            const firstCostService = matchingResult.costs[0];
+            const firstCostService: any = matchingResult.costs[0];
 
             if (firstCostService && firstCostService.cost && firstCostService.cost.length > 0) {
-              const costDetail = firstCostService.cost[0];
+              const costDetail: any = firstCostService.cost[0];
 
               setShippingCost(costDetail.value.toString());
 
