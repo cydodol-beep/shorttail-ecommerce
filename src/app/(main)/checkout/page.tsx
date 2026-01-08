@@ -1310,20 +1310,7 @@ export default function CheckoutPage() {
                       </FormItem>
                     )}
                   />
-                  <div className="grid grid-cols-3 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="city"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>City</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Jakarta" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="province"
@@ -1336,9 +1323,9 @@ export default function CheckoutPage() {
                                 <SelectValue placeholder="Select Province" />
                               </SelectTrigger>
                             </FormControl>
-                            <SelectContent>
+                            <SelectContent className="bg-white dark:bg-zinc-950 border-input">
                               {provinces.map((province) => (
-                                <SelectItem key={province.id} value={province.name}>
+                                <SelectItem key={province.id} value={province.name} className="focus:bg-zinc-100 dark:focus:bg-zinc-800 focus:text-zinc-900 dark:focus:text-zinc-50">
                                   {province.name}
                                 </SelectItem>
                               ))}
@@ -1358,31 +1345,42 @@ export default function CheckoutPage() {
                             onValueChange={(value) => {
                               field.onChange(value);
                               // Also find the corresponding city ID and update it
-                              const selectedCity = cities.find((city: any) => city.city_name === value);
+                              const selectedCity = cities.find((city: any) => 
+                                (city.city_name === value) || (city.name === value)
+                              );
                               if (selectedCity) {
-                                setSelectedCityId(selectedCity.city_id);
-                                form.setValue('destination_city_id', selectedCity.city_id);
+                                const id = selectedCity.city_id || selectedCity.id || ''; 
+                                setSelectedCityId(id);
+                                form.setValue('destination_city_id', id.toString());
                               }
                             }}
                             value={field.value}
+                            disabled={!selectedProvince || cities.length === 0}
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select City" />
+                                <SelectValue placeholder={!selectedProvince ? "Select Province First" : (cities.length === 0 ? "Loading Cities..." : "Select City")} />
                               </SelectTrigger>
                             </FormControl>
-                            <SelectContent>
-                              {cities.map((city: any) => (
-                                <SelectItem key={city.city_id} value={city.city_name}>
-                                  {city.city_name}
-                                </SelectItem>
-                              ))}
+                            <SelectContent className="bg-white dark:bg-zinc-950 border-input max-h-[300px]">
+                              {cities.map((city: any) => {
+                                // Handle Komerce API structure (id, name) or Legacy structure (city_id, city_name)
+                                const cityId = city.city_id || city.id;
+                                const cityName = city.city_name || city.name;
+                                return (
+                                  <SelectItem key={cityId} value={cityName} className="focus:bg-zinc-100 dark:focus:bg-zinc-800 focus:text-zinc-900 dark:focus:text-zinc-50">
+                                    {cityName}
+                                  </SelectItem>
+                                );
+                              })}
                             </SelectContent>
                           </Select>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="postal_code"
@@ -1396,6 +1394,7 @@ export default function CheckoutPage() {
                         </FormItem>
                       )}
                     />
+                  </div>
                     {/* Hidden field to store RajaOngkir city ID */}
                     <FormField
                       control={form.control}
