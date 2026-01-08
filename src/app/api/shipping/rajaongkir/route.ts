@@ -47,8 +47,8 @@ export async function POST(req: NextRequest) {
       courier: courier.toLowerCase(),
     });
 
-    // Call RajaOngkir API - updated to v2 endpoint as per documentation
-    const response = await fetch('https://api.rajaongkir.com/v2/cost', {
+    // Call RajaOngkir API - using Komerce V2 endpoint (District Calculate Cost)
+    const response = await fetch('https://rajaongkir.komerce.id/api/v1/calculate/domestic-cost', {
       method: 'POST',
       headers: {
         'key': rajaongkirApiKey,
@@ -67,7 +67,16 @@ export async function POST(req: NextRequest) {
 
     const result = await response.json();
 
-    if (result.rajaongkir.status.code !== 200) {
+    // Check for Komerce V2 structure
+    if (result.meta && result.meta.code === 200) {
+       return Response.json({
+        success: true,
+        data: result.data,
+      });
+    }
+
+    // Check implementation for Legacy structure
+    if (result.rajaongkir && result.rajaongkir.status.code !== 200) {
       console.error('RajaOngkir API returned error status:', result.rajaongkir.status);
       return Response.json(
         { 
@@ -76,13 +85,20 @@ export async function POST(req: NextRequest) {
         },
         { status: 400 }
       );
+    } else if (result.rajaongkir && result.rajaongkir.results) {
+        return Response.json({
+        success: true,
+        data: result.rajaongkir.results,
+      });
     }
 
-    // Return the shipping costs
-    return Response.json({
-      success: true,
-      data: result.rajaongkir.results,
-    });
+    return Response.json(
+      { 
+        error: result.meta?.message || 'RajaOngkir API error',
+        details: result 
+      },
+      { status: 400 }
+    );
   } catch (error) {
     console.error('Error in RajaOngkir shipping calculation API:', error);
     return Response.json(

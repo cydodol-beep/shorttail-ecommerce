@@ -53,10 +53,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log('Making request to RajaOngkir API with provinceId:', provinceId);
+    console.log('Making request to RajaOngkir Komerce API with provinceId:', provinceId);
 
-    // Call RajaOngkir API - updated to v2 endpoint as per documentation
-    const response = await fetch(`https://api.rajaongkir.com/v2/city?province=${provinceId}`, {
+    // Call RajaOngkir API - using Komerce V2 endpoint
+    const response = await fetch(`https://rajaongkir.komerce.id/api/v1/destination/city/${provinceId}`, {
       method: 'GET',
       headers: {
         'key': rajaongkirApiKey,
@@ -93,33 +93,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (result.rajaongkir && result.rajaongkir.status && result.rajaongkir.status.code !== 200) {
-      console.error('RajaOngkir API returned error status:', result.rajaongkir.status);
-      return Response.json(
-        {
-          error: result.rajaongkir.status.description || 'RajaOngkir API error',
-          details: result.rajaongkir.status
-        },
-        { status: 400 }
-      );
+    // Handle Komerce V2 response format (meta + data)
+    if (result.meta && result.meta.code === 200) {
+       console.log('Successfully retrieved cities from RajaOngkir Komerce API');
+       return Response.json({
+        success: true,
+        data: result.data,
+      });
     }
 
-    // Handle case where response format is different than expected
-    if (!result.rajaongkir || !result.rajaongkir.results) {
-      console.error('Unexpected RajaOngkir API response format:', result);
-      return Response.json(
-        { error: 'Unexpected response format from RajaOngkir API', details: result },
-        { status: 500 }
-      );
+    // Fallback/Legacy check
+    if (result.rajaongkir && result.rajaongkir.status && result.rajaongkir.status.code === 200) {
+       console.log('Successfully retrieved cities from Legacy RajaOngkir API');
+       return Response.json({
+        success: true,
+        data: result.rajaongkir.results,
+      });
     }
 
-    console.log('Successfully retrieved cities from RajaOngkir API');
-    
-    // Return the cities data
-    return Response.json({
-      success: true,
-      data: result.rajaongkir.results,
-    });
+    // If we get here, it's an error state
+    console.error('UserId returned error status:', result);
+    return Response.json(
+      {
+        error: result.meta?.message || result.rajaongkir?.status?.description || 'RajaOngkir API error',
+        details: result
+      },
+      { status: 400 }
+    );
   } catch (error) {
     console.error('Critical error in RajaOngkir cities API:', error);
     return Response.json(
