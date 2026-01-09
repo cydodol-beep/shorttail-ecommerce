@@ -79,17 +79,28 @@ export default function UserSettingsPage() {
 
   // Hooks for Data (RajaOngkir)
   const { provinces, loading: loadingProvinces } = useProvinces();
-  const { cities: personalCities, loading: loadingCities } = useCities(region);
-  const { cities: recipientCities, loading: loadingRecipientCities } = useCities(recipientRegion);
+  
+  // Find selected province to get rajaongkir_id for API calls
+  const selectedProvince = provinces.find(p => p.id.toString() === region);
+  const selectedRajaOngkirId = selectedProvince?.rajaongkir_province_id?.toString() || region; // Fallback to region ID if no mapping (though mapping should exist)
+
+  const selectedRecipientProvince = provinces.find(p => p.id.toString() === recipientRegion);
+  const selectedRecipientRajaOngkirId = selectedRecipientProvince?.rajaongkir_province_id?.toString() || recipientRegion;
+
+  const { cities: personalCities, loading: loadingCities } = useCities(selectedRajaOngkirId);
+  const { cities: recipientCities, loading: loadingRecipientCities } = useCities(selectedRecipientRajaOngkirId);
 
   // Debug logs for City Data
   useEffect(() => {
-    console.log('Region changed:', region);
+    console.log('Region (DB ID) changed:', region);
+    if (selectedProvince) {
+       console.log('Selected Province:', selectedProvince.province_name, 'RajaOngkir ID:', selectedProvince.rajaongkir_province_id);
+    }
     console.log('Personal Cities loaded:', personalCities?.length);
     if (personalCities?.length > 0) {
       console.log('First city sample:', personalCities[0]);
     }
-  }, [region, personalCities]);
+  }, [region, personalCities, selectedProvince]);
 
   useEffect(() => {
     if (profile) {

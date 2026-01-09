@@ -5,6 +5,7 @@ export interface Province {
   id: number;
   province_name: string;
   province_code?: string;
+  rajaongkir_province_id?: number;
   is_active: boolean;
 }
 
