@@ -717,7 +717,7 @@ export default function UserSettingsPage() {
                               style={{ color: 'black' }}
                             >
                                <span className="!text-black !opacity-100" style={{ color: 'black', fontWeight: 500 }}>
-                                {c.type} {c.city_name}
+                                {c.type || ''} {c.city_name || (c as any).name || ''}
                               </span>
                             </SelectItem>
                           ))
@@ -859,7 +859,7 @@ export default function UserSettingsPage() {
                               style={{ color: 'black' }}
                             >
                                <span className="!text-black !opacity-100" style={{ color: 'black', fontWeight: 500 }}>
-                                {c.type} {c.city_name}
+                                {c.type || ''} {c.city_name || (c as any).name || ''}
                               </span>
                             </SelectItem>
                           ))

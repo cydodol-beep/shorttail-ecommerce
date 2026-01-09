@@ -52,7 +52,9 @@ export const useCitiesStore = create<CitiesStore>((set, get) => ({
       const citiesList = rawCities.map((city: any) => ({
         ...city,
         id: typeof city.id === 'string' ? parseInt(city.id) : (city.id || parseInt(city.city_id) || 0),
-        city_id: city.city_id ? parseInt(city.city_id) : (city.id ? parseInt(city.id.toString()) : 0)
+        city_id: city.city_id ? parseInt(city.city_id) : (city.id ? parseInt(city.id.toString()) : 0),
+        city_name: city.city_name || city.name || '',
+        type: city.type || '',
       }));
       
       set((state) => ({
