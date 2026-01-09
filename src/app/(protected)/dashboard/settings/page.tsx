@@ -628,7 +628,34 @@ export default function UserSettingsPage() {
                       />
                     </div>
                   </div>
-region">Province/State</Label>
+
+                  <div>
+                    <Label htmlFor="user_phone">Phone Number *</Label>
+                    <Input
+                      id="user_phone"
+                      value={userPhone}
+                      onChange={(e) => setUserPhone(e.target.value)}
+                      placeholder="+62 812 3456 7890"
+                    />
+                  </div>
+
+                  <Separator />
+
+                  <h3 className="text-lg font-semibold text-brown-900">Personal Address</h3>
+
+                  <div>
+                    <Label htmlFor="address_line1">Address Line 1</Label>
+                    <Input
+                      id="address_line1"
+                      value={addressLine1}
+                      onChange={(e) => setAddressLine1(e.target.value)}
+                      placeholder="Street address"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="region">Province/State</Label>
                       <Select
                         value={region}
                         onValueChange={(val) => {
@@ -661,34 +688,7 @@ region">Province/State</Label>
                         <SelectContent>
                           {personalCities.map((c) => (
                             <SelectItem key={c.id} value={c.id.toString()}>
-                              {c.type} {c.citysLine1(e.target.value)}
-                      placeholder="Street address"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="city">City</Label>
-                      <Input
-                        id="city"
-                        value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                        placeholder="City"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="region">Province/State</Label>
-                      <Select
-                        value={region}
-                        onValueChange={setRegion}
-                      >
-                        <SelectTrigger id="region">
-                          <SelectValue placeholder="Select province" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {provinces.map((province) => (
-                            <SelectItem key={province.id} value={province.id.toString()}>
-                              {province.province_name}
+                              {c.type} {c.city_name}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -744,7 +744,35 @@ region">Province/State</Label>
                       onChange={(e) => setSameAsPersonal(e.target.checked)}
                       className="h-4 w-4 rounded border-brown-300"
                     />
-                    <Label htmlFor="same_as_persregion">Province/State</Label>
+                    <Label htmlFor="same_as_personal">Same as personal address</Label>
+                  </div>
+
+                  {!sameAsPersonal && (
+                  <>
+                    <div>
+                        <Label htmlFor="recipient_name">Recipient Name</Label>
+                        <Input
+                            id="recipient_name"
+                            value={recipientName}
+                            onChange={(e) => setRecipientName(e.target.value)}
+                            placeholder="Recipient Name"
+                        />
+                    </div>
+                    <div>
+                        <Label htmlFor="recipient_address">Address Line 1</Label>
+                         <Input
+                          id="recipient_address"
+                          value={recipientAddress}
+                          onChange={(e) => setRecipientAddress(e.target.value)}
+                          placeholder="Street address"
+                        />
+                    </div>
+                  </>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="recipient_region">Province/State</Label>
                       <Select
                         value={recipientRegion}
                         onValueChange={(val) => {
@@ -778,9 +806,12 @@ region">Province/State</Label>
                         <SelectContent>
                            {recipientCities.map((c) => (
                             <SelectItem key={c.id} value={c.id.toString()}>
-                              {c.type} {c.citys"
-                      disabled={sameAsPersonal}
-                    />
+                              {c.type} {c.city_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
                   <div>
@@ -794,37 +825,7 @@ region">Province/State</Label>
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="recipient_city">City</Label>
-                      <Input
-                        id="recipient_city"
-                        value={recipientCity}
-                        onChange={(e) => setRecipientCity(e.target.value)}
-                        placeholder="City"
-                        disabled={sameAsPersonal}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="recipient_region">Province/State</Label>
-                      <Select
-                        value={recipientRegion}
-                        onValueChange={setRecipientRegion}
-                        disabled={sameAsPersonal}
-                      >
-                        <SelectTrigger id="recipient_region">
-                          <SelectValue placeholder="Select province" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {provinces.map((province) => (
-                            <SelectItem key={province.id} value={province.id.toString()}>
-                              {province.province_name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
+                  <div>
                       <Label htmlFor="recipient_postal_code">Postal Code</Label>
                       <Input
                         id="recipient_postal_code"
@@ -833,7 +834,6 @@ region">Province/State</Label>
                         placeholder="12345"
                         disabled={sameAsPersonal}
                       />
-                    </div>
                   </div>
 
                   <Button

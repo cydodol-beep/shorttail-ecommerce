@@ -81,7 +81,7 @@ async function fetchProvinces() {
 }
 
 // Function to get RajaOngkir province ID based on local province ID
-function getRajaOngkirProvinceId(localProvinceId: string, provincesList: { id: number; name: string }[]): string {
+function getRajaOngkirProvinceId(localProvinceId: string, provincesList: { id: number; province_name: string }[]): string {
   // Find the local province by ID
   const localProvince = provincesList.find(p => p.id.toString() === localProvinceId);
 
@@ -92,7 +92,7 @@ function getRajaOngkirProvinceId(localProvinceId: string, provincesList: { id: n
   
   // Use fuzzy matching logic for names, as the local DB id might differ from RajaOngkir
   const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
-  const targetName = normalize(localProvince.name);
+  const targetName = normalize(localProvince.province_name);
 
   // Expanded mapping for RajaOngkir V2 (Komerce) Province IDs based on actual API response
   const nameToRajaOngkirId: Record<string, string> = {
@@ -155,7 +155,7 @@ function getRajaOngkirProvinceId(localProvinceId: string, provincesList: { id: n
 }
 
 // Fetch cities for selected province using our API route
-async function fetchCitiesByProvinceId(supabaseProvinceId: string, provincesList: { id: number; name: string }[]) {
+async function fetchCitiesByProvinceId(supabaseProvinceId: string, provincesList: { id: number; province_name: string }[]) {
   try {
     // Get the corresponding RajaOngkir province ID
     const rajaOngkirProvinceId = getRajaOngkirProvinceId(supabaseProvinceId, provincesList);
@@ -468,52 +468,35 @@ export default function CheckoutPage() {
 
       // Update the selectedProvince state based on the province value
       if (formValues.province) {
-        const matchedProvince = provinces.find((prov: { id: number; name: string }) =>
-          prov.name.toLowerCase().includes(formValues.province.toLowerCase()) ||
-          formValues.province.toLowerCase().includes(prov.name.toLowerCase())
+        const matchedProvince = provinces.find((prov: { id: number; province_name: string }) =>
+          prov.province_name.toLowerCase().includes(formValues.province.toLowerCase()) ||
+          formValues.province.toLowerCase().includes(prov.province_name.toLowerCase())
         );
         if (matchedProvince) {
-          setSelectedProvince(matchedProvince.id.toString());
-          // Trigger loading of cities for this province
-          loadCitiesForProvince(matchedProvince.id.toString());
+          setSelectedProvinceId(matchedProvince.id.toString());
         }
       }
     }
   }, [profile, form, provinces]);
 
-  // Load cities when province selection changes
-  // Function to load cities for a selected province
-  const loadCitiesForProvince = async (provinceId: string) => {
-    try {
-      const citiesData = await fetchCitiesByProvinceId(provinceId, provinces);
-      setCities(citiesData);
-
-      // If the user had previously selected a city, try to match it with the new city data
+  // Handle city matching when cities list updates
+  useEffect(() => {
       const currentCityValue = form.watch('city');
-      if (currentCityValue) {
-        const matchedCity = citiesData.find(
+      if (currentCityValue && cities.length > 0) {
+        const matchedCity = cities.find(
           (city: any) =>
             city.city_name &&
             (city.city_name.toLowerCase().includes(currentCityValue.toLowerCase()) ||
             currentCityValue.toLowerCase().includes(city.city_name.toLowerCase()))
         );
         if (matchedCity) {
-          setSelectedCityId(matchedCity.city_id);
+          const cityId = matchedCity.id;
+          setSelectedCityId(cityId.toString());
           // Update the hidden form field for destination_city_id
-          form.setValue('destination_city_id', matchedCity.city_id);
+          form.setValue('destination_city_id', cityId.toString());
         }
       }
-    } catch (error) {
-      console.error('Error loading cities for province:', error);
-      setCities([]);
-    }
-  };
-
-  useEffect(() => {
-    if (selectedProvince) {
-      loadCitiesForProvince(selectedProvince);
-    }
-  }, [selectedProvince]);
+  }, [cities, form.watch('city')]);
 
   useEffect(() => {
     // Don't redirect while auth state is loading/stabilizing
@@ -560,40 +543,30 @@ export default function CheckoutPage() {
     const subscription = form.watch((value, { name }) => {
       if (name === 'province' && value.province) {
         // Find the matching province ID based on the name
-        const matchedProvince = provinces.find((prov: { id: number; name: string }) =>
-          prov.name.toLowerCase().includes(value.province?.toLowerCase() || '') ||
-          (value.province || '').toLowerCase().includes(prov.name.toLowerCase())
+        const matchedProvince = provinces.find((prov: { id: number; province_name: string }) =>
+          prov.province_name.toLowerCase().includes(value.province?.toLowerCase() || '') ||
+          (value.province || '').toLowerCase().includes(prov.province_name.toLowerCase())
         );
-        if (matchedProvince && matchedProvince.id.toString() !== selectedProvince) {
-          setSelectedProvince(matchedProvince.id.toString());
+        if (matchedProvince && matchedProvince.id.toString() !== selectedProvinceId) {
+          setSelectedProvinceId(matchedProvince.id.toString());
         }
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [form, provinces, selectedProvince]);
+  }, [form, provinces, selectedProvinceId]);
 
-  // Set up a reverse watcher to update form when selectedProvince changes (for pre-selection from profile)
+  // Set up a reverse watcher to update form when selectedProvinceId changes (for pre-selection from profile)
   useEffect(() => {
-    if (selectedProvince && provinces.length > 0) {
-      const matchedProvince = provinces.find((prov: { id: number; name: string }) =>
-        prov.id.toString() === selectedProvince
+    if (selectedProvinceId && provinces.length > 0) {
+      const matchedProvince = provinces.find((prov: { id: number; province_name: string }) =>
+        prov.id.toString() === selectedProvinceId
       );
-      if (matchedProvince && form.getValues('province') !== matchedProvince.name) {
-        form.setValue('province', matchedProvince.name);
+      if (matchedProvince && form.getValues('province') !== matchedProvince.province_name) {
+        form.setValue('province', matchedProvince.province_name);
       }
     }
-  }, [selectedProvince, provinces, form]);
-
-  // Fetch provinces on component mount
-  useEffect(() => {
-    const loadProvinces = async () => {
-      const fetchedProvinces = await fetchProvinces();
-      setProvinces(fetchedProvinces);
-    };
-
-    loadProvinces();
-  }, []);
+  }, [selectedProvinceId, provinces, form]);
 
   // Set the initial province from the profile when both profile and provinces are available
   useEffect(() => {
@@ -602,25 +575,25 @@ export default function CheckoutPage() {
       const recipientProvinceId = profile.recipient_province_id;
       const regionProvince = profile.recipient_region || profile.region_state_province || '';
 
-      let matchedProvince: { id: number; name: string } | undefined;
+      let matchedProvince: { id: number; province_name: string } | undefined;
 
       if (recipientProvinceId) {
         // Use the ID directly if available
-        matchedProvince = provinces.find((prov: { id: number; name: string }) =>
+        matchedProvince = provinces.find((prov: { id: number; province_name: string }) =>
           prov.id === recipientProvinceId
         );
       } else if (regionProvince) {
         // Fallback to name matching if no ID
-        matchedProvince = provinces.find((prov: { id: number; name: string }) =>
-          prov.name.toLowerCase().includes(regionProvince.toLowerCase()) ||
-          regionProvince.toLowerCase().includes(prov.name.toLowerCase())
+        matchedProvince = provinces.find((prov: { id: number; province_name: string }) =>
+          prov.province_name.toLowerCase().includes(regionProvince.toLowerCase()) ||
+          regionProvince.toLowerCase().includes(prov.province_name.toLowerCase())
         );
       }
 
       if (matchedProvince) {
-        setSelectedProvince(matchedProvince.id.toString());
+        setSelectedProvinceId(matchedProvince.id.toString());
         // Also update the form value to match the province name
-        form.setValue('province', matchedProvince.name);
+        form.setValue('province', matchedProvince.province_name);
       }
     }
   }, [profile, provinces, form]);
@@ -870,12 +843,23 @@ export default function CheckoutPage() {
       total_amount: total,
       shipping_courier_name: selectedCourier?.name,
       customer_notes: data.customer_notes || null,
+      // Flat columns for DB
+      recipient_name: data.recipient_name,
+      recipient_phone: data.phone,
+      recipient_address: data.address_line1,
+      recipient_city: data.city,
+      recipient_province: data.province,
+      recipient_province_id: selectedProvinceId ? parseInt(selectedProvinceId) : null,
+      destination_city_id: data.destination_city_id ? parseInt(data.destination_city_id) : null,
+      
       shipping_address_snapshot: {
         recipient_name: data.recipient_name,
         phone: data.phone,
         address_line1: data.address_line1,
         city: data.city,
+        destination_city_id: data.destination_city_id,
         province: data.province,
+        province_id: selectedProvinceId,
         postal_code: data.postal_code,
       },
       payment_method: selectedPaymentMethod.name, // Store selected payment method name
@@ -1003,6 +987,16 @@ export default function CheckoutPage() {
           total_amount: previewOrderData.total_amount,
           shipping_courier_name: previewOrderData.shipping_courier_name,
           customer_notes: previewOrderData.customer_notes,
+          
+          // Shipping Details Columns
+          recipient_name: previewOrderData.recipient_name,
+          recipient_phone: previewOrderData.recipient_phone,
+          recipient_address: previewOrderData.recipient_address,
+          recipient_city: previewOrderData.recipient_city,
+          recipient_province: previewOrderData.recipient_province,
+          recipient_province_id: previewOrderData.recipient_province_id,
+          destination_city_id: previewOrderData.destination_city_id,
+
           shipping_address_snapshot: previewOrderData.shipping_address_snapshot,
           payment_method: previewOrderData.payment_method,
           // Include ONLY the payment details for the selected payment method

@@ -29,6 +29,8 @@ interface CreateOrderRequest {
   recipientName: string;
   recipientPhone: string;
   recipientAddress: string;
+  recipientCity?: string;
+  destinationCityId?: number | null;
   provinceName: string;
   provinceId: number | null;
   courierName: string;
@@ -86,6 +88,8 @@ export async function POST(request: Request) {
       recipientName,
       recipientPhone,
       recipientAddress,
+      recipientCity,
+      destinationCityId,
       provinceName,
       provinceId,
       courierName,
@@ -213,6 +217,8 @@ export async function POST(request: Request) {
       recipient_address: recipientAddress || null,
       recipient_province: provinceName || null,
       recipient_province_id: provinceId,
+      recipient_city: recipientCity || null,
+      destination_city_id: destinationCityId || null,
       shipping_courier: courierName || null,
       shipping_weight_grams: totalWeightGrams,
       payment_method: paymentMethod,

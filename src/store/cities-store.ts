@@ -46,10 +46,14 @@ export const useCitiesStore = create<CitiesStore>((set, get) => ({
         throw new Error(data.error || 'Failed to fetch cities');
       }
 
-      const citiesList = data.data || [];
+      const rawCities = data.data || [];
       
-      // Map API response to our City interface if needed
-      // API returns: { id, city_name, postal_code, etc. }
+      // Map API response to our City interface
+      const citiesList = rawCities.map((city: any) => ({
+        ...city,
+        id: typeof city.id === 'string' ? parseInt(city.id) : (city.id || parseInt(city.city_id) || 0),
+        city_id: city.city_id ? parseInt(city.city_id) : (city.id ? parseInt(city.id.toString()) : 0)
+      }));
       
       set((state) => ({
         cities: {

@@ -16,6 +16,7 @@ export interface Profile {
   referred_by: string | null;
   address_line1: string | null;
   city: string | null;
+  city_id: number | null;
   region_state_province: string | null;
   province_id: number | null;
   postal_code: string | null;
@@ -23,6 +24,7 @@ export interface Profile {
   recipient_name: string | null;
   recipient_address_line1: string | null;
   recipient_city: string | null;
+  recipient_city_id: number | null;
   recipient_region: string | null;
   recipient_province_id: number | null;
   recipient_postal_code: string | null;

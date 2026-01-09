@@ -118,7 +118,7 @@ export default function KasirPOSPage() {
   const [searchedProfiles, setSearchedProfiles] = useState<any[]>([]);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [searchingProfiles, setSearchingProfiles] = useState(false);
-  const [provinces, setProvinces] = useState<any[]>([]);
+  
   const [couriers, setCouriers] = useState<any[]>([]);
 
   // Temp customer data search
@@ -195,10 +195,28 @@ export default function KasirPOSPage() {
     }
   }, []);
 
+  const fetchCouriers = async () => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from('shipping_couriers')
+      .select('*')
+      .eq('is_active', true)
+      .order('courier_name');
+    if (data) setCouriers(data);
+  };
+
+  // Cleanup debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     fetchProducts();
     fetchPromotions();
-    fetchProvinces();
     fetchCouriers();
 
     // Check if we're on mobile view
@@ -211,36 +229,6 @@ export default function KasirPOSPage() {
 
     return () => window.removeEventListener('resize', handleResize);
   }, [fetchProducts, fetchPromotions, dbCategories]); // Added dbCategories as dependency to ensure categories update properly
-
-
-  // Cleanup debounce on unmount
-  useEffect(() => {
-    return () => {
-      if (searchDebounceRef.current) {
-        clearTimeout(searchDebounceRef.current);
-      }
-    };
-  }, []);
-
-  const fetchProvinces = async () => {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from('provinces')
-      .select('*')
-      .eq('is_active', true)
-      .order('province_name');
-    if (data) setProvinces(data);
-  };
-
-  const fetchCouriers = async () => {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from('shipping_couriers')
-      .select('*')
-      .eq('is_active', true)
-      .order('courier_name');
-    if (data) setCouriers(data);
-  };
 
   // Search profiles with debouncing
   const searchProfiles = useCallback((query: string) => {
@@ -857,6 +845,10 @@ export default function KasirPOSPage() {
     const selectedProvince = provinces.find(p => p.id.toString() === recipientProvince);
     const provinceName = selectedProvince?.province_name || '';
 
+    // Get selected city name
+    const selectedCity = recipientCities.find(c => c.id.toString() === recipientCityId);
+    const cityName = selectedCity?.city_name || '';
+
     try {
       // Use API route to create order (bypasses RLS issues)
       const response = await fetch('/api/orders/kasir/create', {
@@ -889,6 +881,8 @@ export default function KasirPOSPage() {
           recipientName,
           recipientPhone,
           recipientAddress,
+          recipientCity: cityName,
+          destinationCityId: recipientCityId ? parseInt(recipientCityId) : null,
           provinceName,
           provinceId: recipientProvince ? parseInt(recipientProvince) : null,
           courierName,
@@ -1911,12 +1905,8 @@ export default function KasirPOSPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {recipientCities.map((city) => (
-                          <SelectItem key={city.city_id || city.id} value={(city.city_id || city.id).toString()}>
-                            {city.type} {city.city
-                      <SelectContent>
-                        {provinces.map((province) => (
-                          <SelectItem key={province.id} value={province.id.toString()}>
-                            {province.province_name}
+                          <SelectItem key={city.id} value={city.id.toString()}>
+                            {city.type} {city.city_name}
                           </SelectItem>
                         ))}
                       </SelectContent>
