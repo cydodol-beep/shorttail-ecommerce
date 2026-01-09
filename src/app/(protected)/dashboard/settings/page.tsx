@@ -668,7 +668,11 @@ export default function UserSettingsPage() {
                         </SelectTrigger>
                         <SelectContent className="bg-white text-black border-slate-200 max-h-[200px]">
                           {provinces.map((province) => (
-                            <SelectItem key={province.id} value={province.id.toString()}>
+                            <SelectItem 
+                              key={province.id} 
+                              value={province.id.toString()}
+                              className="text-black hover:bg-slate-100 focus:bg-slate-100 focus:text-black cursor-pointer"
+                            >
                               {province.province_name}
                             </SelectItem>
                           ))}
@@ -687,7 +691,11 @@ export default function UserSettingsPage() {
                         </SelectTrigger>
                         <SelectContent className="bg-white text-black border-slate-200 max-h-[200px]">
                           {personalCities.map((c) => (
-                            <SelectItem key={c.id} value={c.id.toString()}>
+                            <SelectItem 
+                              key={c.id} 
+                              value={c.id.toString()}
+                              className="text-black hover:bg-slate-100 focus:bg-slate-100 focus:text-black cursor-pointer"
+                            >
                               {c.type} {c.city_name}
                             </SelectItem>
                           ))}
@@ -786,7 +794,11 @@ export default function UserSettingsPage() {
                         </SelectTrigger>
                         <SelectContent className="bg-white text-black border-slate-200 max-h-[200px]">
                           {provinces.map((province) => (
-                            <SelectItem key={province.id} value={province.id.toString()}>
+                            <SelectItem 
+                              key={province.id} 
+                              value={province.id.toString()}
+                              className="text-black hover:bg-slate-100 focus:bg-slate-100 focus:text-black cursor-pointer"
+                            >
                               {province.province_name}
                             </SelectItem>
                           ))}
@@ -805,7 +817,11 @@ export default function UserSettingsPage() {
                         </SelectTrigger>
                         <SelectContent className="bg-white text-black border-slate-200 max-h-[200px]">
                            {recipientCities.map((c) => (
-                            <SelectItem key={c.id} value={c.id.toString()}>
+                            <SelectItem 
+                              key={c.id} 
+                              value={c.id.toString()}
+                              className="text-black hover:bg-slate-100 focus:bg-slate-100 focus:text-black cursor-pointer"
+                            >
                               {c.type} {c.city_name}
                             </SelectItem>
                           ))}
