@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
+import { useProvinces } from '@/hooks/use-provinces';
+import { useCities } from '@/hooks/use-cities';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,14 +59,14 @@ export default function UserSettingsPage() {
 
   // Personal Address
   const [addressLine1, setAddressLine1] = useState('');
-  const [city, setCity] = useState('');
+  const [cityId, setCityId] = useState(''); // Stores city_id from RajaOngkir
   const [region, setRegion] = useState(''); // stores province_id
   const [postalCode, setPostalCode] = useState('');
 
   // Recipient Address
   const [recipientName, setRecipientName] = useState('');
   const [recipientAddress, setRecipientAddress] = useState('');
-  const [recipientCity, setRecipientCity] = useState('');
+  const [recipientCityId, setRecipientCityId] = useState(''); // Stores recipient_city_id
   const [recipientRegion, setRecipientRegion] = useState(''); // stores recipient_province_id
   const [recipientPostalCode, setRecipientPostalCode] = useState('');
   const [recipientPhone, setRecipientPhone] = useState('');
@@ -75,25 +77,10 @@ export default function UserSettingsPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  // Provinces
-  const [provinces, setProvinces] = useState<Array<{ id: number; province_name: string }>>([]);
-
-  // Fetch provinces
-  useEffect(() => {
-    const fetchProvinces = async () => {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from('provinces')
-        .select('id, province_name')
-        .eq('is_active', true)
-        .order('province_name');
-      
-      if (data) {
-        setProvinces(data);
-      }
-    };
-    fetchProvinces();
-  }, []);
+  // Hooks for Data (RajaOngkir)
+  const { provinces } = useProvinces();
+  const { cities: personalCities } = useCities(region);
+  const { cities: recipientCities } = useCities(recipientRegion);
 
   useEffect(() => {
     if (profile) {
@@ -116,28 +103,55 @@ export default function UserSettingsPage() {
   useEffect(() => {
     if (sameAsPersonal) {
       setRecipientName(userName);
-      setRecipientAddress(addressLine1);
-      setRecipientCity(city);
-      setRecipientRegion(region);
-      setRecipientPostalCode(postalCode);
-      setRecipientPhone(userPhone); // Also copy the user's phone number
+      setReciId(profile.city_id ? profile.city_id.toString() : '');
+      setRegion(profile.province_id ? profile.province_id.toString() : '');
+      setPostalCode(profile.postal_code || '');
+      setRecipientName(profile.recipient_name || '');
+      setRecipientAddress(profile.recipient_address_line1 || '');
+      setRecipientCityId(profile.recipient_city_id ? profile.recipient_city_id.toString() : '');
+      setRecipientRegion(profile.recipient_province_id ? profile.recipient_province_id.toString() : '');
+      setRecipientPostalCode(profile.recipient_postal_code || '');
+      setRecipientPhone(profile.recipient_phoneno || '');
     }
-  }, [sameAsPersonal, userName, addressLine1, city, region, postalCode, userPhone]);
+  }, [profile]);
 
-  const handleSaveProfile = async () => {
-    if (!user) return;
-
-    setSaving(true);
-    try {
-      const supabase = createClient();
-
-      // Convert province IDs to integers
-      const provinceId = region ? parseInt(region, 10) : null;
-      const recipientProvinceId = recipientRegion ? parseInt(recipientRegion, 10) : null;
+  useEffect(() => {
+    if (sameAsPersonal) {
+      setRecipientName(userName);
+      setRecipientAddress(addressLine1);
+      setRecipientCityId(cityId);
+      setRecipientRegion(region);
+      
+      const selectedCityData = personalCities.find(c => c.id.toString() === cityId);
+      const selectedRecipientCityData = recipientCities.find(c => c.id.toString() === recipientCityId);
 
       const { error } = await supabase
         .from('profiles')
         .update({
+          user_name: userName,
+          user_email: userEmail,
+          user_phoneno: userPhone,
+          // Personal address fields
+          address_line1: addressLine1,
+          city: selectedCityData?.city_name || null,
+          city_id: cityId ? parseInt(cityId, 10) : null,
+          province_id: provinceId,
+          region_state_province: provinces.find(p => p.id.toString() === region)?.province_name,
+          postal_code: postalCode,
+          // Recipient/shipping address fields
+          recipient_name: recipientName,
+          recipient_address_line1: recipientAddress,
+          recipient_city: selectedRecipientCityData?.city_name || null,
+          recipient_city_id: recipientCityId ? parseInt(recipientCityId, 10) : null,
+          recipient_province_id: recipientProvinceId,
+          recipient_region: provinces.find(p => p.id.toString() === recipientRegion)?.province_name
+    if (recipientCityId && recipientCities.length > 0) {
+      const selectedCity = recipientCities.find(c => c.id.toString() === recipientCityId);
+      if (selectedCity && selectedCity.postal_code) {
+        setRecipientPostalCode(selectedCity.postal_code);
+      }
+    }
+  }, [recipientCityId, recipientCities
           user_name: userName,
           user_email: userEmail,
           user_phoneno: userPhone,
@@ -614,27 +628,40 @@ export default function UserSettingsPage() {
                       />
                     </div>
                   </div>
-
-                  <div>
-                    <Label htmlFor="user_phone">Phone Number *</Label>
-                    <Input
-                      id="user_phone"
-                      value={userPhone}
-                      onChange={(e) => setUserPhone(e.target.value)}
-                      placeholder="+62 812 3456 7890"
-                    />
-                  </div>
-
-                  <Separator />
-
-                  <h3 className="text-lg font-semibold text-brown-900">Personal Address</h3>
-
-                  <div>
-                    <Label htmlFor="address_line1">Address Line 1</Label>
-                    <Input
-                      id="address_line1"
-                      value={addressLine1}
-                      onChange={(e) => setAddressLine1(e.target.value)}
+region">Province/State</Label>
+                      <Select
+                        value={region}
+                        onValueChange={(val) => {
+                          setRegion(val);
+                          setCityId(''); // Reset city when province changes
+                        }}
+                      >
+                        <SelectTrigger id="region">
+                          <SelectValue placeholder="Select province" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {provinces.map((province) => (
+                            <SelectItem key={province.id} value={province.id.toString()}>
+                              {province.province_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="city">City</Label>
+                      <Select
+                        value={cityId}
+                        onValueChange={setCityId}
+                        disabled={!region}
+                      >
+                        <SelectTrigger id="city">
+                          <SelectValue placeholder="Select city" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {personalCities.map((c) => (
+                            <SelectItem key={c.id} value={c.id.toString()}>
+                              {c.type} {c.citysLine1(e.target.value)}
                       placeholder="Street address"
                     />
                   </div>
@@ -717,29 +744,41 @@ export default function UserSettingsPage() {
                       onChange={(e) => setSameAsPersonal(e.target.checked)}
                       className="h-4 w-4 rounded border-brown-300"
                     />
-                    <Label htmlFor="same_as_personal" className="cursor-pointer">
-                      Same as personal address
-                    </Label>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="recipient_name">Recipient Name</Label>
-                    <Input
-                      id="recipient_name"
-                      value={recipientName}
-                      onChange={(e) => setRecipientName(e.target.value)}
-                      placeholder="Recipient name"
-                      disabled={sameAsPersonal}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="recipient_address">Address Line 1</Label>
-                    <Input
-                      id="recipient_address"
-                      value={recipientAddress}
-                      onChange={(e) => setRecipientAddress(e.target.value)}
-                      placeholder="Street address"
+                    <Label htmlFor="same_as_persregion">Province/State</Label>
+                      <Select
+                        value={recipientRegion}
+                        onValueChange={(val) => {
+                          setRecipientRegion(val);
+                          setRecipientCityId('');
+                        }}
+                        disabled={sameAsPersonal}
+                      >
+                        <SelectTrigger id="recipient_region">
+                          <SelectValue placeholder="Select province" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {provinces.map((province) => (
+                            <SelectItem key={province.id} value={province.id.toString()}>
+                              {province.province_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="recipient_city">City</Label>
+                      <Select
+                         value={recipientCityId}
+                         onValueChange={setRecipientCityId}
+                         disabled={sameAsPersonal || !recipientRegion}
+                      >
+                        <SelectTrigger id="recipient_city">
+                          <SelectValue placeholder="Select city" />
+                        </SelectTrigger>
+                        <SelectContent>
+                           {recipientCities.map((c) => (
+                            <SelectItem key={c.id} value={c.id.toString()}>
+                              {c.type} {c.citys"
                       disabled={sameAsPersonal}
                     />
                   </div>

@@ -28,6 +28,8 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCartStore } from '@/store/cart-store';
 import { useAuth } from '@/hooks/use-auth';
+import { useProvinces } from '@/hooks/use-provinces';
+import { useCities } from '@/hooks/use-cities';
 import { createClient } from '@/lib/supabase/client';
 import { RelatedProducts } from '@/components/products/related-products';
 import { generateInvoiceJPEG, downloadInvoice } from '@/lib/invoice-generator';
@@ -393,10 +395,15 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [dynamicCouriers, setDynamicCouriers] = useState(staticCouriers);
   const [selectedCourier, setSelectedCourier] = useState<ShippingCourier | null>(null);
-  const [selectedProvince, setSelectedProvince] = useState('');
-  const [selectedCityId, setSelectedCityId] = useState(''); // For RajaOngkir
-  const [cities, setCities] = useState<any[]>([]); // Cities for selected province
-  const [provinces, setProvinces] = useState<{ id: number; name: string }[]>([]);
+  
+  // Use IDs for selection
+  const [selectedProvinceId, setSelectedProvinceId] = useState('');
+  const [selectedCityId, setSelectedCityId] = useState(''); 
+  
+  // Hooks for Data
+  const { provinces } = useProvinces();
+  const { cities } = useCities(selectedProvinceId);
+
   const [shippingLoading, setShippingLoading] = useState(false);
   const [promotionCode, setPromotionCode] = useState('');
   const [appliedPromotion, setAppliedPromotion] = useState<any>(null);
@@ -701,7 +708,7 @@ export default function CheckoutPage() {
       };
       calculateRates();
     }
-  }, [selectedProvince, totalWeightGrams]);
+  }, [selectedCityId, totalWeightGrams]);
 
   const shippingFee = selectedCourier?.price || 0;
 
@@ -1368,12 +1375,9 @@ export default function CheckoutPage() {
                           <FormLabel>Province</FormLabel>
                           <Select 
                             onValueChange={(value) => {
-                              field.onChange(value);
-                              // Find the province ID based on the name selected
-                              const selectedProv = provinces.find(p => p.name === value);
-                              if (selectedProv) {
-                                setSelectedProvince(selectedProv.id.toString());
-                              }
+                              field.onChange(value); // Store ID
+                              setSelectedProvinceId(value); // Trigger City Load
+                              // Find name for display/other logic if needed
                             }} 
                             value={field.value}
                           >
@@ -1384,8 +1388,8 @@ export default function CheckoutPage() {
                             </FormControl>
                             <SelectContent className="bg-white dark:bg-zinc-950 border-input">
                               {provinces.map((province) => (
-                                <SelectItem key={province.id} value={province.name} className="focus:bg-zinc-100 dark:focus:bg-zinc-800 focus:text-zinc-900 dark:focus:text-zinc-50">
-                                  {province.name}
+                                <SelectItem key={province.id} value={province.id.toString()} className="focus:bg-zinc-100 dark:focus:bg-zinc-800 focus:text-zinc-900 dark:focus:text-zinc-50">
+                                  {province.province_name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -1402,33 +1406,31 @@ export default function CheckoutPage() {
                           <FormLabel>City</FormLabel>
                           <Select
                             onValueChange={(value) => {
-                              field.onChange(value);
-                              // Also find the corresponding city ID and update it
-                              const selectedCity = cities.find((city: any) => 
-                                (city.city_name === value) || (city.name === value)
-                              );
-                              if (selectedCity) {
-                                const id = selectedCity.city_id || selectedCity.id || ''; 
-                                setSelectedCityId(id);
-                                form.setValue('destination_city_id', id.toString());
+                              field.onChange(value); // Store ID
+                              setSelectedCityId(value);
+                              form.setValue('destination_city_id', value);
+                              
+                              // Optional: Update postal code if not set
+                              const selectedCity = cities.find((c: any) => c.id.toString() === value || c.city_id === value);
+                              if (selectedCity && selectedCity.postal_code) {
+                                form.setValue('postal_code', selectedCity.postal_code);
                               }
                             }}
                             value={field.value}
-                            disabled={!selectedProvince || cities.length === 0}
+                            disabled={!selectedProvinceId || cities.length === 0}
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder={!selectedProvince ? "Select Province First" : (cities.length === 0 ? "Loading Cities..." : "Select City")} />
+                                <SelectValue placeholder={!selectedProvinceId ? "Select Province First" : (cities.length === 0 ? "Loading Cities..." : "Select City")} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent className="bg-white dark:bg-zinc-950 border-input max-h-[300px]">
                               {cities.map((city: any) => {
-                                // Handle Komerce API structure (id, name) or Legacy structure (city_id, city_name)
                                 const cityId = city.city_id || city.id;
                                 const cityName = city.city_name || city.name;
                                 return (
-                                  <SelectItem key={cityId} value={cityName} className="focus:bg-zinc-100 dark:focus:bg-zinc-800 focus:text-zinc-900 dark:focus:text-zinc-50">
-                                    {cityName}
+                                  <SelectItem key={cityId} value={cityId.toString()} className="focus:bg-zinc-100 dark:focus:bg-zinc-800 focus:text-zinc-900 dark:focus:text-zinc-50">
+                                    {city.type} {cityName}
                                   </SelectItem>
                                 );
                               })}

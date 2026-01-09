@@ -16,6 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { useCategories, type Category } from '@/hooks/use-categories';
+import { useProvinces } from '@/hooks/use-provinces';
+import { useCities } from '@/hooks/use-cities';
 import { useAllSettings } from '@/hooks/use-store-settings';
 import type { Product, ProductVariant } from '@/types/database';
 
@@ -94,10 +96,14 @@ export default function KasirPOSPage() {
   const [recipientPhone, setRecipientPhone] = useState('');
   const [recipientAddress, setRecipientAddress] = useState('');
   const [recipientProvince, setRecipientProvince] = useState('');
+  const [recipientCityId, setRecipientCityId] = useState('');
   const [shippingCourier, setShippingCourier] = useState('');
   const [customCourier, setCustomCourier] = useState('');
   const [shippingCost, setShippingCost] = useState('');
   const [customerNotes, setCustomerNotes] = useState('');
+
+  const { provinces } = useProvinces();
+  const { cities: recipientCities } = useCities(recipientProvince);
   const [checkoutStep, setCheckoutStep] = useState<'details' | 'payment'>('details');
 
   // Customer information (separate from recipient)
@@ -1877,14 +1883,32 @@ export default function KasirPOSPage() {
                       value={recipientPhone}
                       onChange={(e) => setRecipientPhone(e.target.value)}
                       className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Province *</label>
-                    <Select value={recipientProvince} onValueChange={setRecipientProvince}>
+                    />(val) => {
+                      setRecipientProvince(val);
+                      setRecipientCityId('');
+                    }}>
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Select province" />
                       </SelectTrigger>
+                      <SelectContent>
+                        {provinces.map((province) => (
+                          <SelectItem key={province.id} value={province.id.toString()}>
+                            {province.province_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">City *</label>
+                    <Select value={recipientCityId} onValueChange={setRecipientCityId} disabled={!recipientProvince}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder={!recipientProvince ? "Select province first" : "Select city"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {recipientCities.map((city) => (
+                          <SelectItem key={city.city_id || city.id} value={(city.city_id || city.id).toString()}>
+                            {city.type} {city.city
                       <SelectContent>
                         {provinces.map((province) => (
                           <SelectItem key={province.id} value={province.id.toString()}>
