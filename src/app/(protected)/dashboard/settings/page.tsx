@@ -162,8 +162,12 @@ export default function UserSettingsPage() {
       const provinceId = region ? parseInt(region, 10) : null;
       const recipientProvinceId = recipientRegion ? parseInt(recipientRegion, 10) : null;
       
+      // Ensure we find the city logic handles the id property access safely
       const selectedCityData = personalCities.find(c => c.id.toString() === cityId);
       const selectedRecipientCityData = recipientCities.find(c => c.id.toString() === recipientCityId);
+
+      const citySaveValue = selectedCityData?.city_name || (selectedCityData as any)?.name || null;
+      const recipientCitySaveValue = selectedRecipientCityData?.city_name || (selectedRecipientCityData as any)?.name || null;
 
       const { error } = await supabase
         .from('profiles')
@@ -173,7 +177,7 @@ export default function UserSettingsPage() {
           user_phoneno: userPhone,
           // Personal address fields
           address_line1: addressLine1,
-          city: selectedCityData?.city_name || null,
+          city: citySaveValue,
           city_id: cityId ? parseInt(cityId, 10) : null,
           province_id: provinceId,
           region_state_province: provinces.find(p => p.id.toString() === region)?.province_name,
@@ -181,7 +185,7 @@ export default function UserSettingsPage() {
           // Recipient/shipping address fields
           recipient_name: recipientName,
           recipient_address_line1: recipientAddress,
-          recipient_city: selectedRecipientCityData?.city_name || null,
+          recipient_city: recipientCitySaveValue,
           recipient_city_id: recipientCityId ? parseInt(recipientCityId, 10) : null,
           recipient_province_id: recipientProvinceId,
           recipient_region: provinces.find(p => p.id.toString() === recipientRegion)?.province_name,
