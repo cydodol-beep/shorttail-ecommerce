@@ -78,9 +78,9 @@ export default function UserSettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   // Hooks for Data (RajaOngkir)
-  const { provinces } = useProvinces();
-  const { cities: personalCities } = useCities(region);
-  const { cities: recipientCities } = useCities(recipientRegion);
+  const { provinces, loading: loadingProvinces } = useProvinces();
+  const { cities: personalCities, loading: loadingCities } = useCities(region);
+  const { cities: recipientCities, loading: loadingRecipientCities } = useCities(recipientRegion);
 
   useEffect(() => {
     if (profile) {
@@ -663,19 +663,26 @@ export default function UserSettingsPage() {
                           setCityId(''); // Reset city when province changes
                         }}
                       >
-                        <SelectTrigger id="region">
+                        <SelectTrigger id="region" className="w-full !bg-white !text-black border-slate-300" style={{ backgroundColor: 'white', color: 'black' }}>
                           <SelectValue placeholder="Select province" />
                         </SelectTrigger>
-                        <SelectContent className="bg-white text-black border-slate-200 max-h-[200px]">
-                          {provinces.map((province) => (
+                        <SelectContent className="!bg-white !text-black border-slate-200 max-h-[200px]" style={{ backgroundColor: 'white', color: 'black' }}>
+                          {loadingProvinces ? (
+                             <SelectItem disabled value="loading" className="!text-gray-500">Loading provinces...</SelectItem>
+                          ) : provinces.length > 0 ? (
+                            provinces.map((province) => (
                             <SelectItem 
                               key={province.id} 
                               value={province.id.toString()}
-                              className="text-black hover:bg-slate-100 focus:bg-slate-100 focus:text-black cursor-pointer"
+                              className="!text-black hover:bg-slate-100 focus:bg-slate-100 focus:text-black cursor-pointer"
+                              style={{ color: 'black' }}
                             >
                               {province.province_name}
                             </SelectItem>
-                          ))}
+                          ))
+                          ) : (
+                             <SelectItem disabled value="empty" className="!text-gray-500">No provinces found</SelectItem>
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
@@ -686,19 +693,26 @@ export default function UserSettingsPage() {
                         onValueChange={setCityId}
                         disabled={!region}
                       >
-                        <SelectTrigger id="city">
+                        <SelectTrigger id="city" className="w-full !bg-white !text-black border-slate-300" style={{ backgroundColor: 'white', color: 'black' }}>
                           <SelectValue placeholder="Select city" />
                         </SelectTrigger>
-                        <SelectContent className="bg-white text-black border-slate-200 max-h-[200px]">
-                          {personalCities.map((c) => (
+                        <SelectContent className="!bg-white !text-black border-slate-200 max-h-[200px]" style={{ backgroundColor: 'white', color: 'black' }}>
+                          {loadingCities ? (
+                             <SelectItem disabled value="loading" className="!text-gray-500">Loading cities...</SelectItem>
+                          ) : personalCities.length > 0 ? (
+                            personalCities.map((c) => (
                             <SelectItem 
                               key={c.id} 
                               value={c.id.toString()}
-                              className="text-black hover:bg-slate-100 focus:bg-slate-100 focus:text-black cursor-pointer"
+                              className="!text-black hover:bg-slate-100 focus:bg-slate-100 focus:text-black cursor-pointer"
+                              style={{ color: 'black' }}
                             >
                               {c.type} {c.city_name}
                             </SelectItem>
-                          ))}
+                          ))
+                          ) : (
+                             <SelectItem disabled value="empty" className="!text-gray-500">No cities found (Select Province)</SelectItem>
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
@@ -789,19 +803,26 @@ export default function UserSettingsPage() {
                         }}
                         disabled={sameAsPersonal}
                       >
-                        <SelectTrigger id="recipient_region">
+                        <SelectTrigger id="recipient_region" className="w-full !bg-white !text-black border-slate-300" style={{ backgroundColor: 'white', color: 'black' }}>
                           <SelectValue placeholder="Select province" />
                         </SelectTrigger>
-                        <SelectContent className="bg-white text-black border-slate-200 max-h-[200px]">
-                          {provinces.map((province) => (
+                        <SelectContent className="!bg-white !text-black border-slate-200 max-h-[200px]" style={{ backgroundColor: 'white', color: 'black' }}>
+                           {loadingProvinces ? (
+                             <SelectItem disabled value="loading" className="!text-gray-500">Loading provinces...</SelectItem>
+                          ) : provinces.length > 0 ? (
+                             provinces.map((province) => (
                             <SelectItem 
                               key={province.id} 
                               value={province.id.toString()}
-                              className="text-black hover:bg-slate-100 focus:bg-slate-100 focus:text-black cursor-pointer"
+                              className="!text-black hover:bg-slate-100 focus:bg-slate-100 focus:text-black cursor-pointer"
+                              style={{ color: 'black' }}
                             >
                               {province.province_name}
                             </SelectItem>
-                          ))}
+                          ))
+                          ) : (
+                             <SelectItem disabled value="empty" className="!text-gray-500">No provinces found</SelectItem>
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
@@ -812,19 +833,26 @@ export default function UserSettingsPage() {
                          onValueChange={setRecipientCityId}
                          disabled={sameAsPersonal || !recipientRegion}
                       >
-                        <SelectTrigger id="recipient_city">
+                        <SelectTrigger id="recipient_city" className="w-full !bg-white !text-black border-slate-300" style={{ backgroundColor: 'white', color: 'black' }}>
                           <SelectValue placeholder="Select city" />
                         </SelectTrigger>
-                        <SelectContent className="bg-white text-black border-slate-200 max-h-[200px]">
-                           {recipientCities.map((c) => (
+                        <SelectContent className="!bg-white !text-black border-slate-200 max-h-[200px]" style={{ backgroundColor: 'white', color: 'black' }}>
+                            {loadingRecipientCities ? (
+                             <SelectItem disabled value="loading" className="!text-gray-500">Loading cities...</SelectItem>
+                            ) : recipientCities.length > 0 ? (
+                                recipientCities.map((c) => (
                             <SelectItem 
                               key={c.id} 
                               value={c.id.toString()}
-                              className="text-black hover:bg-slate-100 focus:bg-slate-100 focus:text-black cursor-pointer"
+                              className="!text-black hover:bg-slate-100 focus:bg-slate-100 focus:text-black cursor-pointer"
+                              style={{ color: 'black' }}
                             >
                               {c.type} {c.city_name}
                             </SelectItem>
-                          ))}
+                          ))
+                            ) : (
+                               <SelectItem disabled value="empty" className="!text-gray-500">No cities found</SelectItem>
+                            )}
                         </SelectContent>
                       </Select>
                     </div>
