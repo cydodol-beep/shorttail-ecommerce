@@ -82,6 +82,15 @@ export default function UserSettingsPage() {
   const { cities: personalCities, loading: loadingCities } = useCities(region);
   const { cities: recipientCities, loading: loadingRecipientCities } = useCities(recipientRegion);
 
+  // Debug logs for City Data
+  useEffect(() => {
+    console.log('Region changed:', region);
+    console.log('Personal Cities loaded:', personalCities?.length);
+    if (personalCities?.length > 0) {
+      console.log('First city sample:', personalCities[0]);
+    }
+  }, [region, personalCities]);
+
   useEffect(() => {
     if (profile) {
       setUserName(profile.user_name || '');
@@ -707,7 +716,9 @@ export default function UserSettingsPage() {
                               className="!text-black hover:bg-slate-100 focus:bg-slate-100 focus:text-black cursor-pointer"
                               style={{ color: 'black' }}
                             >
-                              {c.type} {c.city_name}
+                               <span className="!text-black !opacity-100" style={{ color: 'black', fontWeight: 500 }}>
+                                {c.type} {c.city_name}
+                              </span>
                             </SelectItem>
                           ))
                           ) : (
@@ -847,7 +858,9 @@ export default function UserSettingsPage() {
                               className="!text-black hover:bg-slate-100 focus:bg-slate-100 focus:text-black cursor-pointer"
                               style={{ color: 'black' }}
                             >
-                              {c.type} {c.city_name}
+                               <span className="!text-black !opacity-100" style={{ color: 'black', fontWeight: 500 }}>
+                                {c.type} {c.city_name}
+                              </span>
                             </SelectItem>
                           ))
                             ) : (
