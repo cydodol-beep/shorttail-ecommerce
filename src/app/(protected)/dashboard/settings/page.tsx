@@ -666,7 +666,7 @@ export default function UserSettingsPage() {
                         <SelectTrigger id="region">
                           <SelectValue placeholder="Select province" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white text-black border-slate-200 max-h-[200px]">
                           {provinces.map((province) => (
                             <SelectItem key={province.id} value={province.id.toString()}>
                               {province.province_name}
@@ -685,7 +685,7 @@ export default function UserSettingsPage() {
                         <SelectTrigger id="city">
                           <SelectValue placeholder="Select city" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white text-black border-slate-200 max-h-[200px]">
                           {personalCities.map((c) => (
                             <SelectItem key={c.id} value={c.id.toString()}>
                               {c.type} {c.city_name}
@@ -784,7 +784,7 @@ export default function UserSettingsPage() {
                         <SelectTrigger id="recipient_region">
                           <SelectValue placeholder="Select province" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white text-black border-slate-200 max-h-[200px]">
                           {provinces.map((province) => (
                             <SelectItem key={province.id} value={province.id.toString()}>
                               {province.province_name}
@@ -803,7 +803,7 @@ export default function UserSettingsPage() {
                         <SelectTrigger id="recipient_city">
                           <SelectValue placeholder="Select city" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white text-black border-slate-200 max-h-[200px]">
                            {recipientCities.map((c) => (
                             <SelectItem key={c.id} value={c.id.toString()}>
                               {c.type} {c.city_name}
