@@ -172,8 +172,11 @@ export default function UserSettingsPage() {
       const selectedRecipientCityData = recipientCities.find(c => c.id.toString() === recipientCityId);
 
       const citySaveValue = selectedCityData?.city_name || (selectedCityData as any)?.name || null;
-      const recipientCitySaveValue = selectedRecipientCityData?.city_name || (selectedRecipientCityData as any)?.name || null;
+      console.log('Saving Profile - Personal City:', { cityId, citySaveValue, selectedCityData });
 
+      const recipientCitySaveValue = selectedRecipientCityData?.city_name || (selectedRecipientCityData as any)?.name || null;
+      console.log('Saving Profile - Recipient City:', { recipientCityId, recipientCitySaveValue, selectedRecipientCityData });
+      
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -204,6 +207,10 @@ export default function UserSettingsPage() {
         toast.error('Failed to update profile: ' + error.message);
       } else {
         toast.success('Profile and shipping address updated successfully!');
+        // Refresh profile to update UI immediately
+        if (refetchProfile) {
+            refetchProfile();
+        }
       }
     } catch (err: any) {
       console.error('Exception updating profile:', err);
