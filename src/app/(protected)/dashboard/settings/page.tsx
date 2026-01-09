@@ -88,22 +88,7 @@ export default function UserSettingsPage() {
       setUserEmail(profile.user_email || '');
       setUserPhone(profile.user_phoneno || '');
       setAddressLine1(profile.address_line1 || '');
-      setCity(profile.city || '');
-      setRegion(profile.province_id ? profile.province_id.toString() : '');
-      setPostalCode(profile.postal_code || '');
-      setRecipientName(profile.recipient_name || '');
-      setRecipientAddress(profile.recipient_address_line1 || '');
-      setRecipientCity(profile.recipient_city || '');
-      setRecipientRegion(profile.recipient_province_id ? profile.recipient_province_id.toString() : '');
-      setRecipientPostalCode(profile.recipient_postal_code || '');
-      setRecipientPhone(profile.recipient_phoneno || '');
-    }
-  }, [profile]);
-
-  useEffect(() => {
-    if (sameAsPersonal) {
-      setRecipientName(userName);
-      setReciId(profile.city_id ? profile.city_id.toString() : '');
+      setCityId(profile.city_id ? profile.city_id.toString() : '');
       setRegion(profile.province_id ? profile.province_id.toString() : '');
       setPostalCode(profile.postal_code || '');
       setRecipientName(profile.recipient_name || '');
@@ -121,6 +106,41 @@ export default function UserSettingsPage() {
       setRecipientAddress(addressLine1);
       setRecipientCityId(cityId);
       setRecipientRegion(region);
+      setRecipientPostalCode(postalCode);
+      setRecipientPhone(userPhone);
+    }
+  }, [sameAsPersonal, userName, addressLine1, cityId, region, postalCode, userPhone]);
+
+  // Update postal code when city changes (if available)
+  useEffect(() => {
+    if (cityId && personalCities.length > 0) {
+      const selectedCity = personalCities.find(c => c.id.toString() === cityId);
+      if (selectedCity && selectedCity.postal_code) {
+        setPostalCode(selectedCity.postal_code);
+      }
+    }
+  }, [cityId, personalCities]);
+
+   // Update recipient postal code when city changes
+   useEffect(() => {
+    if (recipientCityId && recipientCities.length > 0) {
+      const selectedCity = recipientCities.find(c => c.id.toString() === recipientCityId);
+      if (selectedCity && selectedCity.postal_code) {
+        setRecipientPostalCode(selectedCity.postal_code);
+      }
+    }
+  }, [recipientCityId, recipientCities]);
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+
+    setSaving(true);
+    try {
+      const supabase = createClient();
+
+      // Convert province IDs to integers
+      const provinceId = region ? parseInt(region, 10) : null;
+      const recipientProvinceId = recipientRegion ? parseInt(recipientRegion, 10) : null;
       
       const selectedCityData = personalCities.find(c => c.id.toString() === cityId);
       const selectedRecipientCityData = recipientCities.find(c => c.id.toString() === recipientCityId);
@@ -144,27 +164,7 @@ export default function UserSettingsPage() {
           recipient_city: selectedRecipientCityData?.city_name || null,
           recipient_city_id: recipientCityId ? parseInt(recipientCityId, 10) : null,
           recipient_province_id: recipientProvinceId,
-          recipient_region: provinces.find(p => p.id.toString() === recipientRegion)?.province_name
-    if (recipientCityId && recipientCities.length > 0) {
-      const selectedCity = recipientCities.find(c => c.id.toString() === recipientCityId);
-      if (selectedCity && selectedCity.postal_code) {
-        setRecipientPostalCode(selectedCity.postal_code);
-      }
-    }
-  }, [recipientCityId, recipientCities
-          user_name: userName,
-          user_email: userEmail,
-          user_phoneno: userPhone,
-          // Personal address fields
-          address_line1: addressLine1,
-          city: city,
-          province_id: provinceId,
-          postal_code: postalCode,
-          // Recipient/shipping address fields
-          recipient_name: recipientName,
-          recipient_address_line1: recipientAddress,
-          recipient_city: recipientCity,
-          recipient_province_id: recipientProvinceId,
+          recipient_region: provinces.find(p => p.id.toString() === recipientRegion)?.province_name,
           recipient_postal_code: recipientPostalCode,
           recipient_phoneno: recipientPhone,
         })

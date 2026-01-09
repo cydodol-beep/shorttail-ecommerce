@@ -1883,7 +1883,11 @@ export default function KasirPOSPage() {
                       value={recipientPhone}
                       onChange={(e) => setRecipientPhone(e.target.value)}
                       className="mt-1"
-                    />(val) => {
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Province *</label>
+                    <Select value={recipientProvince} onValueChange={(val) => {
                       setRecipientProvince(val);
                       setRecipientCityId('');
                     }}>
