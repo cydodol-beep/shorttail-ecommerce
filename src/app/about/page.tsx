@@ -478,8 +478,8 @@ export default function AboutPage() {
                     transition={{ duration: 0.8, delay: 0.4 }}
                   >
                     <button
-                      disabled
-                      className="bg-[#ff911d] hover:bg-[#e6821a] text-white px-6 py-2.5 rounded-full shadow-xl transition-all duration-300 transform hover:scale-105 opacity-50 cursor-not-allowed"
+                      onClick={() => scrollToSection('mission')}
+                      className="bg-[#ff911d] hover:bg-[#e6821a] text-white px-6 py-2.5 rounded-full shadow-xl transition-all duration-300 transform hover:scale-105"
                     >
                       Discover Our Journey
                       <ChevronDown className="ml-2 h-4 w-4 animate-bounce" />
@@ -531,8 +531,8 @@ export default function AboutPage() {
                     transition={{ duration: 0.8, delay: 0.4 }}
                   >
                     <button
-                      disabled
-                      className="bg-[#ff911d] hover:bg-[#e6821a] text-white px-8 py-3 rounded-full shadow-xl transition-all duration-300 transform hover:scale-105 opacity-50 cursor-not-allowed"
+                      onClick={() => scrollToSection('mission')}
+                      className="bg-[#ff911d] hover:bg-[#e6821a] text-white px-8 py-3 rounded-full shadow-xl transition-all duration-300 transform hover:scale-105"
                     >
                       Discover Our Journey
                       <ChevronDown className="ml-2 h-5 w-5 animate-bounce" />

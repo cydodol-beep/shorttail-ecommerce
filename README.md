@@ -46,7 +46,20 @@ The platform consists of five main user interfaces:
 - **Viewport Optimization**: Used intersection observer for lazy loading and optimized rendering
 - **Resource Optimization**: Added proper resource cleanup to prevent memory accumulation
 
-## 🆕 Recent Updates (January 10, 2026)
+## 🆕 Recent Updates (January 8, 2026)
+
+### 🛠️ Critical System Fixes & API Migration
+
+#### RajaOngkir V2 (Komerce) Migration 🚚
+- **API Endpoint Update**: Successfully migrated from the deprecated v2 API to the new **RajaOngkir Komerce** endpoints (`rajaongkir.komerce.id`), resolving `410 Gone` errors during checkout.
+- **Complete Province Mapping**: Implemented a comprehensive mapping system for all 34+ Indonesian provinces to align local database IDs with new Komerce API IDs (e.g., DKI Jakarta ID `10`, Bali ID `15`). This resolved critical bugs where the "City" list failed to populate.
+- **Parallel Rate Calculation**: Optimized the shipping cost calculator to fetch rates for multiple couriers (JNE, POS, TIKI) in parallel using `Promise.all`, significantly reducing checkout wait times.
+- **UI/UX Polishing**:
+  - Removed redundant/duplicate "City" input fields.
+  - Fixed dropdown visibility issues (white text on white background) in Dark/Light modes.
+  - Improved error handling for shipping calculations.
+
+## 🆕 Recent Updates (January 10, 2026 - Planned/Future)
 
 ### RajaOngkir API Integration Implemented 🚚
 
