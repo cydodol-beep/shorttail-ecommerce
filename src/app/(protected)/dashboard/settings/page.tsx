@@ -82,13 +82,18 @@ export default function UserSettingsPage() {
   
   // Find selected province to get rajaongkir_id for API calls
   const selectedProvince = provinces.find(p => p.id.toString() === region);
-  const selectedRajaOngkirId = selectedProvince?.rajaongkir_province_id?.toString() || region; // Fallback to region ID if no mapping (though mapping should exist)
+  
+  // Use mapped ID if available. 
+  // IMPORTANT: Do NOT fallback to 'region' immediately if provinces are still loading, 
+  // otherwise we fetch wrong data (using internal ID as API ID).
+  // Only fallback to 'region' if provinces ARE loaded and we still found nothing (data integrity issue or legacy).
+  const selectedRajaOngkirId = selectedProvince?.rajaongkir_province_id?.toString() || (loadingProvinces ? '' : region);
 
   const selectedRecipientProvince = provinces.find(p => p.id.toString() === recipientRegion);
-  const selectedRecipientRajaOngkirId = selectedRecipientProvince?.rajaongkir_province_id?.toString() || recipientRegion;
+  const selectedRecipientRajaongkirId = selectedRecipientProvince?.rajaongkir_province_id?.toString() || (loadingProvinces ? '' : recipientRegion);
 
   const { cities: personalCities, loading: loadingCities } = useCities(selectedRajaOngkirId);
-  const { cities: recipientCities, loading: loadingRecipientCities } = useCities(selectedRecipientRajaOngkirId);
+  const { cities: recipientCities, loading: loadingRecipientCities } = useCities(selectedRecipientRajaongkirId);
 
   // Debug logs for City Data
   useEffect(() => {
@@ -718,7 +723,12 @@ export default function UserSettingsPage() {
                         disabled={!region}
                       >
                         <SelectTrigger id="city" className="w-full !bg-white !text-black border-slate-300" style={{ backgroundColor: 'white', color: 'black' }}>
-                          <SelectValue placeholder="Select city" />
+                          <SelectValue placeholder="Select city">
+                            {personalCities.find(c => c.id.toString() === cityId)?.city_name || 
+                             (personalCities.find(c => c.id.toString() === cityId) as any)?.name ||
+                             (cityId && profile?.city_id?.toString() === cityId ? profile.city : null) || 
+                             "Select city"}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent className="!bg-white !text-black border-slate-200 max-h-[200px]" style={{ backgroundColor: 'white', color: 'black' }}>
                           {loadingCities ? (
@@ -860,7 +870,12 @@ export default function UserSettingsPage() {
                          disabled={sameAsPersonal || !recipientRegion}
                       >
                         <SelectTrigger id="recipient_city" className="w-full !bg-white !text-black border-slate-300" style={{ backgroundColor: 'white', color: 'black' }}>
-                          <SelectValue placeholder="Select city" />
+                          <SelectValue placeholder="Select city">
+                             {recipientCities.find(c => c.id.toString() === recipientCityId)?.city_name || 
+                              (recipientCities.find(c => c.id.toString() === recipientCityId) as any)?.name ||
+                              (recipientCityId && profile?.recipient_city_id?.toString() === recipientCityId ? profile.recipient_city : null) || 
+                              "Select city"}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent className="!bg-white !text-black border-slate-200 max-h-[200px]" style={{ backgroundColor: 'white', color: 'black' }}>
                             {loadingRecipientCities ? (
