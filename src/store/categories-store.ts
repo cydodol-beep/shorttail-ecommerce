@@ -60,10 +60,18 @@ export const useCategoriesStore = create<CategoriesStore>((set, get) => ({
 
         try {
           const supabase = createClient();
+          
+          // Add timeout protection
+          const abortController = new AbortController();
+          const timeoutId = setTimeout(() => abortController.abort(), 10000);
+          
           const { data, error } = await supabase
             .from('categories')
             .select('id, name, slug, description, image_url, is_active, sort_order')
-            .order('sort_order', { ascending: true });
+            .order('sort_order', { ascending: true })
+            .abortSignal(abortController.signal);
+          
+          clearTimeout(timeoutId);
 
           if (error) {
             console.error('Error fetching categories:', error);
@@ -77,7 +85,8 @@ export const useCategoriesStore = create<CategoriesStore>((set, get) => ({
             });
           }
         } catch (err) {
-          console.error('Exception fetching categories:', err);
+          if (err instanceof Error && err.name !== 'AbortError') {
+            console.error('Exception fetching categories:', err);
           set({ 
             error: err instanceof Error ? err.message : 'Failed to fetch categories', 
             loading: false 

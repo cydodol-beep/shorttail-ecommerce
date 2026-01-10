@@ -62,55 +62,70 @@ function ProductsPageContent() {
     setLoading(true);
     const supabase = createClient();
     
-    // If category filter is set, get the category ID by slug from database
-    let categoryId: string | null = null;
-    if (category && category !== 'all') {
-      const { data: catData, error: catError } = await supabase
-        .from('categories')
-        .select('id')
-        .eq('slug', category)
-        .maybeSingle();
-      
-      if (!catError && catData) {
-        categoryId = catData.id;
-      }
-    }
+    // Add timeout to prevent hanging
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 15000); // 15 second timeout
     
-    let query = supabase
-      .from('products')
-      .select('*, product_variants(*), categories(id, name, slug)')
-      .eq('is_active', true);
+    try {
+      // If category filter is set, get the category ID by slug from database
+      let categoryId: string | null = null;
+      if (category && category !== 'all') {
+        const { data: catData, error: catError } = await supabase
+          .from('categories')
+          .select('id')
+          .eq('slug', category)
+          .maybeSingle()
+          .abortSignal(abortController.signal);
+        
+        if (!catError && catData) {
+          categoryId = catData.id;
+        }
+      }
+      
+      let query = supabase
+        .from('products')
+        .select('*, product_variants(*), categories(id, name, slug)')
+        .eq('is_active', true)
+        .abortSignal(abortController.signal);
 
-    if (categoryId) {
-      query = query.eq('category_id', categoryId);
+      if (categoryId) {
+        query = query.eq('category_id', categoryId);
+      }
+
+      if (searchQuery) {
+        query = query.ilike('name', `%${searchQuery}%`);
+      }
+
+      switch (sortBy) {
+        case 'price-asc':
+          query = query.order('base_price', { ascending: true });
+          break;
+        case 'price-desc':
+          query = query.order('base_price', { ascending: false });
+          break;
+        case 'name-asc':
+          query = query.order('name', { ascending: true });
+          break;
+        default:
+          query = query.order('created_at', { ascending: false });
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching products:', error);
+      } else {
+        setProducts(data || []);
+      }
+    } catch (error) {
+      // Handle abort/timeout errors gracefully
+      if (error instanceof Error && error.name !== 'AbortError') {
+        console.error('Error fetching products:', error);
+      }
+    } finally {
+      clearTimeout(timeoutId);
+      setLoading(false);
     }
-
-    if (searchQuery) {
-      query = query.ilike('name', `%${searchQuery}%`);
-    }
-
-    switch (sortBy) {
-      case 'price-asc':
-        query = query.order('base_price', { ascending: true });
-        break;
-      case 'price-desc':
-        query = query.order('base_price', { ascending: false });
-        break;
-      case 'name-asc':
-        query = query.order('name', { ascending: true });
-        break;
-      default:
-        query = query.order('created_at', { ascending: false });
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Error fetching products:', error);
-    } else {
-      setProducts(data || []);
-    }
-    setLoading(false);
   }, [category, sortBy, searchQuery]);
 
   useEffect(() => {

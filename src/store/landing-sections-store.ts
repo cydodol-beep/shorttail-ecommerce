@@ -61,17 +61,35 @@ export const useLandingSectionsStore = create<LandingSectionsState>((set, get) =
     set({ loading: true, error: null });
     const supabase = createClient();
 
-    const { data, error } = await supabase
-      .from('landing_page_sections')
-      .select('*')
-      .order('sort_order', { ascending: true });
+    // Add timeout to prevent hanging
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 10000); // 10 second timeout
 
-    if (error) {
-      console.error('[LandingSections] Error fetching:', error.message);
-      set({ error: error.message, loading: false, fetched: true });
-    } else {
-      console.log('[LandingSections] Fetched sections:', data?.length, 'sections');
-      set({ sections: data || [], loading: false, fetched: true, lastFetched: now });
+    try {
+      const { data, error } = await supabase
+        .from('landing_page_sections')
+        .select('*')
+        .order('sort_order', { ascending: true })
+        .abortSignal(abortController.signal);
+
+      clearTimeout(timeoutId);
+
+      if (error) {
+        console.error('[LandingSections] Error fetching:', error.message);
+        set({ error: error.message, loading: false, fetched: true });
+      } else {
+        console.log('[LandingSections] Fetched sections:', data?.length, 'sections');
+        set({ sections: data || [], loading: false, fetched: true, lastFetched: now });
+      }
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err instanceof Error && err.name !== 'AbortError') {
+        console.error('[LandingSections] Exception:', err);
+        set({ error: err.message, loading: false, fetched: true });
+      } else {
+        // AbortError (timeout) - treat as temporary failure
+        set({ loading: false, fetched: true });
+      }
     }
   },
 

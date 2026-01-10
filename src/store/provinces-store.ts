@@ -48,11 +48,18 @@ export const useProvincesStore = create<ProvincesStore>((set, get) => ({
     try {
       const supabase = createClient();
 
+      // Add timeout protection
+      const abortController = new AbortController();
+      const timeoutId = setTimeout(() => abortController.abort(), 10000);
+
       const { data, error } = await supabase
         .from('provinces')
         .select('*')
         .eq('is_active', true)
-        .order('province_name', { ascending: true });
+        .order('province_name', { ascending: true })
+        .abortSignal(abortController.signal);
+
+      clearTimeout(timeoutId);
 
       if (error) {
         console.error('Error fetching provinces:', error);
@@ -66,7 +73,9 @@ export const useProvincesStore = create<ProvincesStore>((set, get) => ({
         lastFetched: Date.now(),
       });
     } catch (err) {
-      console.error('Exception fetching provinces:', err);
+      if (err instanceof Error && err.name !== 'AbortError') {
+        console.error('Exception fetching provinces:', err);
+      }
       set({ loading: false });
     }
   },

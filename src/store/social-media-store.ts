@@ -76,10 +76,18 @@ export const useSocialMediaStore = create<SocialMediaStore>((set, get) => ({
 
     try {
       const supabase = createClient();
+      
+      // Add timeout to prevent hanging
+      const abortController = new AbortController();
+      const timeoutId = setTimeout(() => abortController.abort(), 10000); // 10 second timeout
+      
       const { data, error } = await supabase
         .from('social_media_links')
         .select('*')
-        .order('display_order', { ascending: true });
+        .order('display_order', { ascending: true })
+        .abortSignal(abortController.signal);
+      
+      clearTimeout(timeoutId);
 
       if (error) {
         console.error('Error loading social media links:', error);
