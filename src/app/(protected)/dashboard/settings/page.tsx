@@ -109,6 +109,15 @@ export default function UserSettingsPage() {
 
   useEffect(() => {
     if (profile) {
+      console.log('Profile loaded with city data:', { 
+        city_id: profile.city_id, 
+        city: profile.city,
+        recipient_city_id: profile.recipient_city_id,
+        recipient_city: profile.recipient_city,
+        province_id: profile.province_id,
+        recipient_province_id: profile.recipient_province_id
+      });
+      
       setUserName(profile.user_name || '');
       setUserEmail(profile.user_email || '');
       setUserPhone(profile.user_phoneno || '');
@@ -731,10 +740,21 @@ export default function UserSettingsPage() {
                       >
                         <SelectTrigger id="city" className="w-full !bg-white !text-black border-slate-300" style={{ backgroundColor: 'white', color: 'black' }}>
                           <SelectValue placeholder="Select city">
-                            {personalCities.find(c => c.id.toString() === cityId)?.city_name || 
-                             (personalCities.find(c => c.id.toString() === cityId) as any)?.name ||
-                             (cityId && profile?.city_id?.toString() === cityId ? profile.city : null) || 
-                             "Select city"}
+                            {(() => {
+                              // First, try to find city in loaded cities list
+                              const foundCity = personalCities.find(c => c.id.toString() === cityId);
+                              if (foundCity) {
+                                return `${foundCity.type || ''} ${foundCity.city_name || (foundCity as any).name || ''}`.trim();
+                              }
+                              
+                              // If not found in loaded list but we have a cityId and profile has the city name, show from profile
+                              if (cityId && profile?.city_id?.toString() === cityId && profile.city) {
+                                return profile.city;
+                              }
+                              
+                              // Default placeholder
+                              return "Select city";
+                            })()}
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent className="!bg-white !text-black border-slate-200 max-h-[200px]" style={{ backgroundColor: 'white', color: 'black' }}>
@@ -753,6 +773,11 @@ export default function UserSettingsPage() {
                               </span>
                             </SelectItem>
                           ))
+                          ) : cityId && profile?.city ? (
+                            // Show the saved city from database if API cities haven't loaded yet
+                            <SelectItem value={cityId} className="!text-black" style={{ color: 'black' }}>
+                              {profile.city}
+                            </SelectItem>
                           ) : (
                              <SelectItem disabled value="empty" className="!text-gray-500">No cities found (Select Province)</SelectItem>
                           )}
@@ -878,10 +903,21 @@ export default function UserSettingsPage() {
                       >
                         <SelectTrigger id="recipient_city" className="w-full !bg-white !text-black border-slate-300" style={{ backgroundColor: 'white', color: 'black' }}>
                           <SelectValue placeholder="Select city">
-                             {recipientCities.find(c => c.id.toString() === recipientCityId)?.city_name || 
-                              (recipientCities.find(c => c.id.toString() === recipientCityId) as any)?.name ||
-                              (recipientCityId && profile?.recipient_city_id?.toString() === recipientCityId ? profile.recipient_city : null) || 
-                              "Select city"}
+                             {(() => {
+                              // First, try to find city in loaded cities list
+                              const foundCity = recipientCities.find(c => c.id.toString() === recipientCityId);
+                              if (foundCity) {
+                                return `${foundCity.type || ''} ${foundCity.city_name || (foundCity as any).name || ''}`.trim();
+                              }
+                              
+                              // If not found in loaded list but we have a recipientCityId and profile has the city name, show from profile
+                              if (recipientCityId && profile?.recipient_city_id?.toString() === recipientCityId && profile.recipient_city) {
+                                return profile.recipient_city;
+                              }
+                              
+                              // Default placeholder
+                              return "Select city";
+                            })()}
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent className="!bg-white !text-black border-slate-200 max-h-[200px]" style={{ backgroundColor: 'white', color: 'black' }}>
@@ -900,6 +936,11 @@ export default function UserSettingsPage() {
                               </span>
                             </SelectItem>
                           ))
+                            ) : recipientCityId && profile?.recipient_city ? (
+                              // Show the saved city from database if API cities haven't loaded yet
+                              <SelectItem value={recipientCityId} className="!text-black" style={{ color: 'black' }}>
+                                {profile.recipient_city}
+                              </SelectItem>
                             ) : (
                                <SelectItem disabled value="empty" className="!text-gray-500">No cities found</SelectItem>
                             )}

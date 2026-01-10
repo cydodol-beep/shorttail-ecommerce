@@ -46,6 +46,19 @@ The platform consists of five main user interfaces:
 - **Viewport Optimization**: Used intersection observer for lazy loading and optimized rendering
 - **Resource Optimization**: Added proper resource cleanup to prevent memory accumulation
 
+## 🆕 Recent Updates (January 9, 2026)
+
+### 👤 User Settings & Profile Fixes
+
+#### City Dropdown & Data Persistence 🏙️
+- **Fail-Safe City Display**: Implemented intelligent fallback logic in user profile settings (`/dashboard/settings`). Now displays saved city names (`profile.city`) immediately from the database even if external API data hasn't fully loaded or if ID mismatches occur.
+- **UI Visibility Fixes**: Resolved critical styling issues where dropdown text appeared invisible (white-on-white) by enforcing specific text colors in the Select components.
+- **Data Normalization**: Updated `cities-store` to handle inconsistent property naming from the API (`city_name` vs `name`), preventing empty dropdown options.
+
+#### Database & API Alignment 🔗
+- **Province Mapping (Migration 031)**: Added `rajaongkir_province_id` to the `provinces` table and successfully mapped all internal province IDs to RajaOngkir/Komerce API IDs.
+- **Migration Script**: Created and documented usage of `031_fix_province_ids.sql` to ensure correct city fetching based on province selection.
+
 ## 🆕 Recent Updates (January 8, 2026)
 
 ### 🛠️ Critical System Fixes & API Migration
