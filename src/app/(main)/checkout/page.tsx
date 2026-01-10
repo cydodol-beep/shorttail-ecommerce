@@ -258,24 +258,23 @@ async function calculateShippingRates(destinationCityId: string, totalWeightGram
       console.log(`📥 Full API Response for ${courier.name}:`, result);
 
       if (result.success && result.data) {
-        // Handle result data which can be array of results (Standard/V2)
-        const results = Array.isArray(result.data) ? result.data : [result.data];
+        // RajaOngkir returns a flat array of service objects
+        // Each object has: { service: "REG", cost: [{ value: 25000, etd: "3-5" }] }
+        const services = Array.isArray(result.data) ? result.data : [result.data];
         const courierRates: ShippingCourier[] = [];
 
-        // Process each result
-        for (const res of results) {
-           // Skip if no costs array
-           if (!res.costs) continue;
-
-           for (const cost of res.costs) {
-              const uniqueKey = `${courier.code}-${cost.service}`;
-              if (!servicesFound.has(uniqueKey)) {
-                 servicesFound.add(uniqueKey);
-                 const mapped = mapRajaOngkirToCourier(cost, courier.code);
-                 courierRates.push(...mapped);
-              }
+        // Process each service
+        for (const serviceObj of services) {
+           // Each serviceObj is like: { service: "REG", cost: [...] }
+           const uniqueKey = `${courier.code}-${serviceObj.service}`;
+           if (!servicesFound.has(uniqueKey)) {
+              servicesFound.add(uniqueKey);
+              const mapped = mapRajaOngkirToCourier(serviceObj, courier.code);
+              courierRates.push(...mapped);
            }
         }
+        
+        console.log(`✅ Parsed ${courierRates.length} rates for ${courier.name}:`, courierRates);
         return courierRates;
       }
       
