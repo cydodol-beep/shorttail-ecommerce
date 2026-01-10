@@ -97,15 +97,23 @@ export default function UserSettingsPage() {
 
   // Debug logs for City Data
   useEffect(() => {
-    console.log('Region (DB ID) changed:', region);
+    console.log('=== City Debug Info ===');
+    console.log('Profile city_id:', profile?.city_id);
+    console.log('Profile city name:', profile?.city);
+    console.log('State cityId:', cityId);
+    console.log('Region (DB ID):', region);
     if (selectedProvince) {
        console.log('Selected Province:', selectedProvince.province_name, 'RajaOngkir ID:', selectedProvince.rajaongkir_province_id);
     }
     console.log('Personal Cities loaded:', personalCities?.length);
     if (personalCities?.length > 0) {
       console.log('First city sample:', personalCities[0]);
+      console.log('All city IDs:', personalCities.map(c => c.id));
+      const matchingCity = personalCities.find(c => c.id.toString() === cityId);
+      console.log('Matching city for cityId', cityId, ':', matchingCity);
     }
-  }, [region, personalCities, selectedProvince]);
+    console.log('======================');
+  }, [region, personalCities, selectedProvince, cityId, profile]);
 
   useEffect(() => {
     if (profile) {
@@ -741,17 +749,22 @@ export default function UserSettingsPage() {
                         <SelectTrigger id="city" className="w-full !bg-white !text-black border-slate-300" style={{ backgroundColor: 'white', color: 'black' }}>
                           <SelectValue placeholder="Select city">
                             {(() => {
+                              console.log('SelectValue rendering - cityId:', cityId, 'personalCities:', personalCities.length);
+                              
                               // First, try to find city in loaded cities list
                               const foundCity = personalCities.find(c => c.id.toString() === cityId);
                               if (foundCity) {
+                                console.log('Found city in API list:', foundCity);
                                 return `${foundCity.type || ''} ${foundCity.city_name || (foundCity as any).name || ''}`.trim();
                               }
                               
                               // If not found in loaded list but we have a cityId and profile has the city name, show from profile
                               if (cityId && profile?.city_id?.toString() === cityId && profile.city) {
+                                console.log('Showing city from profile:', profile.city);
                                 return profile.city;
                               }
                               
+                              console.log('No city found, showing placeholder');
                               // Default placeholder
                               return "Select city";
                             })()}
@@ -763,11 +776,28 @@ export default function UserSettingsPage() {
                           ) : (
                             <>
                               {/* Always show saved city first if it exists and is not in the loaded list */}
-                              {cityId && profile?.city && !personalCities.find(c => c.id.toString() === cityId) && (
-                                <SelectItem value={cityId} className="!text-black" style={{ color: 'black' }}>
-                                  {profile.city} (Current)
-                                </SelectItem>
-                              )}
+                              {(() => {
+                                const hasSavedCity = cityId && profile?.city;
+                                const cityInList = personalCities.find(c => c.id.toString() === cityId);
+                                const shouldShowSaved = hasSavedCity && !cityInList;
+                                
+                                console.log('Should show saved city?', {
+                                  hasSavedCity,
+                                  cityInList: !!cityInList,
+                                  shouldShowSaved,
+                                  cityId,
+                                  savedCityName: profile?.city
+                                });
+                                
+                                if (shouldShowSaved) {
+                                  return (
+                                    <SelectItem value={cityId} className="!text-black bg-blue-50" style={{ color: 'black' }}>
+                                      {profile.city} (Current - Saved)
+                                    </SelectItem>
+                                  );
+                                }
+                                return null;
+                              })()}
                               
                               {/* Show all loaded cities */}
                               {personalCities.length > 0 ? (
@@ -783,16 +813,9 @@ export default function UserSettingsPage() {
                                     </span>
                                   </SelectItem>
                                 ))
-                              ) : cityId && profile?.city ? (
-                                // Show the saved city from database if API cities haven't loaded yet and it wasn't shown above
-                                !personalCities.find(c => c.id.toString() === cityId) && (
-                                  <SelectItem value={cityId} className="!text-black" style={{ color: 'black' }}>
-                                    {profile.city}
-                                  </SelectItem>
-                                )
-                              ) : (
+                              ) : !cityId || !profile?.city ? (
                                 <SelectItem disabled value="empty" className="!text-gray-500">No cities found (Select Province)</SelectItem>
-                              )}
+                              ) : null}
                             </>
                           )}
                         </SelectContent>
