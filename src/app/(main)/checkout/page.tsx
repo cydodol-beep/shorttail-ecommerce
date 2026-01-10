@@ -792,10 +792,10 @@ export default function CheckoutPage() {
   }, [selectedCityId, totalWeightGrams]);
 
   // Calculate shipping fee with weight multiplier
-  // Logic: < 1kg = 1x, >= 1kg = multiply by ceiling of kg
-  // Example: 500g = 1x, 1500g = 2x, 2100g = 3x, 3000g = 3x
+  // Logic: < 2kg = 1x, >= 2kg = multiply by ceiling of (kg/2)
+  // Example: 500g = 1x, 1500g = 1x, 2100g = 2x, 3000g = 2x, 4100g = 3x
   const baseShippingCost = selectedCourier?.price || 0;
-  const weightMultiplier = totalWeightGrams < 1000 ? 1 : Math.ceil(totalWeightGrams / 1000);
+  const weightMultiplier = totalWeightGrams < 2000 ? 1 : Math.ceil(totalWeightGrams / 2000);
   const shippingFee = baseShippingCost * weightMultiplier;
 
   // Calculate discount amount from either the selected promotion in the UI or from the code input
