@@ -447,6 +447,14 @@ export default function CheckoutPage() {
   // Update form values when profile data becomes available
   useEffect(() => {
     if (profile) {
+      console.log('=== Checkout Profile Data ===');
+      console.log('Recipient Province ID:', profile.recipient_province_id);
+      console.log('Recipient City ID:', profile.recipient_city_id);
+      console.log('Recipient City Name:', profile.recipient_city);
+      console.log('Province ID (fallback):', profile.province_id);
+      console.log('City ID (fallback):', profile.city_id);
+      console.log('City Name (fallback):', profile.city);
+      
       // Set form values based on profile data
       const formValues = {
         // Load recipient data first, fallback to user data if no recipient data exists
@@ -456,7 +464,7 @@ export default function CheckoutPage() {
         // Use recipient address if exists, otherwise use user's address
         address_line1: profile.recipient_address_line1 || profile.address_line1 || '',
         city: profile.recipient_city || profile.city || '',
-        province: profile.recipient_region || profile.region_state_province || '',
+        province: '', // Will be set based on province_id below
         destination_city_id: '', // Will be populated after province selection
         postal_code: profile.recipient_postal_code || profile.postal_code || '',
         courier: '',
@@ -466,37 +474,61 @@ export default function CheckoutPage() {
 
       form.reset(formValues);
 
-      // Update the selectedProvince state based on the province value
-      if (formValues.province) {
+      // Set the province based on province_id from profile
+      const profileProvinceId = profile.recipient_province_id || profile.province_id;
+      if (profileProvinceId && provinces.length > 0) {
         const matchedProvince = provinces.find((prov: { id: number; province_name: string }) =>
-          prov.province_name.toLowerCase().includes(formValues.province.toLowerCase()) ||
-          formValues.province.toLowerCase().includes(prov.province_name.toLowerCase())
+          prov.id === profileProvinceId
         );
         if (matchedProvince) {
+          console.log('Setting province from ID:', matchedProvince.province_name);
           setSelectedProvinceId(matchedProvince.id.toString());
+          form.setValue('province', matchedProvince.id.toString());
         }
+      }
+      
+      // Set the city_id if available
+      const profileCityId = profile.recipient_city_id || profile.city_id;
+      if (profileCityId) {
+        console.log('Setting city ID from profile:', profileCityId);
+        setSelectedCityId(profileCityId.toString());
+        form.setValue('destination_city_id', profileCityId.toString());
       }
     }
   }, [profile, form, provinces]);
 
-  // Handle city matching when cities list updates
+  // Auto-match city by name when city_id is missing but city name exists
   useEffect(() => {
       const currentCityValue = form.watch('city');
-      if (currentCityValue && cities.length > 0) {
+      const currentCityId = selectedCityId;
+      
+      // Only auto-match if we don't have a city_id but we have a city name
+      if (!currentCityId && currentCityValue && cities.length > 0 && selectedProvinceId) {
+        const normalizedCityName = currentCityValue.toUpperCase().trim();
         const matchedCity = cities.find(
-          (city: any) =>
-            city.city_name &&
-            (city.city_name.toLowerCase().includes(currentCityValue.toLowerCase()) ||
-            currentCityValue.toLowerCase().includes(city.city_name.toLowerCase()))
+          (city: any) => {
+            const cityName = (city.city_name || city.name || '').toUpperCase().trim();
+            return cityName === normalizedCityName;
+          }
         );
+        
         if (matchedCity) {
-          const cityId = matchedCity.id;
+          const cityId = matchedCity.id || matchedCity.city_id;
+          console.log('Auto-matched city by name:', {
+            profileCity: currentCityValue,
+            matchedCity: matchedCity,
+            settingCityId: cityId.toString()
+          });
           setSelectedCityId(cityId.toString());
-          // Update the hidden form field for destination_city_id
           form.setValue('destination_city_id', cityId.toString());
+          
+          // Update postal code if available
+          if (matchedCity.postal_code) {
+            form.setValue('postal_code', matchedCity.postal_code);
+          }
         }
       }
-  }, [cities, form.watch('city')]);
+  }, [cities, selectedCityId, form.watch('city'), selectedProvinceId]);
 
   useEffect(() => {
     // Don't redirect while auth state is loading/stabilizing
@@ -1369,18 +1401,25 @@ export default function CheckoutPage() {
                           <FormLabel>Province</FormLabel>
                           <Select 
                             onValueChange={(value) => {
-                              field.onChange(value); // Store ID
+                              field.onChange(value); // Store province ID
                               setSelectedProvinceId(value); // Trigger City Load
-                              // Find name for display/other logic if needed
+                              setSelectedCityId(''); // Reset city when province changes
+                              form.setValue('city', '');
+                              form.setValue('destination_city_id', '');
                             }} 
-                            value={field.value}
+                            value={selectedProvinceId || field.value}
                           >
                             <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select Province" />
+                              <SelectTrigger className="bg-white dark:bg-zinc-950">
+                                <SelectValue placeholder="Select Province">
+                                  {(() => {
+                                    const province = provinces.find(p => p.id.toString() === (selectedProvinceId || field.value));
+                                    return province?.province_name || "Select Province";
+                                  })()}
+                                </SelectValue>
                               </SelectTrigger>
                             </FormControl>
-                            <SelectContent className="bg-white dark:bg-zinc-950 border-input">
+                            <SelectContent className="bg-white dark:bg-zinc-950 border-input max-h-[300px]">
                               {provinces.map((province) => (
                                 <SelectItem key={province.id} value={province.id.toString()} className="focus:bg-zinc-100 dark:focus:bg-zinc-800 focus:text-zinc-900 dark:focus:text-zinc-50">
                                   {province.province_name}
@@ -1400,34 +1439,76 @@ export default function CheckoutPage() {
                           <FormLabel>City</FormLabel>
                           <Select
                             onValueChange={(value) => {
-                              field.onChange(value); // Store ID
-                              setSelectedCityId(value);
+                              const selectedCity = cities.find((c: any) => (c.id || c.city_id).toString() === value);
+                              const cityName = selectedCity?.city_name || selectedCity?.name || '';
+                              
+                              field.onChange(cityName); // Store city name in form
+                              setSelectedCityId(value); // Store city ID in state
                               form.setValue('destination_city_id', value);
                               
-                              // Optional: Update postal code if not set
-                              const selectedCity = cities.find((c: any) => c.id.toString() === value || c.city_id === value);
+                              // Update postal code if available
                               if (selectedCity && selectedCity.postal_code) {
                                 form.setValue('postal_code', selectedCity.postal_code);
                               }
                             }}
-                            value={field.value}
-                            disabled={!selectedProvinceId || cities.length === 0}
+                            value={selectedCityId}
+                            disabled={!selectedProvinceId}
                           >
                             <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder={!selectedProvinceId ? "Select Province First" : (cities.length === 0 ? "Loading Cities..." : "Select City")} />
+                              <SelectTrigger className="bg-white dark:bg-zinc-950">
+                                <SelectValue placeholder={!selectedProvinceId ? "Select Province First" : "Select City"}>
+                                  {(() => {
+                                    // First, try to find city in loaded cities list
+                                    const foundCity = cities.find(c => (c.id || c.city_id).toString() === selectedCityId);
+                                    if (foundCity) {
+                                      const cityName = foundCity.city_name || foundCity.name;
+                                      return `${foundCity.type || ''} ${cityName}`.trim();
+                                    }
+                                    
+                                    // If not found but we have a city name from profile, show it
+                                    const profileCity = profile?.recipient_city || profile?.city;
+                                    if (selectedCityId && profileCity) {
+                                      return profileCity;
+                                    }
+                                    
+                                    return "Select City";
+                                  })()}
+                                </SelectValue>
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent className="bg-white dark:bg-zinc-950 border-input max-h-[300px]">
-                              {cities.map((city: any) => {
-                                const cityId = city.city_id || city.id;
-                                const cityName = city.city_name || city.name;
-                                return (
-                                  <SelectItem key={cityId} value={cityId.toString()} className="focus:bg-zinc-100 dark:focus:bg-zinc-800 focus:text-zinc-900 dark:focus:text-zinc-50">
-                                    {city.type} {cityName}
-                                  </SelectItem>
-                                );
-                              })}
+                              {cities.length === 0 && selectedProvinceId ? (
+                                <SelectItem disabled value="loading">Loading cities...</SelectItem>
+                              ) : (
+                                <>
+                                  {/* Always show saved city first if it exists and is not in the loaded list */}
+                                  {(() => {
+                                    const profileCity = profile?.recipient_city || profile?.city;
+                                    const hasSavedCity = selectedCityId && profileCity;
+                                    const cityInList = cities.find(c => (c.id || c.city_id).toString() === selectedCityId);
+                                    
+                                    if (hasSavedCity && !cityInList) {
+                                      return (
+                                        <SelectItem value={selectedCityId} className="bg-blue-50 dark:bg-blue-950">
+                                          {profileCity} (Current - Saved)
+                                        </SelectItem>
+                                      );
+                                    }
+                                    return null;
+                                  })()}
+                                  
+                                  {/* Show all loaded cities */}
+                                  {cities.map((city: any) => {
+                                    const cityId = city.city_id || city.id;
+                                    const cityName = city.city_name || city.name;
+                                    return (
+                                      <SelectItem key={cityId} value={cityId.toString()} className="focus:bg-zinc-100 dark:focus:bg-zinc-800 focus:text-zinc-900 dark:focus:text-zinc-50">
+                                        {city.type} {cityName}
+                                      </SelectItem>
+                                    );
+                                  })}
+                                </>
+                              )}
                             </SelectContent>
                           </Select>
                           <FormMessage />

@@ -46,6 +46,48 @@ The platform consists of five main user interfaces:
 - **Viewport Optimization**: Used intersection observer for lazy loading and optimized rendering
 - **Resource Optimization**: Added proper resource cleanup to prevent memory accumulation
 
+## 🆕 Recent Updates (January 10, 2026)
+
+### 🗺️ User Dashboard Settings - City/Province Data Sync Fix
+
+#### Fixed City Dropdown Display Issues 🏙️
+- **Problem Solved**: Users were required to re-select their city every time they visited `/dashboard/settings` even though city data existed in the database
+- **Root Cause**: The city dropdown wasn't displaying saved values because:
+  - The `city_id` field was `undefined` for legacy users (only had `city` name saved)
+  - The dropdown options didn't include the saved city from database
+  - No fallback mechanism when RajaOngkir API cities didn't match saved data
+
+#### Smart City Matching System 🎯
+- **Auto-Match by Name**: Implemented intelligent city matching that automatically finds and sets the correct `city_id` when:
+  - User has `city` name in database (e.g., "TANGERANG") but missing `city_id`
+  - Cities are loaded from RajaOngkir API for the selected province
+  - System matches by comparing normalized city names (case-insensitive, trimmed)
+- **Backward Compatibility**: Handles legacy data where users only have city names without IDs
+- **Auto-Population**: Once matched, the system sets the `city_id` in the form state, which gets saved on next update
+
+#### Enhanced Dropdown Behavior 📋
+- **Always Show Saved City**: City dropdown now always includes the user's saved city as an option, even if:
+  - RajaOngkir API is slow to load
+  - The saved city isn't in the current API response
+  - Province was changed but city data exists
+- **Visual Indicator**: Saved cities not in API list are marked as "(Current - Saved)" with blue highlight
+- **Applies to Both Sections**: Fixed for both Personal Address and Shipping Address city dropdowns
+
+#### Technical Implementation 🔧
+- **SelectValue Display Logic**: Enhanced to prioritize showing saved city from `profile.city` field
+- **SelectContent Options**: Ensured saved city is always available as a selectable option
+- **Auto-Match Effect Hook**: Added `useEffect` hook that monitors when cities load and auto-matches by name
+- **Debug Logging**: Comprehensive console logging to track:
+  - Profile data loading (`city_id`, `city` name, province)
+  - City matching attempts and results
+  - Dropdown rendering decisions
+
+#### User Experience Improvements ✨
+- **No Re-Selection Needed**: Users see their saved city immediately upon page load
+- **Seamless Migration**: Legacy users with only city names get auto-upgraded to include IDs
+- **Reliable Display**: Works regardless of API speed or data inconsistencies
+- **Province Changes**: Selecting a new province properly clears city selection for fresh choice
+
 ## 🆕 Recent Updates (January 9, 2026)
 
 ### 👤 User Settings & Profile Fixes
