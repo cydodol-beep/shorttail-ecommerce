@@ -202,17 +202,34 @@ POST https://rajaongkir.komerce.id/api/v1/calculate/domestic-cost
 - System updates `selectedCourier` state
 - Form field `courier` is set to courier ID
 
+**Weight-Based Shipping Cost Multiplier**:
+- **< 1 kg (< 1000g)**: Base shipping cost × 1
+- **≥ 1 kg (≥ 1000g)**: Base shipping cost × ⌈kg⌉ (ceiling)
+- **Examples**:
+  - 500g → 1× base cost (e.g., Rp25,000 × 1 = Rp25,000)
+  - 1500g → 2× base cost (e.g., Rp25,000 × 2 = Rp50,000)
+  - 2100g → 3× base cost (e.g., Rp25,000 × 3 = Rp75,000)
+  - 3000g → 3× base cost (e.g., Rp25,000 × 3 = Rp75,000)
+
 **Price Calculation**:
 ```typescript
 subtotal = Σ(item.price × item.quantity)
 discountAmount = promotion discount (if applied)
-shippingFee = selectedCourier.price
+
+// Calculate weight multiplier
+baseShippingCost = selectedCourier.price
+weightMultiplier = totalWeightGrams < 1000 ? 1 : Math.ceil(totalWeightGrams / 1000)
+shippingFee = baseShippingCost × weightMultiplier
 
 // Free shipping promotion check
 finalShippingFee = freeShippingApplied ? 0 : shippingFee
 
 total = subtotal - discountAmount + finalShippingFee
 ```
+
+**UI Display**:
+- Shows base shipping cost and multiplier when weight > 1kg
+- Example: "Rp25,000 × 3 kg" displayed below shipping fee line
 
 ### Technical Architecture 🏗️
 

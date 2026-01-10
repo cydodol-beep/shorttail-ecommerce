@@ -791,7 +791,12 @@ export default function CheckoutPage() {
     }
   }, [selectedCityId, totalWeightGrams]);
 
-  const shippingFee = selectedCourier?.price || 0;
+  // Calculate shipping fee with weight multiplier
+  // Logic: < 1kg = 1x, >= 1kg = multiply by ceiling of kg
+  // Example: 500g = 1x, 1500g = 2x, 2100g = 3x, 3000g = 3x
+  const baseShippingCost = selectedCourier?.price || 0;
+  const weightMultiplier = totalWeightGrams < 1000 ? 1 : Math.ceil(totalWeightGrams / 1000);
+  const shippingFee = baseShippingCost * weightMultiplier;
 
   // Calculate discount amount from either the selected promotion in the UI or from the code input
   let discountAmount = 0;
@@ -2071,17 +2076,33 @@ export default function CheckoutPage() {
                           </div>
                         )}
                         {!freeShippingApplied && (
-                          <div className="flex justify-between text-sm">
-                            <span className="text-brown-600">Shipping</span>
-                            <span>{finalShippingFee ? formatPrice(finalShippingFee) : '-'}</span>
-                          </div>
+                          <>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-brown-600">Shipping</span>
+                              <span>{finalShippingFee ? formatPrice(finalShippingFee) : '-'}</span>
+                            </div>
+                            {selectedCourier && weightMultiplier > 1 && (
+                              <div className="flex justify-between text-xs text-brown-500 pl-4">
+                                <span>({formatPrice(baseShippingCost)} × {weightMultiplier} kg)</span>
+                                <span></span>
+                              </div>
+                            )}
+                          </>
                         )}
                       </>
                     ) : (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-brown-600">Shipping</span>
-                        <span>{shippingFee ? formatPrice(shippingFee) : '-'}</span>
-                      </div>
+                      <>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-brown-600">Shipping</span>
+                          <span>{shippingFee ? formatPrice(shippingFee) : '-'}</span>
+                        </div>
+                        {selectedCourier && weightMultiplier > 1 && (
+                          <div className="flex justify-between text-xs text-brown-500 pl-4">
+                            <span>({formatPrice(baseShippingCost)} × {weightMultiplier} kg)</span>
+                            <span></span>
+                          </div>
+                        )}
+                      </>
                     )}
                     <Separator />
                     <div className="flex justify-between font-bold text-lg">
