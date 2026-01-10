@@ -117,25 +117,31 @@ export default function UserSettingsPage() {
 
   useEffect(() => {
     if (profile) {
-      console.log('Profile loaded with city data:', { 
-        city_id: profile.city_id, 
-        city: profile.city,
-        recipient_city_id: profile.recipient_city_id,
-        recipient_city: profile.recipient_city,
-        province_id: profile.province_id,
-        recipient_province_id: profile.recipient_province_id
-      });
+      console.log('=== Profile Data Loaded ===');
+      console.log('Raw profile.city_id:', profile.city_id, 'Type:', typeof profile.city_id);
+      console.log('Raw profile.city:', profile.city);
+      console.log('Raw profile.province_id:', profile.province_id, 'Type:', typeof profile.province_id);
+      console.log('Raw profile.recipient_city_id:', profile.recipient_city_id);
+      console.log('Raw profile.recipient_city:', profile.recipient_city);
+      console.log('Full profile object:', profile);
+      
+      const personalCityIdValue = profile.city_id ? profile.city_id.toString() : '';
+      const recipientCityIdValue = profile.recipient_city_id ? profile.recipient_city_id.toString() : '';
+      
+      console.log('Setting cityId to:', personalCityIdValue);
+      console.log('Setting recipientCityId to:', recipientCityIdValue);
+      console.log('==========================');
       
       setUserName(profile.user_name || '');
       setUserEmail(profile.user_email || '');
       setUserPhone(profile.user_phoneno || '');
       setAddressLine1(profile.address_line1 || '');
-      setCityId(profile.city_id ? profile.city_id.toString() : '');
+      setCityId(personalCityIdValue);
       setRegion(profile.province_id ? profile.province_id.toString() : '');
       setPostalCode(profile.postal_code || '');
       setRecipientName(profile.recipient_name || '');
       setRecipientAddress(profile.recipient_address_line1 || '');
-      setRecipientCityId(profile.recipient_city_id ? profile.recipient_city_id.toString() : '');
+      setRecipientCityId(recipientCityIdValue);
       setRecipientRegion(profile.recipient_province_id ? profile.recipient_province_id.toString() : '');
       setRecipientPostalCode(profile.recipient_postal_code || '');
       setRecipientPhone(profile.recipient_phoneno || '');
