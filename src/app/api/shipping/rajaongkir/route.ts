@@ -40,11 +40,21 @@ export async function POST(req: NextRequest) {
     }
 
     // Prepare data for RajaOngkir API
+    const finalWeight = Math.ceil(Number(weight));
     const requestBody = new URLSearchParams({
       origin: originCityId,
       destination: destinationCityId,
-      weight: Math.ceil(Number(weight)).toString(),
+      weight: finalWeight.toString(),
       courier: courier.toLowerCase(),
+    });
+
+    // Log request details for debugging
+    console.log('🚚 RajaOngkir API Request:', {
+      origin: originCityId,
+      destination: destinationCityId,
+      weight: finalWeight,
+      weightInKg: (finalWeight / 1000).toFixed(2),
+      courier: courier.toLowerCase()
     });
 
     // Call RajaOngkir API - using Komerce V2 endpoint (District Calculate Cost)
@@ -69,7 +79,19 @@ export async function POST(req: NextRequest) {
 
     // Check for Komerce V2 structure
     if (result.meta && result.meta.code === 200) {
-       return Response.json({
+      // Log response for debugging
+      console.log('✅ RajaOngkir API Response:', {
+        courier: courier,
+        weight: finalWeight,
+        servicesCount: result.data?.[0]?.costs?.length || 0,
+        costs: result.data?.[0]?.costs?.map((c: any) => ({
+          service: c.service,
+          price: c.cost?.[0]?.value,
+          etd: c.cost?.[0]?.etd
+        }))
+      });
+      
+      return Response.json({
         success: true,
         data: result.data,
       });

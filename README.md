@@ -48,7 +48,270 @@ The platform consists of five main user interfaces:
 
 ## 🆕 Recent Updates (January 10, 2026)
 
-### 🗺️ User Dashboard Settings - City/Province Data Sync Fix
+### � Shipping Origin Configuration - Admin Settings Enhancement
+
+#### New Feature: Configurable Shipping Origin City 📍
+- **Admin UI Added**: Implemented comprehensive UI in Admin Settings (`/admin/settings` → Shipping tab) to configure store's shipping origin city
+- **Real-Time Impact**: The configured origin city is automatically used by RajaOngkir API for accurate shipping cost calculations
+- **Two-Level Selection**:
+  - Province dropdown with all Indonesian provinces
+  - City dropdown dynamically loads cities based on selected province
+  - Uses `rajaongkir_province_id` mapping for accurate API calls
+
+#### Database & API Integration 🔗
+- **Database Field**: `store_settings.shipping_origin_city_id` stores the RajaOngkir city ID
+- **Default Value**: `'151'` (Jakarta Pusat) as fallback for new installations
+- **API Route Fix**: Updated `/api/settings` route to properly save `shipping_origin_city_id` to database
+- **Complete Save Flow**: UI → State → Store → API → Supabase (fully tested and working)
+
+#### Technical Implementation 🔧
+- **ShippingSettings Interface**: Extended with `shippingOriginCityId: string` property
+- **Cascade Selection**: Province selection triggers city list loading via `useCities()` hook
+- **Current Value Display**: Shows saved city name or "City ID: 151 (Default)" for clarity
+- **Helper Text**: Information banner explaining impact on shipping cost calculations
+- **State Management**: Separate state for database province ID and RajaOngkir province ID
+
+#### User Experience Improvements ✨
+- **Visual Feedback**: Disabled city dropdown until province is selected
+- **Smart Display**: Shows city name when available, falls back to ID display
+- **Validation**: Ensures province is selected before allowing city selection
+- **Save Confirmation**: Toast notification confirms successful save to database
+
+---
+
+## 📦 How Shipping Cost Calculation Works
+
+### Overview 🚚
+The checkout page uses **RajaOngkir Komerce API** to calculate real-time shipping costs based on package weight, origin location, destination location, and selected courier service.
+
+### Calculation Flow
+
+#### 1. Package Weight Calculation ⚖️
+```typescript
+totalWeightGrams = Σ(item.weight × item.quantity)
+```
+- Fetches weight from product variant (`variant.weight_grams`) or product base weight (`product.unit_weight_grams`)
+- Multiplies by quantity for each cart item
+- Sums all items for total package weight
+- Displayed to user in kilograms (KG) for clarity
+
+#### 2. Origin City Retrieval 📍
+**Source**: `store_settings.shipping_origin_city_id`
+- Configured by admin in Settings → Shipping tab
+- Default: `'151'` (Jakarta Pusat)
+- Retrieved via `getOriginCityId()` function from `/lib/shipping/config.ts`
+- Uses RajaOngkir city ID format (not database city ID)
+
+#### 3. Destination City Selection 🎯
+**User Input**: Province → City cascade dropdown
+- User selects destination province
+- System extracts `rajaongkir_province_id` from province object
+- Fetches available cities via `/api/shipping/rajaongkir/cities` endpoint
+- User selects destination city
+- City ID stored in `destination_city_id` form field
+
+#### 4. Automatic Rate Calculation 💰
+**Trigger**: When destination city is selected or weight changes
+- Executes `calculateShippingRates(destinationCityId, totalWeightGrams)`
+- Shows loading spinner during calculation
+- Updates available courier options dynamically
+
+#### 5. Parallel API Calls to RajaOngkir 🔄
+**Supported Couriers** (RajaOngkir Starter Plan):
+- JNE (code: 'jne')
+- TIKI (code: 'tiki')
+- POS Indonesia (code: 'pos')
+
+**Process**:
+```typescript
+// For each courier, simultaneously:
+POST /api/shipping/rajaongkir
+{
+  destinationCityId: "455",     // User's city (RajaOngkir ID)
+  weight: 2500,                  // Total weight in grams
+  courier: "jne"                 // Courier code
+}
+
+// Server-side API calls RajaOngkir:
+POST https://rajaongkir.komerce.id/api/v1/calculate/domestic-cost
+{
+  origin: "151",                 // Store's city (from settings)
+  destination: "455",            // Customer's city
+  weight: "2500",                // Package weight (rounded up)
+  courier: "jne"                 // Courier service
+}
+```
+
+**API Response Structure**:
+```json
+{
+  "meta": { "code": 200 },
+  "data": [{
+    "costs": [
+      {
+        "service": "REG",
+        "cost": [{ "value": 25000, "etd": "3-5" }]
+      },
+      {
+        "service": "YES",
+        "cost": [{ "value": 35000, "etd": "2-3" }]
+      }
+    ]
+  }]
+}
+```
+
+#### 6. Response Processing & Display 📊
+**Mapping to Internal Format**:
+```typescript
+{
+  id: "jne-reg",              // Unique identifier
+  name: "JNE REG",            // Display name
+  price: 25000,               // Cost in IDR
+  eta: "3-5 days"             // Estimated delivery time
+}
+```
+
+**Features**:
+- Deduplicates services using `Set<string>` to prevent duplicates
+- Maps each courier's services (REG, YES, OKE, etc.) to individual options
+- Displays all options as selectable cards with:
+  - Courier name and service type
+  - Estimated delivery time
+  - Price in IDR
+  - Visual selection indicator
+
+#### 7. Fallback Mechanism 🛡️
+**If RajaOngkir API fails**:
+- Returns static courier list as fallback
+- Ensures checkout process isn't blocked
+- Logs errors for debugging
+
+**Static Fallback Rates**:
+```typescript
+[
+  { id: 'jne-reg', name: 'JNE Regular', price: 25000, eta: '3-5 days' },
+  { id: 'jne-yes', name: 'JNE YES', price: 35000, eta: '1-2 days' },
+  { id: 'tiki-reg', name: 'TIKI Regular', price: 23000, eta: '3-5 days' }
+]
+```
+
+#### 8. User Selection & Order Total 🧾
+**Selection**:
+- User clicks a courier option
+- System updates `selectedCourier` state
+- Form field `courier` is set to courier ID
+
+**Price Calculation**:
+```typescript
+subtotal = Σ(item.price × item.quantity)
+discountAmount = promotion discount (if applied)
+shippingFee = selectedCourier.price
+
+// Free shipping promotion check
+finalShippingFee = freeShippingApplied ? 0 : shippingFee
+
+total = subtotal - discountAmount + finalShippingFee
+```
+
+### Technical Architecture 🏗️
+
+#### Security Implementation 🔒
+- **Server-Side API**: All RajaOngkir calls made through `/api/shipping/rajaongkir` route
+- **API Key Protection**: `RAJAONGKIR_API_KEY` stored in environment variables (never exposed to client)
+- **Request Validation**: Server validates all parameters before calling external API
+
+#### Error Handling 🚨
+- **API Timeout**: 15-second timeout for RajaOngkir requests
+- **Network Errors**: Graceful degradation to static rates
+- **Invalid Responses**: Logged and fallback applied
+- **User Feedback**: Loading states and error messages
+
+#### Performance Optimization ⚡
+- **Parallel Fetching**: All 3 couriers fetched simultaneously using `Promise.all`
+- **Caching**: Cities cached per province to reduce API calls (5-minute TTL)
+- **Weight Rounding**: Weights rounded up to nearest gram per RajaOngkir requirements
+- **Debouncing**: Rate calculation triggered only on significant changes
+
+#### Data Flow 📊
+```
+User Cart → Calculate Total Weight
+              ↓
+User Selects Province → Load Cities (via rajaongkir_province_id)
+              ↓
+User Selects City → Store destination_city_id
+              ↓
+Trigger Rate Calculation
+              ↓
+[JNE API Call] ──┐
+[TIKI API Call] ─┼→ Promise.all() → Process Responses
+[POS API Call] ──┘
+              ↓
+Display Options → User Selects → Calculate Final Total
+```
+
+### Key Files & Routes 📁
+
+**Frontend Components**:
+- `/src/app/(main)/checkout/page.tsx` - Main checkout page with calculation logic
+- `/src/lib/shipping/config.ts` - Courier configurations and mapping functions
+
+**API Routes**:
+- `/src/app/api/shipping/rajaongkir/route.ts` - Cost calculation endpoint
+- `/src/app/api/shipping/rajaongkir/cities/route.ts` - City list endpoint
+- `/src/app/api/settings/route.ts` - Save shipping origin configuration
+
+**Database**:
+- `store_settings.shipping_origin_city_id` - Store's origin city
+- `provinces.rajaongkir_province_id` - Province ID mapping
+
+**State Management**:
+- `useCities()` hook - Fetches and caches cities by province
+- `useProvinces()` hook - Fetches and caches provinces
+- `cities-store.ts` - Zustand store for city data caching
+
+---
+
+### 🛒 Checkout Page - Province/City Sync & RajaOngkir ID Mapping Fix
+
+#### Critical Bug Fix: Wrong Cities Loading 🐛
+- **Problem Identified**: Users saw incorrect cities (e.g., Central Kalimantan cities instead of Banten cities)
+- **Root Cause**: System was passing database province ID (e.g., `4` for Banten) directly to RajaOngkir API, but RajaOngkir uses different IDs (e.g., Banten = `11` in RajaOngkir, but `4` in database)
+- **Impact**: Shipping cost calculations were completely wrong due to incorrect origin-destination pairing
+
+#### RajaOngkir Province ID Mapping Implementation 🗺️
+- **Dual ID System**: Now maintains both database province ID and RajaOngkir province ID separately
+- **State Variables**:
+  - `selectedProvinceId`: Database province ID for form/display
+  - `selectedRajaOngkirProvinceId`: RajaOngkir API province ID for city fetching
+- **Auto-Extraction**: Extracts `rajaongkir_province_id` from province object when province is selected
+- **Applies to All Triggers**: Province selection via profile load, dropdown change, or form watcher
+
+#### Fixed City Auto-Match Logic 🎯
+- **Enhanced Debugging**: Added comprehensive console logging showing:
+  - Both database and RajaOngkir province IDs
+  - Number of cities loaded
+  - Available city names for comparison
+  - Match success/failure indicators
+- **Correct City Loading**: `useCities(selectedRajaOngkirProvinceId)` now fetches correct cities
+- **Example Fix**: User in Banten (DB ID: 4) now loads Tangerang, Serang, etc. (RajaOngkir ID: 11) instead of Central Kalimantan cities
+
+#### Database Sync Implementation 🔄
+- **Profile Loading**: Pre-fills province and city from `recipient_province_id`/`recipient_city_id` or falls back to `province_id`/`city_id`
+- **City ID Persistence**: Sets `destination_city_id` form field for RajaOngkir shipping calculations
+- **Province Name Display**: Shows province name via ID lookup instead of storing name
+- **City Reset on Change**: Properly clears city selection when province changes
+
+#### Technical Updates 🔧
+- **Multiple Update Points**: Fixed province ID extraction in:
+  - Profile data loading `useEffect`
+  - Province field watcher
+  - Initial province sync from profile
+  - Province Select `onValueChange` handler
+- **Type Safety**: Updated type definitions from specific interfaces to `any` for flexibility with `rajaongkir_province_id` property
+- **Form Integration**: Proper integration with React Hook Form for all address fields
+
+### �🗺️ User Dashboard Settings - City/Province Data Sync Fix
 
 #### Fixed City Dropdown Display Issues 🏙️
 - **Problem Solved**: Users were required to re-select their city every time they visited `/dashboard/settings` even though city data existed in the database

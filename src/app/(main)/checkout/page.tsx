@@ -202,6 +202,12 @@ async function calculateShippingRates(destinationCityId: string, totalWeightGram
   // Import helper functions
   const { mapRajaOngkirToCourier, AVAILABLE_COURIERS } = await import('@/lib/shipping/config');
 
+  console.log('📦 Calculating shipping rates:', {
+    destinationCityId,
+    totalWeightGrams,
+    totalWeightKg: (totalWeightGrams / 1000).toFixed(2)
+  });
+
   if (!destinationCityId) {
     console.error('Missing destination city ID');
     return staticCouriers;
@@ -266,6 +272,16 @@ async function calculateShippingRates(destinationCityId: string, totalWeightGram
 
   const results = await Promise.all(courierPromises);
   results.forEach(rates => allCouriers.push(...rates));
+
+  console.log('💰 All shipping rates received:', {
+    count: allCouriers.length,
+    rates: allCouriers.map(c => ({
+      id: c.id,
+      name: c.name,
+      price: c.price,
+      eta: c.eta
+    }))
+  });
 
   // If no rates found from RajaOngkir, return static couriers as fallback
   if (allCouriers.length === 0) {
