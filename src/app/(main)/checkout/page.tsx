@@ -222,6 +222,12 @@ async function calculateShippingRates(destinationCityId: string, totalWeightGram
   // Use Promise.all to fetch couriers in parallel for better performance
   const courierPromises = AVAILABLE_COURIERS.map(async (courier) => {
     try {
+      console.log(`📤 Fetching rates for ${courier.name}...`, {
+        destinationCityId,
+        weight: totalWeightGrams,
+        courier: courier.code
+      });
+      
       // Get shipping costs from our server-side API that calls RajaOngkir
       const response = await fetch('/api/shipping/rajaongkir', {
         method: 'POST',
@@ -235,12 +241,21 @@ async function calculateShippingRates(destinationCityId: string, totalWeightGram
         }),
       });
 
+      console.log(`📡 Response status for ${courier.name}:`, response.status, response.statusText);
+
       if (!response.ok) {
-        console.error(`Error from RajaOngkir API route for ${courier.name}:`, response.status);
+        const errorText = await response.text();
+        console.error(`❌ Error from RajaOngkir API route for ${courier.name}:`, {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText
+        });
         return [];
       }
 
       const result = await response.json();
+      
+      console.log(`📥 Full API Response for ${courier.name}:`, result);
 
       if (result.success && result.data) {
         // Handle result data which can be array of results (Standard/V2)
@@ -263,9 +278,11 @@ async function calculateShippingRates(destinationCityId: string, totalWeightGram
         }
         return courierRates;
       }
+      
+      console.warn(`⚠️ No valid data from ${courier.name}:`, result);
       return [];
     } catch (error) {
-       console.error(`Error calculating shipping rates for ${courier.name}:`, error);
+       console.error(`💥 Exception calculating shipping rates for ${courier.name}:`, error);
        return [];
     }
   });

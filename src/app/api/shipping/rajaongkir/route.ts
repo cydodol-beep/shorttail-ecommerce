@@ -5,10 +5,15 @@ import { getOriginCityId } from '@/lib/shipping/config';
 
 export async function POST(req: NextRequest) {
   try {
-    const { destinationCityId, weight, courier } = await req.json();
+    console.log('🔵 RajaOngkir API route called');
+    const body = await req.json();
+    const { destinationCityId, weight, courier } = body;
+    
+    console.log('📥 Request body:', { destinationCityId, weight, courier });
     
     // Validate required params
     if (!destinationCityId || !weight || !courier) {
+      console.error('❌ Missing parameters:', { destinationCityId, weight, courier });
       return Response.json(
         { error: 'Missing required parameters: destinationCityId, weight, courier' },
         { status: 400 }
@@ -17,22 +22,31 @@ export async function POST(req: NextRequest) {
 
     // Ensure we have the API key (try both public and private variables)
     const rajaongkirApiKey = process.env.RAJAONGKIR_API_KEY || process.env.NEXT_PUBLIC_RAJAONGKIR_API_KEY;
+    console.log('🔑 API Key check:', { 
+      hasKey: !!rajaongkirApiKey,
+      keyLength: rajaongkirApiKey?.length || 0,
+      keyPreview: rajaongkirApiKey ? rajaongkirApiKey.substring(0, 8) + '...' : 'none'
+    });
+    
     if (!rajaongkirApiKey) {
-      console.error('RajaOngkir API key is not set in environment variables');
+      console.error('❌ RajaOngkir API key is not set in environment variables');
       console.error('Available env vars (partial):', {
         hasRajaongkirApiKey: !!process.env.RAJAONGKIR_API_KEY,
         hasNextPublicRajaongkirApiKey: !!process.env.NEXT_PUBLIC_RAJAONGKIR_API_KEY,
       });
       return Response.json(
-        { error: 'Shipping calculation is temporarily unavailable' },
+        { error: 'Shipping calculation is temporarily unavailable - No API key' },
         { status: 500 }
       );
     }
 
     // Get origin city ID from store settings
+    console.log('📍 Fetching origin city ID...');
     const originCityId = await getOriginCityId();
+    console.log('📍 Origin city ID:', originCityId);
+    
     if (!originCityId) {
-      console.error('Could not determine origin city ID for shipping calculation');
+      console.error('❌ Could not determine origin city ID for shipping calculation');
       return Response.json(
         { error: 'Unable to determine shipping origin' },
         { status: 500 }
@@ -58,6 +72,10 @@ export async function POST(req: NextRequest) {
     });
 
     // Call RajaOngkir API - using Komerce V2 endpoint (District Calculate Cost)
+    console.log('🌐 Calling RajaOngkir API...');
+    console.log('🌐 URL: https://rajaongkir.komerce.id/api/v1/calculate/domestic-cost');
+    console.log('🌐 Body:', requestBody.toString());
+    
     const response = await fetch('https://rajaongkir.komerce.id/api/v1/calculate/domestic-cost', {
       method: 'POST',
       headers: {
@@ -67,15 +85,20 @@ export async function POST(req: NextRequest) {
       body: requestBody,
     });
 
+    console.log('📡 RajaOngkir Response Status:', response.status, response.statusText);
+
     if (!response.ok) {
-      console.error(`RajaOngkir API returned error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`❌ RajaOngkir API returned error: ${response.status} ${response.statusText}`);
+      console.error('❌ Error body:', errorText);
       return Response.json(
-        { error: `RajaOngkir API error: ${response.status}` },
+        { error: `RajaOngkir API error: ${response.status} - ${errorText}` },
         { status: response.status }
       );
     }
 
     const result = await response.json();
+    console.log('📦 RajaOngkir Raw Response:', JSON.stringify(result, null, 2));
 
     // Check for Komerce V2 structure
     if (result.meta && result.meta.code === 200) {
@@ -122,9 +145,15 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   } catch (error) {
-    console.error('Error in RajaOngkir shipping calculation API:', error);
+    console.error('💥 Exception in RajaOngkir shipping calculation API:');
+    console.error('💥 Error:', error);
+    console.error('💥 Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error('💥 Error message:', error instanceof Error ? error.message : String(error));
     return Response.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error', 
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     );
   }
