@@ -269,24 +269,18 @@ async function calculateShippingRates(destinationCityId: string, totalWeightGram
         for (const serviceObj of services) {
            console.log(`🔍 Service object structure:`, serviceObj);
            
-           // Handle different response structures
-           // Structure 1: { service: "REG", cost: [{ value: 25000, etd: "3-5" }] }
+           // The API returns: { service: "REG", cost: 20000, etd: "3-5 HARI" }
            if (serviceObj.service && serviceObj.cost) {
               const uniqueKey = `${courier.code}-${serviceObj.service}`.toLowerCase();
               if (!servicesFound.has(uniqueKey)) {
                  servicesFound.add(uniqueKey);
                  
-                 // Map each cost option in the cost array
-                 if (Array.isArray(serviceObj.cost)) {
-                    serviceObj.cost.forEach((costDetail: any) => {
-                       courierRates.push({
-                          id: uniqueKey,
-                          name: `${courier.code.toUpperCase()} ${serviceObj.service}`,
-                          price: costDetail.value,
-                          eta: costDetail.etd ? `${costDetail.etd} days` : 'Unknown'
-                       });
-                    });
-                 }
+                 courierRates.push({
+                    id: uniqueKey,
+                    name: `${courier.code.toUpperCase()} ${serviceObj.service}`,
+                    price: typeof serviceObj.cost === 'number' ? serviceObj.cost : 0,
+                    eta: serviceObj.etd || 'Unknown'
+                 });
               }
            }
         }
