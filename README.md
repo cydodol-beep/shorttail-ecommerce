@@ -118,13 +118,13 @@ totalWeightGrams = Σ(item.weight × item.quantity)
 
 #### 5. Parallel API Calls to RajaOngkir 🔄
 **Supported Couriers** (RajaOngkir Starter Plan):
-- JNE (code: 'jne')
-- TIKI (code: 'tiki')
-- POS Indonesia (code: 'pos')
+- JNE (code: 'jne') - Only REG and YES services
+  - **REG**: Regular Service (3-5 days)
+  - **YES**: Express Service (1-2 days)
 
 **Process**:
 ```typescript
-// For each courier, simultaneously:
+// Call JNE courier:
 POST /api/shipping/rajaongkir
 {
   destinationCityId: "455",     // User's city (RajaOngkir ID)
@@ -228,7 +228,8 @@ total = subtotal - discountAmount + finalShippingFee
 - **User Feedback**: Loading states and error messages
 
 #### Performance Optimization ⚡
-- **Parallel Fetching**: All 3 couriers fetched simultaneously using `Promise.all`
+- **Single Courier**: Only JNE courier fetched for faster response
+- **Service Filtering**: Only REG and YES services shown to reduce choice overload
 - **Caching**: Cities cached per province to reduce API calls (5-minute TTL)
 - **Weight Rounding**: Weights rounded up to nearest gram per RajaOngkir requirements
 - **Debouncing**: Rate calculation triggered only on significant changes
@@ -243,11 +244,11 @@ User Selects City → Store destination_city_id
               ↓
 Trigger Rate Calculation
               ↓
-[JNE API Call] ──┐
-[TIKI API Call] ─┼→ Promise.all() → Process Responses
-[POS API Call] ──┘
+[JNE API Call] → Fetch REG & YES Services
               ↓
-Display Options → User Selects → Calculate Final Total
+Filter Services (REG, YES only)
+              ↓
+Display 2 Options → User Selects → Calculate Final Total
 ```
 
 ### Key Files & Routes 📁

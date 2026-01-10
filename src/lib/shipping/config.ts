@@ -4,9 +4,10 @@ import { createClient } from '@/lib/supabase/client';
 // Define the available courier services in RajaOngkir Starter plan
 export const AVAILABLE_COURIERS = [
   { code: 'jne', name: 'JNE', logo: '/logos/jne.png' },
-  { code: 'tiki', name: 'TIKI', logo: '/logos/tiki.png' },
-  { code: 'pos', name: 'POS Indonesia', logo: '/logos/pos.png' },
 ];
+
+// Define allowed JNE service types
+export const ALLOWED_JNE_SERVICES = ['REG', 'YES'];
 
 // Default origin for shipping (Jakarta, as an example)
 export const DEFAULT_ORIGIN_CITY_ID = '151'; // Jakarta Pusat

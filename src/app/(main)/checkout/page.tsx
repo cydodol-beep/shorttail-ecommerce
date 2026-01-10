@@ -271,6 +271,13 @@ async function calculateShippingRates(destinationCityId: string, totalWeightGram
            
            // The API returns: { service: "REG", cost: 20000, etd: "3-5 HARI" }
            if (serviceObj.service && serviceObj.cost) {
+              // Filter JNE services: only allow REG and YES
+              const serviceType = serviceObj.service.toUpperCase();
+              if (courier.code === 'jne' && !['REG', 'YES'].includes(serviceType)) {
+                 console.log(`⏭️ Skipping JNE service: ${serviceType} (not in allowed list)`);
+                 continue;
+              }
+              
               const uniqueKey = `${courier.code}-${serviceObj.service}`.toLowerCase();
               if (!servicesFound.has(uniqueKey)) {
                  servicesFound.add(uniqueKey);
