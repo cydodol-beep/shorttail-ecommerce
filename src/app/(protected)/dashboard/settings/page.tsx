@@ -760,26 +760,40 @@ export default function UserSettingsPage() {
                         <SelectContent className="!bg-white !text-black border-slate-200 max-h-[200px]" style={{ backgroundColor: 'white', color: 'black' }}>
                           {loadingCities ? (
                              <SelectItem disabled value="loading" className="!text-gray-500">Loading cities...</SelectItem>
-                          ) : personalCities.length > 0 ? (
-                            personalCities.map((c) => (
-                            <SelectItem 
-                              key={c.id} 
-                              value={c.id.toString()}
-                              className="!text-black hover:bg-slate-100 focus:bg-slate-100 focus:text-black cursor-pointer"
-                              style={{ color: 'black' }}
-                            >
-                               <span className="!text-black !opacity-100" style={{ color: 'black', fontWeight: 500 }}>
-                                {c.type || ''} {c.city_name || (c as any).name || ''}
-                              </span>
-                            </SelectItem>
-                          ))
-                          ) : cityId && profile?.city ? (
-                            // Show the saved city from database if API cities haven't loaded yet
-                            <SelectItem value={cityId} className="!text-black" style={{ color: 'black' }}>
-                              {profile.city}
-                            </SelectItem>
                           ) : (
-                             <SelectItem disabled value="empty" className="!text-gray-500">No cities found (Select Province)</SelectItem>
+                            <>
+                              {/* Always show saved city first if it exists and is not in the loaded list */}
+                              {cityId && profile?.city && !personalCities.find(c => c.id.toString() === cityId) && (
+                                <SelectItem value={cityId} className="!text-black" style={{ color: 'black' }}>
+                                  {profile.city} (Current)
+                                </SelectItem>
+                              )}
+                              
+                              {/* Show all loaded cities */}
+                              {personalCities.length > 0 ? (
+                                personalCities.map((c) => (
+                                  <SelectItem 
+                                    key={c.id} 
+                                    value={c.id.toString()}
+                                    className="!text-black hover:bg-slate-100 focus:bg-slate-100 focus:text-black cursor-pointer"
+                                    style={{ color: 'black' }}
+                                  >
+                                    <span className="!text-black !opacity-100" style={{ color: 'black', fontWeight: 500 }}>
+                                      {c.type || ''} {c.city_name || (c as any).name || ''}
+                                    </span>
+                                  </SelectItem>
+                                ))
+                              ) : cityId && profile?.city ? (
+                                // Show the saved city from database if API cities haven't loaded yet and it wasn't shown above
+                                !personalCities.find(c => c.id.toString() === cityId) && (
+                                  <SelectItem value={cityId} className="!text-black" style={{ color: 'black' }}>
+                                    {profile.city}
+                                  </SelectItem>
+                                )
+                              ) : (
+                                <SelectItem disabled value="empty" className="!text-gray-500">No cities found (Select Province)</SelectItem>
+                              )}
+                            </>
                           )}
                         </SelectContent>
                       </Select>
@@ -923,26 +937,40 @@ export default function UserSettingsPage() {
                         <SelectContent className="!bg-white !text-black border-slate-200 max-h-[200px]" style={{ backgroundColor: 'white', color: 'black' }}>
                             {loadingRecipientCities ? (
                              <SelectItem disabled value="loading" className="!text-gray-500">Loading cities...</SelectItem>
-                            ) : recipientCities.length > 0 ? (
-                                recipientCities.map((c) => (
-                            <SelectItem 
-                              key={c.id} 
-                              value={c.id.toString()}
-                              className="!text-black hover:bg-slate-100 focus:bg-slate-100 focus:text-black cursor-pointer"
-                              style={{ color: 'black' }}
-                            >
-                               <span className="!text-black !opacity-100" style={{ color: 'black', fontWeight: 500 }}>
-                                {c.type || ''} {c.city_name || (c as any).name || ''}
-                              </span>
-                            </SelectItem>
-                          ))
-                            ) : recipientCityId && profile?.recipient_city ? (
-                              // Show the saved city from database if API cities haven't loaded yet
-                              <SelectItem value={recipientCityId} className="!text-black" style={{ color: 'black' }}>
-                                {profile.recipient_city}
-                              </SelectItem>
                             ) : (
-                               <SelectItem disabled value="empty" className="!text-gray-500">No cities found</SelectItem>
+                              <>
+                                {/* Always show saved city first if it exists and is not in the loaded list */}
+                                {recipientCityId && profile?.recipient_city && !recipientCities.find(c => c.id.toString() === recipientCityId) && (
+                                  <SelectItem value={recipientCityId} className="!text-black" style={{ color: 'black' }}>
+                                    {profile.recipient_city} (Current)
+                                  </SelectItem>
+                                )}
+                                
+                                {/* Show all loaded cities */}
+                                {recipientCities.length > 0 ? (
+                                  recipientCities.map((c) => (
+                                    <SelectItem 
+                                      key={c.id} 
+                                      value={c.id.toString()}
+                                      className="!text-black hover:bg-slate-100 focus:bg-slate-100 focus:text-black cursor-pointer"
+                                      style={{ color: 'black' }}
+                                    >
+                                      <span className="!text-black !opacity-100" style={{ color: 'black', fontWeight: 500 }}>
+                                        {c.type || ''} {c.city_name || (c as any).name || ''}
+                                      </span>
+                                    </SelectItem>
+                                  ))
+                                ) : recipientCityId && profile?.recipient_city ? (
+                                  // Show the saved city from database if API cities haven't loaded yet and it wasn't shown above
+                                  !recipientCities.find(c => c.id.toString() === recipientCityId) && (
+                                    <SelectItem value={recipientCityId} className="!text-black" style={{ color: 'black' }}>
+                                      {profile.recipient_city}
+                                    </SelectItem>
+                                  )
+                                ) : (
+                                  <SelectItem disabled value="empty" className="!text-gray-500">No cities found</SelectItem>
+                                )}
+                              </>
                             )}
                         </SelectContent>
                       </Select>
