@@ -397,12 +397,13 @@ export default function CheckoutPage() {
   const [selectedCourier, setSelectedCourier] = useState<ShippingCourier | null>(null);
   
   // Use IDs for selection
-  const [selectedProvinceId, setSelectedProvinceId] = useState('');
+  const [selectedProvinceId, setSelectedProvinceId] = useState(''); // Database province ID
+  const [selectedRajaOngkirProvinceId, setSelectedRajaOngkirProvinceId] = useState(''); // RajaOngkir province ID for API calls
   const [selectedCityId, setSelectedCityId] = useState(''); 
   
   // Hooks for Data
   const { provinces } = useProvinces();
-  const { cities } = useCities(selectedProvinceId);
+  const { cities } = useCities(selectedRajaOngkirProvinceId); // Use RajaOngkir ID for fetching cities
 
   const [shippingLoading, setShippingLoading] = useState(false);
   const [promotionCode, setPromotionCode] = useState('');
@@ -477,12 +478,14 @@ export default function CheckoutPage() {
       // Set the province based on province_id from profile
       const profileProvinceId = profile.recipient_province_id || profile.province_id;
       if (profileProvinceId && provinces.length > 0) {
-        const matchedProvince = provinces.find((prov: { id: number; province_name: string }) =>
+        const matchedProvince = provinces.find((prov: any) =>
           prov.id === profileProvinceId
         );
         if (matchedProvince) {
           console.log('Setting province from ID:', matchedProvince.province_name);
+          console.log('RajaOngkir Province ID:', matchedProvince.rajaongkir_province_id);
           setSelectedProvinceId(matchedProvince.id.toString());
+          setSelectedRajaOngkirProvinceId(matchedProvince.rajaongkir_province_id?.toString() || '');
           form.setValue('province', matchedProvince.id.toString());
         }
       }
@@ -505,7 +508,8 @@ export default function CheckoutPage() {
       console.log('=== City Auto-Match Check ===');
       console.log('Current city ID:', currentCityId);
       console.log('Current city name:', currentCityValue);
-      console.log('Selected province ID:', selectedProvinceId);
+      console.log('Selected province ID (database):', selectedProvinceId);
+      console.log('Selected province ID (RajaOngkir):', selectedRajaOngkirProvinceId);
       console.log('Cities loaded:', cities.length);
       
       // Only auto-match if we don't have a city_id but we have a city name
@@ -595,12 +599,13 @@ export default function CheckoutPage() {
     const subscription = form.watch((value, { name }) => {
       if (name === 'province' && value.province) {
         // Find the matching province ID based on the name
-        const matchedProvince = provinces.find((prov: { id: number; province_name: string }) =>
+        const matchedProvince = provinces.find((prov: any) =>
           prov.province_name.toLowerCase().includes(value.province?.toLowerCase() || '') ||
           (value.province || '').toLowerCase().includes(prov.province_name.toLowerCase())
         );
         if (matchedProvince && matchedProvince.id.toString() !== selectedProvinceId) {
           setSelectedProvinceId(matchedProvince.id.toString());
+          setSelectedRajaOngkirProvinceId(matchedProvince.rajaongkir_province_id?.toString() || '');
         }
       }
     });
@@ -627,16 +632,16 @@ export default function CheckoutPage() {
       const recipientProvinceId = profile.recipient_province_id;
       const regionProvince = profile.recipient_region || profile.region_state_province || '';
 
-      let matchedProvince: { id: number; province_name: string } | undefined;
+      let matchedProvince: any;
 
       if (recipientProvinceId) {
         // Use the ID directly if available
-        matchedProvince = provinces.find((prov: { id: number; province_name: string }) =>
+        matchedProvince = provinces.find((prov: any) =>
           prov.id === recipientProvinceId
         );
       } else if (regionProvince) {
         // Fallback to name matching if no ID
-        matchedProvince = provinces.find((prov: { id: number; province_name: string }) =>
+        matchedProvince = provinces.find((prov: any) =>
           prov.province_name.toLowerCase().includes(regionProvince.toLowerCase()) ||
           regionProvince.toLowerCase().includes(prov.province_name.toLowerCase())
         );
@@ -644,6 +649,7 @@ export default function CheckoutPage() {
 
       if (matchedProvince) {
         setSelectedProvinceId(matchedProvince.id.toString());
+        setSelectedRajaOngkirProvinceId(matchedProvince.rajaongkir_province_id?.toString() || '');
         // Also update the form value to match the province name
         form.setValue('province', matchedProvince.province_name);
       }
@@ -1421,8 +1427,10 @@ export default function CheckoutPage() {
                           <FormLabel>Province</FormLabel>
                           <Select 
                             onValueChange={(value) => {
+                              const province = provinces.find(p => p.id.toString() === value);
                               field.onChange(value); // Store province ID
-                              setSelectedProvinceId(value); // Trigger City Load
+                              setSelectedProvinceId(value); // Set database province ID
+                              setSelectedRajaOngkirProvinceId(province?.rajaongkir_province_id?.toString() || ''); // Set RajaOngkir province ID
                               setSelectedCityId(''); // Reset city when province changes
                               form.setValue('city', '');
                               form.setValue('destination_city_id', '');
