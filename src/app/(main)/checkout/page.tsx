@@ -513,7 +513,7 @@ export default function CheckoutPage() {
         );
         
         if (matchedCity) {
-          const cityId = matchedCity.id || matchedCity.city_id;
+          const cityId = matchedCity.id;
           console.log('Auto-matched city by name:', {
             profileCity: currentCityValue,
             matchedCity: matchedCity,
@@ -1439,8 +1439,8 @@ export default function CheckoutPage() {
                           <FormLabel>City</FormLabel>
                           <Select
                             onValueChange={(value) => {
-                              const selectedCity = cities.find((c: any) => (c.id || c.city_id).toString() === value);
-                              const cityName = selectedCity?.city_name || selectedCity?.name || '';
+                              const selectedCity = cities.find((c: any) => c.id.toString() === value);
+                              const cityName = selectedCity?.city_name || '';
                               
                               field.onChange(cityName); // Store city name in form
                               setSelectedCityId(value); // Store city ID in state
@@ -1459,9 +1459,9 @@ export default function CheckoutPage() {
                                 <SelectValue placeholder={!selectedProvinceId ? "Select Province First" : "Select City"}>
                                   {(() => {
                                     // First, try to find city in loaded cities list
-                                    const foundCity = cities.find(c => (c.id || c.city_id).toString() === selectedCityId);
+                                    const foundCity = cities.find(c => c.id.toString() === selectedCityId);
                                     if (foundCity) {
-                                      const cityName = foundCity.city_name || foundCity.name;
+                                      const cityName = foundCity.city_name;
                                       return `${foundCity.type || ''} ${cityName}`.trim();
                                     }
                                     
@@ -1485,7 +1485,7 @@ export default function CheckoutPage() {
                                   {(() => {
                                     const profileCity = profile?.recipient_city || profile?.city;
                                     const hasSavedCity = selectedCityId && profileCity;
-                                    const cityInList = cities.find(c => (c.id || c.city_id).toString() === selectedCityId);
+                                    const cityInList = cities.find(c => c.id.toString() === selectedCityId);
                                     
                                     if (hasSavedCity && !cityInList) {
                                       return (
@@ -1499,8 +1499,8 @@ export default function CheckoutPage() {
                                   
                                   {/* Show all loaded cities */}
                                   {cities.map((city: any) => {
-                                    const cityId = city.city_id || city.id;
-                                    const cityName = city.city_name || city.name;
+                                    const cityId = city.id;
+                                    const cityName = city.city_name;
                                     return (
                                       <SelectItem key={cityId} value={cityId.toString()} className="focus:bg-zinc-100 dark:focus:bg-zinc-800 focus:text-zinc-900 dark:focus:text-zinc-50">
                                         {city.type} {cityName}
