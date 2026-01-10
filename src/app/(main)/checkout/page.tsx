@@ -283,8 +283,7 @@ async function calculateShippingRates(destinationCityId: string, totalWeightGram
                           id: uniqueKey,
                           name: `${courier.code.toUpperCase()} ${serviceObj.service}`,
                           price: costDetail.value,
-                          eta: costDetail.etd ? `${costDetail.etd} days` : 'Unknown',
-                          description: costDetail.note || serviceObj.description
+                          eta: costDetail.etd ? `${costDetail.etd} days` : 'Unknown'
                        });
                     });
                  }
