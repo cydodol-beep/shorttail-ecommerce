@@ -502,19 +502,29 @@ export default function CheckoutPage() {
       const currentCityValue = form.watch('city');
       const currentCityId = selectedCityId;
       
+      console.log('=== City Auto-Match Check ===');
+      console.log('Current city ID:', currentCityId);
+      console.log('Current city name:', currentCityValue);
+      console.log('Selected province ID:', selectedProvinceId);
+      console.log('Cities loaded:', cities.length);
+      
       // Only auto-match if we don't have a city_id but we have a city name
       if (!currentCityId && currentCityValue && cities.length > 0 && selectedProvinceId) {
+        console.log('Attempting to auto-match city...');
         const normalizedCityName = currentCityValue.toUpperCase().trim();
+        console.log('Normalized city name:', normalizedCityName);
+        console.log('Available cities:', cities.map(c => c.city_name));
+        
         const matchedCity = cities.find(
           (city: any) => {
-            const cityName = (city.city_name || city.name || '').toUpperCase().trim();
+            const cityName = (city.city_name || '').toUpperCase().trim();
             return cityName === normalizedCityName;
           }
         );
         
         if (matchedCity) {
           const cityId = matchedCity.id;
-          console.log('Auto-matched city by name:', {
+          console.log('✅ Auto-matched city by name:', {
             profileCity: currentCityValue,
             matchedCity: matchedCity,
             settingCityId: cityId.toString()
@@ -526,8 +536,18 @@ export default function CheckoutPage() {
           if (matchedCity.postal_code) {
             form.setValue('postal_code', matchedCity.postal_code);
           }
+        } else {
+          console.log('❌ No matching city found for:', normalizedCityName);
         }
+      } else {
+        console.log('Skipping auto-match:', {
+          hasCurrentCityId: !!currentCityId,
+          hasCurrentCityValue: !!currentCityValue,
+          hasCities: cities.length > 0,
+          hasProvinceId: !!selectedProvinceId
+        });
       }
+      console.log('=============================');
   }, [cities, selectedCityId, form.watch('city'), selectedProvinceId]);
 
   useEffect(() => {
