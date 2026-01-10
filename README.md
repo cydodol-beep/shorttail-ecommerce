@@ -1,4 +1,4 @@
-# ShortTail.id - Premium Pet Shop E-Commerce Platform
+﻿# ShortTail.id - Premium Pet Shop E-Commerce Platform
 
 A sophisticated e-commerce platform for pet supplies built with Next.js 16 and Supabase, featuring Role-Based Access Control (RBAC), Point of Sale (POS) system, and gamification features.
 
@@ -47,6 +47,43 @@ The platform consists of five main user interfaces:
 - **Resource Optimization**: Added proper resource cleanup to prevent memory accumulation
 
 ## 🆕 Recent Updates (January 10, 2026)
+
+### 🔧 Performance & Stability Fixes
+
+#### Fixed Timeout Errors in Supabase Queries ⏱️
+- **Issue Resolved**: Eliminated `TimeoutError: signal timed out` and `AbortError: The user aborted a request` console errors
+- **Root Cause**: Supabase queries had no timeout protection, causing indefinite hangs during slow database operations
+- **Fixes Applied**:
+  - Added 10-15 second timeouts to all critical Supabase queries using `AbortController`
+  - Implemented automatic cleanup with `clearTimeout()` to prevent memory leaks
+  - Added graceful error handling for timeout scenarios without console spam
+  - Created `src/lib/supabase/timeout-utils.ts` helper for consistent timeout handling
+- **Stores Updated**:
+  - `social-media-store.ts` - 10s timeout for social media links fetch
+  - `landing-sections-store.ts` - 10s timeout for landing page sections
+  - `categories-store.ts` - 10s timeout for categories fetch (fixed syntax error)
+  - `provinces-store.ts` - 10s timeout for provinces fetch
+  - `products/page.tsx` - 15s timeout for products query with complex filters
+- **Impact**: Improved user experience during slow network conditions, pages load smoothly without freezing
+
+#### Build Error Fixes 🏗️
+- **Fixed Syntax Error**: Resolved missing closing brace in `categories-store.ts` catch block that caused build failures
+- **Build Status**: ✅ All TypeScript compilation errors resolved, production build successful
+- **Commit**: ac18497 - "Fix: Resolve syntax error in categories-store catch block"
+
+#### Shipping Cost Calculation Optimizations 📦
+- **Weight Multiplier Logic**: Verified and optimized 2kg-based shipping cost multiplier working correctly
+- **RajaOngkir Integration**: Ensured proper API response handling with timeout protection
+- **Error Handling**: Improved fallback mechanisms when API calls fail or timeout
+- **API Timeout**: 15-second timeout added to shipping rate calculations
+- **Commit**: 1e6d16a - "Fix: Add timeout protection to prevent TimeoutError and AbortError"
+
+#### Technical Documentation 📚
+- **Created**: `TIMEOUT_FIXES.md` - Comprehensive documentation of timeout error resolution
+- **Updated**: Build process and error handling patterns documented
+- **See Also**: `PERFORMANCE_FIXES.md` for related optimization work
+
+---
 
 ### � Shipping Origin Configuration - Admin Settings Enhancement
 
