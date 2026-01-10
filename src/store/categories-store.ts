@@ -87,10 +87,11 @@ export const useCategoriesStore = create<CategoriesStore>((set, get) => ({
         } catch (err) {
           if (err instanceof Error && err.name !== 'AbortError') {
             console.error('Exception fetching categories:', err);
-          set({ 
-            error: err instanceof Error ? err.message : 'Failed to fetch categories', 
-            loading: false 
-          });
+            set({ 
+              error: err instanceof Error ? err.message : 'Failed to fetch categories', 
+              loading: false 
+            });
+          }
         }
         resolve();
       }, DEBOUNCE_DELAY);
