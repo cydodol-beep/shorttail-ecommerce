@@ -22,6 +22,7 @@ export interface ShippingSettings {
   enableCOD: boolean;
   codFee: number;
   processingDays: number;
+  shippingOriginCityId: string; // RajaOngkir city ID for shipping origin
 }
 
 export interface PaymentSettings {
@@ -91,6 +92,7 @@ const defaultShippingSettings: ShippingSettings = {
   enableCOD: true,
   codFee: 5000,
   processingDays: 2,
+  shippingOriginCityId: '151', // Default: Jakarta Pusat
 };
 
 const defaultPaymentSettings: PaymentSettings = {
@@ -153,6 +155,7 @@ function dbToSettings(row: Record<string, unknown>): AllSettings {
       enableCOD: row.enable_cod as boolean ?? defaultShippingSettings.enableCOD,
       codFee: Number(row.cod_fee) || defaultShippingSettings.codFee,
       processingDays: Number(row.processing_days) || defaultShippingSettings.processingDays,
+      shippingOriginCityId: (row.shipping_origin_city_id as string) || defaultShippingSettings.shippingOriginCityId,
     },
     payment: {
       bankTransferEnabled: row.bank_transfer_enabled as boolean ?? defaultPaymentSettings.bankTransferEnabled,
@@ -211,6 +214,7 @@ function settingsToDb(settings: AllSettings): Record<string, unknown> {
     enable_cod: settings.shipping.enableCOD,
     cod_fee: settings.shipping.codFee,
     processing_days: settings.shipping.processingDays,
+    shipping_origin_city_id: settings.shipping.shippingOriginCityId,
     bank_transfer_enabled: settings.payment.bankTransferEnabled,
     bank_name: settings.payment.bankName,
     bank_account_number: settings.payment.bankAccountNumber,

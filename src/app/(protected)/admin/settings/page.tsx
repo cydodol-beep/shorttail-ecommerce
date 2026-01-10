@@ -38,6 +38,8 @@ import {
 } from '@/components/ui/select';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { useAuth } from '@/hooks/use-auth';
+import { useProvinces } from '@/hooks/use-provinces';
+import { useCities } from '@/hooks/use-cities';
 import { 
   useAllSettings,
   saveAllSettings,
@@ -96,6 +98,14 @@ export default function AdminSettingsPage() {
   const [loyaltySettings, setLoyaltySettings] = useState<LoyaltySettings>(defaultLoyaltySettings);
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(defaultNotificationSettings);
 
+  // State for shipping origin selection
+  const [originProvinceId, setOriginProvinceId] = useState('');
+  const [originRajaOngkirProvinceId, setOriginRajaOngkirProvinceId] = useState('');
+  
+  // Hooks for provinces and cities
+  const { provinces } = useProvinces();
+  const { cities: originCities } = useCities(originRajaOngkirProvinceId);
+
   // Load settings from Supabase when available
   useEffect(() => {
     if (!settingsLoading && loadedSettings) {
@@ -109,8 +119,15 @@ export default function AdminSettingsPage() {
       setPaymentSettings(loadedSettings.payment);
       setLoyaltySettings(loadedSettings.loyalty);
       setNotificationSettings(loadedSettings.notification);
+
+      // Find province from origin city ID
+      if (loadedSettings.shipping.shippingOriginCityId && provinces.length > 0) {
+        // Try to find which province this city belongs to by checking cities
+        // For now, we'll need the user to re-select if they want to change
+        // The ID is already saved and will be used for calculations
+      }
     }
-  }, [settingsLoading, loadedSettings]);
+  }, [settingsLoading, loadedSettings, provinces]);
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -574,6 +591,96 @@ export default function AdminSettingsPage() {
                     />
                   </div>
                 )}
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-base font-semibold">Shipping Origin</Label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Set your store location for accurate shipping cost calculations
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="originProvince">Origin Province</Label>
+                      <Select
+                        value={originProvinceId}
+                        onValueChange={(value) => {
+                          const province = provinces.find(p => p.id.toString() === value);
+                          setOriginProvinceId(value);
+                          setOriginRajaOngkirProvinceId(province?.rajaongkir_province_id?.toString() || '');
+                          // Reset city when province changes
+                          setShippingSettings({ ...shippingSettings, shippingOriginCityId: '' });
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select province">
+                            {(() => {
+                              const province = provinces.find(p => p.id.toString() === originProvinceId);
+                              return province?.province_name || "Select province";
+                            })()}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[300px]">
+                          {provinces.map((province) => (
+                            <SelectItem key={province.id} value={province.id.toString()}>
+                              {province.province_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="originCity">Origin City</Label>
+                      <Select
+                        value={shippingSettings.shippingOriginCityId}
+                        onValueChange={(value) => {
+                          setShippingSettings({ ...shippingSettings, shippingOriginCityId: value });
+                        }}
+                        disabled={!originRajaOngkirProvinceId || originCities.length === 0}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select city">
+                            {(() => {
+                              if (!shippingSettings.shippingOriginCityId) return "Select city";
+                              const city = originCities.find(c => c.id.toString() === shippingSettings.shippingOriginCityId);
+                              if (city) return city.city_name;
+                              // Show current saved city ID if not in list
+                              return `City ID: ${shippingSettings.shippingOriginCityId}`;
+                            })()}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[300px]">
+                          {originCities.map((city) => (
+                            <SelectItem key={city.id} value={city.id.toString()}>
+                              {city.city_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {!originRajaOngkirProvinceId && (
+                        <p className="text-xs text-muted-foreground">
+                          Please select a province first
+                        </p>
+                      )}
+                      {shippingSettings.shippingOriginCityId && (
+                        <p className="text-xs text-primary">
+                          Current: {shippingSettings.shippingOriginCityId === '151' ? 'Jakarta Pusat (Default)' : `City ID: ${shippingSettings.shippingOriginCityId}`}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <p className="text-sm text-blue-900 dark:text-blue-100">
+                      <strong>Important:</strong> The shipping origin city is used to calculate real-time shipping costs from your store to the customer. 
+                      Make sure to select the city where you ship your products from.
+                    </p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
