@@ -263,14 +263,32 @@ async function calculateShippingRates(destinationCityId: string, totalWeightGram
         const services = Array.isArray(result.data) ? result.data : [result.data];
         const courierRates: ShippingCourier[] = [];
 
+        console.log(`🔍 Processing ${services.length} services for ${courier.name}:`, services);
+
         // Process each service
         for (const serviceObj of services) {
-           // Each serviceObj is like: { service: "REG", cost: [...] }
-           const uniqueKey = `${courier.code}-${serviceObj.service}`;
-           if (!servicesFound.has(uniqueKey)) {
-              servicesFound.add(uniqueKey);
-              const mapped = mapRajaOngkirToCourier(serviceObj, courier.code);
-              courierRates.push(...mapped);
+           console.log(`🔍 Service object structure:`, serviceObj);
+           
+           // Handle different response structures
+           // Structure 1: { service: "REG", cost: [{ value: 25000, etd: "3-5" }] }
+           if (serviceObj.service && serviceObj.cost) {
+              const uniqueKey = `${courier.code}-${serviceObj.service}`.toLowerCase();
+              if (!servicesFound.has(uniqueKey)) {
+                 servicesFound.add(uniqueKey);
+                 
+                 // Map each cost option in the cost array
+                 if (Array.isArray(serviceObj.cost)) {
+                    serviceObj.cost.forEach((costDetail: any) => {
+                       courierRates.push({
+                          id: uniqueKey,
+                          name: `${courier.code.toUpperCase()} ${serviceObj.service}`,
+                          price: costDetail.value,
+                          eta: costDetail.etd ? `${costDetail.etd} days` : 'Unknown',
+                          description: costDetail.note || serviceObj.description
+                       });
+                    });
+                 }
+              }
            }
         }
         
