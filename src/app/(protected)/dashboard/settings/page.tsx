@@ -95,6 +95,45 @@ export default function UserSettingsPage() {
   const { cities: personalCities, loading: loadingCities } = useCities(selectedRajaOngkirId);
   const { cities: recipientCities, loading: loadingRecipientCities } = useCities(selectedRecipientRajaongkirId);
 
+  // Auto-match city_id from city name if city_id is missing but city name exists
+  useEffect(() => {
+    // For personal address
+    if (!cityId && profile?.city && personalCities.length > 0 && region) {
+      const normalizedProfileCity = profile.city.toUpperCase().trim();
+      const matchedCity = personalCities.find(c => {
+        const cityName = (c.city_name || (c as any).name || '').toUpperCase().trim();
+        return cityName === normalizedProfileCity;
+      });
+      
+      if (matchedCity) {
+        console.log('Auto-matched personal city by name:', {
+          profileCity: profile.city,
+          matchedCity: matchedCity,
+          settingCityId: matchedCity.id.toString()
+        });
+        setCityId(matchedCity.id.toString());
+      }
+    }
+
+    // For recipient address
+    if (!recipientCityId && profile?.recipient_city && recipientCities.length > 0 && recipientRegion) {
+      const normalizedRecipientCity = profile.recipient_city.toUpperCase().trim();
+      const matchedCity = recipientCities.find(c => {
+        const cityName = (c.city_name || (c as any).name || '').toUpperCase().trim();
+        return cityName === normalizedRecipientCity;
+      });
+      
+      if (matchedCity) {
+        console.log('Auto-matched recipient city by name:', {
+          profileCity: profile.recipient_city,
+          matchedCity: matchedCity,
+          settingCityId: matchedCity.id.toString()
+        });
+        setRecipientCityId(matchedCity.id.toString());
+      }
+    }
+  }, [cityId, profile, personalCities, region, recipientCityId, recipientCities, recipientRegion]);
+
   // Debug logs for City Data
   useEffect(() => {
     console.log('=== City Debug Info ===');
