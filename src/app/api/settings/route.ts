@@ -65,6 +65,7 @@ export async function POST(request: Request) {
       enable_cod: settings.shipping.enableCOD,
       cod_fee: settings.shipping.codFee,
       processing_days: settings.shipping.processingDays,
+      shipping_origin_city_id: settings.shipping.shippingOriginCityId,
       // Payment Settings
       bank_transfer_enabled: settings.payment.bankTransferEnabled,
       bank_name: settings.payment.bankName,
