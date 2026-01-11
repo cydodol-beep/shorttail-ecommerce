@@ -45,6 +45,9 @@ function ProductsPageContent() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [sortBy, setSortBy] = useState('newest');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const itemsPerPage = 24; // Show 24 products per page
   const addItem = useCartStore((state) => state.addItem);
   const { getActiveCategories } = useCategories();
   const categories = getActiveCategories();
@@ -56,6 +59,7 @@ function ProductsPageContent() {
   // Sync category state with URL
   useEffect(() => {
     setCategory(categoryFromUrl);
+    setCurrentPage(1); // Reset to page 1 when category changes
   }, [categoryFromUrl]);
 
   const fetchProducts = useCallback(async () => {
@@ -82,11 +86,17 @@ function ProductsPageContent() {
         }
       }
       
+      // Calculate pagination range
+      const from = (currentPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
+      
+      // Build query with count for pagination
       let query = supabase
         .from('products')
-        .select('*, product_variants(*), categories(id, name, slug)')
+        .select('id, name, slug, base_price, stock_quantity, image_url, has_variants, category_id, product_variants(id, name, price_adjustment, stock_quantity), categories(id, name, slug)', { count: 'exact' })
         .eq('is_active', true)
-        .abortSignal(abortController.signal);
+        .abortSignal(abortController.signal)
+        .range(from, to);
 
       if (categoryId) {
         query = query.eq('category_id', categoryId);
@@ -110,7 +120,7 @@ function ProductsPageContent() {
           query = query.order('created_at', { ascending: false });
       }
 
-      const { data, error } = await query;
+      const { data, error, count } = await query;
 
       if (error) {
         // Filter out expected AbortError from logs
@@ -124,6 +134,7 @@ function ProductsPageContent() {
       
       clearTimeout(timeoutId);
       setProducts(data || []);
+      setTotalCount(count || 0);
     } catch (error) {
       clearTimeout(timeoutId);
       // Handle abort/timeout errors gracefully - silently ignore them
@@ -133,10 +144,12 @@ function ProductsPageContent() {
     } finally {
       setLoading(false);
     }
-  }, [category, sortBy, searchQuery]);
+  }, [category, sortBy, searchQuery, currentPage, itemsPerPage]);
 
   useEffect(() => {
     fetchProducts();
+    // Scroll to top when page changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [fetchProducts]);
 
   const getProductPrice = (product: Product & { product_variants?: ProductVariant[] }) => {
@@ -165,7 +178,18 @@ function ProductsPageContent() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setCurrentPage(1); // Reset to first page on search
     fetchProducts();
+  };
+
+  const handleSortChange = (value: string) => {
+    setSortBy(value);
+    setCurrentPage(1); // Reset to first page on sort change
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setCategory(value);
+    setCurrentPage(1); // Reset to first page on category change
   };
 
   const handleAddToCart = (product: Product) => {
@@ -198,7 +222,7 @@ function ProductsPageContent() {
           </div>
         </form>
         <div className="flex gap-4">
-          <Select value={category} onValueChange={setCategory}>
+          <Select value={category} onValueChange={handleCategoryChange}>
             <SelectTrigger className="w-[180px]">
               <Filter className="h-4 w-4 mr-2" />
               <SelectValue placeholder="Category" />
@@ -212,7 +236,7 @@ function ProductsPageContent() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={sortBy} onValueChange={setSortBy}>
+          <Select value={sortBy} onValueChange={handleSortChange}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
@@ -385,6 +409,59 @@ function ProductsPageContent() {
             );
           })}
         </motion.div>
+      )}
+
+      {/* Pagination */}
+      {!loading && totalCount > itemsPerPage && (
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-brown-600">
+            Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} products
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            {Array.from({ length: Math.ceil(totalCount / itemsPerPage) }, (_, i) => i + 1)
+              .filter(page => {
+                // Show first page, last page, current page, and pages around current
+                const totalPages = Math.ceil(totalCount / itemsPerPage);
+                return page === 1 || 
+                       page === totalPages || 
+                       Math.abs(page - currentPage) <= 1;
+              })
+              .map((page, idx, arr) => {
+                // Add ellipsis if there's a gap
+                const prevPage = arr[idx - 1];
+                const showEllipsis = prevPage && page - prevPage > 1;
+                
+                return (
+                  <div key={page} className="flex gap-2">
+                    {showEllipsis && <span className="px-2 py-1">...</span>}
+                    <Button
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  </div>
+                );
+              })}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalCount / itemsPerPage), p + 1))}
+              disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );
