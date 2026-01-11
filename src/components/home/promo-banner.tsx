@@ -56,41 +56,56 @@ export function PromoBanner() {
   const [loading, setLoading] = useState(true);
 
   const fetchActivePromotions = useCallback(async () => {
-    const supabase = createClient();
-    const now = new Date().toISOString();
-    
-    const { data, error } = await supabase
-      .from('promotions')
-      .select('id, code, description, discount_type, discount_value, min_purchase_amount, start_date, end_date, is_active, free_shipping, buy_quantity, get_quantity')
-      .eq('is_active', true)
-      .or(`start_date.is.null,start_date.lte.${now}`)
-      .or(`end_date.is.null,end_date.gte.${now}`)
-      .order('created_at', { ascending: false })
-      .limit(5);
+    // Create timeout controller
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 10000); // 10 second timeout
 
-    if (error) {
-      console.error('Error fetching promotions:', error);
+    try {
+      const supabase = createClient();
+      const now = new Date().toISOString();
+      
+      const { data, error } = await supabase
+        .from('promotions')
+        .select('id, code, description, discount_type, discount_value, min_purchase_amount, start_date, end_date, is_active, free_shipping, buy_quantity, get_quantity')
+        .abortSignal(abortController.signal)
+        .eq('is_active', true)
+        .or(`start_date.is.null,start_date.lte.${now}`)
+        .or(`end_date.is.null,end_date.gte.${now}`)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) {
+        // Filter out expected AbortError from logs
+        if (error.code !== 'PGRST301' && error.message !== 'AbortError: The user aborted a request.') {
+          console.error('Error fetching promotions:', error);
+        }
+        clearTimeout(timeoutId);
+        setLoading(false);
+        return;
+      }
+
+      const activePromos = (data || []).map((promo: any) => ({
+        id: promo.id,
+        code: promo.code,
+        description: promo.description,
+        discount_type: promo.discount_type,
+        discount_value: parseFloat(promo.discount_value) || 0,
+        min_purchase_amount: promo.min_purchase_amount ? parseFloat(promo.min_purchase_amount) : undefined,
+        start_date: promo.start_date,
+        end_date: promo.end_date,
+        is_active: promo.is_active,
+        free_shipping: promo.free_shipping || false,
+        buy_quantity: promo.buy_quantity,
+        get_quantity: promo.get_quantity,
+      })) as Promotion[];
+
+      clearTimeout(timeoutId);
+      setPromotions(activePromos);
       setLoading(false);
-      return;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      setLoading(false);
     }
-
-    const activePromos = (data || []).map((promo: any) => ({
-      id: promo.id,
-      code: promo.code,
-      description: promo.description,
-      discount_type: promo.discount_type,
-      discount_value: parseFloat(promo.discount_value) || 0,
-      min_purchase_amount: promo.min_purchase_amount ? parseFloat(promo.min_purchase_amount) : undefined,
-      start_date: promo.start_date,
-      end_date: promo.end_date,
-      is_active: promo.is_active,
-      free_shipping: promo.free_shipping || false,
-      buy_quantity: promo.buy_quantity,
-      get_quantity: promo.get_quantity,
-    })) as Promotion[];
-
-    setPromotions(activePromos);
-    setLoading(false);
   }, []);
 
   useEffect(() => {

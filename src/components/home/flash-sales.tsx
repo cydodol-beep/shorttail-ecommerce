@@ -59,6 +59,10 @@ export function FlashSales({ className = '' }: { className?: string }) {
   });
 
   const fetchPromotionalProducts = useCallback(async () => {
+    // Create timeout controller
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 10000); // 10 second timeout
+
     try {
       setLoading(true);
       setError(null);
@@ -88,13 +92,18 @@ export function FlashSales({ className = '' }: { className?: string }) {
           total_uses,
           available_for_pos
         `)
+        .abortSignal(abortController.signal)
         .eq('is_active', true)
         .or(`start_date.is.null,start_date.lte.${now}`)
         .or(`end_date.is.null,end_date.gte.${now}`)
         .order('created_at', { ascending: false });
 
       if (promotionsError) {
-        console.error('Error fetching promotions:', promotionsError);
+        // Filter out expected AbortError from logs
+        if (promotionsError.code !== 'PGRST301' && promotionsError.message !== 'AbortError: The user aborted a request.') {
+          console.error('Error fetching promotions:', promotionsError);
+        }
+        clearTimeout(timeoutId);
         setError('Failed to fetch promotions');
         setProducts([]);
         setLoading(false);
@@ -105,6 +114,7 @@ export function FlashSales({ className = '' }: { className?: string }) {
 
       if (!promotionsData || promotionsData.length === 0) {
         console.log('No active promotions found');
+        clearTimeout(timeoutId);
         setProducts([]);
         setLoading(false);
         return;
@@ -235,8 +245,10 @@ export function FlashSales({ className = '' }: { className?: string }) {
         promotion_code: p.promotion_details?.code 
       })));
 
+      clearTimeout(timeoutId);
       setProducts(promotionalProducts);
     } catch (err) {
+      clearTimeout(timeoutId);
       console.error('Unexpected error in fetchPromotionalProducts:', err);
       setError('An unexpected error occurred');
       setProducts([]);

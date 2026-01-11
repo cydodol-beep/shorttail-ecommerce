@@ -73,6 +73,10 @@ export const usePromotionsStore = create<PromotionsStore>((set, get) => ({
 
     set({ loading: true });
 
+    // Create timeout controller
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 10000); // 10 second timeout
+
     try {
       const supabase = createClient();
 
@@ -81,16 +85,21 @@ export const usePromotionsStore = create<PromotionsStore>((set, get) => ({
       const { data, error } = await supabase
         .from('promotions')
         .select('*')
+        .abortSignal(abortController.signal)
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching promotions:', error);
-        console.error('Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code,
-        });
+        // Filter out expected AbortError from logs
+        if (error.code !== 'PGRST301' && error.message !== 'AbortError: The user aborted a request.') {
+          console.error('Error fetching promotions:', error);
+          console.error('Error details:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code,
+          });
+        }
+        clearTimeout(timeoutId);
         set({ loading: false });
         return;
       }
@@ -118,12 +127,14 @@ export const usePromotionsStore = create<PromotionsStore>((set, get) => ({
         available_for_pos: promo.available_for_pos ?? true,
       })) as Promotion[];
 
+      clearTimeout(timeoutId);
       set({
         promotions,
         loading: false,
         lastFetched: Date.now(),
       });
     } catch (err) {
+      clearTimeout(timeoutId);
       console.error('Exception fetching promotions:', err);
       set({ loading: false });
     }

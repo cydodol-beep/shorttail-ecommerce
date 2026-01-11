@@ -51,6 +51,10 @@ export function FlashSale() {
   });
 
   const fetchFlashSaleProducts = useCallback(async () => {
+    // Create timeout controller
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 10000); // 10 second timeout
+
     try {
       const supabase = createClient();
       const now = new Date().toISOString();
@@ -59,12 +63,17 @@ export function FlashSale() {
       const { data: promoData, error: promoError } = await supabase
         .from('promotions')
         .select('id, code, product_ids, discount_type, discount_value, applies_to, start_date, end_date, min_purchase_amount, buy_quantity, get_quantity')
+        .abortSignal(abortController.signal)
         .eq('is_active', true)
         .or(`start_date.is.null,start_date.lte.${now}`)
         .or(`end_date.is.null,end_date.gte.${now}`);
 
       if (promoError) {
-        console.error('Error fetching promotions:', promoError);
+        // Filter out expected AbortError from logs
+        if (promoError.code !== 'PGRST301' && promoError.message !== 'AbortError: The user aborted a request.') {
+          console.error('Error fetching promotions:', promoError);
+        }
+        clearTimeout(timeoutId);
         setProducts([]);
         setLoading(false);
         return;
@@ -72,6 +81,7 @@ export function FlashSale() {
 
       if (!promoData || promoData.length === 0) {
         console.log('No active promotions found');
+        clearTimeout(timeoutId);
         setProducts([]);
         setLoading(false);
         return;
@@ -273,8 +283,10 @@ export function FlashSale() {
         promotion_type: p.promotion_details?.discount_type
       })));
 
+      clearTimeout(timeoutId);
       setProducts(productsWithDiscounts);
     } catch (error) {
+      clearTimeout(timeoutId);
       console.error('Unexpected error in fetchFlashSaleProducts:', error);
       setProducts([]);
     } finally {
@@ -297,25 +309,37 @@ export function FlashSale() {
   // Countdown timer effect
   useEffect(() => {
     const fetchAndSetTimer = async () => {
-      const supabase = createClient();
-      const now = new Date().toISOString();
+      // Create timeout controller
+      const abortController = new AbortController();
+      const timeoutId = setTimeout(() => abortController.abort(), 10000); // 10 second timeout
 
-      // Fetch all active promotions that are currently valid
-      const { data: promoData, error: promoError } = await supabase
-        .from('promotions')
-        .select('end_date')
-        .eq('is_active', true)
-        .or(`start_date.is.null,start_date.lte.${now}`)
-        .or(`end_date.is.null,end_date.gte.${now}`);
+      try {
+        const supabase = createClient();
+        const now = new Date().toISOString();
 
-      if (promoError) {
-        console.error('Error fetching promotions for countdown:', promoError);
-        return;
-      }
+        // Fetch all active promotions that are currently valid
+        const { data: promoData, error: promoError } = await supabase
+          .from('promotions')
+          .select('end_date')
+          .abortSignal(abortController.signal)
+          .eq('is_active', true)
+          .or(`start_date.is.null,start_date.lte.${now}`)
+          .or(`end_date.is.null,end_date.gte.${now}`);
 
-      if (!promoData || promoData.length === 0) {
-        return;
-      }
+        if (promoError) {
+          // Filter out expected AbortError from logs
+          if (promoError.code !== 'PGRST301' && promoError.message !== 'AbortError: The user aborted a request.') {
+            console.error('Error fetching promotions for countdown:', promoError);
+          }
+          clearTimeout(timeoutId);
+          return;
+        }
+
+        clearTimeout(timeoutId);
+
+        if (!promoData || promoData.length === 0) {
+          return;
+        }
 
       // Find the closest expiration date among active promotions
       let closestExpiration: Date | null = null;
@@ -349,6 +373,9 @@ export function FlashSale() {
 
         // Cleanup interval on unmount
         return () => clearInterval(interval);
+      }
+      } catch (error) {
+        // Silently catch any errors - countdown is non-critical
       }
     };
 
