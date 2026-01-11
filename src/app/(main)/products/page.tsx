@@ -143,11 +143,11 @@ function ProductsPageContent() {
       });
 
       // Build query with count for pagination
-      // Using a simplified query to avoid potential RLS or column errors
-      console.log('[Products] Building initial query with select fields');
+      // Using comprehensive select fields needed for UI, with enhanced error checking
+      console.log('[Products] Building initial query with comprehensive select fields for UI');
       let query = supabase
         .from('products')
-        .select(`id, name, base_price, stock_quantity, main_image_url, has_variants, category_id, is_active`, { count: 'exact' })
+        .select(`id, name, base_price, stock_quantity, main_image_url, has_variants, category_id, is_active, condition`, { count: 'exact' })
         .eq('is_active', true)
         .abortSignal(abortController.signal);
 
