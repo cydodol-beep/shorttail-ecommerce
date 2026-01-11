@@ -142,16 +142,49 @@ function ProductsPageContent() {
         sortBy
       });
 
+      // First, run a simple test to see if there are any active products at all
+      console.log('[Products] Running basic check for active products...');
+      try {
+        const basicCheck = await supabase
+          .from('products')
+          .select('*', { count: 'exact', head: true })  // Just count, no data transfer
+          .eq('is_active', true);
+
+        console.log('[Products] Basic active products check:', {
+          count: basicCheck.count,
+          error: basicCheck.error
+        });
+      } catch (basicError) {
+        console.error('[Products] Basic active products check failed:', basicError);
+      }
+
       // Build query with count for pagination
       // Using a separate query to fetch product variants to avoid potential issues with the join
+      console.log('[Products] Building initial query with select fields');
       let query = supabase
         .from('products')
-        .select('id, name, base_price, stock_quantity, main_image_url, has_variants, category_id, is_active, condition', { count: 'exact' })
+        .select(`
+          id,
+          name,
+          base_price,
+          stock_quantity,
+          main_image_url,
+          has_variants,
+          category_id,
+          is_active,
+          condition
+        `, { count: 'exact' })
         .eq('is_active', true)
-        .abortSignal(abortController.signal)
-        .range(from, to);
+        .abortSignal(abortController.signal);
 
-      console.log('[Products] Applied base filters: is_active = true, range:', { from, to });
+      console.log('[Products] Applied base filters: is_active = true');
+
+      if (from >= 0 && to >= from) {
+        query = query.range(from, to);
+        console.log('[Products] Applied range filter: from:', from, 'to:', to);
+      } else {
+        console.log('[Products] Range parameters invalid, applying without range. Params: from=', from, ', to=', to, ', currentPage=', currentPage, ', itemsPerPage=', itemsPerPage);
+      }
 
       if (categoryId) {
         query = query.eq('category_id', categoryId);
@@ -165,8 +198,35 @@ function ProductsPageContent() {
         console.log('[Products] Applied search filter: name ILIKE', `%${debouncedSearch}%`);
       }
 
-      console.log('[Products] Executing query...');
+      console.log('[Products] Executing query with final parameters...');
       const result = await query;
+      console.log('[Products] Query result received:', {
+        hasData: !!result.data,
+        dataLength: result.data?.length || 0,
+        hasError: !!result.error,
+        error: result.error,
+        count: result.count
+      });
+
+      // If we're still getting no results, try a super simple query as a test
+      if (!result.data || result.data.length === 0) {
+        console.log('[Products] Primary query returned no results, running test query...');
+        try {
+          const testResult = await supabase
+            .from('products')
+            .select('id, name', { count: 'exact' })
+            .limit(1);
+
+          console.log('[Products] Test query result:', {
+            testDataLength: testResult.data?.length || 0,
+            testCount: testResult.count,
+            testError: testResult.error
+          });
+        } catch (testError) {
+          console.error('[Products] Test query failed:', testError);
+        }
+      }
+
       const data = result.data as (Product & { product_variants?: ProductVariant[] })[] | null;
       const error = result.error;
       const count = result.count;
