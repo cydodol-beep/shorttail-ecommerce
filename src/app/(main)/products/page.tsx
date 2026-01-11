@@ -41,7 +41,7 @@ function formatPrice(price: number): string {
 
 function ProductsPageContent() {
   const searchParams = useSearchParams();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<(Product & { categories?: { id: string; name: string; slug: string } })[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [sortBy, setSortBy] = useState('newest');
