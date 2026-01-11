@@ -74,6 +74,7 @@ function ProductsPageContent() {
   }, [searchQuery]);
 
   const fetchProducts = useCallback(async () => {
+    console.log('[Products] Starting fetch...', { category, sortBy, debouncedSearch, currentPage });
     setLoading(true);
     const supabase = createClient();
     
@@ -85,6 +86,7 @@ function ProductsPageContent() {
       // If category filter is set, get the category ID by slug from database
       let categoryId: string | null = null;
       if (category && category !== 'all') {
+        console.log('[Products] Fetching category ID for slug:', category);
         const { data: catData, error: catError } = await supabase
           .from('categories')
           .select('id')
@@ -94,6 +96,7 @@ function ProductsPageContent() {
         
         if (!catError && catData) {
           categoryId = catData.id;
+          console.log('[Products] Found category ID:', categoryId);
         }
       }
       
@@ -101,10 +104,12 @@ function ProductsPageContent() {
       const from = (currentPage - 1) * itemsPerPage;
       const to = from + itemsPerPage - 1;
       
+      console.log('[Products] Building query with pagination:', { from, to, categoryId });
+      
       // Build query with count for pagination
       let query = supabase
         .from('products')
-        .select('id, name, base_price, stock_quantity, main_image_url, has_variants, category_id, product_variants(id, variant_name, price_adjustment, stock_quantity), categories(id, name, slug)', { count: 'exact' })
+        .select('id, name, base_price, stock_quantity, main_image_url, has_variants, category_id, condition, product_variants(id, variant_name, price_adjustment, stock_quantity), categories(id, name, slug)', { count: 'exact' })
         .eq('is_active', true)
         .abortSignal(abortController.signal)
         .range(from, to);
@@ -131,12 +136,13 @@ function ProductsPageContent() {
           query = query.order('created_at', { ascending: false });
       }
 
+      console.log('[Products] Executing query...');
       const { data, error, count } = await query;
 
       if (error) {
         // Filter out expected AbortError from logs
         if (error.code !== 'PGRST301' && error.message !== 'AbortError: The user aborted a request.') {
-          console.error('Error fetching products:', {
+          console.error('[Products] Error fetching products:', {
             message: error.message,
             code: error.code,
             details: error.details,
@@ -148,6 +154,8 @@ function ProductsPageContent() {
         return;
       }
       
+      console.log('[Products] Query successful:', { productsCount: data?.length || 0, totalCount: count });
+      
       clearTimeout(timeoutId);
       setProducts(data || []);
       setTotalCount(count || 0);
@@ -155,13 +163,14 @@ function ProductsPageContent() {
       clearTimeout(timeoutId);
       // Handle abort/timeout errors gracefully - silently ignore them
       if (error instanceof Error && error.name !== 'AbortError') {
-        console.error('Exception fetching products:', {
+        console.error('[Products] Exception fetching products:', {
           name: error.name,
           message: error.message,
           stack: error.stack
         });
       }
     } finally {
+      console.log('[Products] Fetch complete, loading = false');
       setLoading(false);
     }
   }, [category, sortBy, debouncedSearch, currentPage, itemsPerPage]);
