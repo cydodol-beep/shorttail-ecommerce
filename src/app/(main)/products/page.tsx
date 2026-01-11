@@ -104,7 +104,7 @@ function ProductsPageContent() {
       // Build query with count for pagination
       let query = supabase
         .from('products')
-        .select('id, name, slug, base_price, stock_quantity, image_url, main_image_url, has_variants, category_id, product_variants(id, variant_name, price_adjustment, stock_quantity), categories(id, name, slug)', { count: 'exact' })
+        .select('id, name, base_price, stock_quantity, main_image_url, has_variants, category_id, product_variants(id, variant_name, price_adjustment, stock_quantity), categories(id, name, slug)', { count: 'exact' })
         .eq('is_active', true)
         .abortSignal(abortController.signal)
         .range(from, to);
