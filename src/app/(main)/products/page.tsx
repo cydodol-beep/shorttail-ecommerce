@@ -44,7 +44,7 @@ function formatPrice(price: number): string {
 
 function ProductsPageContent() {
   const searchParams = useSearchParams();
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<(Product & { categories?: { id: string; name: string; slug: string } | null; product_variants?: ProductVariant[] })[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [sortBy, setSortBy] = useState('newest');
@@ -156,7 +156,7 @@ function ProductsPageContent() {
       }
 
       console.log('[Products] Executing query...');
-      const { data, error, count } = await query;
+      const { data, error, count } = await query as { data: (Product & { product_variants?: ProductVariant[] })[] | null; error: any; count: number | null };
 
       if (error) {
         // Filter out expected AbortError from logs
@@ -183,10 +183,10 @@ function ProductsPageContent() {
       console.log('[Products] Query successful:', { productsCount: data?.length || 0, totalCount: count });
 
       // Fetch categories data separately to associate with products
-      let processedData = data || [];
+      let processedData: (Product & { product_variants?: ProductVariant[] })[] = data || [];
       if (processedData.length > 0) {
         // Get unique category IDs from the fetched products
-        const categoryIds = [...new Set(data.filter((p: any) => p.category_id).map((p: any) => p.category_id))];
+        const categoryIds = [...new Set(data.filter((p: Product & { product_variants?: ProductVariant[] }) => p.category_id).map((p: Product & { product_variants?: ProductVariant[] }) => p.category_id))];
 
         if (categoryIds.length > 0) {
           const catDataController = new AbortController();
@@ -205,11 +205,11 @@ function ProductsPageContent() {
               console.error('[Products] Error fetching categories:', categoriesError);
             } else {
               // Map categories to products
-              const categoriesMap = new Map(categoriesData.map(cat => [cat.id, cat]));
+              const categoriesMap = new Map(categoriesData.map((cat: any) => [cat.id, cat]));
 
-              processedData = processedData.map((product: any) => ({
+              processedData = processedData.map((product: Product & { product_variants?: ProductVariant[] }) => ({
                 ...product,
-                categories: product.category_id ? categoriesMap.get(product.category_id) : null
+                categories: product.category_id ? categoriesMap.get(product.category_id) as { id: string; name: string; slug: string } | undefined : null
               }));
             }
           } catch (categoriesError) {
