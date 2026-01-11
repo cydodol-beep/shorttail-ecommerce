@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -50,7 +50,8 @@ function ProductsPageContent() {
   const itemsPerPage = 24; // Show 24 products per page
   const addItem = useCartStore((state) => state.addItem);
   const { getActiveCategories } = useCategories();
-  const categories = getActiveCategories();
+  const categories = useMemo(() => getActiveCategories(), [getActiveCategories]);
+  const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
   
   // Get category from URL params - update when URL changes
   const categoryFromUrl = searchParams.get('category') || 'all';
@@ -61,6 +62,16 @@ function ProductsPageContent() {
     setCategory(categoryFromUrl);
     setCurrentPage(1); // Reset to page 1 when category changes
   }, [categoryFromUrl]);
+
+  // Debounce search input to reduce queries
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1); // Reset to page 1 on search
+    }, 500); // Wait 500ms after user stops typing
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -102,8 +113,8 @@ function ProductsPageContent() {
         query = query.eq('category_id', categoryId);
       }
 
-      if (searchQuery) {
-        query = query.ilike('name', `%${searchQuery}%`);
+      if (debouncedSearch) {
+        query = query.ilike('name', `%${debouncedSearch}%`);
       }
 
       switch (sortBy) {
@@ -125,7 +136,12 @@ function ProductsPageContent() {
       if (error) {
         // Filter out expected AbortError from logs
         if (error.code !== 'PGRST301' && error.message !== 'AbortError: The user aborted a request.') {
-          console.error('Error fetching products:', error);
+          console.error('Error fetching products:', {
+            message: error.message,
+            code: error.code,
+            details: error.details,
+            hint: error.hint
+          });
         }
         clearTimeout(timeoutId);
         setLoading(false);
@@ -139,12 +155,16 @@ function ProductsPageContent() {
       clearTimeout(timeoutId);
       // Handle abort/timeout errors gracefully - silently ignore them
       if (error instanceof Error && error.name !== 'AbortError') {
-        console.error('Error fetching products:', error);
+        console.error('Exception fetching products:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        });
       }
     } finally {
       setLoading(false);
     }
-  }, [category, sortBy, searchQuery, currentPage, itemsPerPage]);
+  }, [category, sortBy, debouncedSearch, currentPage, itemsPerPage]);
 
   useEffect(() => {
     fetchProducts();
@@ -178,8 +198,7 @@ function ProductsPageContent() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setCurrentPage(1); // Reset to first page on search
-    fetchProducts();
+    // Debounce effect handles the search automatically
   };
 
   const handleSortChange = (value: string) => {
