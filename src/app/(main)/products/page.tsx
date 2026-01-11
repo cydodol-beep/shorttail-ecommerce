@@ -272,15 +272,15 @@ function ProductsPageContent() {
 
       {/* Products Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          {[...Array(12)].map((_, i) => (
             <Card key={i} className="border-brown-200">
-              <CardContent className="p-4">
-                <Skeleton className="aspect-square rounded-lg mb-4" />
-                <Skeleton className="h-4 w-20 mb-2" />
-                <Skeleton className="h-5 w-full mb-1" />
-                <Skeleton className="h-4 w-24 mb-2" />
-                <Skeleton className="h-6 w-28" />
+              <CardContent className="p-2 sm:p-3">
+                <Skeleton className="aspect-square rounded-md mb-2" />
+                <Skeleton className="h-3 w-16 mb-1.5" />
+                <Skeleton className="h-4 w-full mb-1" />
+                <Skeleton className="h-3 w-20 mb-2" />
+                <Skeleton className="h-5 w-24" />
               </CardContent>
             </Card>
           ))}
@@ -298,7 +298,7 @@ function ProductsPageContent() {
         </div>
       ) : (
         <motion.div 
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
@@ -321,16 +321,16 @@ function ProductsPageContent() {
                 }`}>
                   {/* Out of Stock Overlay */}
                   {outOfStock && (
-                    <div className="absolute top-3 right-3 z-10">
-                      <Badge variant="destructive" className="font-bold">
+                    <div className="absolute top-2 right-2 z-10">
+                      <Badge variant="destructive" className="font-bold text-[10px] px-1.5 py-0.5 h-auto">
                         OUT OF STOCK
                       </Badge>
                     </div>
                   )}
                   
-                  <CardContent className="p-4 flex flex-col flex-1">
+                  <CardContent className="p-2 sm:p-3 flex flex-col flex-1">
                     <Link href={`/products/${product.id}`} className="block">
-                      <div className={`aspect-square bg-brown-100 rounded-lg mb-4 flex items-center justify-center overflow-hidden ${
+                      <div className={`aspect-square bg-brown-100 rounded-md mb-2 flex items-center justify-center overflow-hidden ${
                         outOfStock ? 'opacity-60' : ''
                       }`}>
                         {product.main_image_url ? (
@@ -342,79 +342,79 @@ function ProductsPageContent() {
                             }`}
                           />
                         ) : (
-                          <PawPrint className="h-16 w-16 text-brown-300" />
+                          <PawPrint className="h-12 w-12 text-brown-300" />
                         )}
                       </div>
                     </Link>
                     
                     {product.condition === 'secondhand' && (
-                      <Badge variant="secondary" className="w-fit mb-2">
+                      <Badge variant="secondary" className="w-fit mb-1.5 text-[9px] px-1.5 py-0.5 h-auto">
                         Secondhand
                       </Badge>
                     )}
                     
-                    <div className="flex gap-1 mb-2">
+                    <div className="flex gap-0.5 mb-1.5">
                       {[1, 2, 3, 4, 5].map((star) => (
-                        <Star key={star} className={`h-4 w-4 ${outOfStock ? 'fill-gray-300 text-gray-300' : 'fill-yellow-400 text-yellow-400'}`} />
+                        <Star key={star} className={`h-3 w-3 ${outOfStock ? 'fill-gray-300 text-gray-300' : 'fill-yellow-400 text-yellow-400'}`} />
                       ))}
                     </div>
                     
-                    <Link href={`/products/${product.id}`}>
-                      <h3 className={`font-semibold mb-1 transition-colors line-clamp-2 ${
+                    <Link href={`/products/${product.id}`} className="flex-grow">
+                      <h3 className={`font-semibold mb-1 transition-colors line-clamp-2 text-xs sm:text-sm leading-tight ${
                         outOfStock ? 'text-gray-500' : 'text-brown-900 group-hover:text-primary'
                       }`}>
                         {product.name}
                       </h3>
                     </Link>
                     
-                    <p className="text-sm text-brown-600 mb-2 capitalize">{product.category}</p>
+                    <p className="text-[10px] sm:text-xs text-brown-600 mb-1.5 capitalize">{product.category}</p>
                     
                     <div className="mt-auto">
                       {(() => {
                         const priceInfo = getProductPrice(product as Product & { product_variants?: ProductVariant[] });
                         return (
                           <>
-                            <div className="mb-3">
+                            <div className="mb-2">
                               {priceInfo.isRange ? (
-                                <p className={`font-bold text-lg ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
+                                <p className={`font-bold text-sm sm:text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
                                   {formatPrice(priceInfo.min)} - {formatPrice(priceInfo.max)}
                                 </p>
                               ) : (
-                                <p className={`font-bold text-lg ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
+                                <p className={`font-bold text-sm sm:text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
                                   {formatPrice(priceInfo.min)}
                                 </p>
                               )}
                               {product.has_variants && (
-                                <p className="text-xs text-brown-500">Multiple variants available</p>
+                                <p className="text-[10px] text-brown-500">Multiple variants</p>
                               )}
                               {!outOfStock && (
-                                <p className="text-xs text-green-600 mt-1">Stock: {stock}</p>
+                                <p className="text-[10px] text-green-600 mt-0.5">Stock: {stock}</p>
                               )}
                             </div>
                             
                             {outOfStock ? (
                               <Button
-                                className="w-full"
+                                className="w-full h-8 text-xs"
                                 variant="outline"
                                 onClick={() => toast.error('Out of Stock, please contact admin')}
                               >
-                                <ShoppingBag className="mr-2 h-4 w-4" />
-                                Contact Admin
+                                <ShoppingBag className="mr-1.5 h-3.5 w-3.5" />
+                                Contact
                               </Button>
                             ) : product.has_variants ? (
                               <Link href={`/products/${product.id}`}>
                                 <Button
-                                  className="w-full"
+                                  className="w-full h-8 text-xs"
                                 >
                                   View Options
                                 </Button>
                               </Link>
                             ) : (
                               <Button
-                                className="w-full"
+                                className="w-full h-8 text-xs"
                                 onClick={() => handleAddToCart(product)}
                               >
-                                <ShoppingBag className="mr-2 h-4 w-4" />
+                                <ShoppingBag className="mr-1.5 h-3.5 w-3.5" />
                                 Add to Cart
                               </Button>
                             )}
