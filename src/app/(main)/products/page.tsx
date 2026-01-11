@@ -367,7 +367,11 @@ function ProductsPageContent() {
                       </h3>
                     </Link>
                     
-                    <p className="text-[10px] sm:text-xs text-brown-600 mb-1.5 capitalize">{product.category}</p>
+                    {product.categories && (
+                      <p className="text-[10px] sm:text-xs text-brown-600 mb-1.5 capitalize">
+                        {Array.isArray(product.categories) ? product.categories[0]?.name : product.categories.name}
+                      </p>
+                    )}
                     
                     <div className="mt-auto">
                       {(() => {
