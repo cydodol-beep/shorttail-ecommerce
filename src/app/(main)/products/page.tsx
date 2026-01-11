@@ -44,7 +44,7 @@ function formatPrice(price: number): string {
 
 function ProductsPageContent() {
   const searchParams = useSearchParams();
-  const [products, setProducts] = useState<(Product & { categories?: { id: string; name: string; slug: string } })[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [sortBy, setSortBy] = useState('newest');
@@ -186,7 +186,7 @@ function ProductsPageContent() {
       let processedData = data || [];
       if (processedData.length > 0) {
         // Get unique category IDs from the fetched products
-        const categoryIds = [...new Set(data.filter(p => p.category_id).map(p => p.category_id))];
+        const categoryIds = [...new Set(data.filter((p: any) => p.category_id).map((p: any) => p.category_id))];
 
         if (categoryIds.length > 0) {
           const catDataController = new AbortController();
@@ -207,7 +207,7 @@ function ProductsPageContent() {
               // Map categories to products
               const categoriesMap = new Map(categoriesData.map(cat => [cat.id, cat]));
 
-              processedData = processedData.map(product => ({
+              processedData = processedData.map((product: any) => ({
                 ...product,
                 categories: product.category_id ? categoriesMap.get(product.category_id) : null
               }));
