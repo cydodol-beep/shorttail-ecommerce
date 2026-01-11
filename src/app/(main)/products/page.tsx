@@ -113,17 +113,24 @@ function ProductsPageContent() {
       const { data, error } = await query;
 
       if (error) {
-        console.error('Error fetching products:', error);
-      } else {
-        setProducts(data || []);
+        // Filter out expected AbortError from logs
+        if (error.code !== 'PGRST301' && error.message !== 'AbortError: The user aborted a request.') {
+          console.error('Error fetching products:', error);
+        }
+        clearTimeout(timeoutId);
+        setLoading(false);
+        return;
       }
+      
+      clearTimeout(timeoutId);
+      setProducts(data || []);
     } catch (error) {
-      // Handle abort/timeout errors gracefully
+      clearTimeout(timeoutId);
+      // Handle abort/timeout errors gracefully - silently ignore them
       if (error instanceof Error && error.name !== 'AbortError') {
         console.error('Error fetching products:', error);
       }
     } finally {
-      clearTimeout(timeoutId);
       setLoading(false);
     }
   }, [category, sortBy, searchQuery]);
