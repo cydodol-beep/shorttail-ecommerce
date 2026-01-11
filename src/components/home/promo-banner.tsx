@@ -58,7 +58,7 @@ export function PromoBanner() {
   const fetchActivePromotions = useCallback(async () => {
     // Create timeout controller
     const abortController = new AbortController();
-    const timeoutId = setTimeout(() => abortController.abort(), 10000); // 10 second timeout
+    const timeoutId = setTimeout(() => abortController.abort(), 20000); // 20 second timeout
 
     try {
       const supabase = createClient();
