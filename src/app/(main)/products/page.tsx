@@ -143,10 +143,10 @@ function ProductsPageContent() {
       });
 
       // Build query with count for pagination
-      // Using a separate query to fetch categories to avoid complex joins
+      // Using a separate query to fetch product variants to avoid potential issues with the join
       let query = supabase
         .from('products')
-        .select('id, name, base_price, stock_quantity, main_image_url, has_variants, category_id, is_active, condition, product_variants(id, variant_name, price_adjustment, stock_quantity)', { count: 'exact' })
+        .select('id, name, base_price, stock_quantity, main_image_url, has_variants, category_id, is_active, condition', { count: 'exact' })
         .eq('is_active', true)
         .abortSignal(abortController.signal)
         .range(from, to);
@@ -205,13 +205,29 @@ function ProductsPageContent() {
           itemsPerPage,
           categoryId
         });
+
+        // Test a simple query to see if there are any active products at all
+        try {
+          const simpleTest = await supabase
+            .from('products')
+            .select('id, name', { count: 'exact' })
+            .eq('is_active', true);
+
+          console.log('[Products] Simple test query result:', {
+            simpleCount: simpleTest.count,
+            error: simpleTest.error
+          });
+        } catch (e) {
+          console.error('[Products] Error in simple test query:', e);
+        }
       }
 
-      // Fetch categories data separately to associate with products
-      let processedData: (Product & { product_variants?: ProductVariant[] })[] = data || [];
+      // Since we didn't fetch product variants, we need to handle this differently
+      // Create a processedData array with the expected structure
+      let processedData: (Product & { product_variants?: ProductVariant[] })[] = (data || []) as (Product & { product_variants?: ProductVariant[] })[];
       if (processedData.length > 0 && data) {
         // Get unique category IDs from the fetched products
-        const categoryIds = [...new Set(data.filter((p: Product & { product_variants?: ProductVariant[] }) => p.category_id).map((p: Product & { product_variants?: ProductVariant[] }) => p.category_id))];
+        const categoryIds = [...new Set(data.filter((p: Product) => p.category_id).map((p: Product) => p.category_id))];
 
         if (categoryIds.length > 0) {
           const catDataController = new AbortController();
@@ -232,8 +248,9 @@ function ProductsPageContent() {
               // Map categories to products
               const categoriesMap = new Map(categoriesData.map((cat: any) => [cat.id, cat]));
 
-              processedData = processedData.map((product: Product & { product_variants?: ProductVariant[] }) => ({
+              processedData = processedData.map((product: any) => ({
                 ...product,
+                product_variants: [], // Add an empty array for product variants since we didn't fetch them
                 categories: product.category_id ? categoriesMap.get(product.category_id) as { id: string; name: string; slug: string } | undefined : null
               }));
             }
