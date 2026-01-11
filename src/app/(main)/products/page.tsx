@@ -142,38 +142,12 @@ function ProductsPageContent() {
         sortBy
       });
 
-      // First, run a simple test to see if there are any active products at all
-      console.log('[Products] Running basic check for active products...');
-      try {
-        const basicCheck = await supabase
-          .from('products')
-          .select('*', { count: 'exact', head: true })  // Just count, no data transfer
-          .eq('is_active', true);
-
-        console.log('[Products] Basic active products check:', {
-          count: basicCheck.count,
-          error: basicCheck.error
-        });
-      } catch (basicError) {
-        console.error('[Products] Basic active products check failed:', basicError);
-      }
-
       // Build query with count for pagination
-      // Using a separate query to fetch product variants to avoid potential issues with the join
+      // Using a simplified query to avoid potential RLS or column errors
       console.log('[Products] Building initial query with select fields');
       let query = supabase
         .from('products')
-        .select(`
-          id,
-          name,
-          base_price,
-          stock_quantity,
-          main_image_url,
-          has_variants,
-          category_id,
-          is_active,
-          condition
-        `, { count: 'exact' })
+        .select(`id, name, base_price, stock_quantity, main_image_url, has_variants, category_id, is_active`, { count: 'exact' })
         .eq('is_active', true)
         .abortSignal(abortController.signal);
 
@@ -204,7 +178,12 @@ function ProductsPageContent() {
         hasData: !!result.data,
         dataLength: result.data?.length || 0,
         hasError: !!result.error,
-        error: result.error,
+        error: result.error ? {
+          message: result.error.message,
+          code: result.error.code,
+          details: result.error.details,
+          hint: result.error.hint
+        } : null,
         count: result.count
       });
 
@@ -247,6 +226,8 @@ function ProductsPageContent() {
             categoryId: categoryId,
             debouncedSearch: debouncedSearch
           });
+        } else {
+          console.warn('[Products] Expected timeout/abort error (safe to ignore):', error);
         }
         clearTimeout(timeoutId);
         setLoading(false);
@@ -257,28 +238,31 @@ function ProductsPageContent() {
 
       // Check if the query returned no results for debugging
       if (count === 0 || !data || data.length === 0) {
-        console.log('[Products] No products found with current filters:', {
+        console.log('[Products] No products found with current filters, despite basic check showing 37 active products:', {
           category,
           sortBy,
           debouncedSearch,
           currentPage,
           itemsPerPage,
-          categoryId
+          categoryId,
+          from,
+          to
         });
 
-        // Test a simple query to see if there are any active products at all
+        // Let's run a more detailed test to isolate the issue
         try {
-          const simpleTest = await supabase
+          const detailedTest = await supabase
             .from('products')
-            .select('id, name', { count: 'exact' })
+            .select(`id, name, base_price, stock_quantity, main_image_url, has_variants, category_id, is_active, condition`, { count: 'exact' })
             .eq('is_active', true);
 
-          console.log('[Products] Simple test query result:', {
-            simpleCount: simpleTest.count,
-            error: simpleTest.error
+          console.log('[Products] Detailed test query result:', {
+            detailedDataLength: detailedTest.data?.length || 0,
+            detailedCount: detailedTest.count,
+            detailedError: detailedTest.error
           });
         } catch (e) {
-          console.error('[Products] Error in simple test query:', e);
+          console.error('[Products] Error in detailed test query:', e);
         }
       }
 
