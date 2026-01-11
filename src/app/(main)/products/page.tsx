@@ -502,36 +502,5 @@ function ProductsPageContent() {
 }
 
 export default function ProductsPage() {
-  return (
-    <Suspense fallback={
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <Skeleton className="h-9 w-48 mb-2" />
-          <Skeleton className="h-5 w-72" />
-        </div>
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <Skeleton className="h-10 flex-1" />
-          <div className="flex gap-4">
-            <Skeleton className="h-10 w-[180px]" />
-            <Skeleton className="h-10 w-[180px]" />
-          </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-            <Card key={i} className="border-brown-200">
-              <CardContent className="p-4">
-                <Skeleton className="aspect-square rounded-lg mb-4" />
-                <Skeleton className="h-4 w-20 mb-2" />
-                <Skeleton className="h-5 w-full mb-1" />
-                <Skeleton className="h-4 w-24 mb-2" />
-                <Skeleton className="h-6 w-28" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    }>
-      <ProductsPageContent />
-    </Suspense>
-  );
+  return <ProductsPageContent />;
 }
