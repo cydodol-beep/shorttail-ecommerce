@@ -44,7 +44,7 @@ function formatPrice(price: number): string {
 
 function ProductsPageContent() {
   const searchParams = useSearchParams();
-  const [products, setProducts] = useState<(Product & { categories?: { id: string; name: string; slug: string } | null; product_variants?: ProductVariant[] })[]>([]);
+  const [products, setProducts] = useState<(Product & { categories?: { id: string; name: string; slug: string } | null })[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [sortBy, setSortBy] = useState('newest');
@@ -81,9 +81,9 @@ function ProductsPageContent() {
     setLoading(true);
     const supabase = createClient();
     
-    // Add timeout to prevent hanging
+    // Add timeout to prevent hanging - increased timeout to handle potential slow response
     const abortController = new AbortController();
-    const timeoutId = setTimeout(() => abortController.abort(), 15000); // 15 second timeout
+    const timeoutId = setTimeout(() => abortController.abort(), 30000); // 30 second timeout (was 15s)
     
     try {
       // If category filter is set, get the category ID by slug from database
@@ -93,7 +93,7 @@ function ProductsPageContent() {
       if (category && category !== 'all') {
         console.log('[Products] Fetching category ID for slug:', category);
         const catController = new AbortController();
-        const catTimeoutId = setTimeout(() => catController.abort(), 10000); // 10 second timeout for category lookup
+        const catTimeoutId = setTimeout(() => catController.abort(), 30000); // 30 second timeout for category lookup (increased from 10s)
 
         try {
           const { data: catData, error: catError } = await supabase
@@ -211,23 +211,24 @@ function ProductsPageContent() {
       const count = result.count;
 
       if (error) {
-        // Filter out expected AbortError from logs
-        if (error.code !== 'PGRST301' &&
-            error.message !== 'AbortError: The user aborted a request.' &&
-            error.message !== 'The operation was aborted due to timeout.' &&
-            !error.message.includes('timeout')) {
-          console.error('[Products] Error fetching products:', {
-            message: error.message,
-            code: error.code,
-            details: error.details,
-            hint: error.hint,
-            from: from,
-            to: to,
-            categoryId: categoryId,
-            debouncedSearch: debouncedSearch
-          });
+        console.error('[Products] Primary query error details:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+          from: from,
+          to: to,
+          categoryId: categoryId,
+          debouncedSearch: debouncedSearch
+        });
+
+        // Show if it's a timeout/abort error vs other errors
+        if (error.code === 'PGRST301' ||
+            error.message.includes('AbortError') ||
+            error.message.includes('timeout')) {
+          console.warn('[Products] Expected timeout/abort error (might need to increase timeout):', error.message);
         } else {
-          console.warn('[Products] Expected timeout/abort error (safe to ignore):', error);
+          console.error('[Products] Actual query error (not timeout/abort):', error);
         }
         clearTimeout(timeoutId);
         setLoading(false);
@@ -268,14 +269,14 @@ function ProductsPageContent() {
 
       // Since we didn't fetch product variants, we need to handle this differently
       // Create a processedData array with the expected structure
-      let processedData: (Product & { product_variants?: ProductVariant[] })[] = (data || []) as (Product & { product_variants?: ProductVariant[] })[];
+      let processedData: (Product & { categories?: { id: string; name: string; slug: string } | null })[] = (data || []) as (Product & { categories?: { id: string; name: string; slug: string } | null })[];
       if (processedData.length > 0 && data) {
         // Get unique category IDs from the fetched products
         const categoryIds = [...new Set(data.filter((p: Product) => p.category_id).map((p: Product) => p.category_id))];
 
         if (categoryIds.length > 0) {
           const catDataController = new AbortController();
-          const catDataTimeoutId = setTimeout(() => catDataController.abort(), 10000); // 10 second timeout for categories lookup
+          const catDataTimeoutId = setTimeout(() => catDataController.abort(), 30000); // 30 second timeout for categories lookup (increased from 10s)
 
           try {
             const { data: categoriesData, error: categoriesError } = await supabase
