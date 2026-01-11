@@ -225,6 +225,8 @@ function ProductsPageContent() {
     toast.success(`${product.name} added to cart!`);
   };
 
+  console.log('[Products] Render state:', { loading, productsLength: products.length, totalCount });
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
