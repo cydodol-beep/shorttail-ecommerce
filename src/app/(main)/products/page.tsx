@@ -88,6 +88,8 @@ function ProductsPageContent() {
     try {
       // If category filter is set, get the category ID by slug from database
       let categoryId: string | null = null;
+      console.log('[Products] Processing category filter:', { category, currentCategoryState: categoryFromUrl });
+
       if (category && category !== 'all') {
         console.log('[Products] Fetching category ID for slug:', category);
         const catController = new AbortController();
@@ -111,11 +113,17 @@ function ProductsPageContent() {
           } else if (catData) {
             categoryId = catData.id;
             console.log('[Products] Found category ID:', categoryId);
+          } else {
+            console.warn('[Products] No category found for slug:', category);
+            // If no category matches the slug, set categoryId to null to fetch all products
+            categoryId = null;
           }
         } catch (catError) {
           clearTimeout(catTimeoutId);
           console.error('[Products] Exception fetching category ID:', catError);
         }
+      } else {
+        console.log('[Products] Category filter set to "all", fetching all products');
       }
       
       // Calculate pagination range
@@ -124,6 +132,16 @@ function ProductsPageContent() {
       
       console.log('[Products] Building query with pagination:', { from, to, categoryId });
       
+      console.log('[Products] Building query with parameters:', {
+        from,
+        to,
+        categoryId,
+        is_active: true,
+        debouncedSearch,
+        categoryFilter: category,
+        sortBy
+      });
+
       // Build query with count for pagination
       // Using a separate query to fetch categories to avoid complex joins
       let query = supabase
@@ -133,26 +151,18 @@ function ProductsPageContent() {
         .abortSignal(abortController.signal)
         .range(from, to);
 
+      console.log('[Products] Applied base filters: is_active = true, range:', { from, to });
+
       if (categoryId) {
         query = query.eq('category_id', categoryId);
+        console.log('[Products] Applied category filter: category_id =', categoryId);
+      } else if (category && category !== 'all') {
+        console.warn('[Products] Category specified but no valid category ID found, no category filter applied');
       }
 
       if (debouncedSearch) {
         query = query.ilike('name', `%${debouncedSearch}%`);
-      }
-
-      switch (sortBy) {
-        case 'price-asc':
-          query = query.order('base_price', { ascending: true });
-          break;
-        case 'price-desc':
-          query = query.order('base_price', { ascending: false });
-          break;
-        case 'name-asc':
-          query = query.order('name', { ascending: true });
-          break;
-        default:
-          query = query.order('created_at', { ascending: false });
+        console.log('[Products] Applied search filter: name ILIKE', `%${debouncedSearch}%`);
       }
 
       console.log('[Products] Executing query...');
@@ -183,7 +193,19 @@ function ProductsPageContent() {
         return;
       }
 
-      console.log('[Products] Query successful:', { productsCount: data?.length || 0, totalCount: count });
+      console.log('[Products] Query successful:', { productsCount: data?.length || 0, totalCount: count || 0, queryDetails: { category, sortBy, debouncedSearch, currentPage, itemsPerPage } });
+
+      // Check if the query returned no results for debugging
+      if (count === 0 || !data || data.length === 0) {
+        console.log('[Products] No products found with current filters:', {
+          category,
+          sortBy,
+          debouncedSearch,
+          currentPage,
+          itemsPerPage,
+          categoryId
+        });
+      }
 
       // Fetch categories data separately to associate with products
       let processedData: (Product & { product_variants?: ProductVariant[] })[] = data || [];
