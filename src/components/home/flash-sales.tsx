@@ -61,7 +61,7 @@ export function FlashSales({ className = '' }: { className?: string }) {
   const fetchPromotionalProducts = useCallback(async () => {
     // Create timeout controller
     const abortController = new AbortController();
-    const timeoutId = setTimeout(() => abortController.abort(), 10000); // 10 second timeout
+    const timeoutId = setTimeout(() => abortController.abort(), 20000); // 20 second timeout
 
     try {
       setLoading(true);
