@@ -156,7 +156,10 @@ function ProductsPageContent() {
       }
 
       console.log('[Products] Executing query...');
-      const { data, error, count } = await query as { data: (Product & { product_variants?: ProductVariant[] })[] | null; error: any; count: number | null };
+      const result = await query;
+      const data = result.data as (Product & { product_variants?: ProductVariant[] })[] | null;
+      const error = result.error;
+      const count = result.count;
 
       if (error) {
         // Filter out expected AbortError from logs
@@ -184,7 +187,7 @@ function ProductsPageContent() {
 
       // Fetch categories data separately to associate with products
       let processedData: (Product & { product_variants?: ProductVariant[] })[] = data || [];
-      if (processedData.length > 0) {
+      if (processedData.length > 0 && data) {
         // Get unique category IDs from the fetched products
         const categoryIds = [...new Set(data.filter((p: Product & { product_variants?: ProductVariant[] }) => p.category_id).map((p: Product & { product_variants?: ProductVariant[] }) => p.category_id))];
 
