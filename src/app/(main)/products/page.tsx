@@ -24,6 +24,9 @@ import { useCategories } from '@/hooks/use-categories';
 import type { Product, ProductVariant } from '@/types/database';
 import { toast } from 'sonner';
 
+// Make this page dynamic to avoid SSR issues with useSearchParams
+export const dynamic = 'force-dynamic';
+
 const sortOptions = [
   { value: 'newest', label: 'Newest First' },
   { value: 'price-asc', label: 'Price: Low to High' },
@@ -502,5 +505,36 @@ function ProductsPageContent() {
 }
 
 export default function ProductsPage() {
-  return <ProductsPageContent />;
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <Skeleton className="h-9 w-48 mb-2" />
+          <Skeleton className="h-5 w-72" />
+        </div>
+        <div className="flex flex-col md:flex-row gap-4 mb-8">
+          <Skeleton className="h-10 flex-1" />
+          <div className="flex gap-4">
+            <Skeleton className="h-10 w-[180px]" />
+            <Skeleton className="h-10 w-[180px]" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          {[...Array(12)].map((_, i) => (
+            <Card key={i} className="border-brown-200">
+              <CardContent className="p-2 sm:p-3">
+                <Skeleton className="aspect-square rounded-md mb-2" />
+                <Skeleton className="h-3 w-16 mb-1.5" />
+                <Skeleton className="h-4 w-full mb-1" />
+                <Skeleton className="h-3 w-20 mb-2" />
+                <Skeleton className="h-5 w-24" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    }>
+      <ProductsPageContent />
+    </Suspense>
+  );
 }
