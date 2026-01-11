@@ -90,16 +90,31 @@ function ProductsPageContent() {
       let categoryId: string | null = null;
       if (category && category !== 'all') {
         console.log('[Products] Fetching category ID for slug:', category);
-        const { data: catData, error: catError } = await supabase
-          .from('categories')
-          .select('id')
-          .eq('slug', category)
-          .maybeSingle()
-          .abortSignal(abortController.signal);
-        
-        if (!catError && catData) {
-          categoryId = catData.id;
-          console.log('[Products] Found category ID:', categoryId);
+        const catController = new AbortController();
+        const catTimeoutId = setTimeout(() => catController.abort(), 10000); // 10 second timeout for category lookup
+
+        try {
+          const { data: catData, error: catError } = await supabase
+            .from('categories')
+            .select('id')
+            .eq('slug', category)
+            .maybeSingle()
+            .abortSignal(catController.signal);
+
+          clearTimeout(catTimeoutId);
+
+          if (catError) {
+            console.error('[Products] Error fetching category ID:', {
+              message: catError.message,
+              code: catError.code
+            });
+          } else if (catData) {
+            categoryId = catData.id;
+            console.log('[Products] Found category ID:', categoryId);
+          }
+        } catch (catError) {
+          clearTimeout(catTimeoutId);
+          console.error('[Products] Exception fetching category ID:', catError);
         }
       }
       
@@ -110,9 +125,10 @@ function ProductsPageContent() {
       console.log('[Products] Building query with pagination:', { from, to, categoryId });
       
       // Build query with count for pagination
+      // Using a separate query to fetch categories to avoid complex joins
       let query = supabase
         .from('products')
-        .select('id, name, base_price, stock_quantity, main_image_url, has_variants, category_id, product_variants(id, variant_name, price_adjustment, stock_quantity), categories(id, name, slug)', { count: 'exact' })
+        .select('id, name, base_price, stock_quantity, main_image_url, has_variants, category_id, is_active, condition, product_variants(id, variant_name, price_adjustment, stock_quantity)', { count: 'exact' })
         .eq('is_active', true)
         .abortSignal(abortController.signal)
         .range(from, to);
@@ -144,33 +160,82 @@ function ProductsPageContent() {
 
       if (error) {
         // Filter out expected AbortError from logs
-        if (error.code !== 'PGRST301' && error.message !== 'AbortError: The user aborted a request.') {
+        if (error.code !== 'PGRST301' &&
+            error.message !== 'AbortError: The user aborted a request.' &&
+            error.message !== 'The operation was aborted due to timeout.' &&
+            !error.message.includes('timeout')) {
           console.error('[Products] Error fetching products:', {
             message: error.message,
             code: error.code,
             details: error.details,
-            hint: error.hint
+            hint: error.hint,
+            from: from,
+            to: to,
+            categoryId: categoryId,
+            debouncedSearch: debouncedSearch
           });
         }
         clearTimeout(timeoutId);
         setLoading(false);
         return;
       }
-      
+
       console.log('[Products] Query successful:', { productsCount: data?.length || 0, totalCount: count });
-      
+
+      // Fetch categories data separately to associate with products
+      let processedData = data || [];
+      if (processedData.length > 0) {
+        // Get unique category IDs from the fetched products
+        const categoryIds = [...new Set(data.filter(p => p.category_id).map(p => p.category_id))];
+
+        if (categoryIds.length > 0) {
+          const catDataController = new AbortController();
+          const catDataTimeoutId = setTimeout(() => catDataController.abort(), 10000); // 10 second timeout for categories lookup
+
+          try {
+            const { data: categoriesData, error: categoriesError } = await supabase
+              .from('categories')
+              .select('id, name, slug')
+              .in('id', categoryIds)
+              .abortSignal(catDataController.signal);
+
+            clearTimeout(catDataTimeoutId);
+
+            if (categoriesError) {
+              console.error('[Products] Error fetching categories:', categoriesError);
+            } else {
+              // Map categories to products
+              const categoriesMap = new Map(categoriesData.map(cat => [cat.id, cat]));
+
+              processedData = processedData.map(product => ({
+                ...product,
+                categories: product.category_id ? categoriesMap.get(product.category_id) : null
+              }));
+            }
+          } catch (categoriesError) {
+            clearTimeout(catDataTimeoutId);
+            console.error('[Products] Exception fetching categories:', categoriesError);
+          }
+        }
+      }
+
       clearTimeout(timeoutId);
-      setProducts(data || []);
+      setProducts(processedData);
       setTotalCount(count || 0);
     } catch (error) {
       clearTimeout(timeoutId);
-      // Handle abort/timeout errors gracefully - silently ignore them
-      if (error instanceof Error && error.name !== 'AbortError') {
-        console.error('[Products] Exception fetching products:', {
+      // Handle abort/timeout errors gracefully
+      if (error instanceof Error && error.name === 'AbortError') {
+        // Silently handle abort/timeout errors
+        console.log('[Products] Request was aborted (likely due to timeout or component unmount)');
+      } else if (error instanceof Error) {
+        console.error('[Products] Unexpected exception fetching products:', {
           name: error.name,
           message: error.message,
           stack: error.stack
         });
+      } else {
+        console.error('[Products] Unknown error type:', error);
       }
     } finally {
       console.log('[Products] Fetch complete, loading = false');
@@ -383,7 +448,7 @@ function ProductsPageContent() {
                     
                     {product.categories && (
                       <p className="text-[10px] sm:text-xs text-brown-600 mb-1.5 capitalize">
-                        {Array.isArray(product.categories) ? product.categories[0]?.name : product.categories.name}
+                        {product.categories.name}
                       </p>
                     )}
                     
