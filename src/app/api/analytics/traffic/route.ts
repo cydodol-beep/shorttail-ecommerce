@@ -18,7 +18,6 @@ export async function POST(request: NextRequest) {
     // Extract data from request and body
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
                request.headers.get('x-real-ip') ||
-               request.ip ||
                'unknown';
 
     const userAgent = request.headers.get('user-agent') || '';
