@@ -9,7 +9,7 @@ export const metadata = {
 };
 
 export default async function TrafficPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
