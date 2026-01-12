@@ -9,10 +9,10 @@ import { toast } from 'sonner';
 // Get singleton client instance outside component to prevent re-renders
 const supabase = createClient();
 
-// Timeout duration for operations (2 hours in milliseconds)
-// This is set to a long duration to accommodate slow network conditions
+// Timeout duration for operations (15 seconds in milliseconds)
+// This prevents hanging operations while allowing for reasonable network latency
 // If timeout occurs, user will be logged out with a clear message
-const OPERATION_TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 hours
+const OPERATION_TIMEOUT_MS = 15 * 1000; // 15 seconds
 
 // Create a Zustand store to make the auth state accessible globally
 import { create } from 'zustand';
@@ -115,7 +115,7 @@ export function useAuth() {
             `)
             .eq('id', userId)
             .single() as Promise<{ data: Profile | null; error: any }>,
-          OPERATION_TIMEOUT_MS // 2 hour timeout for slow network conditions
+          OPERATION_TIMEOUT_MS // 15 second timeout for network operations
         );
 
         if (error) {
@@ -171,7 +171,7 @@ export function useAuth() {
 
         const sessionResult = await withTimeoutEffect(
           getSessionPromise,
-          OPERATION_TIMEOUT_MS  // 2 hour timeout for slow network conditions
+          OPERATION_TIMEOUT_MS  // 15 second timeout for network operations
         ) as SessionResult;
 
         const { data: { session }, error: sessionError } = sessionResult;
@@ -251,7 +251,7 @@ export function useAuth() {
 
         const sessionResult = await withTimeoutEffect(
           getSessionPromise,
-          OPERATION_TIMEOUT_MS  // 2 hour timeout for slow network conditions
+          OPERATION_TIMEOUT_MS  // 15 second timeout for network operations
         ) as SessionResult;
 
         const { data: { session }, error } = sessionResult;
@@ -276,7 +276,7 @@ export function useAuth() {
 
             const refreshResult = await withTimeoutEffect(
               refreshPromise,
-              OPERATION_TIMEOUT_MS  // 2 hour timeout for slow network conditions
+              OPERATION_TIMEOUT_MS  // 15 second timeout for network operations
             ) as RefreshResult;
 
             const { error: refreshError, data: refreshData } = refreshResult;
@@ -346,8 +346,8 @@ export function useAuth() {
   };
 
   const signUpWithEmail = async (
-    email: string, 
-    password: string, 
+    email: string,
+    password: string,
     metadata?: { full_name?: string; phone?: string }
   ) => {
     const { data, error } = await supabase.auth.signUp({
@@ -460,7 +460,7 @@ export function useAuth() {
           `)
           .eq('id', user.id)
           .single() as Promise<{ data: Profile | null; error: any }>,
-        OPERATION_TIMEOUT_MS // 2 hour timeout for slow network conditions
+        OPERATION_TIMEOUT_MS // 15 second timeout for network operations
       );
 
       if (error) {
