@@ -1,34 +1,38 @@
 import { NextRequest } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient as createServerClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
-    // Get Supabase server client
-    const supabase = createClient();
-    
+    // Get Supabase server client for auth
+    const serverSupabase = await createServerClient();
+
     // Get user session if available
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await serverSupabase.auth.getUser();
 
     // Get request data
     const reqData = await request.json();
-    
+
     // Extract data from request and body
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
                request.headers.get('x-real-ip') ||
                request.ip ||
                'unknown';
-    
+
     const userAgent = request.headers.get('user-agent') || '';
     const pageUrl = reqData.pageUrl || request.url || '';
     const referrer = request.headers.get('referer') || reqData.referrer || '';
-    
+
     // Extract additional geolocation data if provided
     const country = reqData.country || '';
     const city = reqData.city || '';
     const latitude = reqData.latitude || null;
     const longitude = reqData.longitude || null;
+
+    // Get the admin client for direct database operations
+    const supabase = createAdminClient();
 
     // Insert traffic log into the database
     const { error } = await supabase
@@ -59,13 +63,13 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
-    
+    const supabase = createAdminClient();
+
     // Get query parameters
     const url = new URL(request.url);
     const period = url.searchParams.get('period') || 'daily'; // Options: hourly, daily, monthly, yearly
     const days = parseInt(url.searchParams.get('days') || '30'); // Default to 30 days
-    
+
     // Calculate start and end dates
     const endDate = new Date();
     const startDate = new Date();

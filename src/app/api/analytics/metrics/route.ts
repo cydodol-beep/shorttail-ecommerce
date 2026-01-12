@@ -1,13 +1,13 @@
 import { NextRequest } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
-    
+    const supabase = createAdminClient();
+
     const url = new URL(request.url);
     const type = url.searchParams.get('type') || 'summary'; // Options: summary, topPages, byCountry, byDevice
-    
+
     let rpcFunction;
     let params = {};
 
