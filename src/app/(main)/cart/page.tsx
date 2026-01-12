@@ -184,19 +184,10 @@ export default function CartPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between">
-                <span className="text-brown-600">Subtotal</span>
+                <span className="text-brown-600">Estimated Subtotal</span>
                 <span className="font-medium">{formatPrice(subtotal)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-brown-600">Shipping</span>
-                <span className="font-medium">
-                  {shippingFee === 0 ? (
-                    <span className="text-green-600">Free</span>
-                  ) : (
-                    formatPrice(shippingFee)
-                  )}
-                </span>
-              </div>
+              {/* Shipping cost is hidden as requested */}
               {subtotal < 500000 && (
                 <p className="text-xs text-brown-500">
                   Add {formatPrice(500000 - subtotal)} more for free shipping!
@@ -204,7 +195,7 @@ export default function CartPage() {
               )}
               <Separator />
               <div className="flex justify-between">
-                <span className="font-semibold text-brown-900">Total</span>
+                <span className="font-semibold text-brown-900">Estimated Total</span>
                 <span className="font-bold text-lg text-primary">{formatPrice(total)}</span>
               </div>
             </CardContent>
