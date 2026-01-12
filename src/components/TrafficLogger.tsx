@@ -1,7 +1,9 @@
+'use client';
+
 import { useEffect } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
-export function useTrafficLogger() {
+export default function TrafficLogger() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -47,4 +49,7 @@ export function useTrafficLogger() {
 
     return () => clearTimeout(timer);
   }, [pathname, searchParams]);
+
+  // This component renders nothing but runs the logging effect
+  return null;
 }
