@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  Package, 
-  ShoppingCart, 
-  Users, 
-  Tag, 
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingCart,
+  Users,
+  Tag,
   Truck,
   Bell,
   Settings,
@@ -18,7 +18,8 @@ import {
   FolderOpen,
   LogOut,
   Layout,
-  Megaphone
+  Megaphone,
+  Activity
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -39,6 +40,7 @@ const menuItems = [
   { icon: PawPrint, label: 'About Page', href: '/admin/about-page' },
   { icon: Layout, label: 'Landing Page', href: '/admin/landing-page' },
   { icon: Megaphone, label: 'Advertisements', href: '/admin/advertisements' },
+  { icon: Activity, label: 'Traffic Analytics', href: '/admin/traffic' },
   { icon: FolderOpen, label: 'Temp Customer Data', href: '/admin/temp-custdata' },
   { icon: Bell, label: 'Notifications', href: '/admin/notifications' },
   { icon: Settings, label: 'Settings', href: '/admin/settings' },
