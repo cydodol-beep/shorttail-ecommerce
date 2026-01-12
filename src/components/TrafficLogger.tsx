@@ -42,6 +42,7 @@ export default function TrafficLogger() {
           console.debug('Traffic logged successfully');
         }
       } catch (error) {
+        // Silently ignore errors during traffic logging to prevent impacting user experience
         console.error('Error logging traffic:', error);
       }
     };
