@@ -38,6 +38,8 @@ export default function TrafficLogger() {
 
         if (!response.ok) {
           console.error('Failed to log traffic:', response.statusText);
+        } else {
+          console.debug('Traffic logged successfully');
         }
       } catch (error) {
         console.error('Error logging traffic:', error);
