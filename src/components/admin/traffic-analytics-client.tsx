@@ -1,37 +1,36 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  PointElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend
-} from 'chart.js';
-import { Bar, Line, Pie } from 'react-chartjs-2';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, Globe, Monitor, Smartphone, Users } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useTrafficAnalyticsStore } from '@/store/traffic-analytics-store';
 
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  PointElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend
-);
+// Dynamically import chart components
+const DynamicChartComponent = ({ chartType, data, options }: any) => {
+  const [ChartComponent, setChartComponent] = useState<any>(null);
+
+  useEffect(() => {
+    const loadChart = async () => {
+      const { Bar, Line, Pie } = await import('react-chartjs-2');
+      const chartMap = {
+        bar: Bar,
+        line: Line,
+        pie: Pie,
+      };
+      setChartComponent(() => chartMap[chartType as keyof typeof chartMap]);
+    };
+
+    loadChart();
+  }, [chartType]);
+
+  if (!ChartComponent) {
+    return <div>Loading chart...</div>;
+  }
+
+  return <ChartComponent data={data} options={options} />;
+};
 
 export default function TrafficAnalytics() {
   const { theme } = useTheme();
@@ -121,6 +120,33 @@ export default function TrafficAnalytics() {
         ],
       },
     ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      title: {
+        display: true,
+        text: 'Visitor Trends'
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true
+      }
+    }
+  };
+
+  const pieChartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'right' as const,
+      }
+    }
   };
 
   if (loading) {
@@ -226,25 +252,10 @@ export default function TrafficAnalytics() {
             </CardHeader>
             <CardContent>
               <div className="h-80">
-                <Line 
+                <DynamicChartComponent 
+                  chartType="line" 
                   data={chartData} 
-                  options={{
-                    responsive: true,
-                    plugins: {
-                      legend: {
-                        position: 'top' as const,
-                      },
-                      title: {
-                        display: true,
-                        text: 'Visitor Trends'
-                      }
-                    },
-                    scales: {
-                      y: {
-                        beginAtZero: true
-                      }
-                    }
-                  }} 
+                  options={chartOptions} 
                 />
               </div>
             </CardContent>
@@ -259,16 +270,10 @@ export default function TrafficAnalytics() {
             </CardHeader>
             <CardContent>
               <div className="h-80">
-                <Pie 
+                <DynamicChartComponent 
+                  chartType="pie" 
                   data={pieChartData} 
-                  options={{
-                    responsive: true,
-                    plugins: {
-                      legend: {
-                        position: 'right' as const,
-                      }
-                    }
-                  }} 
+                  options={pieChartOptions} 
                 />
               </div>
             </CardContent>
@@ -285,16 +290,10 @@ export default function TrafficAnalytics() {
           </CardHeader>
           <CardContent>
             <div className="h-64">
-              <Pie 
+              <DynamicChartComponent 
+                chartType="pie" 
                 data={deviceChartData} 
-                options={{
-                  responsive: true,
-                  plugins: {
-                    legend: {
-                      position: 'bottom' as const,
-                    }
-                  }
-                }} 
+                options={pieChartOptions} 
               />
             </div>
             <div className="grid grid-cols-3 gap-4 mt-4">
