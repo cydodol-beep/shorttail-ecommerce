@@ -1,15 +1,37 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Bar, Line, Pie, Chart as ChartJS } from 'chart.js/auto';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+import { Bar, Line, Pie } from 'react-chartjs-2';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, Globe, Monitor, Smartphone, Users } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useTrafficAnalyticsStore } from '@/store/traffic-analytics-store';
 
-ChartJS.register(Bar, Line, Pie);
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 export default function TrafficAnalytics() {
   const { theme } = useTheme();
