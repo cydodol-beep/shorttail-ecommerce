@@ -147,7 +147,18 @@ function ProductsPageContent() {
       console.log('[Products] Building initial query with comprehensive select fields for UI');
       let query = supabase
         .from('products')
-        .select(`id, name, base_price, stock_quantity, main_image_url, has_variants, category_id, is_active, condition`, { count: 'exact' })
+        .select(`
+          id,
+          name,
+          base_price,
+          stock_quantity,
+          main_image_url,
+          has_variants,
+          category_id,
+          is_active,
+          condition,
+          product_variants(id, stock_quantity)
+        `, { count: 'exact' })
         .eq('is_active', true)
         .abortSignal(abortController.signal);
 
@@ -267,9 +278,9 @@ function ProductsPageContent() {
         }
       }
 
-      // Since we didn't fetch product variants, we need to handle this differently
-      // Create a processedData array with the expected structure
-      let processedData: (Product & { categories?: { id: string; name: string; slug: string } | null })[] = (data || []) as (Product & { categories?: { id: string; name: string; slug: string } | null })[];
+      // Process the data to include categories
+      let processedData: (Product & { categories?: { id: string; name: string; slug: string } | null, product_variants?: ProductVariant[] })[] = (data || []) as (Product & { categories?: { id: string; name: string; slug: string } | null, product_variants?: ProductVariant[] })[];
+
       if (processedData.length > 0 && data) {
         // Get unique category IDs from the fetched products
         const categoryIds = [...new Set(data.filter((p: Product) => p.category_id).map((p: Product) => p.category_id))];
@@ -295,7 +306,6 @@ function ProductsPageContent() {
 
               processedData = processedData.map((product: any) => ({
                 ...product,
-                product_variants: [], // Add an empty array for product variants since we didn't fetch them
                 categories: product.category_id ? categoriesMap.get(product.category_id) as { id: string; name: string; slug: string } | undefined : null
               }));
             }
@@ -356,8 +366,12 @@ function ProductsPageContent() {
   };
 
   const isOutOfStock = (product: Product & { product_variants?: ProductVariant[] }) => {
-    const stock = getProductStock(product);
-    return stock <= 0;
+    if (product.has_variants && product.product_variants && product.product_variants.length > 0) {
+      // For products with variants, check if any variant has stock available
+      const hasAnyVariantInStock = product.product_variants.some(variant => variant.stock_quantity > 0);
+      return !hasAnyVariantInStock && product.stock_quantity <= 0;
+    }
+    return product.stock_quantity <= 0;
   };
 
   const handleSearch = (e: React.FormEvent) => {
