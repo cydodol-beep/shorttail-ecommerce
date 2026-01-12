@@ -1,14 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bar, Line, Pie, Chart as ChartJS } from 'chart.js/auto';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, Globe, Monitor, Smartphone, Users } from 'lucide-react';
 import { useTheme } from 'next-themes';
-
-ChartJS.register(Bar, Line, Pie);
 
 interface TrafficDataPoint {
   date?: string;
@@ -44,6 +40,119 @@ interface DeviceTraffic {
   visitor_count: number;
 }
 
+// Simple SVG bar chart component
+const SimpleBarChart = ({ data, labels, title }: { data: number[]; labels: string[]; title: string }) => {
+  if (!data || data.length === 0) return <div>No data available</div>;
+
+  const maxValue = Math.max(...data, 1); // Avoid division by zero
+  const barWidth = 30;
+  const barSpacing = 15;
+  const chartHeight = 200;
+  const chartWidth = Math.min(600, labels.length * (barWidth + barSpacing));
+
+  return (
+    <div className="w-full overflow-x-auto">
+      <div className="min-w-max">
+        <h3 className="text-center mb-2">{title}</h3>
+        <div className="flex items-end justify-between h-48" style={{ width: chartWidth }}>
+          {data.map((value, index) => (
+            <div key={index} className="flex flex-col items-center mx-1">
+              <div className="text-xs text-center mb-1 truncate max-w-[60px]">{labels[index]}</div>
+              <div
+                className="w-6 bg-primary rounded-t-md"
+                style={{
+                  height: `${(value / maxValue) * 80}%`,
+                  minHeight: value > 0 ? '2px' : '0px'
+                }}
+              />
+              <div className="text-xs mt-1">{value}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Simple SVG pie chart component
+const SimplePieChart = ({ data, labels }: { data: number[]; labels: string[] }) => {
+  if (!data || data.length === 0) return <div>No data available</div>;
+
+  const total = data.reduce((sum, value) => sum + value, 0);
+  if (total === 0) return <div>No data available</div>;
+
+  const radius = 70;
+  const strokeWidth = 10;
+  const circumference = 2 * Math.PI * radius;
+  const centerX = 100;
+  const centerY = 100;
+
+  let startAngle = 0;
+
+  const colors = [
+    '#3b82f6', '#ef4444', '#10b981', '#f59e0b',
+    '#8b5cf6', '#ec4899', '#06b6d4', '#f97316',
+    '#84cc16', '#6366f1'
+  ];
+
+  return (
+    <div className="flex flex-col items-center">
+      <svg width="200" height="200" viewBox="0 0 200 200">
+        {data.map((value, index) => {
+          const slicePercentage = value / total;
+          const sliceAngle = slicePercentage * 360;
+          const endAngle = startAngle + sliceAngle;
+
+          // Convert angles to radians
+          const startAngleRad = (startAngle - 90) * (Math.PI / 180);
+          const endAngleRad = (endAngle - 90) * (Math.PI / 180);
+
+          // Calculate start and end points
+          const x1 = centerX + radius * Math.cos(startAngleRad);
+          const y1 = centerY + radius * Math.sin(startAngleRad);
+          const x2 = centerX + radius * Math.cos(endAngleRad);
+          const y2 = centerY + radius * Math.sin(endAngleRad);
+
+          // Large arc flag (1 if angle > 180, 0 otherwise)
+          const largeArcFlag = sliceAngle > 180 ? 1 : 0;
+
+          const pathData = [
+            `M ${centerX} ${centerY}`,
+            `L ${x1} ${y1}`,
+            `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+            'Z'
+          ].join(' ');
+
+          startAngle = endAngle;
+
+          return (
+            <path
+              key={index}
+              d={pathData}
+              fill={colors[index % colors.length]}
+              stroke="white"
+              strokeWidth="2"
+            />
+          );
+        })}
+        <circle cx={centerX} cy={centerY} r={radius * 0.5} fill="white" />
+      </svg>
+      <div className="mt-4 grid grid-cols-2 gap-2 w-full max-w-xs">
+        {labels.map((label, index) => (
+          <div key={index} className="flex items-center">
+            <div
+              className="w-3 h-3 rounded-full mr-2"
+              style={{ backgroundColor: colors[index % colors.length] }}
+            ></div>
+            <span className="text-xs truncate">{label}</span>
+            <span className="text-xs ml-1 text-muted-foreground">({data[index]})</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export default function TrafficAnalytics() {
   const { theme } = useTheme();
   const [timeframe, setTimeframe] = useState<'daily' | 'weekly' | 'monthly'>('daily');
@@ -61,7 +170,7 @@ export default function TrafficAnalytics() {
       // Fetch traffic data based on selected period
       const trafficResponse = await fetch(`/api/analytics/traffic?period=${period}&days=${getDaysForPeriod(period)}`);
       const trafficResult = await trafficResponse.json();
-      
+
       if (trafficResult.success) {
         setTrafficData(trafficResult.data);
       }
@@ -69,7 +178,7 @@ export default function TrafficAnalytics() {
       // Fetch summary
       const summaryResponse = await fetch('/api/analytics/metrics?type=summary');
       const summaryResult = await summaryResponse.json();
-      
+
       if (summaryResult.success) {
         setSummary(summaryResult.data[0]);
       }
@@ -77,7 +186,7 @@ export default function TrafficAnalytics() {
       // Fetch top pages
       const topPagesResponse = await fetch('/api/analytics/metrics?type=topPages');
       const topPagesResult = await topPagesResponse.json();
-      
+
       if (topPagesResult.success) {
         setTopPages(topPagesResult.data);
       }
@@ -85,7 +194,7 @@ export default function TrafficAnalytics() {
       // Fetch countries
       const countriesResponse = await fetch('/api/analytics/metrics?type=byCountry');
       const countriesResult = await countriesResponse.json();
-      
+
       if (countriesResult.success) {
         setCountries(countriesResult.data);
       }
@@ -93,7 +202,7 @@ export default function TrafficAnalytics() {
       // Fetch devices
       const devicesResponse = await fetch('/api/analytics/metrics?type=byDevice');
       const devicesResult = await devicesResponse.json();
-      
+
       if (devicesResult.success) {
         setDevices(devicesResult.data);
       }
@@ -119,57 +228,23 @@ export default function TrafficAnalytics() {
   }, [period]);
 
   // Prepare data for charts
-  const chartData = {
-    labels: trafficData.map(item => {
-      if (item.hour) return item.hour;
-      if (item.day) return item.day;
-      if (item.month) return item.month;
-      if (item.year) return item.year.toString();
-      return '';
-    }),
-    datasets: [
-      {
-        label: 'Unique Visitors',
-        data: trafficData.map(item => item.unique_visitors),
-        backgroundColor: theme === 'dark' ? 'rgba(72, 187, 120, 0.6)' : 'rgba(34, 197, 94, 0.6)',
-        borderColor: theme === 'dark' ? 'rgba(72, 187, 120, 1)' : 'rgba(34, 197, 94, 1)',
-        borderWidth: 1,
-      },
-      {
-        label: 'Total Visits',
-        data: trafficData.map(item => item.total_visits),
-        backgroundColor: theme === 'dark' ? 'rgba(99, 102, 241, 0.6)' : 'rgba(59, 130, 246, 0.6)',
-        borderColor: theme === 'dark' ? 'rgba(99, 102, 241, 1)' : 'rgba(59, 130, 246, 1)',
-        borderWidth: 1,
-      },
-    ],
-  };
+  const chartLabels = trafficData.map(item => {
+    if (item.hour) return item.hour;
+    if (item.day) return item.day;
+    if (item.month) return item.month;
+    if (item.year) return item.year.toString();
+    return '';
+  });
 
-  const pieChartData = {
-    labels: countries.map(country => country.country_code),
-    datasets: [
-      {
-        data: countries.map(country => country.visitor_count),
-        backgroundColor: [
-          '#3b82f6', '#ef4444', '#10b981', '#f59e0b', 
-          '#8b5cf6', '#ec4899', '#06b6d4', '#f97316',
-          '#84cc16', '#6366f1'
-        ],
-      },
-    ],
-  };
+  const uniqueVisitorsData = trafficData.map(item => item.unique_visitors);
+  const totalVisitsData = trafficData.map(item => item.total_visits);
 
-  const deviceChartData = {
-    labels: devices.map(device => device.device_type),
-    datasets: [
-      {
-        data: devices.map(device => device.visitor_count),
-        backgroundColor: [
-          '#10b981', '#f59e0b', '#3b82f6'
-        ],
-      },
-    ],
-  };
+  // Prepare data for pie charts
+  const countryLabels = countries.map(country => country.country_code);
+  const countryData = countries.map(country => country.visitor_count);
+
+  const deviceLabels = devices.map(device => device.device_type);
+  const deviceData = devices.map(device => device.visitor_count);
 
   if (loading) {
     return (
@@ -196,7 +271,7 @@ export default function TrafficAnalytics() {
             Monitor your website's visitor traffic, demographics, and performance
           </p>
         </div>
-        
+
         <div className="flex gap-4">
           <Select value={period} onValueChange={(v: any) => setPeriod(v)}>
             <SelectTrigger className="w-[180px]">
@@ -273,27 +348,27 @@ export default function TrafficAnalytics() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-80">
-                <Line 
-                  data={chartData} 
-                  options={{
-                    responsive: true,
-                    plugins: {
-                      legend: {
-                        position: 'top' as const,
-                      },
-                      title: {
-                        display: true,
-                        text: 'Visitor Trends'
-                      }
-                    },
-                    scales: {
-                      y: {
-                        beginAtZero: true
-                      }
-                    }
-                  }} 
-                />
+              <div className="h-80 overflow-x-auto">
+                <div className="min-w-full">
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <h4 className="text-center mb-2">Unique Visitors</h4>
+                      <SimpleBarChart
+                        data={uniqueVisitorsData}
+                        labels={chartLabels}
+                        title="Unique Visitors"
+                      />
+                    </div>
+                    <div>
+                      <h4 className="text-center mb-2">Total Visits</h4>
+                      <SimpleBarChart
+                        data={totalVisitsData}
+                        labels={chartLabels}
+                        title="Total Visits"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -306,17 +381,10 @@ export default function TrafficAnalytics() {
               <CardDescription>Top countries by visitor count</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-80">
-                <Pie 
-                  data={pieChartData} 
-                  options={{
-                    responsive: true,
-                    plugins: {
-                      legend: {
-                        position: 'right' as const,
-                      }
-                    }
-                  }} 
+              <div className="h-80 flex items-center justify-center">
+                <SimplePieChart
+                  data={countryData}
+                  labels={countryLabels}
                 />
               </div>
             </CardContent>
@@ -332,17 +400,10 @@ export default function TrafficAnalytics() {
             <CardDescription>How visitors access your site</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-64">
-              <Pie 
-                data={deviceChartData} 
-                options={{
-                  responsive: true,
-                  plugins: {
-                    legend: {
-                      position: 'bottom' as const,
-                    }
-                  }
-                }} 
+            <div className="h-64 flex items-center justify-center">
+              <SimplePieChart
+                data={deviceData}
+                labels={deviceLabels}
               />
             </div>
             <div className="grid grid-cols-3 gap-4 mt-4">
