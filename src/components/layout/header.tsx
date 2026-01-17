@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingCart, Search, Menu, X, Heart, ArrowRight, User, Percent, Tag, Calendar, Gift, Sparkles, Star, Bell } from 'lucide-react';
+import { ShoppingCart, Search, Menu, X, Heart, ArrowRight, User, Percent, Tag, Calendar, Gift, Sparkles, Star, Bell, Store } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { Button } from '@/components/ui/button';
@@ -283,18 +283,28 @@ export function Header() {
                     </Link>
                   )}
 
-                  <Link
-                    href="/cart"
-                    className="relative p-2 text-teal hover:text-accent hover:bg-teal/5 rounded-full transition-all cursor-pointer focus-within:ring-2 focus-within:ring-teal"
-                    aria-label={`Shopping Cart, ${itemCount} items`}
-                  >
-                    <ShoppingCart size={20} />
-                    {itemCount > 0 && (
-                      <span className="absolute top-0 right-0 h-4 w-4 bg-accent text-white text-[10px] flex items-center justify-center rounded-full font-bold animate-pulse ring-2 ring-white">
-                        {itemCount}
-                      </span>
-                    )}
-                  </Link>
+                  {user ? (
+                    <Link
+                      href="/cart"
+                      className="relative p-2 text-teal hover:text-accent hover:bg-teal/5 rounded-full transition-all cursor-pointer focus-within:ring-2 focus-within:ring-teal"
+                      aria-label={`Shopping Cart, ${itemCount} items`}
+                    >
+                      <ShoppingCart size={20} />
+                      {itemCount > 0 && (
+                        <span className="absolute top-0 right-0 h-4 w-4 bg-accent text-white text-[10px] flex items-center justify-center rounded-full font-bold animate-pulse ring-2 ring-white">
+                          {itemCount}
+                        </span>
+                      )}
+                    </Link>
+                  ) : (
+                    <Link
+                      href="/products"
+                      className="p-2 text-teal hover:text-accent hover:bg-teal/5 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-teal"
+                      aria-label="Marketplace"
+                    >
+                      <Store size={20} />
+                    </Link>
+                  )}
 
                   {/* User Profile/Logout - Hides when search is open */}
                   {!isSearchOpen && (
