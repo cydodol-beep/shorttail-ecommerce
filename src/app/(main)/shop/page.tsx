@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -76,9 +76,8 @@ function ShopPageContent() {
   const [selectedPriceRange, setSelectedPriceRange] = useState<string>('all');
   const [selectedCondition, setSelectedCondition] = useState<string>('all');
   const [productRatings, setProductRatings] = useState<Map<string, { avg: number; count: number }>>(new Map());
-  
-  {}
-  const { promotions } = useActivePromotions();
+
+  const abortControllerRef = useRef<AbortController | null>(null);const { promotions } = useActivePromotions();
   const { getSectionSettings } = useLandingSections();
   const { settings: allSettings } = useAllSettings();
   
@@ -141,12 +140,16 @@ function ShopPageContent() {
   }, []);
 
   const fetchProducts = useCallback(async () => {
-    setLoading(true);
-    const supabase = createClient();
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
     const abortController = new AbortController();
+    abortControllerRef.current = abortController;
     const timeoutId = setTimeout(() => abortController.abort(), 30000);
-    
+
     try {
+      const supabase = createClient();
       let categoryId: string | null = null;
 
       if (category && category !== 'all') {
@@ -224,7 +227,9 @@ function ShopPageContent() {
       const count = result.count;
 
       if (error) {
-        console.error('Error fetching products:', error);
+        if (error.name !== 'AbortError' && !error.message?.includes('abort')) {
+          console.error('Error fetching products:', error);
+        }
         clearTimeout(timeoutId);
         setLoading(false);
         return;
@@ -279,7 +284,9 @@ function ShopPageContent() {
       setTotalCount(count || 0);
     } catch (error) {
       clearTimeout(timeoutId);
-      console.error('Error fetching products:', error);
+      if (error instanceof Error && error.name !== 'AbortError' && !error.message?.includes('abort')) {
+        console.error('Error fetching products:', error);
+      }
     } finally {
       setLoading(false);
     }
@@ -288,6 +295,13 @@ function ShopPageContent() {
   useEffect(() => {
     fetchProducts();
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
   }, [fetchProducts]);
 
   const getProductPrice = (product: Product & { product_variants?: ProductVariant[] }) => {
