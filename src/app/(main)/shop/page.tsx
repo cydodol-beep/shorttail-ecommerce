@@ -4,11 +4,10 @@ import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { 
-  Search, Filter, PawPrint, Star, ShoppingBag, 
-  Sparkles, ArrowRight, Truck,
-  Shield, Clock, Zap, SlidersHorizontal, X, ChevronDown,
-  TrendingUp, Award, Percent
+import {
+  Search, Filter, PawPrint, Star, ShoppingBag,
+  Truck, Shield, Clock, Award, Zap, SlidersHorizontal, X, ChevronDown,
+  TrendingUp, Percent
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -335,105 +334,10 @@ function ShopPageContent() {
     toast.success(`${product.name} added to cart!`);
   };
 
-  {}
-  const shopSettings = getSectionSettings('shop', {
-    heroTitle: 'Shop For Your Furry Friends',
-    heroSubtitle: 'Discover Premium Pet Supplies',
-    heroDescription: 'Premium organic treats, durable toys, and cozy beds. Everything your pet needs for a happier, healthier life.',
-    showPromoBanner: true,
-  });
-
-  const trustSignals = [
-    { icon: Truck, text: allSettings?.shipping?.freeShippingThreshold ? `Free Shipping over Rp ${allSettings.shipping.freeShippingThreshold.toLocaleString()}` : 'Free Shipping on eligible orders' },
-    { icon: Shield, text: '100% Authentic Products' },
-    { icon: Clock, text: 'Fast Delivery' },
-    { icon: Award, text: 'Vet Approved' },
-  ];
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-cream to-white">
       {}
-      <section className="relative bg-gradient-to-r from-teal/10 via-primary/10 to-accent/10 py-12 sm:py-16 lg:py-20 overflow-hidden">
-        <motion.div
-          animate={{ opacity: [0.03, 0.05, 0.03] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute inset-0 bg-[radial-gradient(#006d77_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none"
-        />
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center gap-2 bg-accent/10 text-accent px-4 py-1.5 rounded-full text-sm font-medium mb-6"
-            >
-              <Sparkles className="h-4 w-4" />
-              <span>{shopSettings.heroSubtitle || 'Discover Premium Pet Supplies'}</span>
-            </motion.div>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="text-4xl sm:text-5xl lg:text-6xl font-bold text-brown-900 mb-4"
-            >
-              {shopSettings.heroTitle || 'Shop For Your Furry Friends'}
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-lg text-brown-600 mb-8 max-w-2xl mx-auto"
-              dangerouslySetInnerHTML={{ __html: shopSettings.heroDescription }}
-            />
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="flex flex-wrap justify-center gap-8 mb-10"
-            >
-              {trustSignals.map((signal, index) => (
-                <div key={index} className="flex items-center gap-2 text-sm text-brown-700">
-                  <signal.icon className="h-5 w-5 text-primary" />
-                  <span>{signal.text}</span>
-                </div>
-              ))}
-            </motion.div>
-
-            {shopSettings.showPromoBanner && promotions.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="bg-gradient-to-r from-teal to-primary rounded-2xl p-6 sm:p-8 max-w-4xl mx-auto text-white"
-              >
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                  <div className="flex-1 text-center sm:text-left">
-                    <p className="text-sm font-medium opacity-90 mb-1">
-                      {promotions[0].discount_type === 'percentage' ? 'Special Offer' : 'Limited Time Deal'}
-                    </p>
-                    <p className="text-2xl sm:text-3xl font-bold mb-2">
-                      {promotions[0].formattedDiscount}
-                    </p>
-                    <p className="text-sm opacity-90">
-                      Use code: <span className="font-bold bg-white/20 px-2 py-0.5 rounded">{promotions[0].code}</span>
-                    </p>
-                  </div>
-                  <Link href="/checkout">
-                    <Button size="lg" className="bg-white text-primary hover:bg-white/90 shadow-xl">
-                      Shop Now <ArrowRight className="ml-2 h-5 w-5" />
-                    </Button>
-                  </Link>
-                </div>
-              </motion.div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {}
       {promotions.length > 1 && (
         <section className="bg-gradient-to-r from-orange-500 to-red-500 py-4 overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
