@@ -2,17 +2,18 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { 
+  withRetry, 
+  withTimeout, 
+  isRetryableError, 
+  isTimeoutError 
+} from '@/lib/supabase/timeout-utils';
 import type { User, AuthChangeEvent, Session } from '@supabase/supabase-js';
 import type { Profile } from '@/types/database';
 import { toast } from 'sonner';
 
 // Get singleton client instance outside component to prevent re-renders
 const supabase = createClient();
-
-// Timeout duration for operations (15 seconds in milliseconds)
-// This prevents hanging operations while allowing for reasonable network latency
-// If timeout occurs, user will be logged out with a clear message
-const OPERATION_TIMEOUT_MS = 15 * 1000; // 15 seconds
 
 // Create a Zustand store to make the auth state accessible globally
 import { create } from 'zustand';

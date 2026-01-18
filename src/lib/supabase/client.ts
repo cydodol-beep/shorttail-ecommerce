@@ -3,7 +3,7 @@ import { createBrowserClient } from '@supabase/ssr';
 // Singleton instance to prevent memory leaks from creating multiple clients
 let supabaseClient: ReturnType<typeof createBrowserClient> | null = null;
 
-// Use the SSR-compatible browser client for proper cookie handling
+// Use SSR-compatible browser client for proper cookie handling
 // Returns a singleton instance to prevent memory accumulation
 export function createClient() {
   if (!supabaseClient) {
@@ -23,12 +23,13 @@ export function createClient() {
           headers: {
             'Content-Type': 'application/json',
           },
-          // Configure fetch options
+          // Configure fetch options with increased timeout
           fetch: (url, options = {}) => {
             // Set timeout explicitly in fetch options
+            // Increased to 45 seconds for better resilience on slow connections
             return fetch(url, {
               ...options,
-              signal: options.signal || AbortSignal.timeout(10000), // 10 seconds timeout
+              signal: options.signal || AbortSignal.timeout(45000), // 45 seconds timeout
             });
           },
         },

@@ -13,7 +13,7 @@ interface IdleTimeoutProviderProps {
 }
 
 export function IdleTimeoutProvider({ children, timeoutMs = IDLE_TIMEOUT_MS }: IdleTimeoutProviderProps) {
-  const { user, idleTimeoutActive } = useAuth();
+  const { user, consecutiveTimeouts } = useAuth();
   const [showWarning, setShowWarning] = useState(false);
   
   // Use the idle timeout hook
@@ -35,8 +35,8 @@ export function IdleTimeoutProvider({ children, timeoutMs = IDLE_TIMEOUT_MS }: I
     }
   }, [user, timeLeft]);
 
-  // If timeout is disabled, don't render the provider
-  if (!idleTimeoutActive) {
+  // If timeout is disabled (too many consecutive timeouts), don't render the provider
+  if (consecutiveTimeouts >= 2) {
     return <>{children}</>;
   }
 
