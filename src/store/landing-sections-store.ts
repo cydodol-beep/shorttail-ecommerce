@@ -28,10 +28,8 @@ interface LandingSectionsState {
   invalidateCache: () => void;
 }
 
-// Cache duration: 30 seconds for optimal performance
 const CACHE_DURATION = 30 * 1000;
 
-// Storage key for cross-tab communication
 const STORAGE_KEY = 'landing_sections_updated';
 
 export const useLandingSectionsStore = create<LandingSectionsState>((set, get) => ({
@@ -43,53 +41,55 @@ export const useLandingSectionsStore = create<LandingSectionsState>((set, get) =
 
   fetchSections: async (forceRefresh = false) => {
     const now = Date.now();
-    const { lastFetched, loading } = get();
-    
-    // Skip if already loading
-    if (loading) {
-      console.log('[LandingSections] Already loading, skipping...');
+
+    // Use cached data if available
+    const lastFetched = get().lastFetched;
+    const hasValidCache = !forceRefresh && lastFetched && now - lastFetched < CACHE_DURATION;
+    if (hasValidCache) {
+      console.log('[LandingSections] Using cached data');
       return;
     }
-    
-    // Skip if cache is still valid (unless force refresh)
-    if (!forceRefresh && lastFetched && now - lastFetched < CACHE_DURATION) {
+    if (hasValidCache) {
       console.log('[LandingSections] Using cached data');
       return;
     }
 
-    console.log('[LandingSections] Fetching sections...', forceRefresh ? '(forced)' : '');
-    set({ loading: true, error: null });
-    const supabase = createClient();
+    // Proceed with fetch if not currently loading OR force refresh
+    if (!get().loading || forceRefresh) {
+      console.log('[LandingSections] Fetching sections...', forceRefresh ? '(forced)' : '');
+      set({ loading: true, error: null });
 
-    // Add timeout to prevent hanging
-    const abortController = new AbortController();
-    const timeoutId = setTimeout(() => abortController.abort(), 10000); // 10 second timeout
+      const supabase = createClient();
 
-    try {
-      const { data, error } = await supabase
-        .from('landing_page_sections')
-        .select('*')
-        .order('sort_order', { ascending: true })
-        .abortSignal(abortController.signal);
+      // Add timeout to prevent hanging
+      const abortController = new AbortController();
+      const timeoutId = setTimeout(() => abortController.abort(), 10000);
 
-      clearTimeout(timeoutId);
+      try {
+        const { data, error } = await supabase
+          .from('landing_page_sections')
+          .select('*')
+          .order('sort_order', { ascending: true })
+          .abortSignal(abortController.signal);
 
-      if (error) {
-        console.error('[LandingSections] Error fetching:', error.message);
-        set({ error: error.message, loading: false, fetched: true });
-      } else {
-        console.log('[LandingSections] Fetched sections:', data?.length, 'sections');
-        set({ sections: data || [], loading: false, fetched: true, lastFetched: now });
+        clearTimeout(timeoutId);
+
+        if (error) {
+          console.error('[LandingSections] Error fetching:', error.message);
+          set({ error: error.message, loading: false, fetched: true });
+        } else {
+          console.log('[LandingSections] Fetched sections:', data?.length, 'sections');
+          set({ sections: data || [], loading: false, fetched: true, lastFetched: now });
+        }
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (err instanceof Error && err.name !== 'AbortError') {
+          console.error('[LandingSections] Exception:', err);
+        }
+        set({ error: err instanceof Error ? err.message : 'Unknown error', loading: false, fetched: true });
       }
-    } catch (err) {
-      clearTimeout(timeoutId);
-      if (err instanceof Error && err.name !== 'AbortError') {
-        console.error('[LandingSections] Exception:', err);
-        set({ error: err.message, loading: false, fetched: true });
-      } else {
-        // AbortError (timeout) - treat as temporary failure
-        set({ loading: false, fetched: true });
-      }
+
+      return;
     }
   },
 
@@ -108,20 +108,19 @@ export const useLandingSectionsStore = create<LandingSectionsState>((set, get) =
     // Immediately invalidate cache
     console.log('[LandingSections] Invalidating cache after update');
     set({ lastFetched: null, fetched: false });
-    
+
     // Force immediate fetch to update all components
     const { data } = await supabase
       .from('landing_page_sections')
       .select('*')
       .order('sort_order', { ascending: true });
-    
+
     if (data) {
       console.log('[LandingSections] Immediate update with fresh data:', data.length, 'sections');
       set({ sections: data, lastFetched: Date.now(), fetched: true });
     }
-    
-    // Notify other tabs/windows about the update via localStorage
-    // This triggers storage event in other tabs
+
+    // Notify other tabs/windows about the update
     if (typeof window !== 'undefined') {
       const updateEvent = {
         timestamp: Date.now(),
@@ -129,9 +128,8 @@ export const useLandingSectionsStore = create<LandingSectionsState>((set, get) =
         action: 'update'
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updateEvent));
-      // Remove it immediately to allow future updates to trigger
       setTimeout(() => localStorage.removeItem(STORAGE_KEY), 100);
-      
+
       // Also dispatch a custom event for same-page updates
       window.dispatchEvent(new CustomEvent('landing-sections-updated', { detail: updateEvent }));
     }
@@ -142,7 +140,6 @@ export const useLandingSectionsStore = create<LandingSectionsState>((set, get) =
 
     console.log('[LandingSections] Batch updating sections:', updates);
 
-    // Perform all updates in parallel without triggering fetch after each
     const updatePromises = updates.map(({ id, data }) => {
       console.log(`[LandingSections] Updating section ${id} with:`, data);
       return supabase
@@ -152,11 +149,9 @@ export const useLandingSectionsStore = create<LandingSectionsState>((set, get) =
     });
 
     const results = await Promise.all(updatePromises);
-    
-    // Log all results for debugging
+
     console.log('[LandingSections] Update results:', results);
-    
-    // Check for errors
+
     const errors = results.filter(r => r.error);
     if (errors.length > 0) {
       console.error('[LandingSections] Batch update errors:', errors.map(e => e.error));
@@ -168,18 +163,18 @@ export const useLandingSectionsStore = create<LandingSectionsState>((set, get) =
     // Immediately invalidate cache
     console.log('[LandingSections] Invalidating cache after batch update');
     set({ lastFetched: null, fetched: false });
-    
+
     // Single fetch to update all components
     const { data } = await supabase
       .from('landing_page_sections')
       .select('*')
       .order('sort_order', { ascending: true });
-    
+
     if (data) {
       console.log('[LandingSections] Immediate update with fresh data:', data.length, 'sections');
       set({ sections: data, lastFetched: Date.now(), fetched: true });
     }
-    
+
     // Notify other tabs/windows about the update
     if (typeof window !== 'undefined') {
       const updateEvent = {
@@ -204,5 +199,24 @@ export const useLandingSectionsStore = create<LandingSectionsState>((set, get) =
 
   getVisibleSections: () => {
     return get().sections.filter((s) => s.is_visible).sort((a, b) => a.sort_order - b.sort_order);
+  },
+
+  getSectionSettings: (sectionKey: string, defaultSettings: Record<string, any>) => {
+    const section = get().sections.find((s) => s.section_key === sectionKey);
+
+    if (section) {
+      const settings = { ...defaultSettings };
+      Object.keys(section.settings || {}).forEach((key) => {
+        if (section.settings && key in section.settings) {
+          settings[key] = section.settings[key];
+        }
+      });
+
+      console.log(`[getSectionSettings] Section ${sectionKey} settings:`, settings);
+      return settings;
+    }
+
+    console.log(`[getSectionSettings] Section ${sectionKey} not found, using defaults`);
+    return defaultSettings;
   },
 }));
