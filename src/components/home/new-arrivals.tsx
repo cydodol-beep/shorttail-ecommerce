@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { Sparkles, PawPrint, Star, ShoppingBag, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -47,7 +47,6 @@ export function NewArrivals() {
 
       const supabase = createClient();
 
-      // Fetch newest products from last 30 days
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -60,24 +59,29 @@ export function NewArrivals() {
         .limit(settings.limit)
         .abortSignal(abortController.signal);
 
-    if (error) {
-      if (error.name !== 'AbortError' && !error.message?.includes('abort')) {
-        console.error('Error fetching new arrivals:', error);
+      if (error) {
+        if (error.name !== 'AbortError' && !error.message?.includes('abort')) {
+          console.error('Error fetching new arrivals:', error);
+        }
+        setLoading(false);
+        return;
+      }
+
+      const productsWithStock = (data || []).filter((product: Product & { product_variants?: ProductVariant[] }) => {
+        if (product.has_variants && product.product_variants) {
+          return product.product_variants.some((v: ProductVariant) => v.stock_quantity > 0);
+        }
+        return product.stock_quantity > 0;
+      });
+
+      setProducts(productsWithStock);
+      setLoading(false);
+    } catch (err) {
+      if (err instanceof Error && err.name !== 'AbortError' && !err.message?.includes('abort')) {
+        console.error('Exception fetching new arrivals:', err);
       }
       setLoading(false);
-      return;
     }
-
-    // Filter products with stock
-    const productsWithStock = (data || []).filter((product: Product & { product_variants?: ProductVariant[] }) => {
-      if (product.has_variants && product.product_variants) {
-        return product.product_variants.some((v: ProductVariant) => v.stock_quantity > 0);
-      }
-      return product.stock_quantity > 0;
-    });
-
-    setProducts(productsWithStock);
-    setLoading(false);
   }, [settings.limit]);
 
   useEffect(() => {
