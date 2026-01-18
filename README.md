@@ -7,46 +7,26 @@
 
 ## 🔄 Recent Updates (January 18, 2026)
 
-### Shop Page Price Range Filter Fix (Critical) 🐛
+### Shop Page Price Range Filter Fix 🐛
 - **Fixed Variant-Aware Price Range Filtering**:
-  - **Issue**: Shop page not showing products due to incorrect price filtering logic
+  - **Critical Issue**: Shop page not showing any products due to incorrect price filtering logic
+  - **Root Causes**:
     - Tried to filter by non-existent database column `product_variants.min_price`
     - Not fetching `price_adjustment` from variants
-    - Only filtering by `base_price`, ignoring variant prices
+    - Only filtering by `base_price`, completely ignoring variant prices
+    - Products with variants priced differently than base price were being filtered out
   - **Solution**: Properly calculate and filter by variant prices
   - **Implementation Details**:
     - Fetch `product_variants(id, price_adjustment, stock_quantity)` from database
-    - Calculate effective prices: `base_price + price_adjustment` for each variant
-    - Determine min/max: min/max of variant prices (or base_price for non-variants)
+    - Calculate effective variant prices: `base_price + price_adjustment` for each variant
+    - Determine effective min/max: min/max of variant prices (or base_price for non-variants)
     - Store calculated prices as `calculatedMinPrice` and `calculatedMaxPrice`
-    - Apply client-side price range filtering: `min >= filterMin && max <= filterMax`
-    - Sort by calculated prices instead of database columns
+    - Apply client-side price range filtering using calculated prices
+    - Sort products by calculated prices instead of database columns
     - Products with variants: Filter by min/max variant prices
     - Products without variants: Filter by base_price
-  - **Result**: Shop page now correctly displays all products
-  - **Impact**: Price range filter works for ALL product types
-
-### Shop Page Price Range Filter Implementation 💰
-- **Replaced Condition Filter with Price Range Filter**:
-  - **Issue**: Condition filter (All, New, Secondhand) was limiting users unnecessarily
-  - **Solution**: Replaced condition filter with price range filter (min/max prices)
-  - **Implementation Details**:
-    - Removed `selectedCondition` state and its filter UI
-    - Added `minPrice` and `maxPrice` state for price range filtering
-    - Added Minus, Plus icons to imports
-    - Removed Filter icon from imports
-    - Created new price range filter UI with min/max inputs
-    - Updated `fetchProducts` query to filter by price range
-    - Modified `getProductPrice` to accept variant-aware prices
-    - Added variant-aware price sorting:
-      - For products with variants: uses `product_variants.min_price` for filtering
-      - For products without variants: uses `base_price` for filtering
-    - Added `gte` and `lte` filter using Supabase's `te`/lte` operators
-    - **Result**: Users can filter by exact price range
-    - **Result**: Products with variants use lowest/highest variant prices
-    - **Impact**: More flexible filtering, better UX for price-sensitive customers
-  - **Result**: Price range filter shows "Rp" (Indonesian Rupiah) label
-  - **Impact**: Removed unused condition filter state, reduced code complexity
+  - **Result**: Shop page now correctly displays ALL products
+  - **Impact**: Price range filter works for both product types (with and without variants)
 
 ### Authentication & Access Control Fixes 🔐
 - **Added /shop to Public Routes**:
