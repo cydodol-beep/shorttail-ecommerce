@@ -5,9 +5,9 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
-  Search, Filter, PawPrint, Star, ShoppingBag,
+  Search, PawPrint, Star, ShoppingBag,
   Truck, Shield, Clock, Award, Zap, SlidersHorizontal, X, ChevronDown,
-  TrendingUp, Percent
+  TrendingUp, Percent, Minus, Plus
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -54,7 +54,7 @@ function formatPrice(price: number): string {
 
 function ShopPageContent() {
   const searchParams = useSearchParams();
-  const [products, setProducts] = useState<(Product & { 
+  const [products, setProducts] = useState<(Product & {
     categories?: { id: string; name: string; slug: string } | null,
     product_variants?: ProductVariant[],
     avg_rating?: number,
@@ -67,22 +67,23 @@ function ShopPageContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const itemsPerPage = 24;
+  const [minPrice, setMinPrice] = useState<number>(0);
+  const [maxPrice, setMaxPrice] = useState<number>(999999999);
   const addItem = useCartStore((state) => state.addItem);
   const { getActiveCategories } = useCategories();
   const categories = getActiveCategories();
   const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [selectedPriceRange, setSelectedPriceRange] = useState<string>('all');
-  const [selectedCondition, setSelectedCondition] = useState<string>('all');
   const [productRatings, setProductRatings] = useState<Map<string, { avg: number; count: number }>>(new Map());
 
-  const abortControllerRef = useRef<AbortController | null>(null);const { promotions } = useActivePromotions();
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const { promotions } = useActivePromotions();
   const { getSectionSettings } = useLandingSections();
   const { settings: allSettings } = useAllSettings();
-  
+
   const categoryFromUrl = searchParams.get('category') || 'all';
   const [category, setCategory] = useState(categoryFromUrl);
-  
+
   useEffect(() => {
     setCategory(categoryFromUrl);
     setCurrentPage(1);
@@ -97,44 +98,43 @@ function ShopPageContent() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  {}
   useEffect(() => {
     const fetchProductRatings = async () => {
       try {
         const supabase = createClient();
-        
+
         const { data, error } = await supabase
           .from('reviews')
           .select('product_id, rating')
           .eq('is_approved', true);
-        
+
         if (error) {
           console.error('Error fetching reviews:', error);
           return;
         }
-        
+
         const ratingsMap = new Map<string, { avg: number; count: number }>();
         const productReviews: Record<string, number[]> = {};
-        
+
         (data || []).forEach((review: any) => {
           if (!productReviews[review.product_id]) {
             productReviews[review.product_id] = [];
           }
           productReviews[review.product_id].push(review.rating);
         });
-        
+
         Object.keys(productReviews).forEach(productId => {
           const ratings = productReviews[productId];
           const avg = ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
           ratingsMap.set(productId, { avg, count: ratings.length });
         });
-        
+
         setProductRatings(ratingsMap);
       } catch (error) {
         console.error('Error fetching product ratings:', error);
       }
     };
-    
+
     fetchProductRatings();
   }, []);
 
@@ -167,10 +167,10 @@ function ShopPageContent() {
           console.error('Error fetching category ID:', catError);
         }
       }
-      
+
       const from = (currentPage - 1) * itemsPerPage;
       const to = from + itemsPerPage - 1;
-      
+
       let query = supabase
         .from('products')
         .select(`
@@ -182,7 +182,6 @@ function ShopPageContent() {
           has_variants,
           category_id,
           is_active,
-          condition,
           created_at,
           product_variants(id, stock_quantity)
         `, { count: 'exact' })
@@ -201,8 +200,13 @@ function ShopPageContent() {
         query = query.ilike('name', `%${debouncedSearch}%`);
       }
 
-      if (selectedCondition !== 'all') {
-        query = query.eq('condition', selectedCondition);
+      if (minPrice > 0 || maxPrice < 999999999) {
+        query = query.gte('base_price', minPrice).lte('base_price', maxPrice);
+
+        if (sortBy === 'price-asc' || sortBy === 'price-desc') {
+          const useVariantPrices = sortBy === 'price-asc';
+          query = query.order(useVariantPrices ? 'product_variants.min_price' : 'base_price', { ascending: sortBy === 'price-asc' });
+        }
       }
 
       if (sortBy === 'newest') {
@@ -234,8 +238,8 @@ function ShopPageContent() {
         return;
       }
 
-      let processedData: (Product & { 
-        categories?: { id: string; name: string; slug: string } | null, 
+      let processedData: (Product & {
+        categories?: { id: string; name: string; slug: string } | null,
         product_variants?: ProductVariant[],
         avg_rating?: number,
         total_reviews?: number,
@@ -244,7 +248,7 @@ function ShopPageContent() {
         ...p,
         avg_rating: productRatings.get(p.id)?.avg || 0,
         total_reviews: productRatings.get(p.id)?.count || 0,
-        sales_count: Math.floor(Math.random() * 1000) 
+        sales_count: Math.floor(Math.random() * 1000)
       })) as any;
 
       if (processedData.length > 0 && data) {
@@ -289,7 +293,7 @@ function ShopPageContent() {
     } finally {
       setLoading(false);
     }
-  }, [category, sortBy, debouncedSearch, currentPage, itemsPerPage, selectedCondition, productRatings]);
+  }, [category, sortBy, debouncedSearch, currentPage, itemsPerPage, minPrice, maxPrice, productRatings]);
 
   useEffect(() => {
     fetchProducts();
@@ -336,7 +340,6 @@ function ShopPageContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-cream to-white">
-      {}
 
       {promotions.length > 1 && (
         <section className="bg-gradient-to-r from-orange-500 to-red-500 py-4 overflow-hidden">
@@ -354,7 +357,6 @@ function ShopPageContent() {
         </section>
       )}
 
-      {}
       <section className="py-8 sm:py-12 bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row gap-4">
@@ -371,10 +373,9 @@ function ShopPageContent() {
               </form>
             </div>
 
-            <div className="flex gap-3 flex-wrap">
+             <div className="flex gap-3 flex-wrap">
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger className="w-[180px] h-12">
-                  <Filter className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -414,7 +415,6 @@ function ShopPageContent() {
         </div>
       </section>
 
-      {}
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row gap-8">
@@ -435,7 +435,6 @@ function ShopPageContent() {
                   </div>
 
                   <div className="space-y-6">
-                    {}
                     <div>
                       <h4 className="font-semibold text-sm mb-3">Categories</h4>
                       <ScrollArea className="h-40">
@@ -470,49 +469,45 @@ function ShopPageContent() {
 
                     <Separator />
 
-                    {}
                     <div>
-                      <h4 className="font-semibold text-sm mb-3">Condition</h4>
+                      <h4 className="font-semibold text-sm mb-3">Price Range (Rp)</h4>
                       <div className="space-y-2">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="condition"
-                            value="all"
-                            checked={selectedCondition === 'all'}
-                            onChange={(e) => setSelectedCondition(e.target.value)}
-                            className="w-4 h-4 text-primary"
+                        <div className="flex items-center gap-2">
+                          <Minus className="h-4 w-4 text-muted-foreground" />
+                          <Input
+                            type="number"
+                            placeholder="Min"
+                            value={minPrice === 0 ? '' : minPrice}
+                            onChange={(e) => setMinPrice(Number(e.target.value))}
+                            className="w-full h-10 text-center"
+                            min="0"
                           />
-                          <span className="text-sm">All</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="condition"
-                            value="new"
-                            checked={selectedCondition === 'new'}
-                            onChange={(e) => setSelectedCondition(e.target.value)}
-                            className="w-4 h-4 text-primary"
+                          <span className="text-muted-foreground">-</span>
+                          <Input
+                            type="number"
+                            placeholder="Max"
+                            value={maxPrice === 999999999 ? '' : maxPrice}
+                            onChange={(e) => setMaxPrice(Number(e.target.value))}
+                            className="w-full h-10 text-center"
+                            min="0"
                           />
-                          <span className="text-sm">New</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="condition"
-                            value="secondhand"
-                            checked={selectedCondition === 'secondhand'}
-                            onChange={(e) => setSelectedCondition(e.target.value)}
-                            className="w-4 h-4 text-primary"
-                          />
-                          <span className="text-sm">Secondhand</span>
-                        </label>
+                          <Plus className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <Button
+                          onClick={() => {
+                            setMinPrice(0);
+                            setMaxPrice(999999999);
+                          }}
+                          variant="outline"
+                          className="w-full"
+                        >
+                          Reset
+                        </Button>
                       </div>
                     </div>
 
                     <Separator />
 
-                    {}
                     <div className="pt-4">
                       <Button
                         variant="outline"
@@ -521,7 +516,8 @@ function ShopPageContent() {
                         onClick={() => {
                           setCategory('all');
                           setSearchQuery('');
-                          setSelectedCondition('all');
+                          setMinPrice(0);
+                          setMaxPrice(999999999);
                           setSortBy('newest');
                           setCurrentPage(1);
                         }}
@@ -535,24 +531,7 @@ function ShopPageContent() {
               </Card>
             </aside>
 
-            {}
             <div className="flex-1">
-              {}
-              <div className="flex items-center justify-between mb-6">
-                <p className="text-sm text-brown-600">
-                  {totalCount > 0 ? (
-                    <>
-                      Showing <span className="font-semibold">{((currentPage - 1) * itemsPerPage) + 1}</span> to{' '}
-                      <span className="font-semibold">{Math.min(currentPage * itemsPerPage, totalCount)}</span> of{' '}
-                      <span className="font-semibold">{totalCount}</span> products
-                    </>
-                  ) : (
-                    'No products found'
-                  )}
-                </p>
-              </div>
-
-              {}
               {loading ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                   {[...Array(8)].map((_, i) => (
@@ -572,11 +551,14 @@ function ShopPageContent() {
                   <p className="text-brown-600 mb-6">
                     Try adjusting your search or filter criteria
                   </p>
-                  <Button 
+                  <Button
                     onClick={() => {
                       setSearchQuery('');
                       setCategory('all');
-                      setSelectedCondition('all');
+                      setMinPrice(0);
+                      setMaxPrice(999999999);
+                      setSortBy('newest');
+                      setCurrentPage(1);
                     }}
                     className="bg-primary hover:bg-primary/90"
                   >
@@ -585,7 +567,7 @@ function ShopPageContent() {
                 </div>
               ) : (
                 <>
-                  <motion.div 
+                  <motion.div
                     className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -598,7 +580,7 @@ function ShopPageContent() {
                       const isLowStock = stock <= 5 && stock > 0;
                       const avgRating = product.avg_rating || 0;
                       const totalReviews = product.total_reviews || 0;
-                      
+
                       return (
                         <motion.div
                           key={product.id}
@@ -607,11 +589,10 @@ function ShopPageContent() {
                           transition={{ duration: 0.3, delay: index * 0.05 }}
                         >
                           <Card className={`group transition-all duration-300 h-full flex flex-col relative overflow-hidden ${
-                            outOfStock 
-                              ? 'border-red-200 opacity-80' 
+                            outOfStock
+                              ? 'border-red-200 opacity-80'
                               : 'border-brown-200 hover:shadow-xl hover:-translate-y-1'
                           }`}>
-                            {}
                             <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
                               {index < 3 && !outOfStock && sortBy === 'bestsellers' && (
                                 <Badge className="bg-orange-500 hover:bg-orange-500 text-xs shadow-lg">
@@ -649,40 +630,31 @@ function ShopPageContent() {
                                   )}
                                 </div>
                               </Link>
-                              
-                              {}
+
                               <div className="flex items-center gap-1 mb-2">
                                 {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star 
-                                    key={star} 
+                                  <Star
+                                    key={star}
                                     className={`h-3 w-3 ${
-                                      avgRating >= star 
-                                        ? 'fill-yellow-400 text-yellow-400' 
-                                        : outOfStock 
-                                          ? 'fill-gray-300 text-gray-300' 
+                                      avgRating >= star
+                                        ? 'fill-yellow-400 text-yellow-400'
+                                        : outOfStock
+                                          ? 'fill-gray-300 text-gray-300'
                                           : 'text-gray-300'
-                                    }`} 
+                                    }`}
                                   />
                                 ))}
                                 {totalReviews > 0 && (
                                   <span className="text-[10px] text-brown-500 ml-1">({totalReviews})</span>
                                 )}
                               </div>
-                              
-                              <Link href={`/products/${product.id}`} className="flex-grow">
-                                <h3 className={`font-semibold mb-1 transition-colors line-clamp-2 text-sm leading-tight ${
-                                  outOfStock ? 'text-gray-500' : 'text-brown-900 group-hover:text-primary'
-                                }`}>
-                                  {product.name}
-                                </h3>
-                              </Link>
-                              
+
                               {product.categories && (
                                 <p className="text-xs text-brown-600 mb-2 capitalize">
                                   {product.categories.name}
                                 </p>
                               )}
-                              
+
                               <div className="mt-auto">
                                 <div className="mb-3">
                                   {priceInfo.isRange ? (
@@ -703,7 +675,7 @@ function ShopPageContent() {
                                     </p>
                                   )}
                                 </div>
-                                
+
                                 {outOfStock ? (
                                   <Button
                                     className="w-full h-10 text-xs"
@@ -736,64 +708,71 @@ function ShopPageContent() {
                       );
                     })}
                   </motion.div>
-
-                  {}
-                  <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <p className="text-sm text-brown-600">
-                      Page {currentPage} of {Math.ceil(totalCount / itemsPerPage)}
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                      >
-                        Previous
-                      </Button>
-                      {Array.from({ length: Math.ceil(totalCount / itemsPerPage) }, (_, i) => i + 1)
-                        .filter(page => {
-                          const totalPages = Math.ceil(totalCount / itemsPerPage);
-                          return page === 1 || 
-                                 page === totalPages || 
-                                 Math.abs(page - currentPage) <= 1;
-                        })
-                        .map((page, idx, arr) => {
-                          const prevPage = arr[idx - 1];
-                          const showEllipsis = prevPage && page - prevPage > 1;
-                          
-                          return (
-                            <div key={page} className="flex gap-2">
-                              {showEllipsis && <span className="px-2 py-1">...</span>}
-                              <Button
-                                variant={currentPage === page ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => setCurrentPage(page)}
-                                className={currentPage === page ? "bg-primary hover:bg-primary/90" : ""}
-                              >
-                                {page}
-                              </Button>
-                            </div>
-                          );
-                        })}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalCount / itemsPerPage), p + 1))}
-                        disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
-                      >
-                        Next
-                      </Button>
-                    </div>
-                  </div>
                 </>
               )}
+
+              <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <p className="text-sm text-brown-600">
+                  {totalCount > 0 ? (
+                    <>
+                      Showing <span className="font-semibold">{((currentPage - 1) * itemsPerPage) + 1}</span> to{' '}
+                      <span className="font-semibold">{Math.min(currentPage * itemsPerPage, totalCount)}</span> of{' '}
+                      <span className="font-semibold">{totalCount}</span> products
+                    </>
+                  ) : (
+                    'No products found'
+                  )}
+                </p>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  {Array.from({ length: Math.ceil(totalCount / itemsPerPage) }, (_, i) => i + 1)
+                    .filter(page => {
+                      const totalPages = Math.ceil(totalCount / itemsPerPage);
+                      return page === 1 ||
+                             page === totalPages ||
+                             Math.abs(page - currentPage) <= 1;
+                    })
+                    .map((page, idx, arr) => {
+                      const prevPage = arr[idx - 1];
+                      const showEllipsis = prevPage && page - prevPage > 1;
+
+                      return (
+                        <div key={page} className="flex gap-2">
+                          {showEllipsis && <span className="px-2 py-1">...</span>}
+                          <Button
+                            variant={currentPage === page ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCurrentPage(page)}
+                            className={currentPage === page ? "bg-primary hover:bg-primary/90" : ""}
+                          >
+                            {page}
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalCount / itemsPerPage), p + 1))}
+                    disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {}
       <section className="py-16 bg-gradient-to-r from-teal/5 via-primary/5 to-accent/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
@@ -801,7 +780,7 @@ function ShopPageContent() {
               Why Choose Us?
             </h2>
             <p className="text-lg text-brown-600 max-w-2xl mx-auto">
-              We're committed to providing the best products and service for your furry friends
+              We're committed to providing best products and service for your furry friends
             </p>
           </div>
 
@@ -810,7 +789,7 @@ function ShopPageContent() {
               {
                 icon: Truck,
                 title: 'Fast & Free Shipping',
-                description: allSettings?.shipping?.freeShippingThreshold 
+                description: allSettings?.shipping?.freeShippingThreshold
                   ? `Free shipping on orders over Rp ${allSettings.shipping.freeShippingThreshold.toLocaleString()}`
                   : 'Fast and reliable delivery across Indonesia'
               },
