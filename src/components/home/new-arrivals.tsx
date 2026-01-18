@@ -25,7 +25,8 @@ export function NewArrivals() {
   const [products, setProducts] = useState<(Product & { product_variants?: ProductVariant[] })[]>([]);
   const [loading, setLoading] = useState(true);
   const addItem = useCartStore((state) => state.addItem);
-  
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   const { getSectionSettings } = useLandingSections();
   const settings = getSectionSettings('new_arrivals', {
     title: 'New Arrivals',
@@ -34,22 +35,35 @@ export function NewArrivals() {
   });
 
   const fetchNewArrivals = useCallback(async () => {
-    const supabase = createClient();
-    
-    // Fetch newest products from last 30 days
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    const { data, error } = await supabase
-      .from('products')
-      .select('*, product_variants(*)')
-      .eq('is_active', true)
-      .gte('created_at', thirtyDaysAgo.toISOString())
-      .order('created_at', { ascending: false })
-      .limit(settings.limit);
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
+    try {
+      setLoading(true);
+
+      const supabase = createClient();
+
+      // Fetch newest products from last 30 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const { data, error } = await supabase
+        .from('products')
+        .select('*, product_variants(*)')
+        .eq('is_active', true)
+        .gte('created_at', thirtyDaysAgo.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(settings.limit)
+        .abortSignal(abortController.signal);
 
     if (error) {
-      console.error('Error fetching new arrivals:', error);
+      if (error.name !== 'AbortError' && !error.message?.includes('abort')) {
+        console.error('Error fetching new arrivals:', error);
+      }
       setLoading(false);
       return;
     }
@@ -68,6 +82,13 @@ export function NewArrivals() {
 
   useEffect(() => {
     fetchNewArrivals();
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
   }, [fetchNewArrivals]);
 
   const getProductPrice = (product: Product & { product_variants?: ProductVariant[] }) => {

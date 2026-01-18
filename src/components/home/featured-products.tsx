@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { PawPrint, ArrowRight, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,8 @@ export function FeaturedProducts() {
   const [products, setProducts] = useState<(Product & { product_variants?: ProductVariant[] })[]>([]);
   const [loading, setLoading] = useState(true);
   const addItem = useCartStore((state) => state.addItem);
-  
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   const { getSectionSettings } = useLandingSections();
   const settings = getSectionSettings('featured_products', {
     title: 'Best Sellers',
@@ -26,38 +27,64 @@ export function FeaturedProducts() {
   });
 
   const fetchFeaturedProducts = useCallback(async () => {
-    const supabase = createClient();
-    
-    // Fetch active products with only needed columns for better performance
-    const { data, error } = await supabase
-      .from('products')
-      .select('id, name, main_image_url, base_price, stock_quantity, has_variants, condition, product_variants(price_adjustment, stock_quantity)')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-      .limit(20); // Fetch more to filter out of stock items
-
-    if (error) {
-      console.error('Error fetching featured products:', error);
-      setLoading(false);
-      return;
+    // Cancel previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
 
-    // Filter products that have stock (either direct stock or variant stock)
-    const productsWithStock = (data || []).filter((product: Product & { product_variants?: ProductVariant[] }) => {
-      if (product.has_variants && product.product_variants) {
-        // For variant products, check if any variant has stock
-        return product.product_variants.some((v: ProductVariant) => v.stock_quantity > 0);
-      }
-      // For simple products, check direct stock
-      return product.stock_quantity > 0;
-    }).slice(0, settings.limit); // Limit to configured number of products
+    // Create new abort controller
+    abortControllerRef.current = new AbortController();
 
-    setProducts(productsWithStock);
-    setLoading(false);
+    try {
+      setLoading(true);
+
+      const supabase = createClient();
+
+      // Fetch active products with only needed columns for better performance
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, name, main_image_url, base_price, stock_quantity, has_variants, condition, product_variants(price_adjustment, stock_quantity)')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(20); // Fetch more to filter out of stock items
+
+      if (error) {
+        // Don't log abort errors
+        if (error.name !== 'AbortError' && !error.message?.includes('abort')) {
+          console.error('Error fetching featured products:', error);
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Filter products that have stock (either direct stock or variant stock)
+      const productsWithStock = (data || []).filter((product: Product & { product_variants?: ProductVariant[] }) => {
+        if (product.has_variants && product.product_variants) {
+          // For variant products, check if any variant has stock
+          return product.product_variants.some((v: ProductVariant) => v.stock_quantity > 0);
+        }
+        // For simple products, check direct stock
+        return product.stock_quantity > 0;
+      }).slice(0, settings.limit); // Limit to configured number of products
+
+      setProducts(productsWithStock);
+      setLoading(false);
+    } catch (err) {
+      console.error('Exception fetching featured products:', err);
+      setLoading(false);
+    }
   }, [settings.limit]);
 
   useEffect(() => {
     fetchFeaturedProducts();
+
+    // Cleanup on unmount
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
   }, [fetchFeaturedProducts]);
 
   const handleAddToCart = (product: Product) => {
