@@ -13,30 +13,30 @@ interface IdleTimeoutProviderProps {
 }
 
 export function IdleTimeoutProvider({ children, timeoutMs = IDLE_TIMEOUT_MS }: IdleTimeoutProviderProps) {
-  const { user, consecutiveTimeouts } = useAuth();
+  const { user, idleTimeoutActive } = useAuth();
   const [showWarning, setShowWarning] = useState(false);
-  
-  // Use the idle timeout hook
-  const { 
-    timeLeft, 
-    isExpired, 
-    isActive, 
-    resetTimer, 
-    logout, 
-    formattedTime 
+
+  // Use idle timeout hook
+  const {
+    timeLeft,
+    isExpired,
+    isActive,
+    resetTimer,
+    logout,
+    formattedTime
   } = useIdleTimeout(timeoutMs);
 
   // Show warning when 5 minutes are left
   useEffect(() => {
-    if (user && timeLeft <= 5 * 60 * 1000 && timeLeft > 0) { // 5 minutes left
+    if (user && idleTimeoutActive && timeLeft <= 5 * 60 * 1000 && timeLeft > 0) { // 5 minutes left
       setShowWarning(true);
     } else {
       setShowWarning(false);
     }
-  }, [user, timeLeft]);
+  }, [user, timeLeft, idleTimeoutActive]);
 
-  // If timeout is disabled (too many consecutive timeouts), don't render the provider
-  if (consecutiveTimeouts >= 2) {
+  // If timeout is disabled, don't render provider
+  if (!idleTimeoutActive) {
     return <>{children}</>;
   }
 

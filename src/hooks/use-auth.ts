@@ -2,11 +2,12 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { 
-  withRetry, 
-  withTimeout, 
-  isRetryableError, 
-  isTimeoutError 
+import {
+  withRetry,
+  withTimeout,
+  isRetryableError,
+  isTimeoutError,
+  DEFAULT_TIMEOUT_MS
 } from '@/lib/supabase/timeout-utils';
 import type { User, AuthChangeEvent, Session } from '@supabase/supabase-js';
 import type { Profile } from '@/types/database';
@@ -116,7 +117,7 @@ export function useAuth() {
             `)
             .eq('id', userId)
             .single() as Promise<{ data: Profile | null; error: any }>,
-          OPERATION_TIMEOUT_MS // 15 second timeout for network operations
+          DEFAULT_TIMEOUT_MS // 45 second timeout for network operations
         );
 
         if (error) {
@@ -172,7 +173,7 @@ export function useAuth() {
 
         const sessionResult = await withTimeoutEffect(
           getSessionPromise,
-          OPERATION_TIMEOUT_MS  // 15 second timeout for network operations
+          DEFAULT_TIMEOUT_MS  // 15 second timeout for network operations
         ) as SessionResult;
 
         const { data: { session }, error: sessionError } = sessionResult;
@@ -252,7 +253,7 @@ export function useAuth() {
 
         const sessionResult = await withTimeoutEffect(
           getSessionPromise,
-          OPERATION_TIMEOUT_MS  // 15 second timeout for network operations
+          DEFAULT_TIMEOUT_MS  // 15 second timeout for network operations
         ) as SessionResult;
 
         const { data: { session }, error } = sessionResult;
@@ -277,7 +278,7 @@ export function useAuth() {
 
             const refreshResult = await withTimeoutEffect(
               refreshPromise,
-              OPERATION_TIMEOUT_MS  // 15 second timeout for network operations
+              DEFAULT_TIMEOUT_MS  // 15 second timeout for network operations
             ) as RefreshResult;
 
             const { error: refreshError, data: refreshData } = refreshResult;
@@ -461,7 +462,7 @@ export function useAuth() {
           `)
           .eq('id', user.id)
           .single() as Promise<{ data: Profile | null; error: any }>,
-        OPERATION_TIMEOUT_MS // 15 second timeout for network operations
+        DEFAULT_TIMEOUT_MS // 15 second timeout for network operations
       );
 
       if (error) {

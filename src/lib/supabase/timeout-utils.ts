@@ -17,7 +17,7 @@ export interface TimeoutOptions {
   skipTimeout?: boolean;
 }
 
-const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
+const DEFAULT_RETRY_OPTIONS: RetryOptions = {
   maxRetries: 3,
   baseDelay: 1000,
   maxDelay: 10000,
@@ -44,29 +44,33 @@ export async function withRetry<T>(
   operation: () => Promise<T>,
   options: RetryOptions = {}
 ): Promise<T> {
-  const opts = { ...DEFAULT_RETRY_OPTIONS, ...options };
+  const maxRetries = options.maxRetries ?? 3;
+  const baseDelay = options.baseDelay ?? 1000;
+  const maxDelay = options.maxDelay ?? 10000;
+  const shouldRetry = options.shouldRetry;
+
   let lastError: Error | null = null;
 
-  for (let attempt = 0; attempt <= opts.maxRetries; attempt++) {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       return await operation();
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
 
-      if (attempt === opts.maxRetries) {
-        console.error(`Operation failed after ${opts.maxRetries} attempts:`, lastError);
+      if (attempt === maxRetries) {
+        console.error(`Operation failed after ${maxRetries} attempts:`, lastError);
         throw lastError;
       }
 
-      const shouldRetryOp = opts.shouldRetry || isRetryableError(lastError);
+      const shouldRetryOp = shouldRetry || isRetryableError(lastError);
       if (!shouldRetryOp) {
         console.error(`Non-retryable error on attempt ${attempt}:`, lastError);
         throw lastError;
       }
 
       const delay = Math.min(
-        opts.baseDelay * Math.pow(2, attempt),
-        opts.maxDelay
+        baseDelay * Math.pow(2, attempt),
+        maxDelay
       );
 
       console.log(`Attempt ${attempt} failed, retrying in ${delay}ms...`, lastError.message);
