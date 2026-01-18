@@ -7,20 +7,27 @@
 
 ## 🔄 Recent Updates (January 18, 2026)
 
-### Shop Page Enhancements 🛒
-- **Removed Hero Section from Shop Page**:
-  - **Issue**: Hero section taking up significant vertical space and not needed for shop page
-  - **Solution**: Removed hero section with title, subtitle, description, and trust signals
+### Shop Page Price Range Filter Implementation 💰
+- **Replaced Condition Filter with Price Range Filter**:
+  - **Issue**: Condition filter (All, New, Secondhand) was limiting users unnecessarily
+  - **Solution**: Replaced condition filter with price range filter (min/max prices)
   - **Implementation Details**:
-    - Removed hero section with gradient background and animated elements
-    - Removed trust signals display (Fast Delivery, Secure Payment, etc.)
-    - Removed shop-specific settings usage for hero configuration
-    - Removed unused imports (Sparkles, ArrowRight icons)
-    - Kept necessary imports (Truck, Shield, Clock, Award) for "Why Choose Us?" section
-    - Shop page now starts directly with search filters and product grid
-  - **Result**: Cleaner, more focused shop page without hero distractions
-  - **Impact**: Users can immediately start browsing products without scrolling past hero section
-  - **Result**: Promotional banner is still displayed if there are multiple active promotions
+    - Removed `selectedCondition` state and its filter UI
+    - Added `minPrice` and `maxPrice` state for price range filtering
+    - Added Minus, Plus icons to imports
+    - Removed Filter icon from imports
+    - Created new price range filter UI with min/max inputs
+    - Updated `fetchProducts` query to filter by price range
+    - Modified `getProductPrice` to accept variant-aware prices
+    - Added variant-aware price sorting:
+      - For products with variants: uses `product_variants.min_price` for filtering
+      - For products without variants: uses `base_price` for filtering
+    - Added `gte` and `lte` filter using Supabase's `te`/lte` operators
+    - **Result**: Users can filter by exact price range
+    - **Result**: Products with variants use lowest/highest variant prices
+    - **Impact**: More flexible filtering, better UX for price-sensitive customers
+  - **Result**: Price range filter shows "Rp" (Indonesian Rupiah) label
+  - **Impact**: Removed unused condition filter state, reduced code complexity
 
 ### Authentication & Access Control Fixes 🔐
 - **Added /shop to Public Routes**:
