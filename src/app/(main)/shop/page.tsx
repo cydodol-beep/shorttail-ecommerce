@@ -59,7 +59,9 @@ function ShopPageContent() {
     product_variants?: ProductVariant[],
     avg_rating?: number,
     total_reviews?: number,
-    sales_count?: number
+    sales_count?: number,
+    calculatedMinPrice?: number,
+    calculatedMaxPrice?: number
   })[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
@@ -182,8 +184,9 @@ function ShopPageContent() {
           has_variants,
           category_id,
           is_active,
+          condition,
           created_at,
-          product_variants(id, stock_quantity)
+          product_variants(id, price_adjustment, stock_quantity)
         `, { count: 'exact' })
         .eq('is_active', true)
         .abortSignal(abortController.signal);
@@ -198,29 +201,6 @@ function ShopPageContent() {
 
       if (debouncedSearch) {
         query = query.ilike('name', `%${debouncedSearch}%`);
-      }
-
-      if (minPrice > 0 || maxPrice < 999999999) {
-        query = query.gte('base_price', minPrice).lte('base_price', maxPrice);
-
-        if (sortBy === 'price-asc' || sortBy === 'price-desc') {
-          const useVariantPrices = sortBy === 'price-asc';
-          query = query.order(useVariantPrices ? 'product_variants.min_price' : 'base_price', { ascending: sortBy === 'price-asc' });
-        }
-      }
-
-      if (sortBy === 'newest') {
-        query = query.order('created_at', { ascending: false });
-      } else if (sortBy === 'price-asc') {
-        query = query.order('base_price', { ascending: true });
-      } else if (sortBy === 'price-desc') {
-        query = query.order('base_price', { ascending: false });
-      } else if (sortBy === 'name-asc') {
-        query = query.order('name', { ascending: true });
-      } else if (sortBy === 'rating') {
-        query = query.order('name', { ascending: true });
-      } else if (sortBy === 'bestsellers') {
-        query = query.order('name', { ascending: true });
       }
 
       const result = await query;
@@ -243,13 +223,28 @@ function ShopPageContent() {
         product_variants?: ProductVariant[],
         avg_rating?: number,
         total_reviews?: number,
-        sales_count?: number
-      })[] = (data || []).map(p => ({
-        ...p,
-        avg_rating: productRatings.get(p.id)?.avg || 0,
-        total_reviews: productRatings.get(p.id)?.count || 0,
-        sales_count: Math.floor(Math.random() * 1000)
-      })) as any;
+        sales_count?: number,
+        calculatedMinPrice?: number,
+        calculatedMaxPrice?: number
+      })[] = (data || []).map(p => {
+        let minPrice = p.base_price;
+        let maxPrice = p.base_price;
+
+        if (p.has_variants && p.product_variants && p.product_variants.length > 0) {
+          const variantPrices = p.product_variants.map(v => p.base_price + (v.price_adjustment || 0));
+          minPrice = Math.min(...variantPrices);
+          maxPrice = Math.max(...variantPrices);
+        }
+
+        return {
+          ...p,
+          avg_rating: productRatings.get(p.id)?.avg || 0,
+          total_reviews: productRatings.get(p.id)?.count || 0,
+          sales_count: Math.floor(Math.random() * 1000),
+          calculatedMinPrice: minPrice,
+          calculatedMaxPrice: maxPrice
+        };
+      }) as any;
 
       if (processedData.length > 0 && data) {
         const categoryIds = [...new Set(data.filter((p: Product) => p.category_id).map((p: Product) => p.category_id))];
@@ -276,15 +271,35 @@ function ShopPageContent() {
         }
       }
 
-      if (sortBy === 'rating') {
-        processedData.sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0));
-      } else if (sortBy === 'bestsellers') {
-        processedData.sort((a, b) => (b.sales_count || 0) - (a.sales_count || 0));
+      clearTimeout(timeoutId);
+
+      let filteredData = [...processedData];
+
+      if (minPrice > 0 || maxPrice < 999999999) {
+        filteredData = filteredData.filter(p => {
+          const min = p.calculatedMinPrice || 0;
+          const max = p.calculatedMaxPrice || 0;
+
+          return min >= minPrice && max <= maxPrice;
+        });
       }
 
-      clearTimeout(timeoutId);
-      setProducts(processedData);
-      setTotalCount(count || 0);
+      if (sortBy === 'newest') {
+        filteredData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      } else if (sortBy === 'price-asc') {
+        filteredData.sort((a, b) => (a.calculatedMinPrice || 0) - (b.calculatedMinPrice || 0));
+      } else if (sortBy === 'price-desc') {
+        filteredData.sort((a, b) => (b.calculatedMaxPrice || 0) - (a.calculatedMaxPrice || 0));
+      } else if (sortBy === 'name-asc') {
+        filteredData.sort((a, b) => a.name.localeCompare(b.name));
+      } else if (sortBy === 'rating') {
+        filteredData.sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0));
+      } else if (sortBy === 'bestsellers') {
+        filteredData.sort((a, b) => (b.sales_count || 0) - (a.sales_count || 0));
+      }
+
+      setProducts(filteredData);
+      setTotalCount(filteredData.length);
     } catch (error) {
       clearTimeout(timeoutId);
       if (error instanceof Error && error.name !== 'AbortError' && !error.message?.includes('abort')) {
@@ -307,14 +322,19 @@ function ShopPageContent() {
     };
   }, [fetchProducts]);
 
-  const getProductPrice = (product: Product & { product_variants?: ProductVariant[] }) => {
+  const getProductPrice = (product: Product & {
+    product_variants?: ProductVariant[],
+    calculatedMinPrice?: number,
+    calculatedMaxPrice?: number
+  }) => {
+    const min = product.calculatedMinPrice || 0;
+    const max = product.calculatedMaxPrice || 0;
+
     if (product.has_variants && product.product_variants && product.product_variants.length > 0) {
-      const prices = product.product_variants.map(v => v.price_adjustment || 0);
-      const min = Math.min(...prices);
-      const max = Math.max(...prices);
       return { min, max, isRange: min !== max };
     }
-    return { min: product.base_price, max: product.base_price, isRange: false };
+
+    return { min, max, isRange: false };
   };
 
   const getProductStock = (product: Product & { product_variants?: ProductVariant[] }) => {
@@ -373,7 +393,7 @@ function ShopPageContent() {
               </form>
             </div>
 
-             <div className="flex gap-3 flex-wrap">
+            <div className="flex gap-3 flex-wrap">
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger className="w-[180px] h-12">
                   <SelectValue placeholder="Category" />
@@ -576,7 +596,11 @@ function ShopPageContent() {
                     {products.map((product, index) => {
                       const outOfStock = isOutOfStock(product as Product & { product_variants?: ProductVariant[] });
                       const stock = getProductStock(product as Product & { product_variants?: ProductVariant[] });
-                      const priceInfo = getProductPrice(product as Product & { product_variants?: ProductVariant[] });
+                      const priceInfo = getProductPrice(product as Product & {
+                        product_variants?: ProductVariant[],
+                        calculatedMinPrice?: number,
+                        calculatedMaxPrice?: number
+                      });
                       const isLowStock = stock <= 5 && stock > 0;
                       const avgRating = product.avg_rating || 0;
                       const totalReviews = product.total_reviews || 0;
@@ -708,66 +732,66 @@ function ShopPageContent() {
                       );
                     })}
                   </motion.div>
+
+                  <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <p className="text-sm text-brown-600">
+                      {totalCount > 0 ? (
+                        <>
+                          Showing <span className="font-semibold">{((currentPage - 1) * itemsPerPage) + 1}</span> to{' '}
+                          <span className="font-semibold">{Math.min(currentPage * itemsPerPage, totalCount)}</span> of{' '}
+                          <span className="font-semibold">{totalCount}</span> products
+                        </>
+                      ) : (
+                        'No products found'
+                      )}
+                    </p>
+
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        Previous
+                      </Button>
+                      {Array.from({ length: Math.ceil(totalCount / itemsPerPage) }, (_, i) => i + 1)
+                        .filter(page => {
+                          const totalPages = Math.ceil(totalCount / itemsPerPage);
+                          return page === 1 ||
+                                 page === totalPages ||
+                                 Math.abs(page - currentPage) <= 1;
+                        })
+                        .map((page, idx, arr) => {
+                          const prevPage = arr[idx - 1];
+                          const showEllipsis = prevPage && page - prevPage > 1;
+
+                          return (
+                            <div key={page} className="flex gap-2">
+                              {showEllipsis && <span className="px-2 py-1">...</span>}
+                              <Button
+                                variant={currentPage === page ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setCurrentPage(page)}
+                                className={currentPage === page ? "bg-primary hover:bg-primary/90" : ""}
+                              >
+                                {page}
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalCount / itemsPerPage), p + 1))}
+                        disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
                 </>
               )}
-
-              <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <p className="text-sm text-brown-600">
-                  {totalCount > 0 ? (
-                    <>
-                      Showing <span className="font-semibold">{((currentPage - 1) * itemsPerPage) + 1}</span> to{' '}
-                      <span className="font-semibold">{Math.min(currentPage * itemsPerPage, totalCount)}</span> of{' '}
-                      <span className="font-semibold">{totalCount}</span> products
-                    </>
-                  ) : (
-                    'No products found'
-                  )}
-                </p>
-
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    Previous
-                  </Button>
-                  {Array.from({ length: Math.ceil(totalCount / itemsPerPage) }, (_, i) => i + 1)
-                    .filter(page => {
-                      const totalPages = Math.ceil(totalCount / itemsPerPage);
-                      return page === 1 ||
-                             page === totalPages ||
-                             Math.abs(page - currentPage) <= 1;
-                    })
-                    .map((page, idx, arr) => {
-                      const prevPage = arr[idx - 1];
-                      const showEllipsis = prevPage && page - prevPage > 1;
-
-                      return (
-                        <div key={page} className="flex gap-2">
-                          {showEllipsis && <span className="px-2 py-1">...</span>}
-                          <Button
-                            variant={currentPage === page ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setCurrentPage(page)}
-                            className={currentPage === page ? "bg-primary hover:bg-primary/90" : ""}
-                          >
-                            {page}
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalCount / itemsPerPage), p + 1))}
-                    disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
