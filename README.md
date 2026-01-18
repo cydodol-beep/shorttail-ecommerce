@@ -7,6 +7,18 @@
 
 ## 🔄 Recent Updates (January 18, 2026)
 
+### Authentication & Access Control Fixes 🔐
+- **Added /shop to Public Routes**:
+  - **Issue**: Shop page was redirecting non-authenticated (public) users to login page
+  - **Solution**: Added `/shop` to `publicRoutes` array in middleware
+  - **Implementation Details**:
+    - Updated `src/lib/supabase/middleware.ts` public routes list
+    - Changed `publicRoutes` from `['/', '/login', '/register', '/products', '/api', '/about']`
+    - To `['/', '/login', '/register', '/products', '/shop', '/api', '/about']`
+    - The `isPublicRoute` check now covers `/shop` and all sub-routes `/shop/*`
+  - **Result**: Public users can now browse shop page without being required to login
+  - **Impact**: Shop page is accessible to all users regardless of authentication status
+
 ### Compilation & Request Handling Fixes 🔧
 - **Fixed TypeScript Compilation Errors**:
   - Resolved `consecutiveTimeouts` property missing in `IdleTimeoutProvider` component
