@@ -7,6 +7,25 @@
 
 ## 🔄 Recent Updates (January 18, 2026)
 
+### Shop Page Price Range Filter Fix (Critical) 🐛
+- **Fixed Variant-Aware Price Range Filtering**:
+  - **Issue**: Shop page not showing products due to incorrect price filtering logic
+    - Tried to filter by non-existent database column `product_variants.min_price`
+    - Not fetching `price_adjustment` from variants
+    - Only filtering by `base_price`, ignoring variant prices
+  - **Solution**: Properly calculate and filter by variant prices
+  - **Implementation Details**:
+    - Fetch `product_variants(id, price_adjustment, stock_quantity)` from database
+    - Calculate effective prices: `base_price + price_adjustment` for each variant
+    - Determine min/max: min/max of variant prices (or base_price for non-variants)
+    - Store calculated prices as `calculatedMinPrice` and `calculatedMaxPrice`
+    - Apply client-side price range filtering: `min >= filterMin && max <= filterMax`
+    - Sort by calculated prices instead of database columns
+    - Products with variants: Filter by min/max variant prices
+    - Products without variants: Filter by base_price
+  - **Result**: Shop page now correctly displays all products
+  - **Impact**: Price range filter works for ALL product types
+
 ### Shop Page Price Range Filter Implementation 💰
 - **Replaced Condition Filter with Price Range Filter**:
   - **Issue**: Condition filter (All, New, Secondhand) was limiting users unnecessarily
