@@ -174,7 +174,7 @@ export function PromoBanner() {
                 <p className="text-white text-xs uppercase tracking-wide">Code</p>
                 <p className="text-white font-bold text-lg">{currentPromo.code}</p>
               </div>
-              <Link href="/products">
+              <Link href="/shop">
                 <Button
                   variant="secondary"
                   className="bg-white text-brown-900 hover:bg-white/90"

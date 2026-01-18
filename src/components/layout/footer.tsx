@@ -103,7 +103,7 @@ export function Footer() {
                 style={{ color: '#fdf6ec' }}>Shop</h3>
               <ul className="space-y-4">
                 <li>
-                  <Link href="/products"
+                  <Link href="/shop"
                     className="text-[#fdf6ec]/80 hover:text-[#ff911d] transition-colors" // 30% cream, hover 10% accent
                     style={{ color: 'rgba(253, 246, 236, 0.8)' }}
                     onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#ff911d'}

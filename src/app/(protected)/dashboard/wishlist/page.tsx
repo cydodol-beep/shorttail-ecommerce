@@ -78,10 +78,10 @@ export default function WishlistPage() {
           <CardContent className="py-16 text-center">
             <Heart className="h-16 w-16 text-brown-300 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-brown-900 mb-2">Your wishlist is empty</h2>
-            <p className="text-brown-600 mb-6">
-              Save products you like by clicking the heart icon
-            </p>
-            <Link href="/products">
+              <p className="text-brown-600 mb-6">
+                Save products you like by clicking the heart icon
+              </p>
+              <Link href="/shop">
               <Button>Browse Products</Button>
             </Link>
           </CardContent>

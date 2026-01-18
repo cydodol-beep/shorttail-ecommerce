@@ -536,7 +536,7 @@ export function FlashSale() {
 
         {/* View All Button */}
         <div className="text-center mt-8">
-          <Link href="/products">
+          <Link href="/shop">
           <Button
             variant="secondary"
             size="lg"

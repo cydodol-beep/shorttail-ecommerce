@@ -194,7 +194,7 @@ export default function HeroSection() {
 
             {/* Button section */}
             <div className="flex flex-col sm:flex-row gap-3.5 mb-9">
-              <Link href="/products">
+              <Link href="/shop">
                 <Button variant="default" size="lg" className="bg-accent hover:bg-accent-hover shadow-xl shadow-teal/20 hover:shadow-teal/30 group text-sm">
                   {(() => {
                     const heroSettings: HeroSectionSettings = getSectionSettings('hero', {

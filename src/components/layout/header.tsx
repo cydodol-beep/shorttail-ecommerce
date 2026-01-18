@@ -298,7 +298,7 @@ export function Header() {
                     </Link>
                   ) : (
                     <Link
-                      href="/products"
+                      href="/shop"
                       className="p-2 text-teal hover:text-accent hover:bg-teal/5 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-teal"
                       aria-label="Marketplace"
                     >

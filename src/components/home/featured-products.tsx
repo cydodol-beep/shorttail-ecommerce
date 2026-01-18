@@ -139,7 +139,7 @@ export function FeaturedProducts() {
               <p className="text-brown-600 text-xs sm:text-sm">{settings.subtitle}</p>
             </div>
           </div>
-          <Link href="/products">
+          <Link href="/shop">
             <Button variant="outline" size="sm" className="hidden sm:flex">
               View All
               <ArrowRight className="ml-2 h-4 w-4" />
@@ -161,7 +161,7 @@ export function FeaturedProducts() {
 
         {/* Mobile View All Button */}
         <div className="text-center mt-6 sm:mt-8 sm:hidden">
-          <Link href="/products">
+          <Link href="/shop">
             <Button variant="outline" className="w-full">
               View All Products
               <ArrowRight className="ml-2 h-4 w-4" />

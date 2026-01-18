@@ -215,7 +215,7 @@ export default function OrdersPage() {
               <ShoppingBag className="h-16 w-16 mx-auto text-brown-300 mb-4" />
               <h3 className="text-lg font-semibold text-brown-900 mb-2">No orders yet</h3>
               <p className="text-brown-600 mb-4">Start shopping to see your orders here!</p>
-              <Link href="/products">
+              <Link href="/shop">
                 <Button>Browse Products</Button>
               </Link>
             </CardContent>

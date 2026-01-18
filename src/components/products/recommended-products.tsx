@@ -196,7 +196,7 @@ export function RecommendedProducts({
             <p className="text-brown-600 text-sm">{subtitle}</p>
           </div>
         </div>
-        <Link href="/products">
+        <Link href="/shop">
           <Button variant="outline" size="sm" className="hidden sm:flex">
             View All
             <ArrowRight className="ml-2 h-4 w-4" />
@@ -265,7 +265,7 @@ export function RecommendedProducts({
 
       {/* Mobile View All Button */}
       <div className="mt-6 text-center sm:hidden">
-        <Link href="/products">
+        <Link href="/shop">
           <Button variant="outline" size="sm">
             View All Products
             <ArrowRight className="ml-2 h-4 w-4" />

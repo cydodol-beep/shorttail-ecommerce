@@ -192,7 +192,7 @@ export function CategorySection() {
           transition={{ duration: 0.5, delay: 0.3 }}
           className="text-center mt-10 sm:mt-12"
         >
-          <Link href="/products">
+          <Link href="/shop">
             <Button 
               size="lg"
               className="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-full shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"

@@ -129,7 +129,7 @@ export function NewArrivals() {
               <p className="text-brown-600 text-sm">{settings.subtitle}</p>
             </div>
           </div>
-          <Link href="/products?sort=newest">
+          <Link href="/shop?sort=newest">
             <Button variant="outline" className="hidden sm:flex">
               View All
               <ArrowRight className="ml-2 h-4 w-4" />
@@ -235,7 +235,7 @@ export function NewArrivals() {
 
         {/* Mobile View All Button */}
         <div className="text-center mt-8 sm:hidden">
-          <Link href="/products?sort=newest">
+          <Link href="/shop?sort=newest">
             <Button variant="outline">
               View All New Arrivals
               <ArrowRight className="ml-2 h-4 w-4" />

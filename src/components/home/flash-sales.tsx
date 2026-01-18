@@ -468,7 +468,7 @@ export function FlashSales({ className = '' }: { className?: string }) {
         </div>
 
         <div className="text-center mt-8">
-          <Link href="/products">
+          <Link href="/shop">
             <Button variant="secondary" size="lg" className="bg-white text-red-500 hover:bg-white/90">
               View All Deals
             </Button>

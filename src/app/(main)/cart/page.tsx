@@ -48,7 +48,7 @@ export default function CartPage() {
           <p className="text-brown-600 mb-6">
             Looks like you haven&apos;t added any items to your cart yet.
           </p>
-          <Link href="/products">
+          <Link href="/shop">
           <Button>
             Start Shopping
             <ArrowRight className="ml-2 h-4 w-4" />
@@ -204,7 +204,7 @@ export default function CartPage() {
                 Proceed to Checkout
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <Link href="/products">
+          <Link href="/shop">
                 <Button variant="outline" className="w-full">Continue Shopping</Button>
               </Link>
             </CardFooter>
