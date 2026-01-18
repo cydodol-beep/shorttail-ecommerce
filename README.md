@@ -1,3 +1,36 @@
+# ShortTail.id - Premium Pet Supplies E-Commerce Platform
+
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Next.js](https://img.shields.io/badge/next.js-16.0-black)
+![TypeScript](https://img.shields.io/badge/typescript-5.0-blue)
+![Supabase](https://img.shields.io/badge/supabase-latest-green)
+
+## 🔄 Recent Updates (January 18, 2026)
+
+### Compilation & Request Handling Fixes 🔧
+- **Fixed TypeScript Compilation Errors**:
+  - Resolved `consecutiveTimeouts` property missing in `IdleTimeoutProvider` component
+  - Added `DEFAULT_TIMEOUT_MS` import to replace undefined `OPERATION_TIMEOUT_MS` references
+  - Fixed `useRef` import missing in `NewArrivals` component
+  - Fixed duplicate and orphaned code in `use-product-data.ts` hook
+  - Fixed nested try blocks and missing imports in `shop/page.tsx`
+
+- **Implemented Proper Request Cleanup**:
+  - Added `AbortController` to `FeaturedProducts` component
+  - Added `AbortController` to `NewArrivals` component
+  - Added `AbortController` to `use-product-data.ts` hook
+  - Added `AbortController` to `shop/page.tsx`
+  - Implemented cleanup functions on component unmount to prevent memory leaks
+  - Added abort error handling to prevent console error spam
+
+- **Fixed Race Conditions in Landing Sections Store**:
+  - Fixed loading state check that was blocking concurrent `fetchSections()` calls
+  - Changed logic from `if (loading)` to `if (!loading || forceRefresh)`
+  - Allows multiple components to fetch concurrently without blocking each other
+  - **Impact**: Shop page now properly loads products for both logged-in and public users
+
+- **Result**: No more AbortError messages in console, proper request cleanup, build succeeds
+
 ## 🔄 Recent Updates (March 1, 2026)
 
 ### Traffic Analytics System Implementation 📊
