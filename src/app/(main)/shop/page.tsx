@@ -304,19 +304,23 @@ function ShopPageContent() {
 
       clearTimeout(timeoutId);
 
-      let filteredData = [...processedData];
+      // First, apply stock filtering to show only in-stock products
+      let filteredData = processedData.filter(p => {
+        const hasStock = p.has_variants && p.product_variants && p.product_variants.length > 0
+          ? p.product_variants.some((v: ProductVariant) => v.stock_quantity > 0) || p.stock_quantity > 0
+          : p.stock_quantity > 0;
 
-      // Apply price filter only if the user has actively changed the price range from default
-      // On initial load, minPrice=0 and maxPrice=999999999, so no filtering occurs
+        return hasStock;
+      });
+
+      // Then, apply price filter only if the user has actively changed the price range from default
+      // On initial load, minPrice=0 and maxPrice=999999999, so no price filtering occurs
       if (minPrice > 0 || maxPrice < 999999999) {
         filteredData = filteredData.filter(p => {
           const min = p.calculatedMinPrice || 0;
           const max = p.calculatedMaxPrice || 0;
-          const hasStock = p.has_variants && p.product_variants && p.product_variants.length > 0
-            ? p.product_variants.some((v: ProductVariant) => v.stock_quantity > 0) || p.stock_quantity > 0
-            : p.stock_quantity > 0;
 
-          return min >= minPrice && max <= maxPrice && hasStock;
+          return min >= minPrice && max <= maxPrice;
         });
       }
 
