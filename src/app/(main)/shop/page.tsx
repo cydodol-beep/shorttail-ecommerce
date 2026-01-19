@@ -24,11 +24,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-<<<<<<< HEAD
-import { Slider } from '@/components/ui/slider'; // Added Slider import
-=======
 import { Slider } from '@/components/ui/slider';
->>>>>>> 3a8cab5b120949a717c5c74ff9eb939690dac80f
 import { createClient } from '@/lib/supabase/client';
 import { useCartStore } from '@/store/cart-store';
 import { useCategories } from '@/hooks/use-categories';
@@ -458,13 +454,30 @@ function ShopPageContent() {
                       <h4 className="font-semibold text-sm mb-3">Categories</h4>
                       <ScrollArea className="h-40">
                         <div className="space-y-2">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm text-muted-foreground">
-                            {minPrice === 0 ? 'No minimum' : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(minPrice)}
-                          </span>
-                          <span className="text-sm text-muted-foreground">
-                            {maxPrice === 999999999 ? 'No maximum' : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(maxPrice)}
-                          </span>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="category"
+                              value="all"
+                              checked={category === 'all'}
+                              onChange={(e) => setCategory(e.target.value)}
+                              className="w-4 h-4 text-primary"
+                            />
+                            <span className="text-sm">All Categories</span>
+                          </label>
+                          {categories.map((cat) => (
+                            <label key={cat.id} className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="radio"
+                                name="category"
+                                value={cat.slug}
+                                checked={category === cat.slug}
+                                onChange={(e) => setCategory(e.target.value)}
+                                className="w-4 h-4 text-primary"
+                              />
+                              <span className="text-sm">{cat.name}</span>
+                            </label>
+                          ))}
                         </div>
                       </ScrollArea>
                     </div>
@@ -532,9 +545,6 @@ function ShopPageContent() {
             </aside>
 
             <div className="flex-1">
-<<<<<<< HEAD
-              {/* Products will go here */}
-=======
               {loading ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                   {[...Array(8)].map((_, i) => (
@@ -775,7 +785,6 @@ function ShopPageContent() {
                   </div>
                 </>
               )}
->>>>>>> 3a8cab5b120949a717c5c74ff9eb939690dac80f
             </div>
           </div>
         </div>
