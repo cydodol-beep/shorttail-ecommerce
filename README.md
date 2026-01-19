@@ -7,6 +7,29 @@
 
 ## 🔄 Recent Updates (January 18, 2026)
 
+### Shop Page Slider Price Range Filter UI Enhancement 🎛️
+- **Added Dual-Thumb Slider for Price Range**:
+  - **Issue**: Input fields for min/max price were less intuitive and harder to use
+  - **Solution**: Replaced with dual-thumb slider component from shadcn/ui
+  - **Implementation Details**:
+    - Added `Slider` import from `@/components/ui/slider`
+    - Removed `formatPrice()` helper function
+    - Using inline `Intl.NumberFormat()` for price display
+    - Replaced input fields with Slider component
+    - Slider props:
+      - `defaultValue={[minPrice, maxPrice]}` - initial state values
+      - `value={[minPrice, maxPrice]}` - controlled values
+      - `min={0}` and `max={999999999}` - price range
+      - `step={10000}` - 10000 IDR granularity
+      - `onValueChange` updates both min and max state
+    - Display labels above slider:
+      - "No minimum" when minPrice is 0
+      - "No maximum" when maxPrice is 999999999
+      - Formatted prices using `Intl.NumberFormat('id-ID', ...)`
+    - Maintains Reset button functionality
+  - **Result**: Intuitive, visual price range selector with better UX
+  - **Impact**: Users can easily filter products by sliding price range
+
 ### Shop Page Stock-Aware Price Range Filter 📦
 - **Enhanced Price Range Filter with Stock Availability**:
   - **Issue**: Price range filter was showing out-of-stock products in results
