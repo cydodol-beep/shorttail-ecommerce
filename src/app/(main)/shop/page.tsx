@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import {
   Search, PawPrint, Star, ShoppingBag,
   Truck, Shield, Clock, Award, Zap, SlidersHorizontal, X, ChevronDown,
-  TrendingUp, Percent, Minus, Plus
+  TrendingUp, Percent
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Slider } from '@/components/ui/slider';
 import { createClient } from '@/lib/supabase/client';
 import { useCartStore } from '@/store/cart-store';
 import { useCategories } from '@/hooks/use-categories';
@@ -43,14 +44,6 @@ const sortOptions = [
   { value: 'bestsellers', label: 'Best Sellers' },
   { value: 'rating', label: 'Top Rated' },
 ];
-
-function formatPrice(price: number): string {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-  }).format(price);
-}
 
 function ShopPageContent() {
   const searchParams = useSearchParams();
@@ -462,30 +455,13 @@ function ShopPageContent() {
                       <h4 className="font-semibold text-sm mb-3">Categories</h4>
                       <ScrollArea className="h-40">
                         <div className="space-y-2">
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="radio"
-                              name="category"
-                              value="all"
-                              checked={category === 'all'}
-                              onChange={(e) => setCategory(e.target.value)}
-                              className="w-4 h-4 text-primary"
-                            />
-                            <span className="text-sm">All Categories</span>
-                          </label>
-                          {categories.map((cat) => (
-                            <label key={cat.id} className="flex items-center gap-2 cursor-pointer">
-                              <input
-                                type="radio"
-                                name="category"
-                                value={cat.slug}
-                                checked={category === cat.slug}
-                                onChange={(e) => setCategory(e.target.value)}
-                                className="w-4 h-4 text-primary"
-                              />
-                              <span className="text-sm">{cat.name}</span>
-                            </label>
-                          ))}
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-muted-foreground">
+                            {minPrice === 0 ? 'No minimum' : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(minPrice)}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {maxPrice === 999999999 ? 'No maximum' : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(maxPrice)}
+                          </span>
                         </div>
                       </ScrollArea>
                     </div>
@@ -494,28 +470,27 @@ function ShopPageContent() {
 
                     <div>
                       <h4 className="font-semibold text-sm mb-3">Price Range (Rp)</h4>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Minus className="h-4 w-4 text-muted-foreground" />
-                          <Input
-                            type="number"
-                            placeholder="Min"
-                            value={minPrice === 0 ? '' : minPrice}
-                            onChange={(e) => setMinPrice(Number(e.target.value))}
-                            className="w-full h-10 text-center"
-                            min="0"
-                          />
-                          <span className="text-muted-foreground">-</span>
-                          <Input
-                            type="number"
-                            placeholder="Max"
-                            value={maxPrice === 999999999 ? '' : maxPrice}
-                            onChange={(e) => setMaxPrice(Number(e.target.value))}
-                            className="w-full h-10 text-center"
-                            min="0"
-                          />
-                          <Plus className="h-4 w-4 text-muted-foreground" />
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-muted-foreground">
+                            {minPrice === 0 ? 'No minimum' : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(minPrice)}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {maxPrice === 999999999 ? 'No maximum' : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(maxPrice)}
+                          </span>
                         </div>
+                        <Slider
+                          defaultValue={[minPrice, maxPrice]}
+                          value={[minPrice, maxPrice]}
+                          min={0}
+                          max={999999999}
+                          step={10000}
+                          onValueChange={(values: number[]) => {
+                            setMinPrice(values[0]);
+                            setMaxPrice(values[1]);
+                          }}
+                          className="w-full"
+                        />
                         <Button
                           onClick={() => {
                             setMinPrice(0);
@@ -684,15 +659,15 @@ function ShopPageContent() {
 
                               <div className="mt-auto">
                                 <div className="mb-3">
-                                  {priceInfo.isRange ? (
-                                    <p className={`font-bold text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
-                                      {formatPrice(priceInfo.min)} - {formatPrice(priceInfo.max)}
-                                    </p>
-                                  ) : (
-                                    <p className={`font-bold text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
-                                      {formatPrice(priceInfo.min)}
-                                    </p>
-                                  )}
+                                   {priceInfo.isRange ? (
+                                     <p className={`font-bold text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
+                                       {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(priceInfo.min)} - {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(priceInfo.max)}
+                                     </p>
+                                   ) : (
+                                     <p className={`font-bold text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
+                                       {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(priceInfo.min)}
+                                     </p>
+                                   )}
                                   {product.has_variants && (
                                     <p className="text-xs text-brown-500">Multiple options</p>
                                   )}
