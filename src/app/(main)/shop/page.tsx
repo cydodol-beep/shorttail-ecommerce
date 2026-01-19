@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import {
   Search, PawPrint, Star, ShoppingBag,
   Truck, Shield, Clock, Award, Zap, SlidersHorizontal, X, ChevronDown,
-  TrendingUp, Percent, Minus, Plus
+  TrendingUp, Percent
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,11 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+<<<<<<< HEAD
 import { Slider } from '@/components/ui/slider'; // Added Slider import
+=======
+import { Slider } from '@/components/ui/slider';
+>>>>>>> 3a8cab5b120949a717c5c74ff9eb939690dac80f
 import { createClient } from '@/lib/supabase/client';
 import { useCartStore } from '@/store/cart-store';
 import { useCategories } from '@/hooks/use-categories';
@@ -44,14 +48,6 @@ const sortOptions = [
   { value: 'bestsellers', label: 'Best Sellers' },
   { value: 'rating', label: 'Top Rated' },
 ];
-
-function formatPrice(price: number): string {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-  }).format(price);
-}
 
 function ShopPageContent() {
   const searchParams = useSearchParams();
@@ -280,8 +276,11 @@ function ShopPageContent() {
         filteredData = filteredData.filter(p => {
           const min = p.calculatedMinPrice || 0;
           const max = p.calculatedMaxPrice || 0;
+          const hasStock = p.has_variants && p.product_variants && p.product_variants.length > 0
+            ? p.product_variants.some((v: ProductVariant) => v.stock_quantity > 0) || p.stock_quantity > 0
+            : p.stock_quantity > 0;
 
-          return min >= minPrice && max <= maxPrice;
+          return min >= minPrice && max <= maxPrice && hasStock;
         });
       }
 
@@ -459,30 +458,13 @@ function ShopPageContent() {
                       <h4 className="font-semibold text-sm mb-3">Categories</h4>
                       <ScrollArea className="h-40">
                         <div className="space-y-2">
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="radio"
-                              name="category"
-                              value="all"
-                              checked={category === 'all'}
-                              onChange={(e) => setCategory(e.target.value)}
-                              className="w-4 h-4 text-primary"
-                            />
-                            <span className="text-sm">All Categories</span>
-                          </label>
-                          {categories.map((cat) => (
-                            <label key={cat.id} className="flex items-center gap-2 cursor-pointer">
-                              <input
-                                type="radio"
-                                name="category"
-                                value={cat.slug}
-                                checked={category === cat.slug}
-                                onChange={(e) => setCategory(e.target.value)}
-                                className="w-4 h-4 text-primary"
-                              />
-                              <span className="text-sm">{cat.name}</span>
-                            </label>
-                          ))}
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-muted-foreground">
+                            {minPrice === 0 ? 'No minimum' : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(minPrice)}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {maxPrice === 999999999 ? 'No maximum' : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(maxPrice)}
+                          </span>
                         </div>
                       </ScrollArea>
                     </div>
@@ -550,7 +532,250 @@ function ShopPageContent() {
             </aside>
 
             <div className="flex-1">
+<<<<<<< HEAD
               {/* Products will go here */}
+=======
+              {loading ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                  {[...Array(8)].map((_, i) => (
+                    <Card key={i} className="border-brown-200">
+                      <CardContent className="p-3 sm:p-4">
+                        <Skeleton className="aspect-square rounded-xl mb-3" />
+                        <Skeleton className="h-4 w-3/4 mb-2" />
+                        <Skeleton className="h-5 w-1/2" />
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : products.length === 0 ? (
+                <div className="text-center py-16 bg-white rounded-2xl">
+                  <PawPrint className="h-20 w-20 text-brown-300 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-brown-900 mb-2">No products found</h3>
+                  <p className="text-brown-600 mb-6">
+                    Try adjusting your search or filter criteria
+                  </p>
+                  <Button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setCategory('all');
+                      setMinPrice(0);
+                      setMaxPrice(999999999);
+                      setSortBy('newest');
+                      setCurrentPage(1);
+                    }}
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    Clear Filters
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <motion.div
+                    className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {products.map((product, index) => {
+                      const outOfStock = isOutOfStock(product as Product & { product_variants?: ProductVariant[] });
+                      const stock = getProductStock(product as Product & { product_variants?: ProductVariant[] });
+                      const priceInfo = getProductPrice(product as Product & {
+                        product_variants?: ProductVariant[],
+                        calculatedMinPrice?: number,
+                        calculatedMaxPrice?: number
+                      });
+                      const isLowStock = stock <= 5 && stock > 0;
+                      const avgRating = product.avg_rating || 0;
+                      const totalReviews = product.total_reviews || 0;
+
+                      return (
+                        <motion.div
+                          key={product.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: index * 0.05 }}
+                        >
+                          <Card className={`group transition-all duration-300 h-full flex flex-col relative overflow-hidden ${
+                            outOfStock
+                              ? 'border-red-200 opacity-80'
+                              : 'border-brown-200 hover:shadow-xl hover:-translate-y-1'
+                          }`}>
+                            <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
+                              {index < 3 && !outOfStock && sortBy === 'bestsellers' && (
+                                <Badge className="bg-orange-500 hover:bg-orange-500 text-xs shadow-lg">
+                                  #{index + 1} Best Seller
+                                </Badge>
+                              )}
+                              {outOfStock && (
+                                <Badge variant="destructive" className="text-xs shadow-lg">
+                                  Out of Stock
+                                </Badge>
+                              )}
+                              {product.condition === 'secondhand' && (
+                                <Badge variant="secondary" className="text-xs shadow-lg">
+                                  Secondhand
+                                </Badge>
+                              )}
+                            </div>
+
+                            <CardContent className="p-3 sm:p-4 flex flex-col flex-1">
+                              <Link href={`/products/${product.id}`} className="block">
+                                <div className={`aspect-square bg-gradient-to-br from-brown-50 to-brown-100 rounded-xl mb-3 flex items-center justify-center overflow-hidden ${
+                                  outOfStock ? 'opacity-60' : ''
+                                }`}>
+                                  {product.main_image_url ? (
+                                    <img
+                                      src={product.main_image_url}
+                                      alt={product.name}
+                                      className={`w-full h-full object-cover transition-transform duration-500 ${
+                                        outOfStock ? 'grayscale' : 'group-hover:scale-110'
+                                      }`}
+                                      loading="lazy"
+                                    />
+                                  ) : (
+                                    <PawPrint className="h-16 w-16 text-brown-300" />
+                                  )}
+                                </div>
+                              </Link>
+
+                              <div className="flex items-center gap-1 mb-2">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star
+                                    key={star}
+                                    className={`h-3 w-3 ${
+                                      avgRating >= star
+                                        ? 'fill-yellow-400 text-yellow-400'
+                                        : outOfStock
+                                          ? 'fill-gray-300 text-gray-300'
+                                          : 'text-gray-300'
+                                    }`}
+                                  />
+                                ))}
+                                {totalReviews > 0 && (
+                                  <span className="text-[10px] text-brown-500 ml-1">({totalReviews})</span>
+                                )}
+                              </div>
+
+                              {product.categories && (
+                                <p className="text-xs text-brown-600 mb-2 capitalize">
+                                  {product.categories.name}
+                                </p>
+                              )}
+
+                              <div className="mt-auto">
+                                <div className="mb-3">
+                                   {priceInfo.isRange ? (
+                                     <p className={`font-bold text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
+                                       {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(priceInfo.min)} - {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(priceInfo.max)}
+                                     </p>
+                                   ) : (
+                                     <p className={`font-bold text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
+                                       {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(priceInfo.min)}
+                                     </p>
+                                   )}
+                                  {product.has_variants && (
+                                    <p className="text-xs text-brown-500">Multiple options</p>
+                                  )}
+                                  {!outOfStock && isLowStock && (
+                                    <p className="text-xs text-red-500 font-medium mt-1">
+                                      Only {stock} left!
+                                    </p>
+                                  )}
+                                </div>
+
+                                {outOfStock ? (
+                                  <Button
+                                    className="w-full h-10 text-xs"
+                                    variant="outline"
+                                    onClick={() => toast.error('Out of Stock, please contact admin')}
+                                  >
+                                    Contact
+                                  </Button>
+                                ) : product.has_variants ? (
+                                  <Link href={`/products/${product.id}`}>
+                                    <Button
+                                      className="w-full h-10 text-xs bg-primary hover:bg-primary/90"
+                                    >
+                                      View Options
+                                    </Button>
+                                  </Link>
+                                ) : (
+                                  <Button
+                                    className="w-full h-10 text-xs bg-primary hover:bg-primary/90"
+                                    onClick={() => handleAddToCart(product)}
+                                  >
+                                    <ShoppingBag className="mr-2 h-4 w-4" />
+                                    Add to Cart
+                                  </Button>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      );
+                    })}
+                  </motion.div>
+
+                  <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <p className="text-sm text-brown-600">
+                      {totalCount > 0 ? (
+                        <>
+                          Showing <span className="font-semibold">{((currentPage - 1) * itemsPerPage) + 1}</span> to{' '}
+                          <span className="font-semibold">{Math.min(currentPage * itemsPerPage, totalCount)}</span> of{' '}
+                          <span className="font-semibold">{totalCount}</span> products
+                        </>
+                      ) : (
+                        'No products found'
+                      )}
+                    </p>
+
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        Previous
+                      </Button>
+                      {Array.from({ length: Math.ceil(totalCount / itemsPerPage) }, (_, i) => i + 1)
+                        .filter(page => {
+                          const totalPages = Math.ceil(totalCount / itemsPerPage);
+                          return page === 1 ||
+                                 page === totalPages ||
+                                 Math.abs(page - currentPage) <= 1;
+                        })
+                        .map((page, idx, arr) => {
+                          const prevPage = arr[idx - 1];
+                          const showEllipsis = prevPage && page - prevPage > 1;
+
+                          return (
+                            <div key={page} className="flex gap-2">
+                              {showEllipsis && <span className="px-2 py-1">...</span>}
+                              <Button
+                                variant={currentPage === page ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setCurrentPage(page)}
+                                className={currentPage === page ? "bg-primary hover:bg-primary/90" : ""}
+                              >
+                                {page}
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalCount / itemsPerPage), p + 1))}
+                        disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
+>>>>>>> 3a8cab5b120949a717c5c74ff9eb939690dac80f
             </div>
           </div>
         </div>

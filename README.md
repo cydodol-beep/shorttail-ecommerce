@@ -7,27 +7,61 @@
 
 ## 🔄 Recent Updates (January 18, 2026)
 
-### Shop Page Price Range Filter Implementation 💰
-- **Replaced Condition Filter with Price Range Filter**:
-  - **Issue**: Condition filter (All, New, Secondhand) was limiting users unnecessarily
-  - **Solution**: Replaced condition filter with price range filter (min/max prices)
+### Shop Page Slider Price Range Filter UI Enhancement 🎛️
+- **Added Dual-Thumb Slider for Price Range**:
+  - **Issue**: Input fields for min/max price were less intuitive and harder to use
+  - **Solution**: Replaced with dual-thumb slider component from shadcn/ui
   - **Implementation Details**:
-    - Removed `selectedCondition` state and its filter UI
-    - Added `minPrice` and `maxPrice` state for price range filtering
-    - Added Minus, Plus icons to imports
-    - Removed Filter icon from imports
-    - Created new price range filter UI with min/max inputs
-    - Updated `fetchProducts` query to filter by price range
-    - Modified `getProductPrice` to accept variant-aware prices
-    - Added variant-aware price sorting:
-      - For products with variants: uses `product_variants.min_price` for filtering
-      - For products without variants: uses `base_price` for filtering
-    - Added `gte` and `lte` filter using Supabase's `te`/lte` operators
-    - **Result**: Users can filter by exact price range
-    - **Result**: Products with variants use lowest/highest variant prices
-    - **Impact**: More flexible filtering, better UX for price-sensitive customers
-  - **Result**: Price range filter shows "Rp" (Indonesian Rupiah) label
-  - **Impact**: Removed unused condition filter state, reduced code complexity
+    - Added `Slider` import from `@/components/ui/slider`
+    - Removed `formatPrice()` helper function
+    - Using inline `Intl.NumberFormat()` for price display
+    - Replaced input fields with Slider component
+    - Slider props:
+      - `defaultValue={[minPrice, maxPrice]}` - initial state values
+      - `value={[minPrice, maxPrice]}` - controlled values
+      - `min={0}` and `max={999999999}` - price range
+      - `step={10000}` - 10000 IDR granularity
+      - `onValueChange` updates both min and max state
+    - Display labels above slider:
+      - "No minimum" when minPrice is 0
+      - "No maximum" when maxPrice is 999999999
+      - Formatted prices using `Intl.NumberFormat('id-ID', ...)`
+    - Maintains Reset button functionality
+  - **Result**: Intuitive, visual price range selector with better UX
+  - **Impact**: Users can easily filter products by sliding price range
+
+### Shop Page Stock-Aware Price Range Filter 📦
+- **Enhanced Price Range Filter with Stock Availability**:
+  - **Issue**: Price range filter was showing out-of-stock products in results
+  - **Solution**: Added stock availability check to price range filtering
+  - **Implementation Details**:
+    - Stock check for products without variants: `stock_quantity > 0`
+    - Stock check for products with variants: Any variant has `stock_quantity > 0` OR `product.stock_quantity > 0`
+    - Only products with available stock (either type) are shown in filtered results
+    - **Result**: Out-of-stock products and variants are completely filtered out
+    - **Impact**: Price range filter now shows only purchasable products
+  - **Impact**: Customers see only items they can actually buy
+
+### Shop Page Price Range Filter Fix 🐛
+- **Fixed Variant-Aware Price Range Filtering**:
+  - **Critical Issue**: Shop page not showing any products due to incorrect price filtering logic
+  - **Root Causes**:
+    - Tried to filter by non-existent database column `product_variants.min_price`
+    - Not fetching `price_adjustment` from variants
+    - Only filtering by `base_price`, completely ignoring variant prices
+    - Products with variants priced differently than base price were being filtered out
+  - **Solution**: Properly calculate and filter by variant prices
+  - **Implementation Details**:
+    - Fetch `product_variants(id, price_adjustment, stock_quantity)` from database
+    - Calculate effective prices: `base_price + price_adjustment` for each variant
+    - Determine min/max: min/max of variant prices (or base_price for non-variants)
+    - Store calculated prices as `calculatedMinPrice` and `calculatedMaxPrice`
+    - Apply client-side price range filtering: `min >= filterMin && max <= filterMax`
+    - Sort by calculated prices instead of database columns
+    - Products with variants: Filter by min/max variant prices
+    - Products without variants: Filter by base_price
+  - **Result**: Shop page now correctly displays ALL products
+  - **Impact**: Price range filter works for ALL product types
 
 ### Authentication & Access Control Fixes 🔐
 - **Added /shop to Public Routes**:
