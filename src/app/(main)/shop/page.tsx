@@ -64,6 +64,16 @@ function ShopPageContent() {
   const itemsPerPage = 24;
   const [minPrice, setMinPrice] = useState<number>(0);
   const [maxPrice, setMaxPrice] = useState<number>(999999999);
+  const [actualMinPrice, setActualMinPrice] = useState<number>(0);
+  const [actualMaxPrice, setActualMaxPrice] = useState<number>(999999999);
+
+  // Initialize min and max prices when actual prices are available
+  useEffect(() => {
+    if (actualMinPrice !== 0 || actualMaxPrice !== 999999999) {
+      setMinPrice(actualMinPrice);
+      setMaxPrice(actualMaxPrice);
+    }
+  }, [actualMinPrice, actualMaxPrice]);
   const addItem = useCartStore((state) => state.addItem);
   const { getActiveCategories } = useCategories();
   const categories = getActiveCategories();
@@ -160,6 +170,58 @@ function ShopPageContent() {
           }
         } catch (catError) {
           console.error('Error fetching category ID:', catError);
+        }
+      }
+
+      // First, fetch min and max prices for the current filters
+      let priceQuery = supabase
+        .from('products')
+        .select(`
+          base_price,
+          has_variants,
+          product_variants(id, price_adjustment)
+        `)
+        .eq('is_active', true)
+        .abortSignal(abortController.signal);
+
+      if (categoryId) {
+        priceQuery = priceQuery.eq('category_id', categoryId);
+      }
+
+      if (debouncedSearch) {
+        priceQuery = priceQuery.ilike('name', `%${debouncedSearch}%`);
+      }
+
+      const priceResult = await priceQuery;
+
+      if (priceResult.error) {
+        console.error('Error fetching price range:', priceResult.error);
+      } else {
+        const priceData = priceResult.data;
+        if (priceData && priceData.length > 0) {
+          let allPrices: number[] = [];
+
+          priceData.forEach((p: any) => {
+            if (p.has_variants && p.product_variants && p.product_variants.length > 0) {
+              const variantPrices = p.product_variants.map((v: any) => p.base_price + (v.price_adjustment || 0));
+              allPrices = [...allPrices, ...variantPrices];
+            } else {
+              allPrices.push(p.base_price);
+            }
+          });
+
+          if (allPrices.length > 0) {
+            const min = Math.min(...allPrices);
+            const max = Math.max(...allPrices);
+
+            setActualMinPrice(min);
+            setActualMaxPrice(max);
+
+            // Update maxPrice if it's the default high value, to use the actual max
+            if (maxPrice === 999999999) {
+              setMaxPrice(max);
+            }
+          }
         }
       }
 
@@ -268,7 +330,7 @@ function ShopPageContent() {
 
       let filteredData = [...processedData];
 
-      if (minPrice > 0 || maxPrice < 999999999) {
+      if (minPrice > actualMinPrice || maxPrice < actualMaxPrice) {
         filteredData = filteredData.filter(p => {
           const min = p.calculatedMinPrice || 0;
           const max = p.calculatedMaxPrice || 0;
@@ -304,7 +366,7 @@ function ShopPageContent() {
     } finally {
       setLoading(false);
     }
-  }, [category, sortBy, debouncedSearch, currentPage, itemsPerPage, minPrice, maxPrice, productRatings]);
+  }, [category, sortBy, debouncedSearch, currentPage, itemsPerPage, minPrice, maxPrice, productRatings, actualMinPrice, actualMaxPrice]);
 
   useEffect(() => {
     fetchProducts();
@@ -496,11 +558,11 @@ function ShopPageContent() {
                           </span>
                         </div>
                         <Slider
-                          defaultValue={[minPrice, maxPrice]}
+                          defaultValue={[actualMinPrice, actualMaxPrice]}
                           value={[minPrice, maxPrice]}
-                          min={0}
-                          max={999999999}
-                          step={10000}
+                          min={actualMinPrice}
+                          max={actualMaxPrice}
+                          step={Math.max(1000, Math.floor((actualMaxPrice - actualMinPrice) / 100))}
                           onValueChange={(values: number[]) => {
                             setMinPrice(values[0]);
                             setMaxPrice(values[1]);
@@ -509,8 +571,8 @@ function ShopPageContent() {
                         />
                         <Button
                           onClick={() => {
-                            setMinPrice(0);
-                            setMaxPrice(999999999);
+                            setMinPrice(actualMinPrice);
+                            setMaxPrice(actualMaxPrice);
                           }}
                           variant="outline"
                           className="w-full"
@@ -530,8 +592,8 @@ function ShopPageContent() {
                          onClick={() => {
                            setCategory('all');
                            setSearchQuery('');
-                           setMinPrice(0);
-                           setMaxPrice(999999999);
+                           setMinPrice(actualMinPrice);
+                           setMaxPrice(actualMaxPrice);
                            setSortBy('newest');
                            setCurrentPage(1);
                          }}
