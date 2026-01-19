@@ -24,6 +24,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Slider } from '@/components/ui/slider'; // Added Slider import
 import { createClient } from '@/lib/supabase/client';
 import { useCartStore } from '@/store/cart-store';
 import { useCategories } from '@/hooks/use-categories';
@@ -438,7 +439,6 @@ function ShopPageContent() {
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row gap-8">
-            {}
             <aside className={`lg:w-64 lg:shrink-0 ${showMobileFilters ? 'block' : 'hidden lg:block'}`}>
               <Card className="sticky top-4">
                 <CardContent className="p-6">
@@ -524,18 +524,6 @@ function ShopPageContent() {
                         </Button>
                       </div>
                     </div>
-                        <Button
-                          onClick={() => {
-                            setMinPrice(0);
-                            setMaxPrice(999999999);
-                          }}
-                          variant="outline"
-                          className="w-full"
-                        >
-                          Reset
-                        </Button>
-                      </div>
-                    </div>
 
                     <Separator />
 
@@ -552,17 +540,18 @@ function ShopPageContent() {
                            setSortBy('newest');
                            setCurrentPage(1);
                          }}
-            ].map((feature, index) => (
-              <Card key={index} className="text-center hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
-                    <feature.icon className="h-8 w-8 text-primary" />
+                      >
+                        Clear All Filters
+                      </Button>
+                    </div>
                   </div>
-                  <h3 className="font-bold text-brown-900 mb-2">{feature.title}</h3>
-                  <p className="text-sm text-brown-600">{feature.description}</p>
                 </CardContent>
               </Card>
-            ))}
+            </aside>
+
+            <div className="flex-1">
+              {/* Products will go here */}
+            </div>
           </div>
         </div>
       </section>
