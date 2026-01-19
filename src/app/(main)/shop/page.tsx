@@ -173,58 +173,6 @@ function ShopPageContent() {
         }
       }
 
-      // First, fetch min and max prices for the current filters
-      let priceQuery = supabase
-        .from('products')
-        .select(`
-          base_price,
-          has_variants,
-          product_variants(id, price_adjustment)
-        `)
-        .eq('is_active', true)
-        .abortSignal(abortController.signal);
-
-      if (categoryId) {
-        priceQuery = priceQuery.eq('category_id', categoryId);
-      }
-
-      if (debouncedSearch) {
-        priceQuery = priceQuery.ilike('name', `%${debouncedSearch}%`);
-      }
-
-      const priceResult = await priceQuery;
-
-      if (priceResult.error) {
-        console.error('Error fetching price range:', priceResult.error);
-      } else {
-        const priceData = priceResult.data;
-        if (priceData && priceData.length > 0) {
-          let allPrices: number[] = [];
-
-          priceData.forEach((p: any) => {
-            if (p.has_variants && p.product_variants && p.product_variants.length > 0) {
-              const variantPrices = p.product_variants.map((v: any) => p.base_price + (v.price_adjustment || 0));
-              allPrices = [...allPrices, ...variantPrices];
-            } else {
-              allPrices.push(p.base_price);
-            }
-          });
-
-          if (allPrices.length > 0) {
-            const min = Math.min(...allPrices);
-            const max = Math.max(...allPrices);
-
-            setActualMinPrice(min);
-            setActualMaxPrice(max);
-
-            // Update maxPrice if it's the default high value, to use the actual max
-            if (maxPrice === 999999999) {
-              setMaxPrice(max);
-            }
-          }
-        }
-      }
-
       const from = (currentPage - 1) * itemsPerPage;
       const to = from + itemsPerPage - 1;
 
@@ -271,6 +219,33 @@ function ShopPageContent() {
         clearTimeout(timeoutId);
         setLoading(false);
         return;
+      }
+
+      // Calculate actual min and max prices from the data
+      if (data && data.length > 0) {
+        let allPrices: number[] = [];
+
+        data.forEach(p => {
+          if (p.has_variants && p.product_variants && p.product_variants.length > 0) {
+            const variantPrices = p.product_variants.map(v => p.base_price + (v.price_adjustment || 0));
+            allPrices = [...allPrices, ...variantPrices];
+          } else {
+            allPrices.push(p.base_price);
+          }
+        });
+
+        if (allPrices.length > 0) {
+          const min = Math.min(...allPrices);
+          const max = Math.max(...allPrices);
+
+          setActualMinPrice(min);
+          setActualMaxPrice(max);
+
+          // Update maxPrice if it's the default high value, to use the actual max
+          if (maxPrice === 999999999) {
+            setMaxPrice(max);
+          }
+        }
       }
 
       let processedData: (Product & {
@@ -330,6 +305,7 @@ function ShopPageContent() {
 
       let filteredData = [...processedData];
 
+      // Apply price filter if the selected range is different from the full range
       if (minPrice > actualMinPrice || maxPrice < actualMaxPrice) {
         filteredData = filteredData.filter(p => {
           const min = p.calculatedMinPrice || 0;
