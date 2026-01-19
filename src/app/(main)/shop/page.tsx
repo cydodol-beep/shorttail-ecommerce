@@ -491,28 +491,39 @@ function ShopPageContent() {
 
                     <div>
                       <h4 className="font-semibold text-sm mb-3">Price Range (Rp)</h4>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Minus className="h-4 w-4 text-muted-foreground" />
-                          <Input
-                            type="number"
-                            placeholder="Min"
-                            value={minPrice === 0 ? '' : minPrice}
-                            onChange={(e) => setMinPrice(Number(e.target.value))}
-                            className="w-full h-10 text-center"
-                            min="0"
-                          />
-                          <span className="text-muted-foreground">-</span>
-                          <Input
-                            type="number"
-                            placeholder="Max"
-                            value={maxPrice === 999999999 ? '' : maxPrice}
-                            onChange={(e) => setMaxPrice(Number(e.target.value))}
-                            className="w-full h-10 text-center"
-                            min="0"
-                          />
-                          <Plus className="h-4 w-4 text-muted-foreground" />
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-muted-foreground">
+                            {minPrice === 0 ? 'No minimum' : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(minPrice)}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {maxPrice === 999999999 ? 'No maximum' : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(maxPrice)}
+                          </span>
                         </div>
+                        <Slider
+                          defaultValue={[minPrice, maxPrice]}
+                          value={[minPrice, maxPrice]}
+                          min={0}
+                          max={999999999}
+                          step={10000}
+                          onValueChange={(values: number[]) => {
+                            setMinPrice(values[0]);
+                            setMaxPrice(values[1]);
+                          }}
+                          className="w-full"
+                        />
+                        <Button
+                          onClick={() => {
+                            setMinPrice(0);
+                            setMaxPrice(999999999);
+                          }}
+                          variant="outline"
+                          className="w-full"
+                        >
+                          Reset
+                        </Button>
+                      </div>
+                    </div>
                         <Button
                           onClick={() => {
                             setMinPrice(0);
@@ -533,305 +544,14 @@ function ShopPageContent() {
                         variant="outline"
                         size="sm"
                         className="w-full"
-                        onClick={() => {
-                          setCategory('all');
-                          setSearchQuery('');
-                          setMinPrice(0);
-                          setMaxPrice(999999999);
-                          setSortBy('newest');
-                          setCurrentPage(1);
-                        }}
-                      >
-                        <X className="h-4 w-4 mr-2" />
-                        Clear All Filters
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </aside>
-
-            <div className="flex-1">
-              {loading ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                  {[...Array(8)].map((_, i) => (
-                    <Card key={i} className="border-brown-200">
-                      <CardContent className="p-3 sm:p-4">
-                        <Skeleton className="aspect-square rounded-xl mb-3" />
-                        <Skeleton className="h-4 w-3/4 mb-2" />
-                        <Skeleton className="h-5 w-1/2" />
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : products.length === 0 ? (
-                <div className="text-center py-16 bg-white rounded-2xl">
-                  <PawPrint className="h-20 w-20 text-brown-300 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-brown-900 mb-2">No products found</h3>
-                  <p className="text-brown-600 mb-6">
-                    Try adjusting your search or filter criteria
-                  </p>
-                  <Button
-                    onClick={() => {
-                      setSearchQuery('');
-                      setCategory('all');
-                      setMinPrice(0);
-                      setMaxPrice(999999999);
-                      setSortBy('newest');
-                      setCurrentPage(1);
-                    }}
-                    className="bg-primary hover:bg-primary/90"
-                  >
-                    Clear Filters
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <motion.div
-                    className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    {products.map((product, index) => {
-                      const outOfStock = isOutOfStock(product as Product & { product_variants?: ProductVariant[] });
-                      const stock = getProductStock(product as Product & { product_variants?: ProductVariant[] });
-                      const priceInfo = getProductPrice(product as Product & {
-                        product_variants?: ProductVariant[],
-                        calculatedMinPrice?: number,
-                        calculatedMaxPrice?: number
-                      });
-                      const isLowStock = stock <= 5 && stock > 0;
-                      const avgRating = product.avg_rating || 0;
-                      const totalReviews = product.total_reviews || 0;
-
-                      return (
-                        <motion.div
-                          key={product.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.3, delay: index * 0.05 }}
-                        >
-                          <Card className={`group transition-all duration-300 h-full flex flex-col relative overflow-hidden ${
-                            outOfStock
-                              ? 'border-red-200 opacity-80'
-                              : 'border-brown-200 hover:shadow-xl hover:-translate-y-1'
-                          }`}>
-                            <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
-                              {index < 3 && !outOfStock && sortBy === 'bestsellers' && (
-                                <Badge className="bg-orange-500 hover:bg-orange-500 text-xs shadow-lg">
-                                  #{index + 1} Best Seller
-                                </Badge>
-                              )}
-                              {outOfStock && (
-                                <Badge variant="destructive" className="text-xs shadow-lg">
-                                  Out of Stock
-                                </Badge>
-                              )}
-                              {product.condition === 'secondhand' && (
-                                <Badge variant="secondary" className="text-xs shadow-lg">
-                                  Secondhand
-                                </Badge>
-                              )}
-                            </div>
-
-                            <CardContent className="p-3 sm:p-4 flex flex-col flex-1">
-                              <Link href={`/products/${product.id}`} className="block">
-                                <div className={`aspect-square bg-gradient-to-br from-brown-50 to-brown-100 rounded-xl mb-3 flex items-center justify-center overflow-hidden ${
-                                  outOfStock ? 'opacity-60' : ''
-                                }`}>
-                                  {product.main_image_url ? (
-                                    <img
-                                      src={product.main_image_url}
-                                      alt={product.name}
-                                      className={`w-full h-full object-cover transition-transform duration-500 ${
-                                        outOfStock ? 'grayscale' : 'group-hover:scale-110'
-                                      }`}
-                                      loading="lazy"
-                                    />
-                                  ) : (
-                                    <PawPrint className="h-16 w-16 text-brown-300" />
-                                  )}
-                                </div>
-                              </Link>
-
-                              <div className="flex items-center gap-1 mb-2">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star
-                                    key={star}
-                                    className={`h-3 w-3 ${
-                                      avgRating >= star
-                                        ? 'fill-yellow-400 text-yellow-400'
-                                        : outOfStock
-                                          ? 'fill-gray-300 text-gray-300'
-                                          : 'text-gray-300'
-                                    }`}
-                                  />
-                                ))}
-                                {totalReviews > 0 && (
-                                  <span className="text-[10px] text-brown-500 ml-1">({totalReviews})</span>
-                                )}
-                              </div>
-
-                              {product.categories && (
-                                <p className="text-xs text-brown-600 mb-2 capitalize">
-                                  {product.categories.name}
-                                </p>
-                              )}
-
-                              <div className="mt-auto">
-                                <div className="mb-3">
-                                  {priceInfo.isRange ? (
-                                    <p className={`font-bold text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
-                                      {formatPrice(priceInfo.min)} - {formatPrice(priceInfo.max)}
-                                    </p>
-                                  ) : (
-                                    <p className={`font-bold text-base ${outOfStock ? 'text-gray-400' : 'text-primary'}`}>
-                                      {formatPrice(priceInfo.min)}
-                                    </p>
-                                  )}
-                                  {product.has_variants && (
-                                    <p className="text-xs text-brown-500">Multiple options</p>
-                                  )}
-                                  {!outOfStock && isLowStock && (
-                                    <p className="text-xs text-red-500 font-medium mt-1">
-                                      Only {stock} left!
-                                    </p>
-                                  )}
-                                </div>
-
-                                {outOfStock ? (
-                                  <Button
-                                    className="w-full h-10 text-xs"
-                                    variant="outline"
-                                    onClick={() => toast.error('Out of Stock, please contact admin')}
-                                  >
-                                    Contact
-                                  </Button>
-                                ) : product.has_variants ? (
-                                  <Link href={`/products/${product.id}`}>
-                                    <Button
-                                      className="w-full h-10 text-xs bg-primary hover:bg-primary/90"
-                                    >
-                                      View Options
-                                    </Button>
-                                  </Link>
-                                ) : (
-                                  <Button
-                                    className="w-full h-10 text-xs bg-primary hover:bg-primary/90"
-                                    onClick={() => handleAddToCart(product)}
-                                  >
-                                    <ShoppingBag className="mr-2 h-4 w-4" />
-                                    Add to Cart
-                                  </Button>
-                                )}
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </motion.div>
-                      );
-                    })}
-                  </motion.div>
-
-                  <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <p className="text-sm text-brown-600">
-                      {totalCount > 0 ? (
-                        <>
-                          Showing <span className="font-semibold">{((currentPage - 1) * itemsPerPage) + 1}</span> to{' '}
-                          <span className="font-semibold">{Math.min(currentPage * itemsPerPage, totalCount)}</span> of{' '}
-                          <span className="font-semibold">{totalCount}</span> products
-                        </>
-                      ) : (
-                        'No products found'
-                      )}
-                    </p>
-
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                      >
-                        Previous
-                      </Button>
-                      {Array.from({ length: Math.ceil(totalCount / itemsPerPage) }, (_, i) => i + 1)
-                        .filter(page => {
-                          const totalPages = Math.ceil(totalCount / itemsPerPage);
-                          return page === 1 ||
-                                 page === totalPages ||
-                                 Math.abs(page - currentPage) <= 1;
-                        })
-                        .map((page, idx, arr) => {
-                          const prevPage = arr[idx - 1];
-                          const showEllipsis = prevPage && page - prevPage > 1;
-
-                          return (
-                            <div key={page} className="flex gap-2">
-                              {showEllipsis && <span className="px-2 py-1">...</span>}
-                              <Button
-                                variant={currentPage === page ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => setCurrentPage(page)}
-                                className={currentPage === page ? "bg-primary hover:bg-primary/90" : ""}
-                              >
-                                {page}
-                              </Button>
-                            </div>
-                          );
-                        })}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalCount / itemsPerPage), p + 1))}
-                        disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
-                      >
-                        Next
-                      </Button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16 bg-gradient-to-r from-teal/5 via-primary/5 to-accent/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl sm:text-4xl font-bold text-brown-900 mb-4">
-              Why Choose Us?
-            </h2>
-            <p className="text-lg text-brown-600 max-w-2xl mx-auto">
-              We're committed to providing best products and service for your furry friends
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              {
-                icon: Truck,
-                title: 'Fast & Free Shipping',
-                description: allSettings?.shipping?.freeShippingThreshold
-                  ? `Free shipping on orders over Rp ${allSettings.shipping.freeShippingThreshold.toLocaleString()}`
-                  : 'Fast and reliable delivery across Indonesia'
-              },
-              {
-                icon: Shield,
-                title: 'Quality Guarantee',
-                description: 'All products are vet-approved and quality-checked for your peace of mind.'
-              },
-              {
-                icon: Clock,
-                title: '24/7 Support',
-                description: 'Our team is here to help you anytime with any questions or concerns.'
-              },
-              {
-                icon: Award,
-                title: 'Best Prices',
-                description: 'Competitive pricing with regular discounts and loyalty rewards.'
-              }
+                         onClick={() => {
+                           setCategory('all');
+                           setSearchQuery('');
+                           setMinPrice(0);
+                           setMaxPrice(999999999);
+                           setSortBy('newest');
+                           setCurrentPage(1);
+                         }}
             ].map((feature, index) => (
               <Card key={index} className="text-center hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
