@@ -279,8 +279,11 @@ function ShopPageContent() {
         filteredData = filteredData.filter(p => {
           const min = p.calculatedMinPrice || 0;
           const max = p.calculatedMaxPrice || 0;
+          const hasStock = p.has_variants && p.product_variants && p.product_variants.length > 0
+            ? p.product_variants.some((v: ProductVariant) => v.stock_quantity > 0) || p.stock_quantity > 0
+            : p.stock_quantity > 0;
 
-          return min >= minPrice && max <= maxPrice;
+          return min >= minPrice && max <= maxPrice && hasStock;
         });
       }
 
