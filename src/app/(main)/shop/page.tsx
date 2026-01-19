@@ -69,11 +69,12 @@ function ShopPageContent() {
 
   // Initialize min and max prices when actual prices are available
   useEffect(() => {
-    if (actualMinPrice !== 0 || actualMaxPrice !== 999999999) {
+    if (actualMinPrice !== 0 && actualMaxPrice !== 999999999 && (minPrice === 0 && maxPrice === 999999999)) {
+      // Only update if we're still using the default values and have actual values
       setMinPrice(actualMinPrice);
       setMaxPrice(actualMaxPrice);
     }
-  }, [actualMinPrice, actualMaxPrice]);
+  }, [actualMinPrice, actualMaxPrice, minPrice, maxPrice]);
   const addItem = useCartStore((state) => state.addItem);
   const { getActiveCategories } = useCategories();
   const categories = getActiveCategories();
@@ -305,8 +306,8 @@ function ShopPageContent() {
 
       let filteredData = [...processedData];
 
-      // Apply price filter if the selected range is different from the full range
-      if (minPrice > actualMinPrice || maxPrice < actualMaxPrice) {
+      // Apply price filter if the selected range is different from the default range
+      if (minPrice > 0 || maxPrice < 999999999) {
         filteredData = filteredData.filter(p => {
           const min = p.calculatedMinPrice || 0;
           const max = p.calculatedMaxPrice || 0;
