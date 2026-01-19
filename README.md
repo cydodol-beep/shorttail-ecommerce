@@ -7,6 +7,18 @@
 
 ## 🔄 Recent Updates (January 18, 2026)
 
+### Shop Page Stock-Aware Price Range Filter 📦
+- **Enhanced Price Range Filter with Stock Availability**:
+  - **Issue**: Price range filter was showing out-of-stock products in results
+  - **Solution**: Added stock availability check to price range filtering
+  - **Implementation Details**:
+    - Stock check for products without variants: `stock_quantity > 0`
+    - Stock check for products with variants: Any variant has `stock_quantity > 0` OR `product.stock_quantity > 0`
+    - Only products with available stock (either type) are shown in filtered results
+    - **Result**: Out-of-stock products and variants are completely filtered out
+    - **Impact**: Price range filter now shows only purchasable products
+  - **Impact**: Customers see only items they can actually buy
+
 ### Shop Page Price Range Filter Fix 🐛
 - **Fixed Variant-Aware Price Range Filtering**:
   - **Critical Issue**: Shop page not showing any products due to incorrect price filtering logic
@@ -18,15 +30,15 @@
   - **Solution**: Properly calculate and filter by variant prices
   - **Implementation Details**:
     - Fetch `product_variants(id, price_adjustment, stock_quantity)` from database
-    - Calculate effective variant prices: `base_price + price_adjustment` for each variant
-    - Determine effective min/max: min/max of variant prices (or base_price for non-variants)
+    - Calculate effective prices: `base_price + price_adjustment` for each variant
+    - Determine min/max: min/max of variant prices (or base_price for non-variants)
     - Store calculated prices as `calculatedMinPrice` and `calculatedMaxPrice`
-    - Apply client-side price range filtering using calculated prices
-    - Sort products by calculated prices instead of database columns
+    - Apply client-side price range filtering: `min >= filterMin && max <= filterMax`
+    - Sort by calculated prices instead of database columns
     - Products with variants: Filter by min/max variant prices
     - Products without variants: Filter by base_price
   - **Result**: Shop page now correctly displays ALL products
-  - **Impact**: Price range filter works for both product types (with and without variants)
+  - **Impact**: Price range filter works for ALL product types
 
 ### Authentication & Access Control Fixes 🔐
 - **Added /shop to Public Routes**:
