@@ -306,7 +306,8 @@ function ShopPageContent() {
 
       let filteredData = [...processedData];
 
-      // Apply price filter if the selected range is different from the default range
+      // Apply price filter only if the user has actively changed the price range from default
+      // On initial load, minPrice=0 and maxPrice=999999999, so no filtering occurs
       if (minPrice > 0 || maxPrice < 999999999) {
         filteredData = filteredData.filter(p => {
           const min = p.calculatedMinPrice || 0;
