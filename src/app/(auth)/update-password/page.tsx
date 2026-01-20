@@ -12,15 +12,15 @@ export default function UpdatePasswordPage() {
   useEffect(() => {
     const checkSession = async () => {
       const supabase = createClient();
-
+      
       const { data: { session }, error } = await supabase.auth.getSession();
-
+      
       if (error || !session) {
         // If no valid session, redirect to login
         router.push('/login');
         return;
       }
-
+      
       // If we have a valid session, allow the user to update their password
       setIsValidSession(true);
     };
