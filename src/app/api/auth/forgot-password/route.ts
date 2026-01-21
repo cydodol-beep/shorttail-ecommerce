@@ -21,36 +21,43 @@ export async function POST(request: NextRequest) {
     // Log for debugging
     console.log('Forgot password - cleanInputPhone:', cleanInputPhone);
 
-    // Possible formats the phone might be stored in database
-    // If client sends 6281317902179, DB might have:
-    const possibleDbFormats = [
-      `+${cleanInputPhone}`,  // +6281317902179
-      cleanInputPhone.startsWith('62') ? `0${cleanInputPhone.substring(2)}` : cleanInputPhone,  // 081317902179
-      cleanInputPhone  // 6281317902179 (same as received)
-    ];
+    // Fetch ALL profiles and filter to avoid database query issues
+    const { data: allProfiles, error: fetchError } = await supabase
+      .from('profiles')
+      .select('id, user_email, user_name, user_phoneno');
 
+    if (fetchError) {
+      console.error('Error fetching profiles:', fetchError);
+      return Response.json(
+        { error: 'Database error occurred. Please try again.' },
+        { status: 500 }
+      );
+    }
+
+    // Normalize phone numbers for comparison (remove +, spaces, dashes)
+    const normalizePhone = (p: string | null) => {
+      if (!p) return '';
+      return p.replace(/\D/g, ''); // Remove all non-digit characters
+    };
+
+    console.log('Total profiles fetched:', allProfiles?.length);
+    console.log('Looking for phone matching:', cleanInputPhone);
+
+    // Find matching profile by comparing normalized phone numbers
     let profileData = null;
+    for (const profile of allProfiles || []) {
+      const normalizedDbPhone = normalizePhone(profile.user_phoneno);
 
-    // Try exact match with all possible stored formats
-    for (const format of possibleDbFormats) {
-      console.log('Trying format:', format);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, user_email, user_name')
-        .eq('user_phoneno', format)
-        .single();
-
-      console.log('Result for format', format, ': error=', error, 'data=', data);
-
-      if (!error && data) {
-        profileData = data;
-        console.log('Found profile:', profileData);
+      if (normalizedDbPhone === cleanInputPhone) {
+        profileData = profile;
+        console.log('Found profile by normalized phone match:', profile);
         break;
       }
     }
 
     // If still no user found, return error
     if (!profileData) {
+      console.log('No matching profile found for phone:', cleanInputPhone);
       return Response.json(
         {
           error: 'Phone number not found in our system.',
@@ -77,7 +84,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use the email from profiles table as the destination for password reset link
+    // Use the email from profiles table for password reset
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(profileData.user_email, {
       redirectTo: `${request.nextUrl.origin}/update-password`,
     });
