@@ -43,20 +43,70 @@ export async function POST(request: NextRequest) {
         phone_param: phoneFormat
       });
 
-      console.log('RPC result for format', phoneFormat, ': error=', error?.message, 'data=', data);
+      console.log('RPC result for format', phoneFormat, ': error=', error?.message, 'data=', data, 'type=', typeof data);
 
-      if (!error && data && data.exists === true) {
-        profileData = {
-          id: data.user_id,
-          user_name: data.user_name,
-          user_email: data.user_email,
-          user_phoneno: phoneFormat
-        };
-        matchedPhoneFormat = phoneFormat;
-        console.log('\n=== PROFILE FOUND ===');
-        console.log('Matched phone format:', matchedPhoneFormat);
-        console.log('Profile data:', JSON.stringify(profileData));
-        break;
+      if (!error) {
+        console.log('Data structure:', JSON.stringify(data));
+
+        // Handle different possible return formats from RPC
+        let exists = false;
+        let userId = null;
+        let userName = null;
+        let userEmail = null;
+
+        if (typeof data === 'boolean') {
+          exists = data;
+        } else if (typeof data === 'object') {
+          exists = data?.exists === true;
+          userId = data?.user_id || data?.id;
+          userName = data?.user_name;
+          userEmail = data?.user_email;
+        }
+
+        if (exists) {
+          profileData = {
+            id: userId,
+            user_name: userName,
+            user_email: userEmail,
+            user_phoneno: phoneFormat
+          };
+          matchedPhoneFormat = phoneFormat;
+          console.log('\n=== PROFILE FOUND ===');
+          console.log('Matched phone format:', matchedPhoneFormat);
+          console.log('Profile data:', JSON.stringify(profileData));
+          break;
+        }
+      }
+    }
+
+    // If still no user found via RPC, try direct query as fallback
+    if (!profileData) {
+      console.log('\n=== NO PROFILE FOUND VIA RPC, TRYING DIRECT QUERY ===');
+
+      // Direct query as fallback - bypass RLS using service role if needed
+      for (const phoneFormat of possibleDbFormats) {
+        console.log('Direct query checking format:', phoneFormat);
+
+        const { data: directProfile, error: directError } = await supabase
+          .from('profiles')
+          .select('id, user_name, user_email, user_phoneno')
+          .eq('user_phoneno', phoneFormat)
+          .maybeSingle();
+
+        console.log('Direct query result for', phoneFormat, ':', directError?.message, directProfile);
+
+        if (!directError && directProfile) {
+          profileData = {
+            id: directProfile.id,
+            user_name: directProfile.user_name,
+            user_email: directProfile.user_email,
+            user_phoneno: phoneFormat
+          };
+          matchedPhoneFormat = phoneFormat;
+          console.log('\n=== PROFILE FOUND VIA DIRECT QUERY ===');
+          console.log('Matched phone format:', matchedPhoneFormat);
+          break;
+        }
       }
     }
 
