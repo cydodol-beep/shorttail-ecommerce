@@ -19,7 +19,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // For security, we don't accept an access token in the body
     // The actual password change happens through the Supabase session
     // that's established when the user clicks the reset link in their email
     const supabase = await createClient();

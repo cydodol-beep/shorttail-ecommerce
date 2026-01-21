@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,27 +21,74 @@ export async function POST(request: NextRequest) {
       formattedPhone = '62' + formattedPhone;
     }
 
-    // Convert phone to email format for Supabase auth (same as in login)
-    const email = `${formattedPhone}@phone.local`;
-
     const supabase = await createClient();
+    const adminClient = createAdminClient();
 
-    // Send password reset email
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${request.nextUrl.origin}/auth/update-password`,
+    // First, find the user by phone number in the profiles table
+    // Try exact match first
+    let { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, user_email')
+      .eq('user_phoneno', formattedPhone)
+      .single();
+
+    // If not found with exact match, try with variations
+    if (profileError || !profileData) {
+      // Try with + prefix
+      ({ data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, user_email')
+        .eq('user_phoneno', `+${formattedPhone}`)
+        .single());
+    }
+
+    if (profileError || !profileData) {
+      // If still not found, try with original format
+      ({ data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, user_email')
+        .ilike('user_phoneno', `%${phone}%`)
+        .single());
+    }
+
+    if (profileError || !profileData) {
+      // If no user found with this phone number, return error
+      return Response.json(
+        { error: 'Phone number not found in our system.', needsContactAdmin: true },
+        { status: 400 }
+      );
+    }
+
+    // Get the actual auth user email from the auth.users table
+    // This is the email that was used during registration (likely phone-to-email format)
+    const { data: authUserData, error: authUserError } = await adminClient.auth.admin.getUserById(profileData.id);
+
+    if (authUserError || !authUserData?.user?.email) {
+      console.error('Error fetching auth user data:', authUserError);
+      return Response.json(
+        { error: 'Unable to retrieve account information. Please contact admin for assistance.', needsContactAdmin: true },
+        { status: 500 }
+      );
+    }
+
+    // Use the auth user's email for password reset (this is the email Supabase knows about)
+    const authUserEmail = authUserData.user.email;
+
+    // Send the password reset link to the auth user's email
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(authUserEmail, {
+      redirectTo: `${request.nextUrl.origin}/update-password`,
     });
 
-    if (error) {
-      console.error('Error sending password reset email:', error);
-      // Return a generic message to avoid revealing if the phone number exists
+    if (resetError) {
+      console.error('Error sending password reset email:', resetError);
       return Response.json(
-        { error: 'If this phone number exists in our system, a password reset link has been sent to the associated email address.' },
-        { status: 200 } // Return 200 to avoid revealing if the phone number exists
+        { error: 'Failed to send password reset email. Please contact admin for assistance.', needsContactAdmin: true },
+        { status: 500 }
       );
     }
 
     return Response.json(
-      { message: 'If this phone number exists in our system, a password reset link has been sent to the associated email address.' },
+      { message: 'Password reset link has been sent to your email address.' },
       { status: 200 }
     );
   } catch (error) {

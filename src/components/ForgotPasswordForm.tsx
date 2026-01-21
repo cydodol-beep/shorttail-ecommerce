@@ -60,18 +60,34 @@ export default function ForgotPasswordForm() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to send password reset link');
+        // Check if the error indicates the user needs to contact admin
+        if (result.needsContactAdmin) {
+          // Show a dialog to contact admin
+          const contactAdmin = window.confirm(
+            `${result.error}\n\nWould you like to contact the administrator for assistance?`
+          );
+
+          if (contactAdmin) {
+            // Open email client to contact admin
+            window.location.href = 'mailto:admin@shorttail.id';
+          }
+          // Don't show error toast in this case since we showed the confirm dialog
+        } else {
+          throw new Error(result.error || 'Failed to send password reset link');
+        }
+      } else {
+        toast.success(result.message || 'Password reset link sent successfully!');
+
+        // Redirect to login after a short delay
+        setTimeout(() => {
+          router.push('/login');
+        }, 2000);
       }
-
-      toast.success(result.message || 'Password reset link sent successfully!');
-
-      // Redirect to login after a short delay
-      setTimeout(() => {
-        router.push('/login');
-      }, 2000);
     } catch (error: any) {
-      console.error('Forgot password error:', error);
-      toast.error(error.message || 'Failed to send password reset link. Please try again.');
+      if (!error.message.includes('contact admin') && !error.message.includes('administrator')) { // Don't show error toast if user chose to contact admin
+        console.error('Forgot password error:', error);
+        toast.error(error.message || 'Failed to send password reset link. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
