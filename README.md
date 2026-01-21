@@ -164,6 +164,23 @@
 - **Result**: Order summary now shows estimated pricing without shipping cost distraction
 - **Impact**: Improves user experience by clearly indicating that prices are estimates until checkout is completed
 
+## 🔄 Recent Updates (January 21, 2026)
+
+### Enhanced Forgot Password Feature 🔐
+- **Improved Phone Number Matching for Password Reset**:
+  - **Issue**: Users were unable to receive password reset links when entering their phone number on the forgot password page, even though the phone number existed in the database
+  - **Root Cause**: The phone number matching algorithm wasn't properly handling the different formats in which phone numbers were stored in the database versus how they were being searched
+  - **Solution**: Enhanced the phone number matching algorithm to handle all possible formats
+  - **Implementation Details**:
+    - Updated `/src/app/api/auth/forgot-password/route.ts` with improved phone number matching logic
+    - The client-side form always sends phone numbers in `62XXXXXXXXXX` format due to the `formatPhoneNumberForEmail` function
+    - The API now checks for all possible stored formats: `+62XXXXXXXXXX`, `0XXXXXXXXXX`, and `62XXXXXXXXXX`
+    - Simplified the matching algorithm to use direct equality comparisons instead of retrieving all profiles
+    - Maintained the functionality to send password reset links to the email address stored in the `user_email` column of the `profiles` table
+    - Removed inefficient database query that was retrieving all profiles for comparison
+  - **Result**: Users can now successfully receive password reset links by entering their phone number
+  - **Impact**: Improved user experience for password recovery process
+
 ## 🔄 Recent Updates (January 9, 2026)
 
 ### Promotions Management Sync & Mobile Touch Handling Improvements 🛒

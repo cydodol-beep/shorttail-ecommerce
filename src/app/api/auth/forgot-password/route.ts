@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     for (const format of possibleDbFormats) {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, user_email')
+        .select('id, user_email, user_name')
         .eq('user_phoneno', format)
         .single();
 
@@ -45,7 +45,12 @@ export async function POST(request: NextRequest) {
     // If still no user found, return error
     if (!profileData) {
       return Response.json(
-        { error: 'Phone number not found in our system.', needsContactAdmin: true },
+        { 
+          error: 'Phone number not found in our system.', 
+          needsContactAdmin: true,
+          userName: null,
+          userPhone: cleanInputPhone
+        },
         { status: 400 }
       );
     }
@@ -54,7 +59,13 @@ export async function POST(request: NextRequest) {
     if (!profileData.user_email || !profileData.user_email.includes('@')) {
       // User doesn't have a valid email, return error with flag to show contact admin option
       return Response.json(
-        { error: 'No valid email address found for this account.', needsContactAdmin: true, userId: profileData.id },
+        { 
+          error: 'No valid email address found for this account.', 
+          needsContactAdmin: true, 
+          userId: profileData.id,
+          userName: profileData.user_name || 'N/A',
+          userPhone: cleanInputPhone
+        },
         { status: 400 }
       );
     }
