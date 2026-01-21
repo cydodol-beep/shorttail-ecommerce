@@ -34,14 +34,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Normalize phone numbers for comparison (remove +, spaces, dashes)
+    // Normalize phone numbers for comparison (remove +, spaces, dashes, quotes)
     const normalizePhone = (p: string | null) => {
       if (!p) return '';
-      return p.replace(/\D/g, ''); // Remove all non-digit characters
+      // Remove all non-digit characters (including quotes, spaces, dashes, etc.)
+      return p.replace(/[^\d]/g, '');
     };
 
     console.log('Total profiles fetched:', allProfiles?.length);
     console.log('Looking for phone matching:', cleanInputPhone);
+
+    // Log all phone numbers in DB for debugging
+    (allProfiles || []).forEach(p => {
+      console.log('DB Phone:', p.user_phoneno, '→ Normalized:', normalizePhone(p.user_phoneno));
+    });
 
     // Find matching profile by comparing normalized phone numbers
     let profileData = null;
