@@ -14,18 +14,22 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
+    // The phone number coming from the client is already formatted by the client-side function
+    // It's likely in the format 62XXXXXXXXXX (without +)
+    // But in the database it might be stored as +62XXXXXXXXXX
+
+    // Clean the input phone number by removing non-digit characters
+    const cleanInputPhone = phone.replace(/\D/g, '');
+
     // Generate multiple possible formats for comparison
     const phoneFormats = [];
-
-    // Normalize the input phone number by removing non-digit characters
-    const cleanInputPhone = phone.replace(/\D/g, '');
 
     // Handle different input formats and generate corresponding database search formats
     if (phone.startsWith('+62')) {
       // Input is in +62 format: +6281234567890
       phoneFormats.push(phone, `62${cleanInputPhone.substring(3)}`, `0${cleanInputPhone.substring(2)}`);
     } else if (phone.startsWith('62')) {
-      // Input is in 62 format: 6281234567890
+      // Input is in 62 format: 6281234567890 (likely from client-side formatting)
       phoneFormats.push(`+${phone}`, phone, `0${cleanInputPhone.substring(2)}`);
     } else if (phone.startsWith('0')) {
       // Input is in 0 format: 081234567890
@@ -33,7 +37,7 @@ export async function POST(request: NextRequest) {
       phoneFormats.push(`+62${withoutZero}`, `62${withoutZero}`, phone);
     } else {
       // Input is in raw format: 81234567890
-      phoneFormats.push(`+62${cleanInputPhone}`, `62${cleanInputPhone}`, `0${cleanInputPhone}`);
+      phoneFormats.push(`+62${cleanInputPhone}`, `62${cleanInputPhone}`, `0${cleanInputPhone}`, phone);
     }
 
     // Remove duplicates while preserving order
