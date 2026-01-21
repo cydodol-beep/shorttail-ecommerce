@@ -3,7 +3,12 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { phone } = await request.json();
+    const body = await request.json();
+    const phone = body.phone;
+
+    console.log('=== DEBUG FORGOT PASSWORD START ===');
+    console.log('Raw request body:', JSON.stringify(body));
+    console.log('Raw phone received:', phone);
 
     if (!phone) {
       return Response.json(
@@ -14,56 +19,51 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
-    // The client-side form always sends phone in 62XXXXXXXXXX format
-    // due to formatPhoneNumberForEmail function
-    const cleanInputPhone = phone.replace(/\D/g, '');
+    // Clean the input phone (remove non-digits)
+    const cleanInputPhone = phone.replace(/[^\d]/g, '');
+    console.log('Cleaned input phone (digits only):', cleanInputPhone);
 
-    // Log for debugging
-    console.log('Forgot password - cleanInputPhone:', cleanInputPhone);
+    // Try all possible phone number formats (+62, 08, 62)
+    const possibleDbFormats = [
+      `+${cleanInputPhone}`,
+      cleanInputPhone.startsWith('62') ? `0${cleanInputPhone.substring(2)}` : cleanInputPhone,
+      cleanInputPhone
+    ];
 
-    // Fetch ALL profiles and filter to avoid database query issues
-    const { data: allProfiles, error: fetchError } = await supabase
-      .from('profiles')
-      .select('id, user_email, user_name, user_phoneno');
+    console.log('Trying phone formats:', possibleDbFormats);
 
-    if (fetchError) {
-      console.error('Error fetching profiles:', fetchError);
-      return Response.json(
-        { error: 'Database error occurred. Please try again.' },
-        { status: 500 }
-      );
-    }
-
-    // Normalize phone numbers for comparison (remove +, spaces, dashes, quotes)
-    const normalizePhone = (p: string | null) => {
-      if (!p) return '';
-      // Remove all non-digit characters (including quotes, spaces, dashes, etc.)
-      return p.replace(/[^\d]/g, '');
-    };
-
-    console.log('Total profiles fetched:', allProfiles?.length);
-    console.log('Looking for phone matching:', cleanInputPhone);
-
-    // Log all phone numbers in DB for debugging
-    (allProfiles || []).forEach(p => {
-      console.log('DB Phone:', p.user_phoneno, '→ Normalized:', normalizePhone(p.user_phoneno));
-    });
-
-    // Find matching profile by comparing normalized phone numbers
+    // Use the check_phone_exists function (bypasses RLS)
     let profileData = null;
-    for (const profile of allProfiles || []) {
-      const normalizedDbPhone = normalizePhone(profile.user_phoneno);
+    let matchedPhoneFormat = '';
 
-      if (normalizedDbPhone === cleanInputPhone) {
-        profileData = profile;
-        console.log('Found profile by normalized phone match:', profile);
+    for (const phoneFormat of possibleDbFormats) {
+      console.log('Checking format:', phoneFormat);
+
+      const { data, error } = await supabase.rpc('check_phone_exists', {
+        phone_param: phoneFormat
+      });
+
+      console.log('RPC result for format', phoneFormat, ': error=', error?.message, 'data=', data);
+
+      if (!error && data && data.exists === true) {
+        profileData = {
+          id: data.user_id,
+          user_name: data.user_name,
+          user_email: data.user_email,
+          user_phoneno: phoneFormat
+        };
+        matchedPhoneFormat = phoneFormat;
+        console.log('\n=== PROFILE FOUND ===');
+        console.log('Matched phone format:', matchedPhoneFormat);
+        console.log('Profile data:', JSON.stringify(profileData));
         break;
       }
     }
 
     // If still no user found, return error
     if (!profileData) {
-      console.log('No matching profile found for phone:', cleanInputPhone);
+      console.log('\n=== NO PROFILE FOUND ===');
+      console.log('Returning error to client');
       return Response.json(
         {
           error: 'Phone number not found in our system.',
@@ -75,9 +75,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user has a valid email address in profiles table
+    console.log('\n=== PROCEEDING TO SEND EMAIL ===');
+    console.log('Profile email:', profileData.user_email);
+
+    // Check if user has a valid email address
     if (!profileData.user_email || !profileData.user_email.includes('@')) {
-      // User doesn't have a valid email, return error with flag to show contact admin option
+      console.log('No valid email found, showing contact admin dialog');
       return Response.json(
         {
           error: 'No valid email address found for this account.',
@@ -90,7 +93,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use the email from profiles table for password reset
+    // Use the email for password reset
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(profileData.user_email, {
       redirectTo: `${request.nextUrl.origin}/update-password`,
     });
@@ -102,6 +105,9 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    console.log('Password reset email sent successfully');
+    console.log('=== DEBUG FORGOT PASSWORD END ===\n');
 
     return Response.json(
       { message: 'Password reset link has been sent to your email address.' },

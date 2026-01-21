@@ -74,6 +74,11 @@ export default function ForgotPasswordForm() {
     try {
       const formattedPhone = formatPhoneNumberForEmail(data.phone);
 
+      console.log('=== CLIENT FORGOT PASSWORD ===');
+      console.log('Form phone input:', data.phone);
+      console.log('Formatted phone (sent to API):', formattedPhone);
+      console.log('Form data being sent:', JSON.stringify({ phone: formattedPhone }));
+
       const response = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
