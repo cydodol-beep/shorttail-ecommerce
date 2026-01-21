@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,7 +21,6 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createClient();
-    const adminClient = createAdminClient();
 
     // First, find the user by phone number in the profiles table
     // Try exact match first
@@ -59,23 +57,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get the actual auth user email from the auth.users table
-    // This is the email that was used during registration (likely phone-to-email format)
-    const { data: authUserData, error: authUserError } = await adminClient.auth.admin.getUserById(profileData.id);
-
-    if (authUserError || !authUserData?.user?.email) {
-      console.error('Error fetching auth user data:', authUserError);
+    // Check if the user has a valid email address in the profiles table
+    if (!profileData.user_email || !profileData.user_email.includes('@')) {
+      // User doesn't have a valid email, return error with flag to show contact admin option
       return Response.json(
-        { error: 'Unable to retrieve account information. Please contact admin for assistance.', needsContactAdmin: true },
-        { status: 500 }
+        { error: 'No valid email address found for this account.', needsContactAdmin: true, userId: profileData.id },
+        { status: 400 }
       );
     }
 
-    // Use the auth user's email for password reset (this is the email Supabase knows about)
-    const authUserEmail = authUserData.user.email;
-
-    // Send the password reset link to the auth user's email
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(authUserEmail, {
+    // Use the email from the profiles table as the destination for the password reset link
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(profileData.user_email, {
       redirectTo: `${request.nextUrl.origin}/update-password`,
     });
 
