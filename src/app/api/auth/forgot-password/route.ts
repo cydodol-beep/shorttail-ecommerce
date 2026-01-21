@@ -14,10 +14,6 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
-    // The phone number coming from the client is already formatted by the client-side function
-    // It's likely in the format 62XXXXXXXXXX (without +)
-    // But in the database it might be stored as +62XXXXXXXXXX
-
     // Clean the input phone number by removing non-digit characters
     const cleanInputPhone = phone.replace(/\D/g, '');
 
@@ -27,17 +23,17 @@ export async function POST(request: NextRequest) {
     // Handle different input formats and generate corresponding database search formats
     if (phone.startsWith('+62')) {
       // Input is in +62 format: +6281234567890
-      phoneFormats.push(phone, `62${cleanInputPhone.substring(3)}`, `0${cleanInputPhone.substring(2)}`);
+      phoneFormats.push(phone, `62${cleanInputPhone.substring(3)}`, `0${cleanInputPhone.substring(2)}`, cleanInputPhone);
     } else if (phone.startsWith('62')) {
-      // Input is in 62 format: 6281234567890 (likely from client-side formatting)
-      phoneFormats.push(`+${phone}`, phone, `0${cleanInputPhone.substring(2)}`);
+      // Input is in 62 format: 6281234567890
+      phoneFormats.push(`+${phone}`, phone, `0${cleanInputPhone.substring(2)}`, cleanInputPhone);
     } else if (phone.startsWith('0')) {
       // Input is in 0 format: 081234567890
       const withoutZero = cleanInputPhone.substring(1);
-      phoneFormats.push(`+62${withoutZero}`, `62${withoutZero}`, phone);
+      phoneFormats.push(`+62${withoutZero}`, `62${withoutZero}`, phone, cleanInputPhone);
     } else {
       // Input is in raw format: 81234567890
-      phoneFormats.push(`+62${cleanInputPhone}`, `62${cleanInputPhone}`, `0${cleanInputPhone}`, phone);
+      phoneFormats.push(`+62${cleanInputPhone}`, `62${cleanInputPhone}`, `0${cleanInputPhone}`, phone, cleanInputPhone);
     }
 
     // Remove duplicates while preserving order
@@ -47,6 +43,7 @@ export async function POST(request: NextRequest) {
     let profileData = null;
     let profileError = null;
 
+    // First, try exact matches with all possible formats
     for (const format of uniqueFormats) {
       const { data, error } = await supabase
         .from('profiles')
@@ -57,28 +54,36 @@ export async function POST(request: NextRequest) {
       if (!error && data) {
         profileData = data;
         break;
-      } else {
-        profileError = error;
       }
     }
 
-    // If no user found with any format, return error
+    // If no user found with exact match, try more flexible matching
     if (!profileData) {
-      // If still not found, try with ilike for partial match as a last resort
-      const { data: partialMatch, error: partialError } = await supabase
+      // Try to find the user by cleaning both the input and stored phone numbers
+      const { data: allProfiles } = await supabase
         .from('profiles')
-        .select('id, user_email')
-        .ilike('user_phoneno', `%${cleanInputPhone}%`)
-        .single();
+        .select('id, user_email, user_phoneno');
 
-      if (partialError || !partialMatch) {
-        return Response.json(
-          { error: 'Phone number not found in our system.', needsContactAdmin: true },
-          { status: 400 }
-        );
-      } else {
-        profileData = partialMatch;
+      if (allProfiles && allProfiles.length > 0) {
+        // Find a profile where the cleaned phone number matches
+        for (const profile of allProfiles) {
+          const cleanedStoredPhone = profile.user_phoneno.replace(/\D/g, '');
+
+          // Check if the cleaned phone numbers match
+          if (cleanedStoredPhone === cleanInputPhone) {
+            profileData = profile;
+            break;
+          }
+        }
       }
+    }
+
+    // If still no user found, return error
+    if (!profileData) {
+      return Response.json(
+        { error: 'Phone number not found in our system.', needsContactAdmin: true },
+        { status: 400 }
+      );
     }
 
     // Check if the user has a valid email address in the profiles table
