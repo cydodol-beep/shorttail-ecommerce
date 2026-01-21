@@ -12,49 +12,69 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Format phone to E.164 format
-    let formattedPhone = phone.replace(/\D/g, '');
-    if (formattedPhone.startsWith('0')) {
-      formattedPhone = '62' + formattedPhone.substring(1);
-    } else if (!formattedPhone.startsWith('62')) {
-      formattedPhone = '62' + formattedPhone;
-    }
-
     const supabase = await createClient();
 
-    // First, find the user by phone number in the profiles table
-    // Try exact match first
-    let { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('id, user_email')
-      .eq('user_phoneno', formattedPhone)
-      .single();
+    // Generate multiple possible formats for comparison
+    const phoneFormats = [];
 
-    // If not found with exact match, try with variations
-    if (profileError || !profileData) {
-      // Try with + prefix
-      ({ data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, user_email')
-        .eq('user_phoneno', `+${formattedPhone}`)
-        .single());
+    // Normalize the input phone number by removing non-digit characters
+    const cleanInputPhone = phone.replace(/\D/g, '');
+
+    // Handle different input formats and generate corresponding database search formats
+    if (phone.startsWith('+62')) {
+      // Input is in +62 format: +6281234567890
+      phoneFormats.push(phone, `62${cleanInputPhone.substring(3)}`, `0${cleanInputPhone.substring(2)}`);
+    } else if (phone.startsWith('62')) {
+      // Input is in 62 format: 6281234567890
+      phoneFormats.push(`+${phone}`, phone, `0${cleanInputPhone.substring(2)}`);
+    } else if (phone.startsWith('0')) {
+      // Input is in 0 format: 081234567890
+      const withoutZero = cleanInputPhone.substring(1);
+      phoneFormats.push(`+62${withoutZero}`, `62${withoutZero}`, phone);
+    } else {
+      // Input is in raw format: 81234567890
+      phoneFormats.push(`+62${cleanInputPhone}`, `62${cleanInputPhone}`, `0${cleanInputPhone}`);
     }
 
-    if (profileError || !profileData) {
-      // If still not found, try with original format
-      ({ data: profileData, error: profileError } = await supabase
+    // Remove duplicates while preserving order
+    const uniqueFormats = [...new Set(phoneFormats)];
+
+    // Try to find the user by phone number in the profiles table using any of the formats
+    let profileData = null;
+    let profileError = null;
+
+    for (const format of uniqueFormats) {
+      const { data, error } = await supabase
         .from('profiles')
         .select('id, user_email')
-        .ilike('user_phoneno', `%${phone}%`)
-        .single());
+        .eq('user_phoneno', format)
+        .single();
+
+      if (!error && data) {
+        profileData = data;
+        break;
+      } else {
+        profileError = error;
+      }
     }
 
-    if (profileError || !profileData) {
-      // If no user found with this phone number, return error
-      return Response.json(
-        { error: 'Phone number not found in our system.', needsContactAdmin: true },
-        { status: 400 }
-      );
+    // If no user found with any format, return error
+    if (!profileData) {
+      // If still not found, try with ilike for partial match as a last resort
+      const { data: partialMatch, error: partialError } = await supabase
+        .from('profiles')
+        .select('id, user_email')
+        .ilike('user_phoneno', `%${cleanInputPhone}%`)
+        .single();
+
+      if (partialError || !partialMatch) {
+        return Response.json(
+          { error: 'Phone number not found in our system.', needsContactAdmin: true },
+          { status: 400 }
+        );
+      } else {
+        profileData = partialMatch;
+      }
     }
 
     // Check if the user has a valid email address in the profiles table
