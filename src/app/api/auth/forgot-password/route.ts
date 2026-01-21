@@ -2,6 +2,9 @@ import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
+  console.log('=== FORGOT PASSWORD API CALLED ===');
+  console.log('Timestamp:', new Date().toISOString());
+
   try {
     const body = await request.json();
     const phone = body.phone;
@@ -19,9 +22,13 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
+    console.log('Supabase client created successfully');
+    console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'configured' : 'MISSING');
+
     // Clean the input phone (remove non-digits)
     const cleanInputPhone = phone.replace(/[^\d]/g, '');
     console.log('Cleaned input phone (digits only):', cleanInputPhone);
+    console.log('Proceeding to check phone in database...');
 
     // Try all possible phone number formats (+62, 08, 62)
     const possibleDbFormats = [
@@ -38,11 +45,13 @@ export async function POST(request: NextRequest) {
 
     for (const phoneFormat of possibleDbFormats) {
       console.log('Checking format:', phoneFormat);
+      console.log('Calling RPC with phone_param:', phoneFormat);
 
       const { data, error } = await supabase.rpc('check_phone_exists', {
         phone_param: phoneFormat
       });
 
+      console.log('RPC call completed for format', phoneFormat);
       console.log('RPC result for format', phoneFormat, ': error=', error?.message, 'data=', data, 'type=', typeof data);
 
       if (!error) {

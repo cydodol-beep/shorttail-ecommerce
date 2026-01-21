@@ -85,7 +85,11 @@ export default function ForgotPasswordForm() {
         body: JSON.stringify({ phone: formattedPhone }),
       });
 
+      console.log('Response status:', response.status, response.statusText);
+
       const result = await response.json();
+
+      console.log('Response data:', result);
 
       if (!response.ok) {
         if (result.needsContactAdmin) {
