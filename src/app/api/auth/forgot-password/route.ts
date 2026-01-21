@@ -14,15 +14,18 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
-    // The client-side form always sends the phone in 62XXXXXXXXXX format
-    // due to the formatPhoneNumberForEmail function
+    // The client-side form always sends phone in 62XXXXXXXXXX format
+    // due to formatPhoneNumberForEmail function
     const cleanInputPhone = phone.replace(/\D/g, '');
 
-    // Possible formats the phone might be stored in the database
-    // If client sends 6281317902179, the DB might have:
+    // Log for debugging
+    console.log('Forgot password - cleanInputPhone:', cleanInputPhone);
+
+    // Possible formats the phone might be stored in database
+    // If client sends 6281317902179, DB might have:
     const possibleDbFormats = [
       `+${cleanInputPhone}`,  // +6281317902179
-      `0${cleanInputPhone.substring(2)}`,  // 081317902179
+      cleanInputPhone.startsWith('62') ? `0${cleanInputPhone.substring(2)}` : cleanInputPhone,  // 081317902179
       cleanInputPhone  // 6281317902179 (same as received)
     ];
 
@@ -30,14 +33,18 @@ export async function POST(request: NextRequest) {
 
     // Try exact match with all possible stored formats
     for (const format of possibleDbFormats) {
+      console.log('Trying format:', format);
       const { data, error } = await supabase
         .from('profiles')
         .select('id, user_email, user_name')
         .eq('user_phoneno', format)
         .single();
 
+      console.log('Result for format', format, ': error=', error, 'data=', data);
+
       if (!error && data) {
         profileData = data;
+        console.log('Found profile:', profileData);
         break;
       }
     }
@@ -45,8 +52,8 @@ export async function POST(request: NextRequest) {
     // If still no user found, return error
     if (!profileData) {
       return Response.json(
-        { 
-          error: 'Phone number not found in our system.', 
+        {
+          error: 'Phone number not found in our system.',
           needsContactAdmin: true,
           userName: null,
           userPhone: cleanInputPhone
@@ -55,13 +62,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if the user has a valid email address in the profiles table
+    // Check if user has a valid email address in profiles table
     if (!profileData.user_email || !profileData.user_email.includes('@')) {
       // User doesn't have a valid email, return error with flag to show contact admin option
       return Response.json(
-        { 
-          error: 'No valid email address found for this account.', 
-          needsContactAdmin: true, 
+        {
+          error: 'No valid email address found for this account.',
+          needsContactAdmin: true,
           userId: profileData.id,
           userName: profileData.user_name || 'N/A',
           userPhone: cleanInputPhone
@@ -70,7 +77,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use the email from the profiles table as the destination for the password reset link
+    // Use the email from profiles table as the destination for password reset link
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(profileData.user_email, {
       redirectTo: `${request.nextUrl.origin}/update-password`,
     });
