@@ -14,37 +14,22 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
-    // Clean the input phone number by removing non-digit characters
+    // The client-side form always sends the phone in 62XXXXXXXXXX format
+    // due to the formatPhoneNumberForEmail function
     const cleanInputPhone = phone.replace(/\D/g, '');
 
-    // Generate multiple possible formats for comparison
-    const phoneFormats = [];
+    // Possible formats the phone might be stored in the database
+    // If client sends 6281317902179, the DB might have:
+    const possibleDbFormats = [
+      `+${cleanInputPhone}`,  // +6281317902179
+      `0${cleanInputPhone.substring(2)}`,  // 081317902179
+      cleanInputPhone  // 6281317902179 (same as received)
+    ];
 
-    // Handle different input formats and generate corresponding database search formats
-    if (phone.startsWith('+62')) {
-      // Input is in +62 format: +6281234567890
-      phoneFormats.push(phone, `62${cleanInputPhone.substring(3)}`, `0${cleanInputPhone.substring(2)}`, cleanInputPhone);
-    } else if (phone.startsWith('62')) {
-      // Input is in 62 format: 6281234567890
-      phoneFormats.push(`+${phone}`, phone, `0${cleanInputPhone.substring(2)}`, cleanInputPhone);
-    } else if (phone.startsWith('0')) {
-      // Input is in 0 format: 081234567890
-      const withoutZero = cleanInputPhone.substring(1);
-      phoneFormats.push(`+62${withoutZero}`, `62${withoutZero}`, phone, cleanInputPhone);
-    } else {
-      // Input is in raw format: 81234567890
-      phoneFormats.push(`+62${cleanInputPhone}`, `62${cleanInputPhone}`, `0${cleanInputPhone}`, phone, cleanInputPhone);
-    }
-
-    // Remove duplicates while preserving order
-    const uniqueFormats = [...new Set(phoneFormats)];
-
-    // Try to find the user by phone number in the profiles table using any of the formats
     let profileData = null;
-    let profileError = null;
 
-    // First, try exact matches with all possible formats
-    for (const format of uniqueFormats) {
+    // Try exact match with all possible stored formats
+    for (const format of possibleDbFormats) {
       const { data, error } = await supabase
         .from('profiles')
         .select('id, user_email')
@@ -54,27 +39,6 @@ export async function POST(request: NextRequest) {
       if (!error && data) {
         profileData = data;
         break;
-      }
-    }
-
-    // If no user found with exact match, try more flexible matching
-    if (!profileData) {
-      // Try to find the user by cleaning both the input and stored phone numbers
-      const { data: allProfiles } = await supabase
-        .from('profiles')
-        .select('id, user_email, user_phoneno');
-
-      if (allProfiles && allProfiles.length > 0) {
-        // Find a profile where the cleaned phone number matches
-        for (const profile of allProfiles) {
-          const cleanedStoredPhone = profile.user_phoneno.replace(/\D/g, '');
-
-          // Check if the cleaned phone numbers match
-          if (cleanedStoredPhone === cleanInputPhone) {
-            profileData = profile;
-            break;
-          }
-        }
       }
     }
 
