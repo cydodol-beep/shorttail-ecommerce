@@ -70,13 +70,6 @@ export default function UpdatePasswordClient() {
       // Start checking
       checkSession();
     } else {
-          // If no session exists, the token might be invalid or expired
-          setIsTokenValid(false);
-        }
-      };
-
-      checkSession();
-    } else {
       // If not a recovery request, check if there's a valid session
       const checkSession = async () => {
         const supabase = createClient();
