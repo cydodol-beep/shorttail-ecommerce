@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -27,7 +27,35 @@ type UpdatePasswordForm = z.infer<typeof updatePasswordSchema>;
 
 export default function UpdatePasswordForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
+  const [isTokenValid, setIsTokenValid] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    // Get the type parameter from URL
+    const type = searchParams.get('type');
+
+    // If this is a recovery request, allow the form to be displayed
+    if (type === 'recovery') {
+      setIsTokenValid(true);
+    } else {
+      // If not a recovery request, check if there's a valid session
+      const checkSession = async () => {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session) {
+          // If user is already logged in, redirect to dashboard
+          router.push('/dashboard');
+        } else {
+          // If not logged in and not a recovery request, redirect to login
+          router.push('/login');
+        }
+      };
+
+      checkSession();
+    }
+  }, [searchParams, router]);
 
   const form = useForm<UpdatePasswordForm>({
     resolver: zodResolver(updatePasswordSchema),
@@ -65,6 +93,39 @@ export default function UpdatePasswordForm() {
       setLoading(false);
     }
   };
+
+  // Don't render anything until we know the token status
+  if (isTokenValid === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-lg">Checking token validity...</p>
+      </div>
+    );
+  }
+
+  // If token is not valid for password recovery, show error
+  if (isTokenValid !== true) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Password Reset</CardTitle>
+            <CardDescription>
+              Invalid or expired password reset link.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              onClick={() => router.push('/login')}
+              className="w-full"
+            >
+              Back to Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <Card className="border-brown-200 shadow-lg">
