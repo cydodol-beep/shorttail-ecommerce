@@ -70,7 +70,26 @@ export default function UpdatePasswordClient() {
     try {
       const supabase = createClient();
 
-      // Update the user's password
+      // When a user clicks a password reset link, Supabase automatically creates a session
+      // We can update the password directly using the current session
+      // First, let's ensure we have a session by calling getSession
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw new Error('Session error: ' + sessionError.message);
+      }
+
+      if (!sessionData.session) {
+        // If no session, try to refresh it (this might happen if session establishment is delayed)
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError) {
+          console.error('Could not refresh session:', refreshError);
+          throw new Error('Unable to establish session. Please try the password reset link again.');
+        }
+      }
+
+      // Now update the password
       const { error } = await supabase.auth.updateUser({
         password: data.password,
       });
