@@ -1,8 +1,4 @@
-import dynamic from 'next/dynamic';
-
-const UpdatePasswordClient = dynamic(() => import('@/components/UpdatePasswordClient'), {
-  ssr: false
-});
+import UpdatePasswordClient from '@/components/UpdatePasswordClient';
 
 export default function UpdatePasswordPage() {
   return <UpdatePasswordClient />;

@@ -16,12 +16,12 @@ export default function UpdatePasswordClient() {
   const [isTokenValid, setIsTokenValid] = useState<boolean | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
-  
-  // Get the token from URL parameters
-  const type = searchParams.get('type');
-  const next = searchParams.get('next') || '/';
 
   useEffect(() => {
+    // Get the token from URL parameters after component mounts
+    const type = searchParams.get('type');
+    const next = searchParams.get('next') || '/';
+
     // Check if this is a password recovery request
     if (type === 'recovery') {
       setIsTokenValid(true);
@@ -30,7 +30,7 @@ export default function UpdatePasswordClient() {
       const checkSession = async () => {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
-        
+
         if (session) {
           // If user is already logged in, redirect to next or dashboard
           router.push(next || '/dashboard');
@@ -39,10 +39,10 @@ export default function UpdatePasswordClient() {
           router.push('/login');
         }
       };
-      
+
       checkSession();
     }
-  }, [type, next, router]);
+  }, [searchParams, router]); // Only router in dependency array to avoid infinite loop
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +62,7 @@ export default function UpdatePasswordClient() {
 
     try {
       const supabase = createClient();
-      
+
       // Update the password
       const { error } = await supabase.auth.updateUser({
         password: password,
@@ -104,8 +104,8 @@ export default function UpdatePasswordClient() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button 
-              onClick={() => router.push('/login')} 
+            <Button
+              onClick={() => router.push('/login')}
               className="w-full"
             >
               Back to Login
@@ -139,7 +139,7 @@ export default function UpdatePasswordClient() {
                 minLength={6}
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm New Password</Label>
               <Input
@@ -151,10 +151,10 @@ export default function UpdatePasswordClient() {
                 required
               />
             </div>
-            
-            <Button 
-              type="submit" 
-              className="w-full" 
+
+            <Button
+              type="submit"
+              className="w-full"
               disabled={loading}
             >
               {loading ? 'Updating...' : 'Update Password'}
