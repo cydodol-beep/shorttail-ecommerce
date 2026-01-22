@@ -34,9 +34,29 @@ export default function UpdatePasswordClient() {
     // Get the type parameter from URL
     const type = searchParams.get('type');
 
-    // If this is a recovery request, allow the form to be displayed
+    // If this is a recovery request, we need to ensure the session is established
     if (type === 'recovery') {
-      setIsTokenValid(true);
+      // When it's a recovery request, Supabase should automatically establish a session
+      // when the user clicks the reset link, but we might need to wait for it
+      // Let's check if a session exists
+      const checkSession = async () => {
+        const supabase = createClient();
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (error) {
+          console.error('Error getting session:', error);
+          // If there's an error getting the session, the user might need to try the link again
+          setIsTokenValid(false);
+        } else if (session) {
+          // If session exists, we can show the form
+          setIsTokenValid(true);
+        } else {
+          // If no session exists, the token might be invalid or expired
+          setIsTokenValid(false);
+        }
+      };
+
+      checkSession();
     } else {
       // If not a recovery request, check if there's a valid session
       const checkSession = async () => {
@@ -70,26 +90,9 @@ export default function UpdatePasswordClient() {
     try {
       const supabase = createClient();
 
-      // When a user clicks a password reset link, Supabase automatically creates a session
-      // We can update the password directly using the current session
-      // First, let's ensure we have a session by calling getSession
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-
-      if (sessionError) {
-        console.error('Session error:', sessionError);
-        throw new Error('Session error: ' + sessionError.message);
-      }
-
-      if (!sessionData.session) {
-        // If no session, try to refresh it (this might happen if session establishment is delayed)
-        const { error: refreshError } = await supabase.auth.refreshSession();
-        if (refreshError) {
-          console.error('Could not refresh session:', refreshError);
-          throw new Error('Unable to establish session. Please try the password reset link again.');
-        }
-      }
-
-      // Now update the password
+      // For password reset, the session should be automatically established when the user clicks the reset link
+      // If we get an Auth session missing error, it might be because the session establishment is delayed
+      // In this case, we should try to ensure the session is established before updating the password
       const { error } = await supabase.auth.updateUser({
         password: data.password,
       });
