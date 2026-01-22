@@ -1,6 +1,6 @@
 # ShortTail.id - Premium Pet Supplies E-Commerce Platform
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-1.0.1-blue)
 ![Next.js](https://img.shields.io/badge/next.js-16.0-black)
 ![TypeScript](https://img.shields.io/badge/typescript-5.0-blue)
 ![Supabase](https://img.shields.io/badge/supabase-latest-green)
@@ -206,4 +206,64 @@
     - Updated touch event handling to ensure proper positional accuracy
     - Added more responsive feedback when items are caught to improve user experience
   - **Result**: Items now properly collide with the character when in range on mobile devices
-  - **Impact**: Better gameplay experience on mobile devices with accurate collection of items
+   - **Impact**: Better gameplay experience on mobile devices with accurate collection of items
+  ## 🔄 Recent Updates (January 22, 2026)
+
+  ### Forgot Password Bug Fixes & Database Function Improvements 🔐
+  - **Fixed Password Reset API with Enhanced Error Handling**:
+    - **Issue**: Users could not receive password reset links due to RPC function errors and lack of detailed logging for debugging
+    - **Root Causes**:
+      - PostgreSQL `check_phone_exists` function had GROUP BY error with aggregate functions
+      - RPC call error handling didn't account for different return formats
+      - No fallback mechanism when RPC function failed
+      - Insufficient logging made debugging difficult
+    - **Solution**: Completely refactored forgot password API with comprehensive fixes
+    - **Implementation Details**:
+      - Updated `/src/app/api/auth/forgot-password/route.ts` with extensive logging:
+        - Added timestamp logging at API entry
+        - Added Supabase client creation verification
+        - Added detailed logging for each phone format checked
+        - Added RPC call completion logging with full data structure
+        - Added response status logging for client debugging
+      - Enhanced RPC data handling to support multiple return formats:
+        - Handles boolean returns
+        - Handles object returns with `exists`, `user_id`, `user_name`, `user_email`
+        - Extracts data correctly from both formats
+      - Added fallback direct query mechanism:
+        - If RPC function fails or returns no results
+        - System tries direct database query as backup
+        - Checks all three phone formats: `+62XXXXXXXXXX`, `0XXXXXXXXXX`, `62XXXXXXXXXX`
+        - Ensures users can reset password even if RPC has issues
+      - Updated `/src/components/ForgotPasswordForm.tsx` with better client-side logging:
+        - Added response status logging
+        - Added response data logging for full debugging visibility
+    - **Fixed PostgreSQL Function**:
+      - Created `fix_check_phone_function.sql` with corrected implementation
+      - Replaced problematic aggregate query with proper PL/pgSQL pattern:
+        - Uses `SELECT ... INTO v_profile` to find profile
+        - Uses `IF FOUND` to check for profile existence
+        - Builds JSONB result conditionally based on match
+        - Eliminates GROUP BY clause requirement
+      - Grants execute permissions to `authenticated` and `anon` roles
+      - Includes test queries to verify phone matching
+    - **Result**: Password reset now works reliably with comprehensive logging
+    - **Impact**: Users can successfully reset passwords by entering phone number, with full debugging capabilities for troubleshooting
+
+  - **Supabase Email Service Configuration Guide 📧**:
+    - **New Feature**: Added documentation for configuring email services in Supabase
+    - **Implementation Details**:
+      - Documented built-in Supabase email service limitations:
+        - 2 emails/hour rate limit
+        - Only sends to authorized team member emails
+        - No SLA guarantee for production
+      - Provided Gmail SMTP setup instructions:
+        - 2-Step Verification enablement
+        - App Password generation process
+        - SMTP configuration fields (host, port, user, password)
+        - Sender email and name configuration
+      - Listed alternative email providers for production:
+        - Brevo (300 emails/day free)
+        - SendGrid (100 emails/day free)
+        - Mailgun, Mailtrap, AWS SES
+    - **Result**: Complete guide available for setting up email delivery
+    - **Impact**: Easy-to-follow instructions for configuring password reset emails in production environment
