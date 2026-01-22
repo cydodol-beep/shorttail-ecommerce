@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
 
     // Use the email for password reset
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(profileData.user_email, {
-      redirectTo: `${request.nextUrl.origin}/update-password`,
+      redirectTo: `${request.nextUrl.origin}/update-password?type=recovery`,
     });
 
     if (resetError) {
