@@ -34,7 +34,7 @@ export default function UpdatePasswordForm() {
   useEffect(() => {
     // Get the type parameter from URL
     const type = searchParams.get('type');
-
+    
     // If this is a recovery request, allow the form to be displayed
     if (type === 'recovery') {
       setIsTokenValid(true);
@@ -43,7 +43,7 @@ export default function UpdatePasswordForm() {
       const checkSession = async () => {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
-
+        
         if (session) {
           // If user is already logged in, redirect to dashboard
           router.push('/dashboard');
@@ -52,7 +52,7 @@ export default function UpdatePasswordForm() {
           router.push('/login');
         }
       };
-
+      
       checkSession();
     }
   }, [searchParams, router]);
@@ -115,8 +115,8 @@ export default function UpdatePasswordForm() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button
-              onClick={() => router.push('/login')}
+            <Button 
+              onClick={() => router.push('/login')} 
               className="w-full"
             >
               Back to Login
