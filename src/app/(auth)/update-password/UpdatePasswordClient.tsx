@@ -31,17 +31,19 @@ export default function UpdatePasswordClient() {
   const [isTokenValid, setIsTokenValid] = useState<boolean | null>(null);
 
   useEffect(() => {
-    // Get the type parameter from URL
+    // Get type parameter from URL
     const type = searchParams.get('type');
 
-    // If this is a recovery request, we need to ensure the session is established
+    // If this is a recovery request, we need to ensure that session is established
     if (type === 'recovery') {
       // When it's a recovery request, Supabase should automatically establish a session
       // when the user clicks the reset link, but we might need to wait for it
-      // Let's check if a session exists
-      const checkSession = async () => {
+      // Let's check if a session exists with retry logic
+      const checkSession = async (retryCount = 0) => {
         const supabase = createClient();
         const { data: { session }, error } = await supabase.auth.getSession();
+
+        console.log('Password reset - Check session attempt', retryCount + 1, ': session exists =', !!session, ', error =', error?.message);
 
         if (error) {
           console.error('Error getting session:', error);
@@ -49,8 +51,25 @@ export default function UpdatePasswordClient() {
           setIsTokenValid(false);
         } else if (session) {
           // If session exists, we can show the form
+          console.log('Session found, showing password reset form');
           setIsTokenValid(true);
         } else {
+          // If no session exists, token might be invalid or expired, OR session establishment is delayed
+          // Retry up to 3 times with delays
+          if (retryCount < 3) {
+            const delay = (retryCount + 1) * 500; // 500ms, 1s, 1.5s delays
+            console.log(`No session yet, retrying in ${delay}ms... (attempt ${retryCount + 1}/3)`);
+            setTimeout(() => checkSession(retryCount + 1), delay);
+          } else {
+            console.error('No session found after 3 attempts, token may be invalid or expired');
+            setIsTokenValid(false);
+          }
+        }
+      };
+
+      // Start checking
+      checkSession();
+    } else {
           // If no session exists, the token might be invalid or expired
           setIsTokenValid(false);
         }
