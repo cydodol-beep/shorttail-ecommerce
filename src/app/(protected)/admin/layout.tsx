@@ -18,6 +18,7 @@ import {
 import { Bell, LogOut, Store } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useNotificationStore } from '@/store/notification-store';
+import { EnhancedSignOutButton } from '@/components/ui/enhanced-signout-button';
 import { SessionCountdown } from '@/components/admin/session-countdown';
 
 export default function AdminLayout({
@@ -146,9 +147,20 @@ export default function AdminLayout({
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuLabel>My Account</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Sign out
+                    <DropdownMenuItem asChild>
+                      <div className="w-full">
+                        <EnhancedSignOutButton
+                          variant="ghost"
+                          className="w-full justify-start"
+                          confirmationMessage="Are you sure you want to sign out? Your admin session will end."
+                          showSuccessToast={true}
+                          showErrorToast={true}
+                          useReplaceRedirect={true}
+                        >
+                          <LogOut className="mr-2 h-4 w-4" />
+                          Sign Out
+                        </EnhancedSignOutButton>
+                      </div>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

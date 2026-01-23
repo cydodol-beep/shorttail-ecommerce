@@ -27,6 +27,7 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useStoreSettings } from '@/hooks/use-store-settings';
 import Image from 'next/image';
+import { EnhancedSignOutButton } from '@/components/ui/enhanced-signout-button';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/admin' },
@@ -58,10 +59,10 @@ export function AdminSidebar() {
     try {
       // Call signOut from auth hook
       await signOut();
-      
+
       // Small delay to ensure cookies are cleared
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       // Force hard redirect to clear any cached state
       window.location.replace('/login');
     } catch (err) {
@@ -189,20 +190,22 @@ export function AdminSidebar() {
           </div>
         )}
         
-        <Button
+        <EnhancedSignOutButton
           variant="ghost"
           size="sm"
           className={cn(
             "w-full text-brown-600 hover:text-destructive hover:bg-destructive/10",
             collapsed ? "justify-center px-2" : "justify-start"
           )}
-          onClick={handleSignOut}
-          disabled={signingOut}
+          confirmationMessage="Are you sure you want to sign out? Your admin session will end."
+          showLoadingSpinner={true}
+          redirectPath="/login"
+          useReplaceRedirect={true}
           title={collapsed ? "Sign out" : undefined}
         >
-          <LogOut className={cn("h-4 w-4", signingOut && "animate-spin")} />
-          {!collapsed && <span className="ml-2">{signingOut ? 'Signing out...' : 'Sign out'}</span>}
-        </Button>
+          <LogOut className="h-4 w-4" />
+          {!collapsed && <span className="ml-2">Sign out</span>}
+        </EnhancedSignOutButton>
         <Button
           variant="ghost"
           size="sm"

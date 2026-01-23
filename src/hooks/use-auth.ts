@@ -372,10 +372,14 @@ export function useAuth() {
 
       // Call server-side signout to clear cookies first
       try {
-        await fetch('/api/auth/signout', {
+        const response = await fetch('/api/auth/signout', {
           method: 'POST',
           credentials: 'include'
         });
+
+        if (!response.ok) {
+          console.warn('Server signout failed with status:', response.status);
+        }
       } catch (e) {
         console.warn('Server signout failed, continuing with client signout:', e);
       }
@@ -385,6 +389,8 @@ export function useAuth() {
 
       if (error) {
         console.error('Supabase signOut error:', error);
+        // Return the error to allow calling components to handle it
+        return { error };
       }
 
       setLoading(false);

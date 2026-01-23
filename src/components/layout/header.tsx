@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingCart, Search, Menu, X, Heart, ArrowRight, User, Percent, Tag, Calendar, Gift, Sparkles, Star, Bell, Store } from 'lucide-react';
+import { ShoppingCart, Search, Menu, X, Heart, ArrowRight, User, Percent, Tag, Calendar, Gift, Sparkles, Star, Bell, Store, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useCartItemCount } from '@/store/cart-store';
 import { useAuth } from '@/hooks/use-auth';
+import { EnhancedSignOutButton } from '@/components/ui/enhanced-signout-button';
 import { useActivePromotions } from '@/hooks/use-active-promotions';
 import { useNotificationStore } from '@/store/notification-store';
 import { getAvatarDataInfo } from '@/lib/utils';
@@ -365,24 +366,20 @@ export function Header() {
                                 </Link>
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={async () => {
-                                  try {
-                                    await signOut();
-                                  } catch (error) {
-                                    console.error('Error during logout:', error);
-                                  }
-                                }}
-                                className="text-red-600 focus:text-red-700"
-                              >
-                                <span className="flex items-center">
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-log-out mr-2">
-                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                                    <polyline points="16 17 21 12 16 7"></polyline>
-                                    <line x1="21" x2="9" y1="12" y2="12"></line>
-                                  </svg>
-                                  Logout
-                                </span>
+                              <DropdownMenuItem asChild>
+                                <div className="w-full">
+                                  <EnhancedSignOutButton
+                                    variant="ghost"
+                                    className="w-full justify-start text-red-600 focus:text-red-700"
+                                    confirmationMessage="Are you sure you want to sign out? Your session will end."
+                                    showSuccessToast={true}
+                                    showErrorToast={true}
+                                    useReplaceRedirect={false}
+                                  >
+                                    <LogOut className="mr-2 h-4 w-4" />
+                                    Sign Out
+                                  </EnhancedSignOutButton>
+                                </div>
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>

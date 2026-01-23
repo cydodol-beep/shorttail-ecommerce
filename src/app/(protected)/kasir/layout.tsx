@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { EnhancedSignOutButton } from '@/components/ui/enhanced-signout-button';
 import { useAuth } from '@/hooks/use-auth';
 import { useNotifications } from '@/hooks/use-notifications';
 import { useStoreSettings } from '@/hooks/use-store-settings';
@@ -257,17 +258,20 @@ export default function KasirLayout({
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={handleSignOut}
-                  disabled={isSigningOut}
-                  className="cursor-pointer text-red-600 focus:text-red-600"
-                >
-                  {isSigningOut ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <LogOut className="h-4 w-4 mr-2" />
-                  )}
-                  Sign Out
+                <DropdownMenuItem asChild>
+                  <div className="w-full">
+                    <EnhancedSignOutButton
+                      variant="ghost"
+                      className="w-full justify-start text-red-600 focus:text-red-600"
+                      confirmationMessage="Are you sure you want to sign out? Your kasir session will end."
+                      showSuccessToast={true}
+                      showErrorToast={true}
+                      useReplaceRedirect={true}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign Out
+                    </EnhancedSignOutButton>
+                  </div>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
