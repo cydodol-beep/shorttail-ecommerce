@@ -39,7 +39,7 @@ export default function UpdatePasswordClient() {
     // If this is a recovery request, we need to ensure that session is established
     if (type === 'recovery') {
       // Listen for auth state changes to detect when the session is established
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string, session) => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string, session: any) => {
         console.log('Auth state change event:', event, 'session exists:', !!session);
         if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
           if (session) {
