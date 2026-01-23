@@ -31,48 +31,42 @@ export default function UpdatePasswordClient() {
   const [isTokenValid, setIsTokenValid] = useState<boolean | null>(null);
 
   useEffect(() => {
+    const supabase = createClient();
+
     // Get type parameter from URL
     const type = searchParams.get('type');
 
     // If this is a recovery request, we need to ensure that session is established
     if (type === 'recovery') {
-      // When it's a recovery request, Supabase should automatically establish a session
-      // when the user clicks the reset link, but we might need to wait for it
-      // Let's check if a session exists with retry logic
-      const checkSession = async (retryCount = 0) => {
-        const supabase = createClient();
-        const { data: { session }, error } = await supabase.auth.getSession();
-
-        console.log('Password reset - Check session attempt', retryCount + 1, ': session exists =', !!session, ', error =', error?.message);
-
-        if (error) {
-          console.error('Error getting session:', error);
-          // If there's an error getting the session, the user might need to try the link again
-          setIsTokenValid(false);
-        } else if (session) {
-          // If session exists, we can show the form
-          console.log('Session found, showing password reset form');
-          setIsTokenValid(true);
-        } else {
-          // If no session exists, token might be invalid or expired, OR session establishment is delayed
-          // Retry up to 3 times with delays
-          if (retryCount < 3) {
-            const delay = (retryCount + 1) * 500; // 500ms, 1s, 1.5s delays
-            console.log(`No session yet, retrying in ${delay}ms... (attempt ${retryCount + 1}/3)`);
-            setTimeout(() => checkSession(retryCount + 1), delay);
-          } else {
-            console.error('No session found after 3 attempts, token may be invalid or expired');
-            setIsTokenValid(false);
+      // Listen for auth state changes to detect when the session is established
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        console.log('Auth state change event:', _event, 'session exists:', !!session);
+        if (_event === 'PASSWORD_RECOVERY' || _event === 'SIGNED_IN') {
+          if (session) {
+            console.log('Session established via auth state change, showing password reset form');
+            setIsTokenValid(true);
           }
+        }
+      });
+
+      // Also check the current session
+      const checkCurrentSession = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          console.log('Current session exists, showing password reset form');
+          setIsTokenValid(true);
         }
       };
 
-      // Start checking
-      checkSession();
+      checkCurrentSession();
+
+      // Cleanup subscription on unmount
+      return () => {
+        subscription.unsubscribe();
+      };
     } else {
       // If not a recovery request, check if there's a valid session
       const checkSession = async () => {
-        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
 
         if (session) {

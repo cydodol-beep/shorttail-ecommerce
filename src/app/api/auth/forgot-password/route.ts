@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export async function POST(request: NextRequest) {
   console.log('=== FORGOT PASSWORD API CALLED ===');
@@ -21,6 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createClient();
+    const adminSupabase = createAdminClient();
 
     console.log('Supabase client created successfully');
     console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'configured' : 'MISSING');
@@ -59,31 +61,38 @@ export async function POST(request: NextRequest) {
 
         // Handle different possible return formats from RPC
         let exists = false;
-        let userId = null;
-        let userName = null;
         let userEmail = null;
 
         if (typeof data === 'boolean') {
           exists = data;
         } else if (typeof data === 'object') {
           exists = data?.exists === true;
-          userId = data?.user_id || data?.id;
-          userName = data?.user_name;
           userEmail = data?.user_email;
         }
 
-        if (exists) {
-          profileData = {
-            id: userId,
-            user_name: userName,
-            user_email: userEmail,
-            user_phoneno: phoneFormat
-          };
-          matchedPhoneFormat = phoneFormat;
-          console.log('\n=== PROFILE FOUND ===');
-          console.log('Matched phone format:', matchedPhoneFormat);
-          console.log('Profile data:', JSON.stringify(profileData));
-          break;
+        if (exists && userEmail) {
+          // Get the user ID and name separately since the function no longer returns them for security
+          // Use service role client to bypass RLS
+
+          const { data: profile, error: profileError } = await adminSupabase
+            .from('profiles')
+            .select('id, user_name, user_phoneno')
+            .eq('user_phoneno', phoneFormat)
+            .single();
+
+          if (!profileError && profile) {
+            profileData = {
+              id: profile.id,
+              user_name: profile.user_name,
+              user_email: userEmail,
+              user_phoneno: profile.user_phoneno
+            };
+            matchedPhoneFormat = phoneFormat;
+            console.log('\n=== PROFILE FOUND ===');
+            console.log('Matched phone format:', matchedPhoneFormat);
+            console.log('Profile data:', JSON.stringify(profileData));
+            break;
+          }
         }
       }
     }
@@ -96,7 +105,7 @@ export async function POST(request: NextRequest) {
       for (const phoneFormat of possibleDbFormats) {
         console.log('Direct query checking format:', phoneFormat);
 
-        const { data: directProfile, error: directError } = await supabase
+        const { data: directProfile, error: directError } = await adminSupabase
           .from('profiles')
           .select('id, user_name, user_email, user_phoneno')
           .eq('user_phoneno', phoneFormat)

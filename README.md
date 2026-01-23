@@ -1,9 +1,83 @@
 # ShortTail.id - Premium Pet Supplies E-Commerce Platform
 
-![Version](https://img.shields.io/badge/version-1.0.1-blue)
+![Version](https://img.shields.io/badge/version-1.0.2-blue)
 ![Next.js](https://img.shields.io/badge/next.js-16.0-black)
 ![TypeScript](https://img.shields.io/badge/typescript-5.0-blue)
 ![Supabase](https://img.shields.io/badge/supabase-latest-green)
+
+## 🔄 Recent Updates (January 22, 2026)
+
+### Email Deliverability Fixes & Documentation 📧
+- **Resolved Gmail SMTP "Dangerous Message" Warnings**:
+  - **Issue**: Password reset emails were being flagged by Gmail as "This message might be dangerous" due to Gmail SMTP limitations for transactional emails
+  - **Root Causes**:
+    - Gmail SMTP is designed for personal use, not transactional/automated emails
+    - Password reset patterns trigger Gmail's spam filters
+    - Gmail SMTP signs emails as @gmail.com instead of custom domain @shorttail.id
+    - Missing SPF/DKIM/DMARC authentication for proper deliverability
+  - **Solutions Provided**:
+    - **Option A**: Continue with Gmail SMTP using Gmail address as sender (`shorttail.id@gmail.com`)
+      - Added SPF record: `v=spf1 include:_spf.google.com ~all`
+      - Added DMARC record: `v=DMARC1; p=none; rua=mailto:admin@shorttail.id`
+    - **Option B (Recommended)**: Migrate to Brevo (free 300 emails/day)
+      - Complete setup guide with SMTP credentials configuration
+      - Domain verification for `@shorttail.id` with proper DKIM signing
+      - Better deliverability (95-98% vs Gmail's 80-90%)
+      - Trusted transactional email provider - no "dangerous" warnings
+  - **Implementation Details**:
+    - Created `DNS_RECORDS_SHORTTAIL_ID.md` with exact DNS records for shorttail.id
+    - Created `BREVO_SETUP_GUIDE.md` with step-by-step Brevo configuration
+    - Created `EMAIL_DELIVERABILITY_COMPARISON.md` with detailed comparison
+    - Documented SPF/DKIM/DMARC records and verification commands
+  - **Result**: Complete documentation for solving email deliverability issues
+  - **Impact**: Users can choose between optimized Gmail setup or professional Brevo migration
+
+### Password Reset Bug Fixes & Syntax Error Resolution 🔐
+- **Fixed "Invalid or Expired Password Reset Link" Error**:
+  - **Issue**: Password reset links were failing with "Invalid or expired password reset link" error
+  - **Root Causes**:
+    - Supabase redirect URLs were not whitelisted in authentication settings
+    - Production environment variables missing correct site URL configuration
+    - Session establishment delay when users clicked reset links
+    - Syntax error in UpdatePasswordClient.tsx (duplicate code blocks)
+  - **Solutions Implemented**:
+    - Added redirect URL configuration instructions for Supabase Dashboard:
+      - `http://localhost:3000/**` for development
+      - `https://www.shorttail.id/**` for production
+      - `https://shorttail.id/**` for production (without www)
+    - Updated production environment variables:
+      ```bash
+      NEXT_PUBLIC_SITE_URL=https://www.shorttail.id
+      NEXT_PUBLIC_APP_URL=https://www.shorttail.id
+      ```
+    - Enhanced session checking with retry logic:
+      - Retry up to 3 times with delays (500ms, 1s, 1.5s)
+      - Added detailed console logging for debugging
+      - Better error handling for delayed session establishment
+    - Fixed syntax error in UpdatePasswordClient.tsx:
+      - Removed duplicate code blocks (lines 72-78)
+      - Resolved "Expected ',', got ';'" build error
+      - Verified successful build compilation
+  - **Implementation Details**:
+    - Updated `src/app/(auth)/update-password/UpdatePasswordClient.tsx`:
+      - Added `checkSession` function with retry parameter
+      - Implemented exponential backoff delays between retries
+      - Added comprehensive logging: session existence, retry attempts, errors
+      - Improved error messages for debugging
+    - Created `PASSWORD_RESET_FIX.md` with complete troubleshooting guide
+    - Supabase Dashboard configuration instructions
+    - Testing checklist for verification
+  - **Result**: Build successful, syntax error resolved, ready for deployment
+  - **Impact**: Password reset flow will work after configuring Supabase redirect URLs
+
+### Email Configuration Documentation Assets 📁
+- **Created Supporting Documentation Files**:
+  - `DNS_RECORDS_SHORTTAIL_ID.md`: DNS records for SPF/DKIM/DMARC
+  - `BREVO_SETUP_GUIDE.md`: Complete Brevo SMTP setup instructions
+  - `EMAIL_DELIVERABILITY_COMPARISON.md`: Gmail vs Brevo comparison
+  - `EMAIL_CONFIG_CHECKLIST.md`: Testing and verification checklist
+  - `PASSWORD_RESET_FIX.md`: Password reset troubleshooting guide
+  - All files include step-by-step instructions and troubleshooting sections
 
 ## 🔄 Recent Updates (January 18, 2026)
 

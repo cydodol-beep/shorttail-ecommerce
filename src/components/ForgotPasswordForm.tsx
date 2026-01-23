@@ -94,8 +94,8 @@ export default function ForgotPasswordForm() {
       if (!response.ok) {
         if (result.needsContactAdmin) {
           setContactAdminData({
-            userName: result.userName,
-            userPhone: formatPhoneNumberDisplay(result.userPhone)
+            userName: result.userName || null,
+            userPhone: result.userPhone ? formatPhoneNumberDisplay(result.userPhone) : ''
           });
           setShowContactAdminDialog(true);
         } else {
