@@ -42,6 +42,7 @@ export function EnhancedSignOutButton({
   showErrorToast = true,
   successToastMessage = 'Successfully signed out',
   errorToastMessage = 'Failed to sign out. Please try again.',
+  title,
 }: EnhancedSignOutButtonProps) {
   const router = useRouter();
   const { signOut } = useAuth();
