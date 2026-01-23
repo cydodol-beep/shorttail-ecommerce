@@ -23,6 +23,7 @@ interface EnhancedSignOutButtonProps {
   showErrorToast?: boolean;
   successToastMessage?: string;
   errorToastMessage?: string;
+  title?: string;
 }
 
 export function EnhancedSignOutButton({
@@ -100,6 +101,7 @@ export function EnhancedSignOutButton({
       variant={variant}
       size={size}
       className={className}
+      title={title}
     >
       {isLoading && showLoadingSpinner ? (
         <>
