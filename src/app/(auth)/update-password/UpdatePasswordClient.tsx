@@ -109,7 +109,8 @@ export default function UpdatePasswordClient() {
 
       toast.success('Password updated successfully!');
 
-      // Redirect to login after a short delay
+      // Redirect to login after a short delay to allow the password update to propagate
+      // Don't sign out immediately to avoid triggering additional profile fetches that might timeout
       setTimeout(() => {
         router.push('/login');
       }, 2000);
