@@ -29,7 +29,7 @@ export function createClient() {
             // Increased to 45 seconds for better resilience on slow connections
             return fetch(url, {
               ...options,
-              signal: options.signal || AbortSignal.timeout(45000), // 45 seconds timeout
+              signal: options.signal || AbortSignal.timeout(60000), // 60 seconds timeout
             });
           },
         },

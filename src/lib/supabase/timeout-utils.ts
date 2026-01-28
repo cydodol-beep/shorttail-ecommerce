@@ -23,7 +23,7 @@ const DEFAULT_RETRY_OPTIONS: RetryOptions = {
   maxDelay: 10000,
 };
 
-const DEFAULT_TIMEOUT_MS = 45000; // 45 seconds - more forgiving
+const DEFAULT_TIMEOUT_MS = 60000; // 60 seconds - more forgiving for slower connections
 
 export function withTimeout<T>(
   promise: Promise<T>,

@@ -173,7 +173,7 @@ export function useAuth() {
 
         const sessionResult = await withTimeoutEffect(
           getSessionPromise,
-          DEFAULT_TIMEOUT_MS  // 15 second timeout for network operations
+          15000  // 15 second timeout for network operations
         ) as SessionResult;
 
         const { data: { session }, error: sessionError } = sessionResult;
@@ -253,7 +253,7 @@ export function useAuth() {
 
         const sessionResult = await withTimeoutEffect(
           getSessionPromise,
-          DEFAULT_TIMEOUT_MS  // 15 second timeout for network operations
+          15000  // 15 second timeout for network operations
         ) as SessionResult;
 
         const { data: { session }, error } = sessionResult;
@@ -278,7 +278,7 @@ export function useAuth() {
 
             const refreshResult = await withTimeoutEffect(
               refreshPromise,
-              DEFAULT_TIMEOUT_MS  // 15 second timeout for network operations
+              15000  // 15 second timeout for network operations
             ) as RefreshResult;
 
             const { error: refreshError, data: refreshData } = refreshResult;
@@ -468,7 +468,7 @@ export function useAuth() {
           `)
           .eq('id', user.id)
           .single() as Promise<{ data: Profile | null; error: any }>,
-        DEFAULT_TIMEOUT_MS // 15 second timeout for network operations
+        60000 // 60 second timeout for network operations to match DEFAULT_TIMEOUT_MS
       );
 
       if (error) {

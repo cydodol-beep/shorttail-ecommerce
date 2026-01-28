@@ -382,3 +382,40 @@
     - Added toast notifications for successful password updates
   - **Result**: Password reset form now properly validates tokens and provides clear feedback
   - **Impact**: Improved user experience with clear messaging for valid and invalid reset attempts
+
+## 🔄 Recent Updates (January 24, 2026)
+
+### Enhanced Sign Out Functionality & Improved Security 🔐
+- **Created Reusable Enhanced Sign Out Button Component**:
+  - **Issue**: Sign out functionality was inconsistent across different parts of the application with varying UX and error handling
+  - **Solution**: Developed a centralized, reusable EnhancedSignOutButton component with consistent UX and robust error handling
+  - **Implementation Details**:
+    - Created `EnhancedSignOutButton` component in `src/components/ui/enhanced-signout-button.tsx`
+    - Added customizable options: confirmation messages, loading indicators, toast notifications, redirect options
+    - Implemented proper error handling with detailed logging and user feedback
+    - Added utility functions in `src/utils/signout-handler.ts` for handling success, error, and redirect operations
+    - Integrated the enhanced button across all application areas: Header, Admin Sidebar, Admin Layout, Kasir Layout
+  - **Result**: Consistent, user-friendly sign out experience across the entire application
+  - **Impact**: Improved user experience with standardized sign out flow and better error handling
+
+- **Improved Middleware Security for Password Reset Flow**:
+  - **Issue**: Timeout errors during password reset flow were causing poor user experience and potential security concerns
+  - **Solution**: Enhanced middleware to handle password reset sessions more efficiently with appropriate timeouts
+  - **Implementation Details**:
+    - Updated middleware to skip profile fetches during password reset flow to prevent timeouts
+    - Reduced timeout values from 2 hours to 30 seconds for better responsiveness
+    - Added special handling for update-password route to prevent unnecessary redirects during reset
+    - Implemented safeguards to prevent role-based redirects during password reset
+  - **Result**: More reliable password reset flow with reduced timeout errors
+  - **Impact**: Smoother password reset experience with better security and performance
+
+- **Enhanced Password Reset Session Handling**:
+  - **Issue**: Session establishment after clicking reset links was unreliable, causing "Auth session missing!" errors
+  - **Solution**: Improved session handling using Supabase's onAuthStateChange listener for more reliable session detection
+  - **Implementation Details**:
+    - Implemented onAuthStateChange listener to detect PASSWORD_RECOVERY and SIGNED_IN events
+    - Added proper cleanup of subscriptions to prevent memory leaks
+    - Updated UpdatePasswordClient to properly handle session establishment events
+    - Removed immediate signOut calls that might trigger additional profile fetches causing timeouts
+  - **Result**: More reliable session establishment when users click password reset links
+  - **Impact**: Users can now successfully update their passwords after clicking reset links without session errors

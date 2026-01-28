@@ -78,10 +78,10 @@ export async function updateSession(request: NextRequest) {
         // For update-password route, use default role to avoid profile fetch during reset
         role = 'normal_user';
       } else {
-        // Use a more reasonable timeout (30 seconds instead of 2 hours)
+        // Use a more reasonable timeout (60 seconds to match other timeout configurations)
         // This prevents hanging requests while still allowing for slower connections
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds
+        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 seconds to match DEFAULT_TIMEOUT_MS
 
         try {
           const { data: profile, error: profileError } = await supabase
