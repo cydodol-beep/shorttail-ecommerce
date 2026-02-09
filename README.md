@@ -419,3 +419,36 @@
     - Removed immediate signOut calls that might trigger additional profile fetches causing timeouts
   - **Result**: More reliable session establishment when users click password reset links
   - **Impact**: Users can now successfully update their passwords after clicking reset links without session errors
+
+## 🔄 Recent Updates (January 28, 2026)
+
+### Session Timeout Fixes & Improved Network Resilience 🕐
+- **Fixed "Operation timed out after 45000ms" Error**:
+  - **Issue**: Users were experiencing timeout errors during authentication and profile loading operations, especially on slower network connections
+  - **Root Causes**:
+    - Inconsistent timeout configurations across different modules (some using 30s, others 45s)
+    - Aggressive timeout values that were too short for slower connections
+    - Middleware profile fetching had a 30-second timeout while other operations used 45 seconds
+  - **Solutions Implemented**:
+    - Increased default timeout value from 45 seconds to 60 seconds across the application
+    - Updated middleware profile fetching timeout from 30 seconds to 60 seconds for consistency
+    - Updated client-side timeout configurations to match the new default
+    - Fixed inconsistencies in session management operations
+  - **Implementation Details**:
+    - Updated `DEFAULT_TIMEOUT_MS` in `src/lib/supabase/timeout-utils.ts` from 45000ms to 60000ms
+    - Updated profile fetching timeout in `src/lib/supabase/middleware.ts` from 30s to 60s
+    - Updated fetch timeout in `src/lib/supabase/client.ts` from 45s to 60s
+    - Updated profile refetching timeout in `src/hooks/use-auth.ts` to 60 seconds
+    - Maintained 15-second timeouts for quick session operations to preserve responsiveness
+  - **Result**: Significantly reduced timeout errors during authentication and profile loading
+  - **Impact**: Better user experience with fewer timeout errors, especially on slower connections
+
+- **Improved Session Management Consistency**:
+  - **Issue**: Inconsistent timeout values across different session management operations
+  - **Solution**: Standardized timeout values to ensure consistency across all operations
+  - **Implementation Details**:
+    - Aligned all timeout configurations with the new 60-second default
+    - Maintained appropriate timeouts for different operation types (quick ops vs. profile fetching)
+    - Preserved responsiveness for quick operations like session checks (15 seconds)
+  - **Result**: Consistent timeout behavior across all authentication and session operations
+  - **Impact**: More predictable behavior and fewer timeout-related issues during user sessions

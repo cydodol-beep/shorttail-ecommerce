@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { createClient } from '@/lib/supabase/client';
-import { useAuthState } from '@/hooks/use-auth';
 
 export interface OrderItem {
   product_id: string;
@@ -49,7 +48,7 @@ interface OrdersStore {
   orders: Order[];
   loading: boolean;
   lastFetched: number | null;
-  fetchOrders: () => Promise<void>;
+  fetchOrders: (userRole?: string) => Promise<void>;
   updateOrderStatus: (orderId: string, status: string) => Promise<boolean>;
   invalidate: () => void;
 }
@@ -61,7 +60,7 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
   loading: false,
   lastFetched: null,
 
-  fetchOrders: async () => {
+  fetchOrders: async (userRole?: string) => {
     const state = get();
 
     // Skip if already loading
@@ -76,9 +75,6 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
 
     try {
       const supabase = createClient();
-
-      // Get current user's role to determine how to fetch orders
-      const { role: userRole } = useAuthState();
 
       let ordersWithItems;
 
@@ -100,118 +96,97 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
         const result = await response.json();
         const ordersData = result.orders;
 
+        // Get all order IDs to fetch items in batch
+        const orderIds = ordersData?.map((order: any) => order.id) || [];
+        
+        // Fetch all order items with nested product and variant data in a single query
+        let allItemsData: any[] = [];
+        if (orderIds.length > 0) {
+          const { data: itemsData, error: itemsError } = await supabase
+            .from('order_items')
+            .select(`
+              *,
+              products:product_id (name, sku),
+              product_variants:variant_id (variant_name, sku)
+            `)
+            .in('order_id', orderIds);
+
+          if (itemsError) {
+            console.error('Error fetching order items:', itemsError);
+          } else {
+            allItemsData = itemsData || [];
+          }
+        }
+
+        // Group items by order_id
+        const itemsByOrderId = allItemsData.reduce((acc: Map<string, any[]>, item: any) => {
+          if (!acc.has(item.order_id)) {
+            acc.set(item.order_id, []);
+          }
+          acc.get(item.order_id)!.push(item);
+          return acc;
+        }, new Map());
+
         // Process the orders for kasir users (they already have profile info from API)
-        ordersWithItems = await Promise.all(
-          (ordersData || []).map(async (order: any) => {
-            // Fetch order items separately
-            const { data: itemsData, error: itemsError } = await supabase
-              .from('order_items')
-              .select('*')
-              .eq('order_id', order.id);
+        ordersWithItems = (ordersData || []).map((order: any) => {
+          const orderItems = itemsByOrderId.get(order.id) || [];
+          
+          const itemsWithDetails = orderItems.map((item: any) => ({
+            product_id: item.product_id,
+            product_name: item.products?.name || 'Unknown Product',
+            product_sku: item.products?.sku || undefined,
+            variant_id: item.variant_id,
+            variant_name: item.product_variants?.variant_name || null,
+            variant_sku: item.product_variants?.sku || undefined,
+            quantity: item.quantity,
+            price_at_purchase: parseFloat(item.price_at_purchase) || 0,
+          }));
 
-            if (itemsError) {
-              console.error(`Error fetching items for order ${order.id}:`, itemsError);
-            }
-
-            // Fetch product and variant names separately
-            const itemsWithDetails = await Promise.all(
-              (itemsData || []).map(async (item: any) => {
-                // Fetch product name
-                const { data: productData, error: productError } = await supabase
-                  .from('products')
-                  .select('name, sku')
-                  .eq('id', item.product_id)
-                  .single();
-
-                if (productError) {
-                  console.error('Error fetching product:', productError);
-                }
-
-                // Fetch variant name if exists
-                let variantName = null;
-                let variantSku = null;
-                if (item.variant_id) {
-                  const { data: variantData } = await supabase
-                    .from('product_variants')
-                    .select('variant_name, sku')
-                    .eq('id', item.variant_id)
-                    .limit(1);
-
-                  if (variantData && variantData.length > 0) {
-                    variantName = variantData[0].variant_name;
-                    variantSku = variantData[0].sku;
-                  }
-                }
-
-                return {
-                  product_id: item.product_id,
-                  product_name: productData?.name || 'Unknown Product',
-                  product_sku: productData?.sku || undefined,
-                  variant_id: item.variant_id,
-                  variant_name: variantName,
-                  variant_sku: variantSku || undefined,
-                  quantity: item.quantity,
-                  price_at_purchase: parseFloat(item.price_at_purchase) || 0,
-                };
-              })
-            );
-
-            return {
-              id: order.id,
-              custom_order_id: order.custom_order_id,
-              user_id: order.user_id,
-              user_name: order.user_name,
-              user_email: order.user_email,
-              cashier_id: order.cashier_id,
-              cashier_name: order.cashier_name,
-              source: order.source,
-              status: order.status,
-              subtotal: parseFloat(order.subtotal) || 0,
-              shipping_fee: parseFloat(order.shipping_fee) || 0,
-              discount_amount: parseFloat(order.discount_amount) || 0,
-              total_amount: parseFloat(order.total_amount) || 0,
-              recipient_name: order.recipient_name,
-              recipient_phone: order.recipient_phone,
-              recipient_address: order.recipient_address,
-              recipient_province: order.recipient_province,
-              shipping_courier: order.shipping_courier,
-              shipping_courier_name: order.shipping_courier_name,
-              shipping_address_snapshot: order.shipping_address_snapshot,
-              payment_method: order.payment_method,
-              customer_notes: order.customer_notes || undefined,
-              payment_details: order.payment_details || undefined,
-              invoice_url: order.invoice_url,
-              packing_list_url: order.packing_list_url,
-              items_count: itemsWithDetails.length,
-              items: itemsWithDetails,
-              created_at: order.created_at,
-              updated_at: order.updated_at,
-            } as Order;
-          })
-        );
+          return {
+            id: order.id,
+            custom_order_id: order.custom_order_id,
+            user_id: order.user_id,
+            user_name: order.user_name,
+            user_email: order.user_email,
+            cashier_id: order.cashier_id,
+            cashier_name: order.cashier_name,
+            source: order.source,
+            status: order.status,
+            subtotal: parseFloat(order.subtotal) || 0,
+            shipping_fee: parseFloat(order.shipping_fee) || 0,
+            discount_amount: parseFloat(order.discount_amount) || 0,
+            total_amount: parseFloat(order.total_amount) || 0,
+            recipient_name: order.recipient_name,
+            recipient_phone: order.recipient_phone,
+            recipient_address: order.recipient_address,
+            recipient_province: order.recipient_province,
+            shipping_courier: order.shipping_courier,
+            shipping_courier_name: order.shipping_courier_name,
+            shipping_address_snapshot: order.shipping_address_snapshot,
+            payment_method: order.payment_method,
+            customer_notes: order.customer_notes || undefined,
+            payment_details: order.payment_details || undefined,
+            invoice_url: order.invoice_url,
+            packing_list_url: order.packing_list_url,
+            items_count: itemsWithDetails.length,
+            items: itemsWithDetails,
+            created_at: order.created_at,
+            updated_at: order.updated_at,
+          } as Order;
+        });
       } else {
         // For other users, use the standard method with RLS
         // Only fetch orders that the current user is authorized to see (their own orders)
-        console.log('Fetching orders from Supabase...');
-
         const { data, error } = await supabase
           .from('orders')
           .select('*')
           .order('created_at', { ascending: false });
 
         if (error) {
-          console.error('Error fetching orders:', error);
-          console.error('Error details:', {
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code,
-          });
+          console.error('Error fetching orders');
           set({ loading: false });
           return;
         }
-
-        console.log('Orders fetch result:', { count: data?.length || 0 });
 
         // Fetch user profiles to get user names
         const userIds = [...new Set((data || []).map((o: any) => o.user_id).filter((id: any) => id !== null && id !== undefined))];
@@ -224,104 +199,93 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
             .in('id', userIds);
 
           if (profilesError) {
-            console.error('Error fetching profiles:', profilesError);
+            console.error('Error fetching profiles');
           } else {
             profilesMap = new Map((profilesData || []).map((p: any) => [p.id, p]));
           }
         }
 
+        // Get all order IDs to fetch items in batch
+        const orderIds = data?.map((order: any) => order.id) || [];
+        
+        // Fetch all order items with nested product and variant data in a single query
+        let allItemsData: any[] = [];
+        if (orderIds.length > 0) {
+          const { data: itemsData, error: itemsError } = await supabase
+            .from('order_items')
+            .select(`
+              *,
+              products:product_id (name, sku),
+              product_variants:variant_id (variant_name, sku)
+            `)
+            .in('order_id', orderIds);
+
+          if (itemsError) {
+            console.error('Error fetching order items:', itemsError);
+          } else {
+            allItemsData = itemsData || [];
+          }
+        }
+
+        // Group items by order_id
+        const itemsByOrderId = allItemsData.reduce((acc: Map<string, any[]>, item: any) => {
+          if (!acc.has(item.order_id)) {
+            acc.set(item.order_id, []);
+          }
+          acc.get(item.order_id)!.push(item);
+          return acc;
+        }, new Map());
+
         // Process the orders for non-kasir users
-        ordersWithItems = await Promise.all(
-          (data || []).map(async (order: any) => {
-            // Fetch order items separately
-            const { data: itemsData, error: itemsError } = await supabase
-              .from('order_items')
-              .select('*')
-              .eq('order_id', order.id);
+        ordersWithItems = (data || []).map((order: any) => {
+          const orderItems = itemsByOrderId.get(order.id) || [];
+          
+          const itemsWithDetails = orderItems.map((item: any) => ({
+            product_id: item.product_id,
+            product_name: item.products?.name || 'Unknown Product',
+            product_sku: item.products?.sku || undefined,
+            variant_id: item.variant_id,
+            variant_name: item.product_variants?.variant_name || null,
+            variant_sku: item.product_variants?.sku || undefined,
+            quantity: item.quantity,
+            price_at_purchase: parseFloat(item.price_at_purchase) || 0,
+          }));
 
-            if (itemsError) {
-              console.error(`Error fetching items for order ${order.id}:`, itemsError);
-            }
+          // Get user profile data from the map
+          const userProfile = profilesMap.get(order.user_id);
 
-            // Fetch product and variant names separately
-            const itemsWithDetails = await Promise.all(
-              (itemsData || []).map(async (item: any) => {
-                // Fetch product name
-                const { data: productData, error: productError } = await supabase
-                  .from('products')
-                  .select('name, sku')
-                  .eq('id', item.product_id)
-                  .single();
-
-                if (productError) {
-                  console.error('Error fetching product:', productError);
-                }
-
-                // Fetch variant name if exists
-                let variantName = null;
-                let variantSku = null;
-                if (item.variant_id) {
-                  const { data: variantData } = await supabase
-                    .from('product_variants')
-                    .select('variant_name, sku')
-                    .eq('id', item.variant_id)
-                    .limit(1);
-
-                  if (variantData && variantData.length > 0) {
-                    variantName = variantData[0].variant_name;
-                    variantSku = variantData[0].sku;
-                  }
-                }
-
-                return {
-                  product_id: item.product_id,
-                  product_name: productData?.name || 'Unknown Product',
-                  product_sku: productData?.sku || undefined,
-                  variant_id: item.variant_id,
-                  variant_name: variantName,
-                  variant_sku: variantSku || undefined,
-                  quantity: item.quantity,
-                  price_at_purchase: parseFloat(item.price_at_purchase) || 0,
-                };
-              })
-            );
-
-            // Get user profile data from the map
-            const userProfile = profilesMap.get(order.user_id);
-
-            return {
-              id: order.id,
-              custom_order_id: order.custom_order_id,
-              user_id: order.user_id,
-              user_name: order.user_name || userProfile?.user_name, // Use API fetched name, fallback to profile
-              user_email: order.user_email || userProfile?.user_email, // Use API fetched email, fallback to profile
-              cashier_id: order.cashier_id,
-              cashier_name: order.cashier_name,
-              source: order.source,
-              status: order.status,
-              subtotal: parseFloat(order.subtotal) || 0,
-              shipping_fee: parseFloat(order.shipping_fee) || 0,
-              discount_amount: parseFloat(order.discount_amount) || 0,
-              total_amount: parseFloat(order.total_amount) || 0,
-              recipient_name: order.recipient_name,
-              recipient_phone: order.recipient_phone,
-              recipient_address: order.recipient_address,
-              recipient_province: order.recipient_province,
-              shipping_courier: order.shipping_courier,
-              shipping_courier_name: order.shipping_courier_name,
-              shipping_address_snapshot: order.shipping_address_snapshot,
-              payment_method: order.payment_method,
-              customer_notes: order.customer_notes || undefined,
-              payment_details: order.payment_details || undefined,
-              invoice_url: order.invoice_url,
-              packing_list_url: order.packing_list_url,
-              items_count: itemsWithDetails.length,
-              items: itemsWithDetails,
-              created_at: order.created_at,
-              updated_at: order.updated_at,
-            } as Order;
-          })
-        );
+          return {
+            id: order.id,
+            custom_order_id: order.custom_order_id,
+            user_id: order.user_id,
+            user_name: order.user_name || userProfile?.user_name,
+            user_email: order.user_email || userProfile?.user_email,
+            cashier_id: order.cashier_id,
+            cashier_name: order.cashier_name,
+            source: order.source,
+            status: order.status,
+            subtotal: parseFloat(order.subtotal) || 0,
+            shipping_fee: parseFloat(order.shipping_fee) || 0,
+            discount_amount: parseFloat(order.discount_amount) || 0,
+            total_amount: parseFloat(order.total_amount) || 0,
+            recipient_name: order.recipient_name,
+            recipient_phone: order.recipient_phone,
+            recipient_address: order.recipient_address,
+            recipient_province: order.recipient_province,
+            shipping_courier: order.shipping_courier,
+            shipping_courier_name: order.shipping_courier_name,
+            shipping_address_snapshot: order.shipping_address_snapshot,
+            payment_method: order.payment_method,
+            customer_notes: order.customer_notes || undefined,
+            payment_details: order.payment_details || undefined,
+            invoice_url: order.invoice_url,
+            packing_list_url: order.packing_list_url,
+            items_count: itemsWithDetails.length,
+            items: itemsWithDetails,
+            created_at: order.created_at,
+            updated_at: order.updated_at,
+          } as Order;
+        });
       }
 
       set({
@@ -330,7 +294,7 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
         lastFetched: Date.now(),
       });
     } catch (err) {
-      console.error('Exception fetching orders:', err);
+      console.error('Exception fetching orders');
       set({ loading: false });
     }
   },
@@ -349,8 +313,7 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
       const result = await response.json();
 
       if (!response.ok) {
-        console.error('Error updating order status:', result);
-        console.error('Error details:', result.details);
+        console.error('Error updating order status');
         return false;
       }
 
@@ -365,7 +328,7 @@ export const useOrdersStore = create<OrdersStore>((set, get) => ({
 
       return true;
     } catch (err) {
-      console.error('Exception updating order status:', err);
+      console.error('Exception updating order status');
       return false;
     }
   },

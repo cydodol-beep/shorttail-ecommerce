@@ -160,21 +160,6 @@ export async function updateSession(request: NextRequest) {
       }
     }
 
-    // Dashboard routes - all authenticated users except redirect admins/kasir to their panels
-    // Skip this redirect if we're on the update-password route
-    if (pathname === '/dashboard' && !isUpdatePasswordRoute) {
-      if (['master_admin', 'normal_admin'].includes(role)) {
-        const url = request.nextUrl.clone();
-        url.pathname = '/admin';
-        return NextResponse.redirect(url);
-      }
-      if (role === 'kasir') {
-        const url = request.nextUrl.clone();
-        url.pathname = '/kasir';
-        return NextResponse.redirect(url);
-      }
-    }
-
     // Redirect authenticated users away from login/register unless they're on update-password
     if ((pathname === '/login' || pathname === '/register') && !isUpdatePasswordRoute) {
       const url = request.nextUrl.clone();

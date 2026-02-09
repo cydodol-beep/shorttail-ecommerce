@@ -251,10 +251,13 @@ export default function KasirPOSPage() {
       try {
         const supabase = createClient();
 
+        // Sanitize query to prevent SQL injection - remove special SQL characters
+        const sanitizedQuery = query.replace(/[%_]/g, '');
+
         const { data, error } = await supabase
           .from('profiles')
           .select('id, user_name, user_phoneno, user_email, recipient_name, recipient_phoneno, recipient_address_line1, recipient_province_id, address_line1, province_id')
-          .or(`user_name.ilike.%${query}%,user_phoneno.ilike.%${query}%,recipient_name.ilike.%${query}%,recipient_phoneno.ilike.%${query}%`)
+          .or(`user_name.ilike.%${sanitizedQuery}%,user_phoneno.ilike.%${sanitizedQuery}%,recipient_name.ilike.%${sanitizedQuery}%,recipient_phoneno.ilike.%${sanitizedQuery}%`)
           .limit(10);
 
         if (error) {
@@ -498,7 +501,7 @@ export default function KasirPOSPage() {
   // Convert to kg for display
   const totalWeightKg = (totalWeightGrams / 1000).toFixed(2);
 
-  // Calculate shipping cost using RajaOngkir when courier, province, or weight changes
+  // Calculate shipping cost using RajaOngkir when courier, province, city, or weight changes
   useEffect(() => {
     const calculateShipping = async () => {
       // Reset shipping cost if conditions not met
@@ -507,7 +510,7 @@ export default function KasirPOSPage() {
         return;
       }
 
-      if (!recipientProvince) {
+      if (!recipientProvince || !recipientCityId) {
         setShippingCost('');
         return;
       }
@@ -542,28 +545,22 @@ export default function KasirPOSPage() {
           return;
         }
 
-        // Convert province ID to city ID for RajaOngkir
-        // This mapping converts Supabase province IDs to RajaOngkir city IDs
-        // Common mapping for Indonesian provinces to major cities:
-        const provinceToCityMap: Record<string, string> = {
-          // Jakarta
-          '6': '151', // DKI Jakarta -> Jakarta Pusat
-          '7': '152', // Jawa Barat -> Bandung
-          '8': '153', // Jawa Tengah -> Semarang
-          '9': '155', // DI Yogyakarta -> Yogyakarta
-          '10': '156', // Jawa Timur -> Surabaya
-          '12': '161', // Sumatera Utara -> Medan
-          '18': '396', // Sulawesi Selatan -> Makassar
-          '24': '399', // Papua -> Jayapura
-          '31': '391', // Banten -> Tangerang
-          '32': '154', // Bali -> Denpasar
-          '37': '157', // Kalimantan Timur -> Samarinda
-          // Add more mappings as needed
-        };
-
-        // Get the corresponding city ID or use the province ID if no mapping exists
-        const mappedCityId = provinceToCityMap[recipientProvince] || recipientProvince;
-        const destinationCityId = mappedCityId;
+        // Get the destination city ID from the selected city
+        // The recipientCityId is already the Supabase city ID
+        // We need to get the rajaongkir_city_id from the cities table
+        let destinationCityId = recipientCityId;
+        
+        if (recipientCityId) {
+          const { data: cityData } = await supabase
+            .from('cities')
+            .select('rajaongkir_city_id')
+            .eq('id', parseInt(recipientCityId))
+            .single();
+          
+          if (cityData?.rajaongkir_city_id) {
+            destinationCityId = cityData.rajaongkir_city_id.toString();
+          }
+        }
 
         // Call our secure API route for RajaOngkir shipping calculation
         const response = await fetch('/api/shipping/rajaongkir', {
@@ -631,7 +628,7 @@ export default function KasirPOSPage() {
     };
 
     calculateShipping();
-  }, [shippingCourier, recipientProvince, totalWeightGrams]);
+  }, [shippingCourier, recipientProvince, recipientCityId, totalWeightGrams]);
 
   // Automatically find and apply the best promotion (only if user hasn't manually selected)
   useEffect(() => {

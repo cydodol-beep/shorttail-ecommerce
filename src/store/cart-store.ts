@@ -77,8 +77,8 @@ export const useCartStore = create<CartStore>()(
       getTotal: () => {
         const { items } = get();
         return items.reduce((total, item) => {
-          // For variant products, use variant price_adjustment; for simple products, use base_price
-          const price = item.variant ? (item.variant.price_adjustment || 0) : item.product.base_price;
+          // For variant products, use base_price + price_adjustment; for simple products, use base_price
+          const price = item.variant ? (item.product.base_price + (item.variant.price_adjustment || 0)) : item.product.base_price;
           return total + price * item.quantity;
         }, 0);
       },
@@ -93,7 +93,7 @@ export const useCartStore = create<CartStore>()(
       version: 1, // Increment this when cart schema changes to invalidate old cache
       partialize: (state) => ({
         items: state.items,
-        _hasHydrated: state._hasHydrated,
+        // _hasHydrated should NOT be persisted - it always starts as false
       }),
       migrate: (persistedState: any, version: number) => {
         // If version is 0 (or undefined), migrate to version 1

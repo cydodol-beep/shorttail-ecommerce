@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { NextResponse } from 'next/server';
 
 export async function PUT(request: Request) {
@@ -52,19 +53,20 @@ export async function PUT(request: Request) {
       .eq('id', userId);
 
     if (updateError) {
-      console.error('Error updating profile:', updateError);
+      console.error('Error updating profile');
       return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
     }
 
-    // Update password if provided
+    // Update password if provided using admin client
     if (userData.password && userData.password.length >= 6) {
-      const { error: passwordError } = await supabase.auth.admin.updateUserById(
+      const adminSupabase = createAdminClient();
+      const { error: passwordError } = await adminSupabase.auth.admin.updateUserById(
         userId,
         { password: userData.password }
       );
 
       if (passwordError) {
-        console.error('Error updating password:', passwordError);
+        console.error('Error updating password');
         return NextResponse.json({ 
           error: 'Profile updated but password change failed',
           details: passwordError.message 
@@ -74,7 +76,7 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Exception in update user API:', error);
+    console.error('Exception in update user API');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

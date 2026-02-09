@@ -22,10 +22,9 @@ export async function POST(req: NextRequest) {
 
     // Ensure we have the API key (try both public and private variables)
     const rajaongkirApiKey = process.env.RAJAONGKIR_API_KEY || process.env.NEXT_PUBLIC_RAJAONGKIR_API_KEY;
-    console.log('🔑 API Key check:', { 
+    console.log('🔑 API Key check:', {
       hasKey: !!rajaongkirApiKey,
-      keyLength: rajaongkirApiKey?.length || 0,
-      keyPreview: rajaongkirApiKey ? rajaongkirApiKey.substring(0, 8) + '...' : 'none'
+      keyLength: rajaongkirApiKey?.length || 0
     });
     
     if (!rajaongkirApiKey) {

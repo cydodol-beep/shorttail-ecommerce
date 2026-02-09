@@ -56,4 +56,15 @@ FROM public.categories c
 WHERE p.category = c.slug;
 
 -- Optional: After migration is complete and verified, you can drop the old category column
--- ALTER TABLE public.products DROP COLUMN category;
+-- This checks if the column exists before attempting to drop it
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+    AND table_name = 'products' 
+    AND column_name = 'category'
+  ) THEN
+    ALTER TABLE public.products DROP COLUMN category;
+  END IF;
+END $$;

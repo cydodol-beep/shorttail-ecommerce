@@ -1,6 +1,34 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { NextResponse } from 'next/server';
 
+// Simple in-memory rate limiter: max 5 attempts per IP per 15 minutes
+const rateLimitMap = new Map<string, { count: number; timestamp: number }>();
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
+function checkRateLimit(ip: string): { success: boolean; resetTime?: number } {
+  const now = Date.now();
+  const record = rateLimitMap.get(ip);
+
+  if (!record) {
+    rateLimitMap.set(ip, { count: 1, timestamp: now });
+    return { success: true };
+  }
+
+  if (now - record.timestamp > RATE_LIMIT_WINDOW_MS) {
+    // Window expired, reset
+    rateLimitMap.set(ip, { count: 1, timestamp: now });
+    return { success: true };
+  }
+
+  if (record.count >= RATE_LIMIT_MAX) {
+    return { success: false, resetTime: record.timestamp + RATE_LIMIT_WINDOW_MS };
+  }
+
+  record.count++;
+  return { success: true };
+}
+
 // Convert phone to email-like format for Supabase auth (workaround for phone auth disabled)
 const phoneToEmail = (phone: string): string => {
   // Remove + and use phone as email: +628123456789 -> 628123456789@phone.local
@@ -10,6 +38,17 @@ const phoneToEmail = (phone: string): string => {
 
 export async function POST(request: Request) {
   try {
+    // Apply rate limiting
+    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    const rateLimitResult = checkRateLimit(ip);
+    
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many registration attempts. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
     const { phone, password, full_name, email } = await request.json();
 
     // Validate required fields - phone is now required, email is optional
@@ -45,7 +84,7 @@ export async function POST(request: Request) {
     });
 
     if (createError || !authData.user) {
-      console.error('Error creating user:', createError);
+      console.error('Error creating user');
       
       // Check for duplicate phone error
       if (createError?.message?.includes('already registered') || createError?.message?.includes('duplicate')) {
@@ -67,7 +106,7 @@ export async function POST(request: Request) {
       .eq('id', authData.user.id);
 
     if (updateError) {
-      console.error('Error updating profile:', updateError);
+      console.error('Error updating profile');
     }
 
     return NextResponse.json({ 
@@ -75,7 +114,7 @@ export async function POST(request: Request) {
       message: 'Registration successful. Please wait for admin approval before logging in.' 
     });
   } catch (error) {
-    console.error('Exception in register API:', error);
+    console.error('Exception in register API');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
