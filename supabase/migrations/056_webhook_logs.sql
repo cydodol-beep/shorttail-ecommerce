@@ -179,7 +179,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- ============================================================================
 
 GRANT SELECT, INSERT ON webhook_logs TO authenticated;
-GRANT USAGE ON SEQUENCE webhook_logs_id_seq TO authenticated;
+-- Note: No sequence grant needed as id uses gen_random_uuid() (UUID), not SERIAL
 
 -- ============================================================================
 -- Migration Complete

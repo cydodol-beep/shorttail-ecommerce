@@ -35,6 +35,12 @@ ALTER TABLE notifications_broadcast ENABLE ROW LEVEL SECURITY;
 -- 2. RLS Policies for notifications_broadcast
 -- ============================================================================
 
+-- Drop existing policies to avoid conflicts
+DROP POLICY IF EXISTS "Users can view their own and broadcast notifications" ON notifications_broadcast;
+DROP POLICY IF EXISTS "Only admins can create notifications" ON notifications_broadcast;
+DROP POLICY IF EXISTS "Users can update their own notification read status" ON notifications_broadcast;
+DROP POLICY IF EXISTS "Only admins can delete notifications" ON notifications_broadcast;
+
 -- Users can see their own notifications OR broadcast notifications targeted at their role
 CREATE POLICY "Users can view their own and broadcast notifications"
     ON notifications_broadcast FOR SELECT
@@ -43,7 +49,7 @@ CREATE POLICY "Users can view their own and broadcast notifications"
         OR (
             is_broadcast = true 
             AND target_role = (
-                SELECT role FROM profiles WHERE id = auth.uid()
+                SELECT role::text FROM profiles WHERE id = auth.uid()
             )
         )
     );
@@ -55,7 +61,7 @@ CREATE POLICY "Only admins can create notifications"
         EXISTS (
             SELECT 1 FROM profiles 
             WHERE id = auth.uid() 
-            AND role IN ('master_admin', 'normal_admin', 'super_user')
+            AND role IN ('master_admin'::app_role, 'normal_admin'::app_role, 'super_user'::app_role)
         )
     );
 
@@ -72,7 +78,7 @@ CREATE POLICY "Only admins can delete notifications"
         EXISTS (
             SELECT 1 FROM profiles 
             WHERE id = auth.uid() 
-            AND role IN ('master_admin', 'normal_admin', 'super_user')
+            AND role IN ('master_admin'::app_role, 'normal_admin'::app_role, 'super_user'::app_role)
         )
     );
 
@@ -80,19 +86,23 @@ CREATE POLICY "Only admins can delete notifications"
 -- 3. Enable Realtime for notifications_broadcast
 -- ============================================================================
 
--- Add to realtime publication
-ALTER PUBLICATION supabase_realtime ADD TABLE notifications_broadcast;
-
--- Configure realtime to broadcast all changes
-BEGIN;
-  -- Drop existing if any
-  DROP PUBLICATION IF EXISTS supabase_realtime;
-  
-  -- Create new publication with notifications_broadcast
-  CREATE PUBLICATION supabase_realtime FOR TABLE 
-    notifications_broadcast,
-    orders;
-COMMIT;
+-- Configure realtime publication (handles already-existing gracefully)
+DO $$
+BEGIN
+    -- Check if publication exists
+    IF EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN
+        -- Try to add table to existing publication (will be skipped if already member)
+        BEGIN
+            EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE notifications_broadcast';
+        EXCEPTION WHEN duplicate_object THEN
+            -- Table already in publication, ignore
+            NULL;
+        END;
+    ELSE
+        -- Create new publication
+        CREATE PUBLICATION supabase_realtime FOR TABLE notifications_broadcast, orders;
+    END IF;
+END $$;
 
 -- ============================================================================
 -- 4. Function to broadcast order status updates
@@ -242,7 +252,7 @@ DECLARE
     v_user_role VARCHAR(50);
 BEGIN
     -- Get user role
-    SELECT role INTO v_user_role FROM profiles WHERE id = COALESCE(p_user_id, auth.uid());
+    SELECT role::text INTO v_user_role FROM profiles WHERE id = COALESCE(p_user_id, auth.uid());
     
     SELECT COUNT(*) INTO v_count
     FROM notifications_broadcast
@@ -304,7 +314,7 @@ CREATE INDEX IF NOT EXISTS idx_notifications_broadcast_created_at
 -- ============================================================================
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON notifications_broadcast TO authenticated;
-GRANT USAGE ON SEQUENCE notifications_broadcast_id_seq TO authenticated;
+-- Note: No sequence grant needed as id uses gen_random_uuid() (UUID), not SERIAL
 
 -- ============================================================================
 -- 11. Add realtime configuration comment
