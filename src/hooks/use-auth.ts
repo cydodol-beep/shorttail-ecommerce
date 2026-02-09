@@ -173,7 +173,7 @@ export function useAuth() {
 
         const sessionResult = await withTimeoutEffect(
           getSessionPromise,
-          15000  // 15 second timeout for network operations
+          30000  // 30 second timeout for network operations
         ) as SessionResult;
 
         const { data: { session }, error: sessionError } = sessionResult;
@@ -253,23 +253,41 @@ export function useAuth() {
 
         const sessionResult = await withTimeoutEffect(
           getSessionPromise,
-          15000  // 15 second timeout for network operations
+          30000  // 30 second timeout - more lenient for idle users
         ) as SessionResult;
 
         const { data: { session }, error } = sessionResult;
 
-        if (error || !session) {
-          // If session retrieval fails, user might be logged out, so sign out properly
-          await signOut();
+        // Only sign out on actual authentication errors, not timeouts
+        if (error) {
+          // Check if it's a real auth error vs timeout
+          const errorMessage = error.message?.toLowerCase() || '';
+          const isAuthError = errorMessage.includes('token') ||
+                             errorMessage.includes('unauthorized') ||
+                             errorMessage.includes('invalid');
+          
+          if (isAuthError) {
+            console.log('Auth error detected, signing out:', error.message);
+            await signOut();
+          } else {
+            console.warn('Non-auth error during session check (likely timeout), keeping user logged in:', error.message);
+          }
           return;
         }
 
-        // Check if token expires within 10 minutes of the 1-hour session (to allow for refresh)
+        if (!session) {
+          // No session but no error - might be normal, don't force logout
+          console.log('No active session found during periodic check');
+          return;
+        }
+
+        // Check if token expires within 10 minutes
         const expiresAt = session.expires_at;
         if (expiresAt) {
           const expiresIn = expiresAt * 1000 - Date.now();
-          // If token expires in less than 10 minutes of the 1-hour session, refresh it
-          if (expiresIn < 10 * 60 * 1000) {
+          
+          // If token expires in less than 10 minutes, try to refresh
+          if (expiresIn < 10 * 60 * 1000 && expiresIn > 0) {
             const refreshPromise = supabase.auth.refreshSession();
             type RefreshResult = {
               data: { session: Session | null },
@@ -278,28 +296,42 @@ export function useAuth() {
 
             const refreshResult = await withTimeoutEffect(
               refreshPromise,
-              15000  // 15 second timeout for network operations
+              30000  // 30 second timeout for refresh
             ) as RefreshResult;
 
             const { error: refreshError, data: refreshData } = refreshResult;
             if (refreshError) {
-              console.error('Failed to refresh session:', refreshError.message);
-              // If refresh fails, force logout as session may be invalid
-              await signOut();
+              const refreshErrorMsg = refreshError.message?.toLowerCase() || '';
+              const isRefreshAuthError = refreshErrorMsg.includes('token') ||
+                                        refreshErrorMsg.includes('unauthorized') ||
+                                        refreshErrorMsg.includes('invalid') ||
+                                        refreshErrorMsg.includes('expired');
+              
+              if (isRefreshAuthError) {
+                console.log('Refresh token invalid, signing out:', refreshError.message);
+                await signOut();
+              } else {
+                console.warn('Non-auth error during refresh (likely timeout), keeping session:', refreshError.message);
+              }
             } else if (refreshData.session) {
               // Update session in the UI after refresh
               setUser(refreshData.session.user);
               useAuthStore.setState({ user: refreshData.session.user });
             }
           } else if (expiresIn < 0) {
-            // If already expired, sign out
+            // Token already expired
+            console.log('Session expired, signing out');
             await signOut();
           }
         }
       } catch (error) {
-        console.error('Session check failed:', error);
-        // If the check completely fails, sign out the user as session may be invalid
-        await signOut();
+        // Catch-all for unexpected errors - don't sign out on timeout/network issues
+        const errorMessage = error instanceof Error ? error.message.toLowerCase() : '';
+        if (errorMessage.includes('timeout') || errorMessage.includes('network') || errorMessage.includes('fetch')) {
+          console.warn('Network/timeout error during session check, keeping user logged in:', error);
+        } else {
+          console.error('Unexpected session check error:', error);
+        }
       }
     };
 
