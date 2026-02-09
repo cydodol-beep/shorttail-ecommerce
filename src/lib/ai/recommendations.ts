@@ -25,10 +25,17 @@ import type { Product } from '@/types/database';
  * - Type-safe recommendations
  */
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy initialization of OpenAI client to avoid build-time errors
+let openai: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI | null {
+  if (!openai && process.env.OPENAI_API_KEY) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return openai;
+}
 
 /**
  * User context for recommendations
@@ -140,8 +147,14 @@ async function generateAIRecommendations(
       includeReasons
     );
 
+    // Get OpenAI client (will be null if API key not configured)
+    const openaiClient = getOpenAIClient();
+    if (!openaiClient) {
+      return getFallbackRecommendations(supabase, userContext, options);
+    }
+
     // Call OpenAI API
-    const completion = await openai.chat.completions.create({
+    const completion = await openaiClient.chat.completions.create({
       model: 'gpt-4o-mini', // Cost-effective model
       messages: [
         {
