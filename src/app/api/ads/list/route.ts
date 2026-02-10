@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 import type { AdvertisementCampaign, AdPosition } from '@/types/database';
 
 // Cache duration in seconds (5 minutes)
@@ -27,6 +27,18 @@ function getCachedAds(key: string): AdvertisementCampaign[] | null {
 
 function setCachedAds(key: string, ads: AdvertisementCampaign[]): void {
   cache.set(key, { data: ads, timestamp: Date.now() });
+}
+
+// Create a simple Supabase client for public data (no auth required)
+function createSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!url || !key) {
+    throw new Error('Missing Supabase environment variables');
+  }
+  
+  return createClient(url, key);
 }
 
 export async function GET(request: NextRequest) {
@@ -68,44 +80,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Create Supabase client
-    const supabase = await createClient();
+    // Create simple Supabase client (no cookies needed for public ads)
+    const supabase = createSupabaseClient();
 
-    // Build query
-    let query = supabase
+    // Build query - simplified to avoid complex JSONB filtering that may cause issues
+    const { data: ads, error } = await supabase
       .from('advertisement_campaigns')
       .select('*')
       .eq('is_active', true)
       .eq('status', 'active')
-      .eq('position', position);
-
-    // Apply date filters
-    query = query.or('start_date.is.null,start_date.lte.now');
-    query = query.or('end_date.is.null,end_date.gte.now');
-
-    // Apply targeting filters
-    if (deviceType) {
-      // Filter by device type in target_audience JSONB
-      query = query.or(`target_audience->device_types.is.null,target_audience->device_types.cs.{"${deviceType}"}`);
-    }
-
-    if (userTier) {
-      // Filter by user tier in target_audience JSONB
-      query = query.or(`target_audience->user_tiers.is.null,target_audience->user_tiers.cs.{"${userTier}"}`);
-    }
-
-    // Order by priority and created_at
-    query = query
+      .eq('position', position)
+      .or('start_date.is.null,start_date.lte.now()')
+      .or('end_date.is.null,end_date.gte.now()')
       .order('priority', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(10);
 
-    const { data: ads, error } = await query;
-
     if (error) {
       console.error('Error fetching ads:', error);
       return NextResponse.json(
-        { error: 'Failed to fetch advertisements' },
+        { error: 'Failed to fetch advertisements', details: error.message },
         { status: 500 }
       );
     }
@@ -126,7 +120,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error in ads list API:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

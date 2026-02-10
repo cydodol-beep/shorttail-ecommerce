@@ -69,6 +69,7 @@ export function useProductsGrid(options: UseProductsGridOptions = {}): UseProduc
   const supabase = createClient();
   const abortControllerRef = useRef<AbortController | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
 
   const hasMore = products.length < totalCount;
 
@@ -236,36 +237,46 @@ export function useProductsGrid(options: UseProductsGridOptions = {}): UseProduc
         });
       }
 
-      if (isLoadMore) {
-        setProducts((prev) => [...prev, ...filteredProducts]);
-        setPage(currentPage);
-      } else {
-        setProducts(filteredProducts);
-        setPage(1);
-      }
+      if (isMountedRef.current) {
+        if (isLoadMore) {
+          setProducts((prev) => [...prev, ...filteredProducts]);
+          setPage(currentPage);
+        } else {
+          setProducts(filteredProducts);
+          setPage(1);
+        }
 
-      setTotalCount(count || 0);
+        setTotalCount(count || 0);
+      }
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
         return; // Ignore aborted requests
       }
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch products';
-      setError(errorMessage);
+      if (isMountedRef.current) {
+        setError(errorMessage);
+      }
       console.error('Error fetching products:', err);
     } finally {
-      setIsLoading(false);
-      setIsLoadingMore(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+        setIsLoadingMore(false);
+      }
     }
   }, [filters, page, itemsPerPage, supabase]);
 
   // Debounced fetch for search
   useEffect(() => {
+    isMountedRef.current = true;
+    
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
 
     searchTimeoutRef.current = setTimeout(() => {
-      fetchProducts(false);
+      if (isMountedRef.current) {
+        fetchProducts(false);
+      }
     }, 300);
 
     return () => {
@@ -273,17 +284,20 @@ export function useProductsGrid(options: UseProductsGridOptions = {}): UseProduc
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [filters.searchQuery, filters.category, filters.sortBy, filters.inStockOnly]);
+  }, [filters.searchQuery, filters.category, filters.sortBy, filters.inStockOnly, fetchProducts]);
 
   // Immediate fetch for other filters
   useEffect(() => {
-    fetchProducts(false);
+    if (isMountedRef.current) {
+      fetchProducts(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.minPrice, filters.maxPrice]);
 
   // Cleanup
   useEffect(() => {
     return () => {
+      isMountedRef.current = false;
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }

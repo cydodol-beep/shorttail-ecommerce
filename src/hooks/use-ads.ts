@@ -48,15 +48,16 @@ export function useAds(options: UseAdsOptions): UseAdsReturn {
   const supabase = createClient();
   
   const store = useAdsStore();
-  const ads = store.adsByPosition[position];
-  const isLoading = store.isLoading[position];
-  const error = store.errors[position];
+  const ads = store.adsByPosition[position] || [];
+  const isLoading = store.isLoading[position] || false;
+  const error = store.errors[position] || null;
   
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
 
-  // Fetch ads from API or Supabase
+  // Fetch ads from Supabase directly (skip API to avoid timeout issues)
   const fetchAds = useCallback(async () => {
-    if (!enabled) return;
+    if (!enabled || !isMountedRef.current) return;
     
     // Check cache validity
     if (store.getCacheValid(position)) {
@@ -67,46 +68,36 @@ export function useAds(options: UseAdsOptions): UseAdsReturn {
     store.setError(position, null);
 
     try {
-      // Try to fetch from API first (for Redis caching)
-      const device = deviceType || getDeviceType();
-      const params = new URLSearchParams({
-        position,
-        deviceType: device,
-      });
-      if (userTier) params.append('userTier', userTier);
+      // Fetch directly from Supabase (more reliable than API route)
+      const { data, error: supabaseError } = await supabase
+        .from('advertisement_campaigns')
+        .select('*')
+        .eq('is_active', true)
+        .eq('status', 'active')
+        .eq('position', position)
+        .or('start_date.is.null,start_date.lte.now()')
+        .or('end_date.is.null,end_date.gte.now()')
+        .order('priority', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(10);
 
-      const response = await fetch(`/api/ads/list?${params}`, {
-        signal: AbortSignal.timeout(10000),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        store.setAds(position, data.ads || []);
-      } else {
-        // Fallback to direct Supabase query
-        const { data, error: supabaseError } = await supabase
-          .from('advertisement_campaigns')
-          .select('*')
-          .eq('is_active', true)
-          .eq('status', 'active')
-          .eq('position', position)
-          .or('start_date.is.null,start_date.lte.now')
-          .or('end_date.is.null,end_date.gte.now')
-          .order('priority', { ascending: false })
-          .order('created_at', { ascending: false })
-          .limit(10);
-
-        if (supabaseError) throw supabaseError;
+      if (supabaseError) throw supabaseError;
+      
+      if (isMountedRef.current) {
         store.setAds(position, data || []);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch ads';
-      store.setError(position, errorMessage);
+      if (isMountedRef.current) {
+        store.setError(position, errorMessage);
+      }
       console.error('Error fetching ads:', err);
     } finally {
-      store.setLoading(position, false);
+      if (isMountedRef.current) {
+        store.setLoading(position, false);
+      }
     }
-  }, [position, deviceType, userTier, enabled, supabase, store]);
+  }, [position, enabled, supabase, store]);
 
   // Track impression
   const trackImpression = useCallback(async (adId: string) => {
@@ -122,7 +113,7 @@ export function useAds(options: UseAdsOptions): UseAdsReturn {
       const device = deviceType || getDeviceType();
       const sessionId = getSessionId();
 
-      // Send to API
+      // Send to API with longer timeout
       await fetch('/api/ads/impression', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -132,7 +123,7 @@ export function useAds(options: UseAdsOptions): UseAdsReturn {
           deviceType: device,
           pageUrl: typeof window !== 'undefined' ? window.location.href : '',
         }),
-        signal: AbortSignal.timeout(5000),
+        signal: AbortSignal.timeout(30000), // 30 second timeout
       });
     } catch (err) {
       // Silently fail - don't break user experience
@@ -154,7 +145,7 @@ export function useAds(options: UseAdsOptions): UseAdsReturn {
       const device = deviceType || getDeviceType();
       const sessionId = getSessionId();
 
-      // Send to API
+      // Send to API with longer timeout
       await fetch('/api/ads/click', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -164,7 +155,7 @@ export function useAds(options: UseAdsOptions): UseAdsReturn {
           deviceType: device,
           pageUrl: typeof window !== 'undefined' ? window.location.href : '',
         }),
-        signal: AbortSignal.timeout(5000),
+        signal: AbortSignal.timeout(30000), // 30 second timeout
       });
     } catch (err) {
       // Silently fail - don't break user experience
@@ -174,6 +165,8 @@ export function useAds(options: UseAdsOptions): UseAdsReturn {
 
   // Initial fetch
   useEffect(() => {
+    isMountedRef.current = true;
+    
     if (!enabled) return;
 
     // Debounce fetch to prevent multiple rapid calls
@@ -186,6 +179,7 @@ export function useAds(options: UseAdsOptions): UseAdsReturn {
     }, 100);
 
     return () => {
+      isMountedRef.current = false;
       if (fetchTimeoutRef.current) {
         clearTimeout(fetchTimeoutRef.current);
       }
