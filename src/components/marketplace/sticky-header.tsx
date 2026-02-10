@@ -236,9 +236,9 @@ export function StickyHeader({ onSearch, searchQuery = '' }: StickyHeaderProps) 
                     </Link>
                   ) : (
                     <Link
-                      href="/shop"
+                      href="/about"
                       className="p-2 text-teal hover:text-accent hover:bg-teal/5 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-teal"
-                      aria-label="Marketplace"
+                      aria-label="About"
                     >
                       <Store size={20} />
                     </Link>

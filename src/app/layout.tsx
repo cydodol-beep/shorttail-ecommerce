@@ -79,7 +79,7 @@ export default function RootLayout({
         <link rel="canonical" href="https://shorttail.id" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}
       >
         <AppWrapper>
           {children}
