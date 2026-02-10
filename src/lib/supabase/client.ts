@@ -23,15 +23,8 @@ export function createClient() {
           headers: {
             'Content-Type': 'application/json',
           },
-          // Configure fetch options with increased timeout
-          fetch: (url, options = {}) => {
-            // Set timeout explicitly in fetch options
-            // Increased to 45 seconds for better resilience on slow connections
-            return fetch(url, {
-              ...options,
-              signal: options.signal || AbortSignal.timeout(60000), // 60 seconds timeout
-            });
-          },
+          // Note: We don't set a global timeout here to avoid conflicts with AbortController
+          // Individual requests can set their own timeout via AbortSignal
         },
       }
     );

@@ -67,7 +67,6 @@ export function useProductsGrid(options: UseProductsGridOptions = {}): UseProduc
   });
 
   const supabase = createClient();
-  const abortControllerRef = useRef<AbortController | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
 
@@ -95,30 +94,8 @@ export function useProductsGrid(options: UseProductsGridOptions = {}): UseProduc
     setPage(1);
   }, []);
 
-  // Test Supabase connection first
-  const testConnection = useCallback(async () => {
-    try {
-      const { data, error } = await supabase.from('products').select('count', { count: 'exact', head: true });
-      if (error) {
-        console.error('Supabase connection test failed:', error);
-        return false;
-      }
-      console.log('Supabase connection test passed. Products count:', data);
-      return true;
-    } catch (err) {
-      console.error('Supabase connection test error:', err);
-      return false;
-    }
-  }, [supabase]);
-
   // Fetch products
   const fetchProducts = useCallback(async (isLoadMore = false) => {
-    // Cancel previous request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    abortControllerRef.current = new AbortController();
-
     if (isLoadMore) {
       setIsLoadingMore(true);
     } else {
@@ -127,12 +104,6 @@ export function useProductsGrid(options: UseProductsGridOptions = {}): UseProduc
     setError(null);
 
     try {
-      // Test connection first
-      const isConnected = await testConnection();
-      if (!isConnected) {
-        throw new Error('Unable to connect to database. Please check your Supabase configuration.');
-      }
-
       const currentPage = isLoadMore ? page + 1 : 1;
       const from = (currentPage - 1) * itemsPerPage;
       const to = from + itemsPerPage - 1;
@@ -141,8 +112,7 @@ export function useProductsGrid(options: UseProductsGridOptions = {}): UseProduc
       let query = supabase
         .from('products')
         .select('*', { count: 'exact' })
-        .eq('is_active', true)
-        .abortSignal(abortControllerRef.current.signal);
+        .eq('is_active', true);
 
       // Apply category filter
       if (filters.category && filters.category !== 'all') {
@@ -191,7 +161,7 @@ export function useProductsGrid(options: UseProductsGridOptions = {}): UseProduc
 
       if (fetchError) {
         console.error('Products fetch error:', fetchError);
-        throw fetchError;
+        throw new Error(fetchError.message || 'Failed to fetch products');
       }
 
       // Step 2: Fetch variants for products that have them
@@ -204,7 +174,9 @@ export function useProductsGrid(options: UseProductsGridOptions = {}): UseProduc
           .select('*')
           .in('product_id', productIds);
         
-        if (!variantsError && variantsData) {
+        if (variantsError) {
+          console.error('Variants fetch error:', variantsError);
+        } else if (variantsData) {
           variantsMap = variantsData.reduce((acc: Record<string, ProductVariant[]>, variant: ProductVariant) => {
             if (!acc[variant.product_id]) acc[variant.product_id] = [];
             acc[variant.product_id].push(variant);
@@ -223,7 +195,9 @@ export function useProductsGrid(options: UseProductsGridOptions = {}): UseProduc
           .select('*')
           .in('id', categoryIds);
         
-        if (!categoriesError && categoriesData) {
+        if (categoriesError) {
+          console.error('Categories fetch error:', categoriesError);
+        } else if (categoriesData) {
           categoriesMap = categoriesData.reduce((acc: Record<string, Category>, cat: Category) => {
             acc[cat.id] = cat;
             return acc;
@@ -286,19 +260,11 @@ export function useProductsGrid(options: UseProductsGridOptions = {}): UseProduc
         setTotalCount(count || 0);
       }
     } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') {
-        return;
-      }
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch products';
       if (isMountedRef.current) {
         setError(errorMessage);
       }
-      console.error('Error fetching products:', {
-        message: errorMessage,
-        error: err,
-        filters,
-        page,
-      });
+      console.error('Error fetching products:', err);
     } finally {
       if (isMountedRef.current) {
         setIsLoading(false);
@@ -340,9 +306,6 @@ export function useProductsGrid(options: UseProductsGridOptions = {}): UseProduc
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
     };
   }, []);
 
