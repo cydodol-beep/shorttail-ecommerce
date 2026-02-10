@@ -22,7 +22,6 @@ import { cn } from '@/lib/utils';
 import { useProductsPagination, ProductFilters } from '@/hooks/use-products-pagination';
 import { StickyHeader } from '@/components/marketplace/sticky-header';
 import { ScrollProgress } from '@/components/marketplace/scroll-progress';
-import { AnimatedFooter } from '@/components/marketplace/animated-footer';
 import { SocialProofToast } from '@/components/marketplace/social-proof-toast';
 import { FilterBar } from '@/components/marketplace/filter-bar';
 import type { ProductWithDetails } from '@/hooks/use-products-pagination';
@@ -426,9 +425,6 @@ export function MarketplaceLanding() {
           </>
         )}
       </main>
-
-      {/* Animated Footer */}
-      <AnimatedFooter />
 
       {/* Social Proof Toast */}
       <SocialProofToast position="bottom-left" interval={10000} />
