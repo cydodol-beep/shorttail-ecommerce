@@ -306,10 +306,9 @@ export function MarketplaceLanding() {
       <ScrollProgress />
       
       {/* Sticky Smart Header */}
-      <StickyHeader 
-        onSearch={handleSearch} 
+      <StickyHeader
+        onSearch={handleSearch}
         searchQuery={filters.searchQuery || ''}
-        cartCount={0}
       />
 
       {/* Hero Section */}
