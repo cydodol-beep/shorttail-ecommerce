@@ -1,16 +1,15 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense } from 'react';
+import { MarketplaceContent } from '@/app/marketplace/components/marketplace-content';
+import { MarketplaceSkeleton } from '@/app/marketplace/components/marketplace-skeleton';
 
 export default function HomePage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    // Redirect to the /about page
-    router.push('/about');
-  }, [router]);
-
-  // Render nothing since we're redirecting
-  return null;
+  return (
+    <main className="min-h-screen bg-background">
+      <Suspense fallback={<MarketplaceSkeleton />}>
+        <MarketplaceContent />
+      </Suspense>
+    </main>
+  );
 }
