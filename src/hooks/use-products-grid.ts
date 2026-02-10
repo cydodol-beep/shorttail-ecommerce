@@ -95,6 +95,22 @@ export function useProductsGrid(options: UseProductsGridOptions = {}): UseProduc
     setPage(1);
   }, []);
 
+  // Test Supabase connection first
+  const testConnection = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.from('products').select('count', { count: 'exact', head: true });
+      if (error) {
+        console.error('Supabase connection test failed:', error);
+        return false;
+      }
+      console.log('Supabase connection test passed. Products count:', data);
+      return true;
+    } catch (err) {
+      console.error('Supabase connection test error:', err);
+      return false;
+    }
+  }, [supabase]);
+
   // Fetch products
   const fetchProducts = useCallback(async (isLoadMore = false) => {
     // Cancel previous request
@@ -111,6 +127,12 @@ export function useProductsGrid(options: UseProductsGridOptions = {}): UseProduc
     setError(null);
 
     try {
+      // Test connection first
+      const isConnected = await testConnection();
+      if (!isConnected) {
+        throw new Error('Unable to connect to database. Please check your Supabase configuration.');
+      }
+
       const currentPage = isLoadMore ? page + 1 : 1;
       const from = (currentPage - 1) * itemsPerPage;
       const to = from + itemsPerPage - 1;

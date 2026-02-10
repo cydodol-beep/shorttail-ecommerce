@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Loader2, Package, Grid, List } from 'lucide-react';
+import { Loader2, Package, Grid, List, AlertCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 
 import { useProductsGrid, ProductFilters } from '@/hooks/use-products-grid';
@@ -176,13 +177,22 @@ export function MarketplaceContent() {
                 ))}
               </div>
             ) : error ? (
-              <div className="text-center py-16">
-                <Package className="h-16 w-16 text-brown-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-brown-900 mb-2">
-                  Error loading products
-                </h3>
-                <p className="text-brown-600 mb-4">{error}</p>
-                <Button onClick={refetch}>Try Again</Button>
+              <div className="py-8">
+                <Alert variant="destructive" className="mb-6">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Error loading products</AlertTitle>
+                  <AlertDescription>
+                    {error}
+                    <div className="mt-2 text-sm opacity-80">
+                      Check the browser console for detailed error information.
+                    </div>
+                  </AlertDescription>
+                </Alert>
+                <div className="text-center">
+                  <Button onClick={refetch} size="lg">
+                    Try Again
+                  </Button>
+                </div>
               </div>
             ) : products.length === 0 ? (
               <div className="text-center py-16">
