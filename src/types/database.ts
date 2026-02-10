@@ -92,6 +92,19 @@ export interface ShippingCourier {
   is_active: boolean;
 }
 
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  image_url: string | null;
+  parent_id: string | null;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Promotion {
   id: string;
   code: string;
@@ -169,6 +182,51 @@ export interface Wishlist {
   created_at: string;
 }
 
+export type AdPosition = 'sidebar' | 'interstitial' | 'banner' | 'popup';
+export type AdStatus = 'active' | 'paused' | 'draft' | 'expired';
+export type AdTestGroup = 'A' | 'B' | 'control';
+
+export interface AdvertisementCampaign {
+  id: string;
+  title: string;
+  description: string | null;
+  image_url: string;
+  image_srcset: { url: string; width: number }[] | null;
+  link_url: string | null;
+  position: AdPosition;
+  start_date: string | null;
+  end_date: string | null;
+  status: AdStatus;
+  priority: number;
+  is_active: boolean;
+  target_audience: {
+    device_types?: string[];
+    user_tiers?: string[];
+    pet_types?: string[];
+  } | null;
+  ab_test_group: AdTestGroup | null;
+  impression_count: number;
+  click_count: number;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdImpression {
+  id: string;
+  ad_id: string;
+  user_id: string | null;
+  session_id: string | null;
+  timestamp: string;
+  clicked: boolean;
+  click_timestamp: string | null;
+  device_type: string | null;
+  user_agent: string | null;
+  referrer_url: string | null;
+  page_url: string | null;
+  ab_test_group: string | null;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -221,6 +279,16 @@ export interface Database {
         Row: Review;
         Insert: Omit<Review, 'id' | 'created_at'>;
         Update: Partial<Review>;
+      };
+      advertisement_campaigns: {
+        Row: AdvertisementCampaign;
+        Insert: Omit<AdvertisementCampaign, 'id' | 'impression_count' | 'click_count' | 'created_at' | 'updated_at'>;
+        Update: Partial<AdvertisementCampaign>;
+      };
+      ad_impressions: {
+        Row: AdImpression;
+        Insert: Omit<AdImpression, 'id' | 'timestamp'>;
+        Update: Partial<AdImpression>;
       };
     };
   };

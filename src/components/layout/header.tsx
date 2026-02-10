@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingCart, Search, Menu, X, Heart, ArrowRight, User, Percent, Tag, Calendar, Gift, Sparkles, Star, Bell, Store, LogOut } from 'lucide-react';
+import { ShoppingCart, Search, Menu, X, Heart, ArrowRight, User, Percent, Tag, Calendar, Gift, Sparkles, Star, Bell, Store, LogOut, Coins, Trophy, Gem } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { Button } from '@/components/ui/button';
@@ -282,6 +282,27 @@ export function Header() {
                     >
                       <Heart size={20} />
                     </Link>
+                  )}
+
+                  {/* User Points & Level Display */}
+                  {!isSearchOpen && user && profile?.points_balance !== undefined && (
+                    <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-full border border-amber-200">
+                      <div className="flex items-center gap-1 text-amber-600" title="Points">
+                        <Coins size={14} className="text-amber-500" />
+                        <span className="text-xs font-semibold">
+                          {profile.points_balance.toLocaleString('id-ID')}
+                        </span>
+                      </div>
+                      {profile.level !== undefined && profile.level > 0 && (
+                        <>
+                          <span className="text-amber-300">|</span>
+                          <div className="flex items-center gap-1 text-purple-600" title={`Level ${profile.level}`}>
+                            <Trophy size={14} className="text-purple-500" />
+                            <span className="text-xs font-semibold">Lv.{profile.level}</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   )}
 
                   {user ? (
