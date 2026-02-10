@@ -1,15 +1,7 @@
-'use client';
+import { MarketplaceLanding } from './marketplace/components/marketplace-landing';
 
-import { Suspense } from 'react';
-import { MarketplaceContent } from '@/app/marketplace/components/marketplace-content';
-import { MarketplaceSkeleton } from '@/app/marketplace/components/marketplace-skeleton';
+export const dynamic = 'force-dynamic';
 
 export default function HomePage() {
-  return (
-    <main className="min-h-screen bg-background">
-      <Suspense fallback={<MarketplaceSkeleton />}>
-        <MarketplaceContent />
-      </Suspense>
-    </main>
-  );
+  return <MarketplaceLanding />;
 }
