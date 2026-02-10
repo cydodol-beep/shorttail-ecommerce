@@ -115,38 +115,15 @@ export function useProductsGrid(options: UseProductsGridOptions = {}): UseProduc
       const from = (currentPage - 1) * itemsPerPage;
       const to = from + itemsPerPage - 1;
 
-      // Build base query
+      // Step 1: Fetch products (simpler query without joins first)
       let query = supabase
         .from('products')
-        .select(
-          `
-            id,
-            name,
-            description,
-            sku,
-            category_id,
-            base_price,
-            stock_quantity,
-            condition,
-            has_variants,
-            main_image_url,
-            gallery_image_urls,
-            unit_weight_grams,
-            is_active,
-            related_product_ids,
-            created_at,
-            updated_at,
-            categories:category_id(id, name, slug),
-            product_variants(id, variant_name, price_adjustment, stock_quantity, variant_image_url)
-          `,
-          { count: 'exact' }
-        )
+        .select('*', { count: 'exact' })
         .eq('is_active', true)
         .abortSignal(abortControllerRef.current.signal);
 
-      // Apply filters
+      // Apply category filter
       if (filters.category && filters.category !== 'all') {
-        // Get category ID from slug
         const { data: categoryData } = await supabase
           .from('categories')
           .select('id')
@@ -158,10 +135,12 @@ export function useProductsGrid(options: UseProductsGridOptions = {}): UseProduc
         }
       }
 
+      // Apply search filter
       if (filters.searchQuery?.trim()) {
         query = query.ilike('name', `%${filters.searchQuery.trim()}%`);
       }
 
+      // Apply stock filter
       if (filters.inStockOnly) {
         query = query.gt('stock_quantity', 0);
       }
@@ -186,13 +165,53 @@ export function useProductsGrid(options: UseProductsGridOptions = {}): UseProduc
       // Apply pagination
       query = query.range(from, to);
 
-      const { data, error: fetchError, count } = await query;
+      const { data: productsData, error: fetchError, count } = await query;
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error('Products fetch error:', fetchError);
+        throw fetchError;
+      }
 
-      // Process products with variants
-      const processedProducts: ProductWithDetails[] = (data || []).map((product: any) => {
-        const variants = product.product_variants || [];
+      // Step 2: Fetch variants for products that have them
+      const productIds = (productsData || []).map((p: Product) => p.id);
+      let variantsMap: Record<string, ProductVariant[]> = {};
+      
+      if (productIds.length > 0) {
+        const { data: variantsData, error: variantsError } = await supabase
+          .from('product_variants')
+          .select('*')
+          .in('product_id', productIds);
+        
+        if (!variantsError && variantsData) {
+          variantsMap = variantsData.reduce((acc: Record<string, ProductVariant[]>, variant: ProductVariant) => {
+            if (!acc[variant.product_id]) acc[variant.product_id] = [];
+            acc[variant.product_id].push(variant);
+            return acc;
+          }, {});
+        }
+      }
+
+      // Step 3: Fetch categories
+      const categoryIds = [...new Set((productsData || []).map((p: Product) => p.category_id).filter(Boolean))];
+      let categoriesMap: Record<string, Category> = {};
+      
+      if (categoryIds.length > 0) {
+        const { data: categoriesData, error: categoriesError } = await supabase
+          .from('categories')
+          .select('*')
+          .in('id', categoryIds);
+        
+        if (!categoriesError && categoriesData) {
+          categoriesMap = categoriesData.reduce((acc: Record<string, Category>, cat: Category) => {
+            acc[cat.id] = cat;
+            return acc;
+          }, {});
+        }
+      }
+
+      // Process products
+      const processedProducts: ProductWithDetails[] = (productsData || []).map((product: Product) => {
+        const variants = variantsMap[product.id] || [];
         
         // Calculate price range
         let lowestPrice = product.base_price;
@@ -213,21 +232,18 @@ export function useProductsGrid(options: UseProductsGridOptions = {}): UseProduc
         );
         const totalStock = product.stock_quantity + variantStock;
 
-        // Check if out of stock
-        const isOutOfStock = totalStock <= 0;
-
         return {
           ...product,
-          categories: product.categories,
+          categories: product.category_id ? categoriesMap[product.category_id] || null : null,
           product_variants: variants,
           lowestPrice,
           highestPrice,
           totalStock,
-          isOutOfStock,
+          isOutOfStock: totalStock <= 0,
         };
       });
 
-      // Apply price filter in memory (since variants affect price)
+      // Apply price filter in memory
       let filteredProducts = processedProducts;
       if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
         filteredProducts = processedProducts.filter((product) => {
@@ -245,18 +261,22 @@ export function useProductsGrid(options: UseProductsGridOptions = {}): UseProduc
           setProducts(filteredProducts);
           setPage(1);
         }
-
         setTotalCount(count || 0);
       }
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
-        return; // Ignore aborted requests
+        return;
       }
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch products';
       if (isMountedRef.current) {
         setError(errorMessage);
       }
-      console.error('Error fetching products:', err);
+      console.error('Error fetching products:', {
+        message: errorMessage,
+        error: err,
+        filters,
+        page,
+      });
     } finally {
       if (isMountedRef.current) {
         setIsLoading(false);
