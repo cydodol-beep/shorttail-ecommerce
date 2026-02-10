@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Loader2, Package, Grid, List, AlertCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 
 import { useProductsGrid, ProductFilters } from '@/hooks/use-products-grid';
@@ -178,16 +177,18 @@ export function MarketplaceContent() {
               </div>
             ) : error ? (
               <div className="py-8">
-                <Alert variant="destructive" className="mb-6">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Error loading products</AlertTitle>
-                  <AlertDescription>
-                    {error}
-                    <div className="mt-2 text-sm opacity-80">
-                      Check the browser console for detailed error information.
+                <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                    <div>
+                      <h3 className="font-semibold text-red-900">Error loading products</h3>
+                      <p className="text-red-700 mt-1">{error}</p>
+                      <p className="text-red-600 text-sm mt-2">
+                        Check the browser console for detailed error information.
+                      </p>
                     </div>
-                  </AlertDescription>
-                </Alert>
+                  </div>
+                </div>
                 <div className="text-center">
                   <Button onClick={refetch} size="lg">
                     Try Again
