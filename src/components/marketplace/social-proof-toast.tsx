@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, MapPin, Clock, Users, Star, TrendingUp } from 'lucide-react';
+import { ShoppingBag, MapPin, Clock, Users, Star, TrendingUp, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 
 import { cn } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
+import type { Product } from '@/types/database';
 
 interface SocialProofEvent {
   id: string;
@@ -17,35 +19,66 @@ interface SocialProofEvent {
   userName?: string;
 }
 
-// Simulated social proof data
-const mockEvents: Omit<SocialProofEvent, 'id' | 'timeAgo'>[] = [
-  { type: 'purchase', message: 'Someone bought Premium Dog Food', location: 'Jakarta', productImage: '' },
-  { type: 'purchase', message: 'Cat Toy Bundle purchased', location: 'Surabaya', productImage: '' },
-  { type: 'cart', message: '5 people added Organic Cat Treats to cart' },
-  { type: 'view', message: '12 people viewing Dog Bed Premium now' },
-  { type: 'review', message: 'Ani gave Cat Scratching Post 5 stars', userName: 'Ani' },
-  { type: 'purchase', message: 'Aquarium Filter purchased', location: 'Bandung', productImage: '' },
-  { type: 'view', message: '8 people viewing Bird Cage Large now' },
-  { type: 'purchase', message: 'Leather Dog Collar bought', location: 'Yogyakarta', productImage: '' },
-];
-
 interface SocialProofToastProps {
   interval?: number;
   maxVisible?: number;
   position?: 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right';
 }
 
+// Indonesian cities for location variety
+const locations = ['Jakarta', 'Surabaya', 'Bandung', 'Yogyakarta', 'Medan', 'Semarang', 'Makassar', 'Denpasar', 'Palembang', 'Malang'];
+
+// Get random location
+function getRandomLocation(): string {
+  return locations[Math.floor(Math.random() * locations.length)];
+}
+
+// Get time ago text
 function getTimeAgo(): string {
   const times = ['Just now', '1 min ago', '2 mins ago', '3 mins ago', '5 mins ago'];
   return times[Math.floor(Math.random() * times.length)];
 }
 
-function generateEvent(): SocialProofEvent {
-  const baseEvent = mockEvents[Math.floor(Math.random() * mockEvents.length)];
+// Generate event from product
+function generateEventFromProduct(product: Product, usedProductIds: Set<string>): SocialProofEvent | null {
+  if (!product || !product.name) return null;
+  
+  // Skip if this product was just used
+  if (usedProductIds.has(product.id)) {
+    return null;
+  }
+
+  const eventTypes: ('purchase' | 'view' | 'cart' | 'review')[] = ['purchase', 'purchase', 'purchase', 'cart', 'view', 'review'];
+  const type = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+
+  let message = '';
+  let userName: string | undefined;
+
+  switch (type) {
+    case 'purchase':
+      message = `Someone just bought ${product.name}`;
+      break;
+    case 'cart':
+      message = `${Math.floor(Math.random() * 5) + 2} people added ${product.name} to cart`;
+      break;
+    case 'view':
+      message = `${Math.floor(Math.random() * 15) + 3} people viewing ${product.name} now`;
+      break;
+    case 'review':
+      const names = ['Budi', 'Ani', 'Siti', 'Ahmad', 'Rina', 'Dewi', 'Agus'];
+      userName = names[Math.floor(Math.random() * names.length)];
+      message = `${userName} gave ${product.name} 5 stars`;
+      break;
+  }
+
   return {
-    ...baseEvent,
     id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    type,
+    message,
+    location: type === 'purchase' ? getRandomLocation() : undefined,
     timeAgo: getTimeAgo(),
+    productImage: product.main_image_url || undefined,
+    userName,
   };
 }
 
@@ -80,43 +113,130 @@ function getEventColor(type: SocialProofEvent['type']) {
 }
 
 export function SocialProofToast({
-  interval = 8000,
+  interval = 10000,
   maxVisible = 2,
   position = 'bottom-left',
 }: SocialProofToastProps) {
   const [events, setEvents] = useState<SocialProofEvent[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState(false);
+  
+  const supabase = createClient();
+  const usedProductIdsRef = useRef<Set<string>>(new Set());
+  const productIndexRef = useRef(0);
+
+  // Fetch products from Supabase
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const { data, error: fetchError } = await supabase
+          .from('products')
+          .select('id, name, main_image_url, is_active')
+          .eq('is_active', true)
+          .limit(50);
+
+        if (fetchError) {
+          console.error('Error fetching products for social proof:', fetchError);
+          setError(fetchError.message);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          setProducts(data);
+          console.log(`Loaded ${data.length} products for social proof notifications`);
+        } else {
+          console.warn('No active products found for social proof notifications');
+          setError('No products available');
+        }
+      } catch (err) {
+        console.error('Error fetching products:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch products');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [supabase]);
+
+  // Get next product (with rotation to avoid immediate repetition)
+  const getNextProduct = useCallback((): Product | null => {
+    if (products.length === 0) return null;
+
+    // If we've used all products, clear the used set
+    if (usedProductIdsRef.current.size >= products.length) {
+      usedProductIdsRef.current.clear();
+    }
+
+    // Find a product that hasn't been used recently
+    let attempts = 0;
+    let product: Product | null = null;
+
+    while (attempts < products.length && !product) {
+      const candidate = products[productIndexRef.current % products.length];
+      productIndexRef.current++;
+      
+      if (!usedProductIdsRef.current.has(candidate.id)) {
+        product = candidate;
+        usedProductIdsRef.current.add(candidate.id);
+      }
+      attempts++;
+    }
+
+    // Fallback: if all products are used, pick random and clear
+    if (!product) {
+      product = products[Math.floor(Math.random() * products.length)];
+      usedProductIdsRef.current.clear();
+      usedProductIdsRef.current.add(product.id);
+    }
+
+    return product;
+  }, [products]);
 
   // Add new event
   const addEvent = useCallback(() => {
-    if (isPaused) return;
+    if (isPaused || products.length === 0) return;
+
+    const product = getNextProduct();
+    if (!product) return;
+
+    const newEvent = generateEventFromProduct(product, usedProductIdsRef.current);
+    if (!newEvent) return;
 
     setEvents((prev) => {
-      const newEvent = generateEvent();
       const updated = [newEvent, ...prev].slice(0, maxVisible);
       return updated;
     });
 
     // Remove event after display duration
     setTimeout(() => {
-      setEvents((prev) => prev.slice(0, -1));
+      setEvents((prev) => prev.filter((e) => e.id !== newEvent.id));
     }, 5000);
-  }, [isPaused, maxVisible]);
+  }, [isPaused, products, maxVisible, getNextProduct]);
 
   // Initial delay before showing first toast
   useEffect(() => {
+    if (isLoading || products.length === 0) return;
+
     const initialTimeout = setTimeout(() => {
       addEvent();
     }, 3000);
 
     return () => clearTimeout(initialTimeout);
-  }, [addEvent]);
+  }, [addEvent, isLoading, products.length]);
 
   // Interval for new events
   useEffect(() => {
+    if (isLoading || products.length === 0) return;
+
     const intervalId = setInterval(addEvent, interval);
     return () => clearInterval(intervalId);
-  }, [addEvent, interval]);
+  }, [addEvent, interval, isLoading, products.length]);
 
   const positionClasses = {
     'bottom-left': 'bottom-4 left-4',
@@ -124,6 +244,11 @@ export function SocialProofToast({
     'top-left': 'top-4 left-4',
     'top-right': 'top-4 right-4',
   };
+
+  // Don't render if loading or error (graceful degradation)
+  if (isLoading || error || products.length === 0) {
+    return null;
+  }
 
   return (
     <div
