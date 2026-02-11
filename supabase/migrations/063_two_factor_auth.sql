@@ -39,6 +39,11 @@ CREATE INDEX IF NOT EXISTS idx_backup_code_usage_user ON two_factor_backup_code_
 ALTER TABLE two_factor_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE two_factor_backup_code_usage ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can view own 2FA requests" ON two_factor_requests;
+DROP POLICY IF EXISTS "System can manage 2FA requests" ON two_factor_requests;
+DROP POLICY IF EXISTS "Users can view own backup code usage" ON two_factor_backup_code_usage;
+
 -- RLS Policies
 CREATE POLICY "Users can view own 2FA requests"
     ON two_factor_requests FOR SELECT
