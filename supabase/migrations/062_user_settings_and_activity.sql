@@ -137,7 +137,7 @@ BEGIN
         allow_messages
     ) VALUES (
         NEW.id,
-        COALESCE(NEW.full_name, split_part(NEW.email, '@', 1)),
+        COALESCE(NEW.user_name, split_part(NEW.user_email, '@', 1)),
         'system',
         'id',
         'Asia/Jakarta',
@@ -256,9 +256,9 @@ INSERT INTO user_settings (
     timezone,
     currency
 )
-SELECT 
+SELECT
     id,
-    COALESCE(full_name, split_part(email, '@', 1)),
+    COALESCE(user_name, split_part(user_email, '@', 1)),
     'system',
     'id',
     'Asia/Jakarta',

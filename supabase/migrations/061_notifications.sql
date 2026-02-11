@@ -17,6 +17,17 @@ CREATE TABLE IF NOT EXISTS notifications (
     expires_at TIMESTAMPTZ
 );
 
+-- Ensure category column exists (for migration compatibility)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'notifications' AND column_name = 'category'
+    ) THEN
+        ALTER TABLE notifications ADD COLUMN category VARCHAR(50) NOT NULL DEFAULT 'system';
+    END IF;
+END $$;
+
 -- Create notification preferences table
 CREATE TABLE IF NOT EXISTS notification_preferences (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -98,6 +109,14 @@ CREATE POLICY "Users can manage own push subscriptions"
     ON push_subscriptions FOR ALL
     USING (auth.uid() = user_id);
 
+-- Drop existing functions to allow recreation
+DROP FUNCTION IF EXISTS create_notification(UUID, VARCHAR, TEXT, VARCHAR, VARCHAR, VARCHAR, VARCHAR, JSONB);
+DROP FUNCTION IF EXISTS mark_notification_read(UUID, UUID);
+DROP FUNCTION IF EXISTS mark_all_notifications_read(UUID);
+DROP FUNCTION IF EXISTS get_unread_notification_count(UUID);
+DROP FUNCTION IF EXISTS initialize_notification_preferences();
+DROP FUNCTION IF EXISTS broadcast_notification();
+
 -- Function to create notification
 CREATE OR REPLACE FUNCTION create_notification(
     p_user_id UUID,
@@ -125,13 +144,13 @@ BEGIN
             RETURN NULL;
         END IF;
         
-        CASE p_category
-            WHEN 'promotional' AND NOT v_preferences.promotional_notifications THEN RETURN NULL;
-            WHEN 'social' AND NOT v_preferences.social_notifications THEN RETURN NULL;
-            WHEN 'order' AND NOT v_preferences.order_notifications THEN RETURN NULL;
-            WHEN 'achievement' AND NOT v_preferences.achievement_notifications THEN RETURN NULL;
-            WHEN 'system' AND NOT v_preferences.system_notifications THEN RETURN NULL;
-        END CASE;
+        IF (p_category = 'promotional' AND NOT v_preferences.promotional_notifications) OR
+           (p_category = 'social' AND NOT v_preferences.social_notifications) OR
+           (p_category = 'order' AND NOT v_preferences.order_notifications) OR
+           (p_category = 'achievement' AND NOT v_preferences.achievement_notifications) OR
+           (p_category = 'system' AND NOT v_preferences.system_notifications) THEN
+            RETURN NULL;
+        END IF;
         
         -- Check quiet hours
         IF v_preferences.quiet_hours_enabled THEN
