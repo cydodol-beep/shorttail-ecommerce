@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   ShoppingBag,
   Heart,
@@ -11,20 +12,60 @@ import {
   ChevronRight,
   Trophy,
   TrendingUp,
-  Bell
+  Bell,
+  Home,
+  Package,
+  User,
+  LogOut,
+  Menu,
+  X,
+  Search,
+  Moon,
+  Sun,
+  LayoutGrid,
+  Sparkles,
+  Zap,
+  Activity,
+  ChevronDown,
+  MoreHorizontal,
+  Copy,
+  ExternalLink
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { LineChart, Line, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/use-auth';
-import { StoreLogo } from '@/components/ui/store-logo';
-import { isValidWebPDataUrl, getAvatarDataInfo } from '@/lib/utils';
-import { createClient } from '@/lib/supabase/client';
-import { generateInvoiceJPEG } from '@/lib/invoice-generator';
 import { useStoreSettingsStore } from '@/store/store-settings-store';
+import { createClient } from '@/lib/supabase/client';
+import { isValidWebPDataUrl, getAvatarDataInfo, cn } from '@/lib/utils';
 import type { Order, Pet } from '@/types/database';
+
+// 8-point grid spacing scale
+const spacing = {
+  1: '2px',
+  2: '4px', 
+  3: '8px',
+  4: '12px',
+  5: '16px',
+  6: '24px',
+  7: '32px',
+  8: '48px',
+};
 
 const tierThresholds = {
   Newborn: 0,
@@ -35,12 +76,26 @@ const tierThresholds = {
 };
 
 const tierColors = {
-  Newborn: 'bg-gray-500',
-  Transitional: 'bg-green-500',
+  Newborn: 'bg-slate-500',
+  Transitional: 'bg-emerald-500',
   Juvenile: 'bg-blue-500',
-  Adolescence: 'bg-purple-500',
-  Adulthood: 'bg-yellow-500',
+  Adolescence: 'bg-violet-500',
+  Adulthood: 'bg-amber-500',
 };
+
+const tierGradients = {
+  Newborn: 'from-slate-500 to-slate-600',
+  Transitional: 'from-emerald-500 to-emerald-600',
+  Juvenile: 'from-blue-500 to-blue-600',
+  Adolescence: 'from-violet-500 to-violet-600',
+  Adulthood: 'from-amber-500 to-amber-600',
+};
+
+// Mock data for sparklines
+const sparklineData = [
+  { value: 30 }, { value: 45 }, { value: 35 }, { value: 50 }, { value: 48 },
+  { value: 60 }, { value: 55 }, { value: 70 }, { value: 65 }, { value: 80 },
+];
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('id-ID', {
@@ -50,18 +105,89 @@ function formatPrice(price: number): string {
   }).format(price);
 }
 
-function generateReferralCode(userId: string): string {
-  const prefix = 'ST';
-  const hash = userId.slice(0, 6).toUpperCase();
-  return `${prefix}${hash}`;
+// Navigation items
+const navItems = [
+  { icon: Home, label: 'Dashboard', href: '/dashboard' },
+  { icon: ShoppingBag, label: 'Orders', href: '/dashboard/orders' },
+  { icon: PawPrint, label: 'My Pets', href: '/dashboard/pets' },
+  { icon: Heart, label: 'Wishlist', href: '/dashboard/wishlist' },
+  { icon: Bell, label: 'Notifications', href: '/dashboard/notifications' },
+  { icon: Trophy, label: 'Achievements', href: '/dashboard/achievements' },
+  { icon: Settings, label: 'Settings', href: '/dashboard/settings' },
+];
+
+// Loading skeleton for widgets
+function WidgetSkeleton() {
+  return (
+    <Card className="border-slate-200/60 dark:border-slate-700/60">
+      <CardHeader className="space-y-2">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-3 w-16" />
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-20 w-full" />
+      </CardContent>
+    </Card>
+  );
+}
+
+// Error Boundary Component
+class DashboardErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Card className="p-6 text-center border-red-200 dark:border-red-800">
+          <p className="text-red-600 dark:text-red-400">Something went wrong loading this widget.</p>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-3"
+            onClick={() => this.setState({ hasError: false })}
+          >
+            Try again
+          </Button>
+        </Card>
+      );
+    }
+
+    return this.props.children;
+  }
 }
 
 export default function DashboardPage() {
-  const { profile, user, refetchProfile } = useAuth();
+  const router = useRouter();
+  const { profile, user, refetchProfile, signOut } = useAuth();
+  const { allSettings } = useStoreSettingsStore();
   const [orders, setOrders] = useState<Order[]>([]);
   const [pets, setPets] = useState<Pet[]>([]);
   const [referralCode, setReferralCode] = useState<string | null>(null);
-  const [, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [notifications, setNotifications] = useState(3);
+
+  // Toggle dark mode
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -84,34 +210,6 @@ export default function DashboardPage() {
     setPets(petsRes.data || []);
     setLoading(false);
   }, [user]);
-
-  // Generate referral code if not exists
-  useEffect(() => {
-    const ensureReferralCode = async () => {
-      if (!user || !profile) return;
-
-      if (profile.referral_code) {
-        setReferralCode(profile.referral_code);
-        return;
-      }
-
-      // Generate and save referral code
-      const supabase = createClient();
-      const newCode = generateReferralCode(user.id);
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({ referral_code: newCode })
-        .eq('id', user.id);
-
-      if (!error) {
-        setReferralCode(newCode);
-        refetchProfile?.();
-      }
-    };
-
-    ensureReferralCode();
-  }, [user, profile, refetchProfile]);
 
   useEffect(() => {
     if (user) {
@@ -138,518 +236,699 @@ export default function DashboardPage() {
     return Math.min(100, Math.max(0, progress));
   };
 
+  const handleLogout = async () => {
+    await signOut();
+    router.push('/login');
+  };
+
+  const copyReferralCode = () => {
+    const code = referralCode || profile?.referral_code;
+    if (code) {
+      navigator.clipboard.writeText(`${window.location.origin}/register?ref=${code}`);
+    }
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Quick Actions - Single column layout */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-        <Link href="/shop">
-          <Card className="border-brown-200 hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="pt-6 text-center">
-              <ShoppingBag className="h-8 w-8 text-primary mx-auto mb-2" />
-              <p className="font-medium text-brown-900">Marketplace</p>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/dashboard/orders">
-          <Card className="border-brown-200 hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="pt-6 text-center">
-              <ShoppingBag className="h-8 w-8 text-primary mx-auto mb-2" />
-              <p className="font-medium text-brown-900">Orders</p>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/dashboard/pets">
-          <Card className="border-brown-200 hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="pt-6 text-center">
-              <div className="w-8 h-8 mx-auto mb-2">
-                <StoreLogo className="w-full h-full" iconClassName="h-8 w-8 text-primary" fallbackSize="lg" />
+    <div className={cn("min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300", darkMode && "dark")}>
+      {/* Sticky Glassmorphism Header */}
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 border-b border-slate-200/60 dark:border-slate-700/60">
+        <div className="flex items-center justify-between h-14 px-4 lg:px-6">
+          {/* Left: Menu + Logo */}
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden h-9 w-9"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
+                <Sparkles className="h-4 w-4 text-white" />
               </div>
-              <p className="font-medium text-brown-900">My Pets</p>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/dashboard/wishlist">
-          <Card className="border-brown-200 hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="pt-6 text-center">
-              <Heart className="h-8 w-8 text-primary mx-auto mb-2" />
-              <p className="font-medium text-brown-900">Wishlist</p>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/dashboard/notifications">
-          <Card className="border-brown-200 hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="pt-6 text-center">
-              <Bell className="h-8 w-8 text-primary mx-auto mb-2" />
-              <p className="font-medium text-brown-900">Notifications</p>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/game">
-          <Card className="border-brown-200 hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="pt-6 text-center">
-              <Trophy className="h-8 w-8 text-primary mx-auto mb-2" />
-              <p className="font-medium text-brown-900">Game</p>
-            </CardContent>
-          </Card>
-        </Link>
-      </div>
+              <span className="font-semibold text-slate-900 dark:text-slate-100 hidden sm:block">
+                {allSettings?.store?.storeName || 'Dashboard'}
+              </span>
+            </div>
+          </div>
 
-      {/* Two column layout for other content sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-6">
-          {/* Profile Card */}
-          <Card className="border-brown-200">
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center text-center">
-                <Avatar className="h-20 w-20 mb-4">
-                  {(() => {
-                    const avatarUrl = profile?.user_avatar_url;
-                    const avatarInfo = getAvatarDataInfo(avatarUrl);
+          {/* Center: Global Search */}
+          <div className="flex-1 max-w-md mx-4 hidden md:block">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                type="search"
+                placeholder="Search orders, pets, products..."
+                className="pl-9 h-9 bg-slate-100/50 dark:bg-slate-800/50 border-slate-200/60 dark:border-slate-700/60"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
 
-                    console.debug('Dashboard Avatar Info:', {
-                      urlExists: !!avatarUrl,
-                      isValid: avatarInfo.isValid,
-                      length: avatarInfo.length,
-                      prefix: avatarInfo.prefix
-                    });
+          {/* Right: Actions + Profile */}
+          <div className="flex items-center gap-2">
+            {/* Dark Mode Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9"
+              onClick={() => setDarkMode(!darkMode)}
+            >
+              <AnimatePresence mode="wait">
+                {darkMode ? (
+                  <Sun className="h-4 w-4" />
+                ) : (
+                  <Moon className="h-4 w-4" />
+                )}
+              </AnimatePresence>
+            </Button>
 
-                    return (
-                      <>
-                        <AvatarImage
-                          src={avatarUrl && isValidWebPDataUrl(avatarUrl) ? avatarUrl : undefined}
-                          onError={(e) => {
-                            console.error('Dashboard Avatar image failed to load:', avatarUrl);
-                            console.error('Error object:', e);
-                          }}
-                          className="object-cover"
-                          onLoad={() => {
-                            console.debug('Dashboard Avatar image loaded successfully');
-                          }}
-                        />
-                        <AvatarFallback className="bg-primary text-white text-xl">
-                          {profile?.user_name?.charAt(0).toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </>
-                    );
-                  })()}
-                </Avatar>
-                <h2 className="text-xl font-bold text-brown-900">
-                  {profile?.user_name || 'User'}
-                </h2>
-                <p className="text-sm text-brown-600">{profile?.user_email}</p>
-                <Badge
-                  className={`mt-2 ${tierColors[profile?.tier || 'Newborn']} text-white`}
-                >
-                  <Trophy className="h-3 w-3 mr-1" />
-                  {profile?.tier || 'Newborn'}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Membership Progress */}
-          <Card className="border-brown-200">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                Membership Progress
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-brown-900">Membership Level</span>
-                  <span className="text-xs text-brown-600">
-                    {profile?.points_balance || 0} / {getNextTier() ? tierThresholds[getNextTier()!] : tierThresholds.Adulthood} pts
-                  </span>
+            {/* Notifications */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9 relative">
+                  <Bell className="h-4 w-4" />
+                  {notifications > 0 && (
+                    <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-medium rounded-full flex items-center justify-center">
+                      {notifications}
+                    </span>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <div className="max-h-64 overflow-auto">
+                  <DropdownMenuItem className="flex flex-col items-start gap-1 py-2">
+                    <span className="text-sm font-medium">Order Shipped</span>
+                    <span className="text-xs text-slate-500">Your order #1234 has been shipped</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="flex flex-col items-start gap-1 py-2">
+                    <span className="text-sm font-medium">Points Earned</span>
+                    <span className="text-xs text-slate-500">You earned 50 points from your purchase</span>
+                  </DropdownMenuItem>
                 </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-                {/* Tier Progress Bar */}
-                <div className="relative">
-                  {/* Background track */}
-                  <div className="h-3 bg-brown-100 rounded-full overflow-hidden">
-                    {/* Progress fill */}
+            {/* Profile Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-9 gap-2 pl-1 pr-2">
+                  <Avatar className="h-7 w-7">
+                    <AvatarImage src={profile?.user_avatar_url || undefined} />
+                    <AvatarFallback className="bg-indigo-500 text-white text-xs">
+                      {profile?.user_name?.charAt(0).toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm hidden sm:block">{profile?.user_name || 'User'}</span>
+                  <ChevronDown className="h-3 w-3 text-slate-400" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/settings">Profile Settings</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/orders">My Orders</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex">
+        {/* Collapsible Sidebar */}
+        <AnimatePresence mode="wait">
+          {sidebarOpen && (
+            <motion.aside
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 240, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed lg:sticky top-14 left-0 h-[calc(100vh-3.5rem)] bg-white dark:bg-slate-900 border-r border-slate-200/60 dark:border-slate-700/60 z-40 overflow-hidden"
+            >
+              <nav className="p-3 space-y-1">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+
+              {/* Tier Progress in Sidebar */}
+              <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-slate-200/60 dark:border-slate-700/60">
+                <div className="bg-gradient-to-r from-indigo-500/10 to-violet-500/10 dark:from-indigo-500/20 dark:to-violet-500/20 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Trophy className="h-4 w-4 text-indigo-500" />
+                    <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                      {profile?.tier || 'Newborn'}
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                     <div
-                      className={`h-full ${tierColors[profile?.tier || 'Newborn']} transition-all duration-500`}
-                      style={{
-                        width: `${Math.min(100, ((profile?.points_balance || 0) / (getNextTier() ? tierThresholds[getNextTier()!] : tierThresholds.Adulthood)) * 100)}%`
-                      }}
+                      className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all"
+                      style={{ width: `${getProgressToNextTier()}%` }}
                     />
                   </div>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {tierThresholds[getNextTier() || 'Adulthood'] - (profile?.points_balance || 0)} pts to next tier
+                  </p>
+                </div>
+              </div>
+            </motion.aside>
+          )}
+        </AnimatePresence>
 
-                  {/* Tier markers */}
-                  <div className="relative mt-2">
-                    <div className="flex justify-between">
-                      {Object.entries(tierThresholds).map(([tier, points], index) => {
-                        const currentPoints = profile?.points_balance || 0;
-                        const isAchieved = currentPoints >= points;
-                        const isCurrent = profile?.tier === tier;
+        {/* Main Content */}
+        <main className="flex-1 p-4 lg:p-6 min-h-[calc(100vh-3.5rem)]">
+          {/* Welcome Section */}
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+              Welcome back, {profile?.user_name?.split(' ')[0] || 'User'}! 👋
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1">
+              Here's what's happening with your account today.
+            </p>
+          </div>
 
-                        return (
-                          <div key={tier} className="flex flex-col items-center" style={{ width: '20%' }}>
-                            <div
-                              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mb-1 transition-all ${
-                                isAchieved
-                                  ? `${tierColors[tier as keyof typeof tierColors]} border-transparent`
-                                  : 'bg-white border-brown-300'
-                              } ${isCurrent ? 'ring-2 ring-primary ring-offset-2' : ''}`}
-                            >
-                              {isAchieved && (
-                                <Trophy className="h-3 w-3 text-white" />
-                              )}
-                            </div>
-                            <span className={`text-[10px] font-medium text-center leading-tight ${
-                              isCurrent ? 'text-primary' : isAchieved ? 'text-brown-900' : 'text-brown-400'
-                            }`}>
-                              {tier}
-                            </span>
-                            <span className="text-[9px] text-brown-500">
-                              {points.toLocaleString()}
-                            </span>
-                          </div>
-                        );
-                      })}
+          {/* Bento Grid Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {/* KPI Cards */}
+            <DashboardErrorBoundary>
+              <Suspense fallback={<WidgetSkeleton />}>
+                <KPICard
+                  title="Total Orders"
+                  value={orders.length.toString()}
+                  trend="+12%"
+                  trendUp={true}
+                  icon={Package}
+                  color="indigo"
+                  data={sparklineData}
+                />
+              </Suspense>
+            </DashboardErrorBoundary>
+
+            <DashboardErrorBoundary>
+              <Suspense fallback={<WidgetSkeleton />}>
+                <KPICard
+                  title="Points Balance"
+                  value={(profile?.points_balance || 0).toLocaleString()}
+                  trend="+250"
+                  trendUp={true}
+                  icon={Zap}
+                  color="amber"
+                  data={sparklineData.map(d => ({ value: d.value * 1.2 }))}
+                />
+              </Suspense>
+            </DashboardErrorBoundary>
+
+            <DashboardErrorBoundary>
+              <Suspense fallback={<WidgetSkeleton />}>
+                <KPICard
+                  title="Wishlist Items"
+                  value="12"
+                  trend="+3"
+                  trendUp={true}
+                  icon={Heart}
+                  color="rose"
+                  data={sparklineData.map(d => ({ value: d.value * 0.8 }))}
+                />
+              </Suspense>
+            </DashboardErrorBoundary>
+
+            <DashboardErrorBoundary>
+              <Suspense fallback={<WidgetSkeleton />}>
+                <KPICard
+                  title="Active Pets"
+                  value={pets.length.toString()}
+                  trend="0"
+                  trendUp={true}
+                  icon={PawPrint}
+                  color="emerald"
+                  data={sparklineData.map(d => ({ value: d.value * 0.5 }))}
+                />
+              </Suspense>
+            </DashboardErrorBoundary>
+
+            {/* Membership Card - Spans 2 columns */}
+            <Card className="md:col-span-2 border-slate-200/60 dark:border-slate-700/60 overflow-hidden">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Trophy className="h-4 w-4 text-indigo-500" />
+                  Membership Progress
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className={cn(
+                    "w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center",
+                    tierGradients[profile?.tier || 'Newborn']
+                  )}>
+                    <Trophy className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-baseline justify-between">
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                        {profile?.tier || 'Newborn'} Member
+                      </h3>
+                      <span className="text-sm text-slate-500">
+                        {profile?.points_balance || 0} / {tierThresholds[getNextTier() || 'Adulthood']} pts
+                      </span>
+                    </div>
+                    <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full mt-2 overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${getProgressToNextTier()}%` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                        className={cn(
+                          "h-full rounded-full bg-gradient-to-r",
+                          tierGradients[profile?.tier || 'Newborn']
+                        )}
+                      />
                     </div>
                   </div>
                 </div>
 
-                {getNextTier() && (
-                  <p className="text-xs text-brown-600 text-center">
-                    <span className="font-medium">{tierThresholds[getNextTier()!] - (profile?.points_balance || 0)} points</span> needed to reach <span className="font-semibold">{getNextTier()}</span>
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Referral Code */}
-          <Card className="border-brown-200">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Gift className="h-5 w-5 text-primary" />
-                Referral Program
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-brown-600 mb-3">
-                Share your code and earn points when friends join!
-              </p>
-              <div className="p-3 bg-brown-50 rounded-lg text-center">
-                <code className="text-lg font-mono font-bold text-primary">
-                  {referralCode || profile?.referral_code || 'Generating...'}
-                </code>
-              </div>
-              <Button
-                className="w-full mt-3"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const code = referralCode || profile?.referral_code;
-                  if (code) {
-                    navigator.clipboard.writeText(`${window.location.origin}/register?ref=${code}`);
-                  }
-                }}
-                disabled={!referralCode && !profile?.referral_code}
-              >
-                Copy Referral Link
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-          {/* My Pets */}
-          <Card className="border-brown-200">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>My Pets</CardTitle>
-                <CardDescription>Your registered companions</CardDescription>
-              </div>
-              <Link href="/dashboard/pets">
-                <Button variant="ghost" size="sm">
-                  Manage
-                  <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
-              </Link>
-            </CardHeader>
-            <CardContent>
-              {pets.length === 0 ? (
-                <div className="text-center py-8">
-                  <PawPrint className="h-12 w-12 text-brown-300 mx-auto mb-3" />
-                  <p className="text-brown-600">No pets registered yet</p>
-                  <Link href="/dashboard/pets/new">
-                    <Button className="mt-4">Add Your Pet</Button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-4">
-                  {pets.map((pet) => (
-                    <div
-                      key={pet.id}
-                      className="flex items-center gap-3 p-4 bg-brown-50 rounded-lg"
-                    >
-                      <div className="h-12 w-12 bg-brown-200 rounded-full flex items-center justify-center">
-                        {pet.pet_image_url ? (
-                          <img
-                            src={pet.pet_image_url}
-                            alt={pet.pet_name}
-                            className="h-full w-full rounded-full object-cover"
-                          />
-                        ) : (
-                          <PawPrint className="h-6 w-6 text-brown-500" />
-                        )}
+                {/* Tier Roadmap */}
+                <div className="flex justify-between mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  {Object.entries(tierThresholds).map(([tier, points], index) => {
+                    const isAchieved = (profile?.points_balance || 0) >= points;
+                    const isCurrent = profile?.tier === tier;
+                    return (
+                      <div key={tier} className="flex flex-col items-center">
+                        <div className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all",
+                          isCurrent 
+                            ? "bg-indigo-500 text-white ring-2 ring-indigo-200 dark:ring-indigo-800"
+                            : isAchieved
+                            ? "bg-emerald-500 text-white"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-400"
+                        )}>
+                          {index + 1}
+                        </div>
+                        <span className={cn(
+                          "text-[10px] mt-1 font-medium",
+                          isCurrent ? "text-indigo-600 dark:text-indigo-400" : "text-slate-500"
+                        )}>
+                          {tier}
+                        </span>
                       </div>
-                      <div>
-                        <p className="font-medium text-brown-900">{pet.pet_name}</p>
-                        <p className="text-sm text-brown-600 capitalize">{pet.pet_type}</p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* Recent Orders */}
-          <Card className="border-brown-200">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Recent Orders</CardTitle>
-                <CardDescription>Your latest purchases</CardDescription>
-              </div>
-              <Link href="/dashboard/orders">
-                <Button variant="ghost" size="sm">
-                  View All
-                  <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
-              </Link>
-            </CardHeader>
-            <CardContent>
-              {orders.length === 0 ? (
-                <div className="text-center py-8">
-                  <ShoppingBag className="h-12 w-12 text-brown-300 mx-auto mb-3" />
-                  <p className="text-brown-600">No orders yet</p>
-                  <Link href="/shop">
-                    <Button className="mt-4">Start Shopping</Button>
-                  </Link>
+            {/* Referral Card */}
+            <Card className="border-slate-200/60 dark:border-slate-700/60">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Gift className="h-4 w-4 text-rose-500" />
+                  Refer & Earn
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+                  Share with friends and earn points!
+                </p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 px-3 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-mono text-slate-900 dark:text-slate-100">
+                    {profile?.referral_code || 'Loading...'}
+                  </code>
+                  <Button size="icon" variant="ghost" className="h-9 w-9" onClick={copyReferralCode}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {orders.map((order) => (
-                    <div
-                      key={order.id}
-                      className="p-4 bg-brown-50 rounded-lg border border-brown-100"
-                    >
-                      {/* Order Info - Stack on mobile, flex row on larger screens */}
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
-                            <p className="font-medium text-brown-900 truncate">
-                              Order #{order.id.slice(0, 8)}
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions */}
+            <Card className="border-slate-200/60 dark:border-slate-700/60">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <QuickActionButton icon={ShoppingBag} label="Shop Now" href="/shop" color="indigo" />
+                <QuickActionButton icon={Package} label="View Orders" href="/dashboard/orders" color="emerald" />
+                <QuickActionButton icon={PawPrint} label="Add Pet" href="/dashboard/pets/new" color="amber" />
+                <QuickActionButton icon={Heart} label="Wishlist" href="/dashboard/wishlist" color="rose" />
+              </CardContent>
+            </Card>
+
+            {/* Recent Orders - Spans 2 columns */}
+            <Card className="md:col-span-2 lg:col-span-2 border-slate-200/60 dark:border-slate-700/60">
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Recent Orders</CardTitle>
+                <Link href="/dashboard/orders">
+                  <Button variant="ghost" size="sm" className="h-8">
+                    View all
+                    <ChevronRight className="ml-1 h-3 w-3" />
+                  </Button>
+                </Link>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-14 w-full" />
+                    ))}
+                  </div>
+                ) : orders.length === 0 ? (
+                  <div className="text-center py-8 text-slate-500">
+                    <ShoppingBag className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                    <p className="text-sm">No orders yet</p>
+                    <Link href="/shop">
+                      <Button variant="link" size="sm">Start shopping</Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {orders.slice(0, 4).map((order) => (
+                      <div
+                        key={order.id}
+                        className="flex items-center justify-between p-3 rounded-lg bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                            <Package className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                              #{order.id.slice(0, 8)}
                             </p>
-                            <Badge variant="outline" className="capitalize text-xs px-2.5 py-0.5 h-6 flex-shrink-0">
-                              {order.status}
-                            </Badge>
-                          </div>
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-brown-600">
-                            <span>
-                              {new Date(order.created_at).toLocaleDateString('id-ID', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                              })}
-                            </span>
-                            <span className="hidden sm:block">•</span>
-                            <span>
-                              {new Date(order.created_at).toLocaleTimeString('id-ID', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </span>
+                            <p className="text-xs text-slate-500">
+                              {new Date(order.created_at).toLocaleDateString()}
+                            </p>
                           </div>
                         </div>
-
-                        {/* Price and Actions - Stack on mobile, stay inline on larger screens */}
-                        <div className="w-full sm:w-auto sm:text-right">
-                          <div className="font-bold text-primary text-lg mb-3 sm:mb-2 sm:mr-0 sm:text-right">
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                             {formatPrice(order.total_amount)}
-                          </div>
-
-                          {/* Action buttons - Stack vertically on mobile */}
-                          <div className="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0 sm:items-center">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-9 text-sm flex-1 sm:flex-none w-full sm:w-auto"
-                              onClick={async () => {
-                                // Generate invoice preview
-                                try {
-                                  const supabase = createClient();
-
-                                  // Fetch the order with items to generate invoice
-                                  // First get the order
-                                  const { data: orderData, error: orderError } = await supabase
-                                    .from('orders')
-                                    .select('id, user_id, cashier_id, source, status, subtotal, shipping_fee, discount_amount, total_amount, recipient_name, recipient_phone, recipient_address, recipient_province, shipping_courier, shipping_courier_name, shipping_address_snapshot, customer_notes, created_at, updated_at')
-                                    .eq('id', order.id)
-                                    .single();
-
-                                  if (orderError) throw orderError;
-
-                                  // Then get the order items
-                                  const { data: itemsData, error: itemsError } = await supabase
-                                    .from('order_items')
-                                    .select('product_id, variant_id, quantity, price_at_purchase')
-                                    .eq('order_id', order.id);
-
-                                  if (itemsError) throw itemsError;
-
-                                  // For each item, get product and variant details
-                                  let itemsWithDetails = [];
-                                  if (itemsData && itemsData.length > 0) {
-                                    for (const item of itemsData) {
-                                      // Get product details
-                                      const { data: productData, error: productError } = await supabase
-                                        .from('products')
-                                        .select('name, sku')
-                                        .eq('id', item.product_id)
-                                        .single();
-
-                                      let productDetails = {
-                                        name: 'Unknown Product',
-                                        sku: undefined
-                                      };
-
-                                      if (!productError && productData) {
-                                        productDetails = {
-                                          name: productData.name,
-                                          sku: productData.sku
-                                        };
-                                      }
-
-                                      // Get variant details if exists
-                                      let variantDetails = {
-                                        name: null,
-                                        sku: null
-                                      };
-
-                                      if (item.variant_id) {
-                                        const { data: variantData, error: variantError } = await supabase
-                                          .from('product_variants')
-                                          .select('variant_name, sku')
-                                          .eq('id', item.variant_id)
-                                          .single();
-
-                                        if (!variantError && variantData) {
-                                          variantDetails = {
-                                            name: variantData.variant_name,
-                                            sku: variantData.sku
-                                          };
-                                        }
-                                      }
-
-                                      itemsWithDetails.push({
-                                        product_id: item.product_id,
-                                        product_name: productDetails.name,
-                                        product_sku: productDetails.sku,
-                                        variant_id: item.variant_id,
-                                        variant_name: variantDetails.name || undefined,
-                                        variant_sku: variantDetails.sku || undefined,
-                                        quantity: item.quantity,
-                                        price_at_purchase: item.price_at_purchase,
-                                      });
-                                    }
-                                  }
-
-                                  // Get user profile to get the user name
-                                  let userName = '';
-                                  if (orderData.user_id) {
-                                    const { data: profileData, error: profileError } = await supabase
-                                      .from('profiles')
-                                      .select('user_name')
-                                      .eq('id', orderData.user_id)
-                                      .single();
-
-                                    if (!profileError && profileData) {
-                                      userName = profileData.user_name || '';
-                                    }
-                                  }
-
-                                  // Get store settings for invoice generation
-                                  const { allSettings } = useStoreSettingsStore.getState();
-                                  const storeSettings = {
-                                    store_name: allSettings?.store?.storeName || 'ShortTail.id',
-                                    store_logo: allSettings?.store?.storeLogo || '',
-                                    store_address: allSettings?.store?.storeAddress || '',
-                                    store_phone: allSettings?.store?.storePhone || '',
-                                    store_email: allSettings?.store?.storeEmail || '',
-                                  };
-
-                                  // Format the order data to match the expected structure for the invoice generator
-                                  const orderForInvoice = {
-                                    id: orderData.id,
-                                    user_id: orderData.user_id || undefined,
-                                    cashier_id: orderData.cashier_id || undefined,
-                                    user_name: userName,
-                                    source: orderData.source,
-                                    status: orderData.status,
-                                    subtotal: orderData.subtotal,
-                                    shipping_fee: orderData.shipping_fee,
-                                    discount_amount: orderData.discount_amount,
-                                    total_amount: orderData.total_amount,
-                                    recipient_name: orderData.recipient_name || (orderData.shipping_address_snapshot as any)?.recipient_name || undefined,
-                                    recipient_phone: orderData.recipient_phone || (orderData.shipping_address_snapshot as any)?.phone || undefined,
-                                    recipient_address: orderData.recipient_address || (orderData.shipping_address_snapshot as any)?.address_line1 || undefined,
-                                    recipient_province: orderData.recipient_province || (orderData.shipping_address_snapshot as any)?.province || undefined,
-                                    shipping_courier: orderData.shipping_courier || orderData.shipping_courier_name || undefined,
-                                    shipping_courier_name: orderData.shipping_courier_name || undefined,
-                                    shipping_address_snapshot: orderData.shipping_address_snapshot,
-                                    customer_notes: orderData.customer_notes || undefined,
-                                    items_count: itemsWithDetails.length,
-                                    items: itemsWithDetails,
-                                    created_at: orderData.created_at,
-                                    updated_at: orderData.updated_at,
-                                  };
-
-                                  // Generate the invoice
-                                  const invoiceBlob = await generateInvoiceJPEG(orderForInvoice, storeSettings);
-
-                                  // Create a temporary URL for the preview
-                                  const url = URL.createObjectURL(invoiceBlob);
-
-                                  // Open the invoice in a new tab
-                                  window.open(url, '_blank');
-
-                                  // Clean up the object URL after a delay
-                                  setTimeout(() => URL.revokeObjectURL(url), 10000);
-                                } catch (error) {
-                                  console.error('Error generating invoice:', error);
-                                  alert('Error generating invoice. Please try again.');
-                                }
-                              }}
-                            >
-                              Invoice
-                            </Button>
-                            <Link href={`/dashboard/orders/${order.id}`}>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-9 text-sm w-full sm:w-auto"
-                              >
-                                View Details
-                              </Button>
-                            </Link>
-                          </div>
+                          </p>
+                          <Badge variant="secondary" className="text-[10px]">
+                            {order.status}
+                          </Badge>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* My Pets */}
+            <Card className="border-slate-200/60 dark:border-slate-700/60">
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-base">My Pets</CardTitle>
+                <Link href="/dashboard/pets">
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="space-y-2">
+                    {[1, 2].map((i) => (
+                      <Skeleton key={i} className="h-12 w-full" />
+                    ))}
+                  </div>
+                ) : pets.length === 0 ? (
+                  <div className="text-center py-6 text-slate-500">
+                    <PawPrint className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                    <p className="text-xs mb-2">No pets added</p>
+                    <Link href="/dashboard/pets/new">
+                      <Button size="sm" variant="outline" className="h-7 text-xs">Add pet</Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {pets.slice(0, 3).map((pet) => (
+                      <div
+                        key={pet.id}
+                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center overflow-hidden">
+                          {pet.pet_image_url ? (
+                            <img src={pet.pet_image_url} alt={pet.pet_name} className="w-full h-full object-cover" />
+                          ) : (
+                            <PawPrint className="h-5 w-5 text-white" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+                            {pet.pet_name}
+                          </p>
+                          <p className="text-xs text-slate-500 capitalize">{pet.pet_type}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Activity Feed - Spans full width on mobile, 1 column on large */}
+            <Card className="border-slate-200/60 dark:border-slate-700/60">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-emerald-500" />
+                  Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <ActivityItem
+                    icon={ShoppingBag}
+                    iconColor="indigo"
+                    title="Order placed"
+                    description="Order #1234 confirmed"
+                    time="2 hours ago"
+                  />
+                  <ActivityItem
+                    icon={Zap}
+                    iconColor="amber"
+                    title="Points earned"
+                    description="+50 points from purchase"
+                    time="2 hours ago"
+                  />
+                  <ActivityItem
+                    icon={Trophy}
+                    iconColor="violet"
+                    title="Tier upgraded"
+                    description="You're now Juvenile!"
+                    time="1 day ago"
+                  />
+                  <ActivityItem
+                    icon={Heart}
+                    iconColor="rose"
+                    title="Item wishlisted"
+                    description="Premium Dog Food added"
+                    time="2 days ago"
+                  />
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
       </div>
+
+      {/* Floating Quick Action Button */}
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        className="fixed bottom-6 right-6 z-50"
+      >
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="icon"
+              className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-r from-indigo-500 to-violet-600"
+            >
+              <LayoutGrid className="h-6 w-6" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/shop" className="flex items-center gap-2">
+                <ShoppingBag className="h-4 w-4" />
+                Shop Now
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/pets/new" className="flex items-center gap-2">
+                <PawPrint className="h-4 w-4" />
+                Add Pet
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/game" className="flex items-center gap-2">
+                <Trophy className="h-4 w-4" />
+                Play Game
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </motion.div>
+    </div>
+  );
+}
+
+// KPI Card Component with Sparkline
+function KPICard({
+  title,
+  value,
+  trend,
+  trendUp,
+  icon: Icon,
+  color,
+  data,
+}: {
+  title: string;
+  value: string;
+  trend: string;
+  trendUp: boolean;
+  icon: React.ElementType;
+  color: string;
+  data: { value: number }[];
+}) {
+  const colorMap: Record<string, { bg: string; text: string; stroke: string }> = {
+    indigo: { bg: 'bg-indigo-50 dark:bg-indigo-950/30', text: 'text-indigo-600 dark:text-indigo-400', stroke: '#6366f1' },
+    amber: { bg: 'bg-amber-50 dark:bg-amber-950/30', text: 'text-amber-600 dark:text-amber-400', stroke: '#f59e0b' },
+    rose: { bg: 'bg-rose-50 dark:bg-rose-950/30', text: 'text-rose-600 dark:text-rose-400', stroke: '#f43f5e' },
+    emerald: { bg: 'bg-emerald-50 dark:bg-emerald-950/30', text: 'text-emerald-600 dark:text-emerald-400', stroke: '#10b981' },
+  };
+
+  const colors = colorMap[color] || colorMap.indigo;
+
+  return (
+    <Card className="border-slate-200/60 dark:border-slate-700/60 hover:shadow-md transition-shadow group">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between">
+          <div className={cn("p-2 rounded-lg", colors.bg)}>
+            <Icon className={cn("h-4 w-4", colors.text)} />
+          </div>
+          <div className={cn(
+            "text-xs font-medium",
+            trendUp ? "text-emerald-600" : "text-rose-600"
+          )}>
+            {trend}
+          </div>
+        </div>
+        <div className="mt-3">
+          <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{value}</p>
+          <p className="text-sm text-slate-500">{title}</p>
+        </div>
+        <div className="h-10 mt-3">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data}>
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke={colors.stroke}
+                strokeWidth={2}
+                dot={false}
+              />
+              <RechartsTooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(0,0,0,0.8)',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                }}
+                itemStyle={{ color: '#fff' }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Quick Action Button
+function QuickActionButton({
+  icon: Icon,
+  label,
+  href,
+  color,
+}: {
+  icon: React.ElementType;
+  label: string;
+  href: string;
+  color: string;
+}) {
+  const colorMap: Record<string, string> = {
+    indigo: 'hover:bg-indigo-50 dark:hover:bg-indigo-950/30 hover:text-indigo-600',
+    emerald: 'hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:text-emerald-600',
+    amber: 'hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:text-amber-600',
+    rose: 'hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600',
+  };
+
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 transition-all hover:translate-x-1",
+        colorMap[color]
+      )}
+    >
+      <Icon className="h-4 w-4" />
+      {label}
+    </Link>
+  );
+}
+
+// Activity Item Component
+function ActivityItem({
+  icon: Icon,
+  iconColor,
+  title,
+  description,
+  time,
+}: {
+  icon: React.ElementType;
+  iconColor: string;
+  title: string;
+  description: string;
+  time: string;
+}) {
+  const colorMap: Record<string, string> = {
+    indigo: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400',
+    amber: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
+    violet: 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400',
+    rose: 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400',
+    emerald: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
+  };
+
+  return (
+    <div className="flex items-start gap-3">
+      <div className={cn("p-1.5 rounded-lg shrink-0", colorMap[iconColor])}>
+        <Icon className="h-3.5 w-3.5" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{title}</p>
+        <p className="text-xs text-slate-500 truncate">{description}</p>
+      </div>
+      <span className="text-[10px] text-slate-400 shrink-0">{time}</span>
     </div>
   );
 }
