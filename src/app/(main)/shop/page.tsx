@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export default function ShopPage() {
   return (
     <Suspense fallback={<MarketplaceSkeleton />}>
-      <MarketplaceLanding />
+      <MarketplaceLanding showStickyHeader={false} />
     </Suspense>
   );
 }

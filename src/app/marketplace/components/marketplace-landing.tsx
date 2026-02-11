@@ -275,7 +275,11 @@ function ScrollToTop() {
 }
 
 // Main Marketplace Landing Component
-export function MarketplaceLanding() {
+interface MarketplaceLandingProps {
+  showStickyHeader?: boolean;
+}
+
+export function MarketplaceLanding({ showStickyHeader = true }: MarketplaceLandingProps) {
   const {
     paginatedProducts,
     isLoading,
@@ -304,11 +308,13 @@ export function MarketplaceLanding() {
       {/* Scroll Progress Indicator */}
       <ScrollProgress />
       
-      {/* Sticky Smart Header */}
-      <StickyHeader
-        onSearch={handleSearch}
-        searchQuery={filters.searchQuery || ''}
-      />
+      {/* Sticky Smart Header - Only render when not inside (main) layout */}
+      {showStickyHeader && (
+        <StickyHeader
+          onSearch={handleSearch}
+          searchQuery={filters.searchQuery || ''}
+        />
+      )}
 
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-background pt-32 pb-12">
