@@ -6,12 +6,11 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { PawPrint, Loader2, Phone } from 'lucide-react';
+import { PawPrint, Loader2, Phone, Lock, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useAuth } from '@/hooks/use-auth';
 import { useStoreSettings } from '@/hooks/use-store-settings';
@@ -26,7 +25,6 @@ const loginSchema = z.object({
 
 type LoginForm = z.infer<typeof loginSchema>;
 
-// Helper to format phone number to E.164 format
 const formatPhoneNumber = (phone: string): string => {
   let cleaned = phone.replace(/\D/g, '');
   if (cleaned.startsWith('0')) {
@@ -37,9 +35,7 @@ const formatPhoneNumber = (phone: string): string => {
   return '+' + cleaned;
 };
 
-// Convert phone to email-like format for Supabase auth (workaround)
 const phoneToEmail = (phone: string): string => {
-  // Remove + and use phone as email: +628123456789 -> 628123456789@phone.local
   const cleanPhone = phone.replace(/^\+/, '');
   return `${cleanPhone}@phone.local`;
 };
@@ -64,10 +60,7 @@ export default function LoginPage() {
     const { createClient } = await import('@/lib/supabase/client');
     const supabase = createClient();
     
-    // Format phone to E.164 format
     const formattedPhone = formatPhoneNumber(data.phone);
-    
-    // Look up the auth email by phone number (handles both old and new registration systems)
     let loginEmail: string;
     
     try {
@@ -81,11 +74,9 @@ export default function LoginPage() {
       if (lookupData.email) {
         loginEmail = lookupData.email;
       } else {
-        // Fallback to phone-to-email format (new registration system)
         loginEmail = phoneToEmail(formattedPhone);
       }
     } catch {
-      // Fallback to phone-to-email format
       loginEmail = phoneToEmail(formattedPhone);
     }
     
@@ -97,7 +88,6 @@ export default function LoginPage() {
       return;
     }
 
-    // Check if user is approved
     if (authData?.user) {
       const { data: userProfile } = await supabase
         .from('profiles')
@@ -106,7 +96,6 @@ export default function LoginPage() {
         .single();
       
       if (userProfile && !userProfile.is_approved) {
-        // Sign out the user and show error
         await supabase.auth.signOut();
         toast.error('Your account is pending approval. Please wait for admin approval.');
         setLoading(false);
@@ -120,59 +109,63 @@ export default function LoginPage() {
   };
 
   return (
-    <Card className="border-brown-200 shadow-lg">
-      <CardHeader className="text-center">
-        <div className="flex justify-center mb-4">
+    <div className="w-full max-w-sm bg-white rounded-lg shadow-md border border-gray-200">
+      {/* Compact Header */}
+      <div className="p-3 border-b border-gray-100">
+        <div className="flex items-center gap-2">
           {settings?.storeLogo ? (
-            <div className="relative w-32 h-20">
+            <div className="relative w-8 h-8 shrink-0">
               {settings.storeLogo.startsWith('data:') ? (
                 <img
                   src={settings.storeLogo}
-                  alt={settings.storeName || 'Store Logo'}
+                  alt=""
                   className="w-full h-full object-contain"
                 />
               ) : (
                 <Image
                   src={settings.storeLogo}
-                  alt={settings.storeName || 'Store Logo'}
+                  alt=""
                   fill
                   className="object-contain"
                 />
               )}
             </div>
           ) : (
-            <div className="p-3 bg-primary/10 rounded-full">
-              <PawPrint className="h-8 w-8 text-primary" />
+            <div className="p-1 bg-primary/10 rounded shrink-0">
+              <PawPrint className="h-4 w-4 text-primary" />
             </div>
           )}
+          <div className="min-w-0">
+            <h1 className="text-sm font-semibold text-gray-900 leading-tight">
+              {settings?.storeName || 'ShortTail.id'}
+            </h1>
+            <p className="text-xs text-gray-500">Sign in to continue</p>
+          </div>
         </div>
-        <CardTitle className="text-2xl font-bold text-brown-900">Welcome Back</CardTitle>
-        <CardDescription className="text-brown-600">
-          Sign in to {settings?.storeName || 'ShortTail.id'}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+      </div>
+
+      {/* Dense Form */}
+      <div className="p-3">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
             <FormField
               control={form.control}
               name="phone"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
+                <FormItem className="space-y-1">
+                  <FormLabel className="text-xs font-medium text-gray-700">Phone</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Phone className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
                       <Input
                         type="tel"
                         placeholder="08123456789"
-                        className="pl-10"
+                        className="h-8 pl-7 pr-2 text-sm"
                         {...field}
                       />
                     </div>
                   </FormControl>
-                  <p className="text-xs text-muted-foreground">Format: 08xx or +62xx</p>
-                  <FormMessage />
+                  <FormMessage className="text-xs" />
                 </FormItem>
               )}
             />
@@ -180,39 +173,60 @@ export default function LoginPage() {
               control={form.control}
               name="password"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
+                <FormItem className="space-y-1">
+                  <FormLabel className="text-xs font-medium text-gray-700">Password</FormLabel>
                   <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="Enter your password"
-                      {...field}
-                    />
+                    <div className="relative">
+                      <Lock className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                      <Input
+                        type="password"
+                        placeholder="••••••"
+                        className="h-8 pl-7 pr-2 text-sm"
+                        {...field}
+                      />
+                    </div>
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-xs" />
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sign In
-            </Button>
+            
+            {/* Compact Actions */}
+            <div className="pt-1 space-y-2">
+              <Button 
+                type="submit" 
+                className="w-full h-8 text-sm" 
+                disabled={loading}
+                size="sm"
+              >
+                {loading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <>
+                    Sign In
+                    <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                  </>
+                )}
+              </Button>
+              
+              <div className="flex items-center justify-between text-xs">
+                <Link 
+                  href="/forgot-password" 
+                  className="text-primary hover:underline"
+                >
+                  Forgot password?
+                </Link>
+                <Link 
+                  href="/register" 
+                  className="text-primary hover:underline font-medium"
+                >
+                  Sign up
+                </Link>
+              </div>
+            </div>
           </form>
         </Form>
-      </CardContent>
-      <CardFooter className="flex flex-col gap-4">
-        <p className="text-sm text-muted-foreground text-center">
-          <Link href="/forgot-password" className="text-primary hover:underline font-medium">
-            Forgot your password?
-          </Link>
-        </p>
-        <p className="text-sm text-muted-foreground text-center">
-          Don&apos;t have an account?{' '}
-          <Link href="/register" className="text-primary hover:underline font-medium">
-            Sign up
-          </Link>
-        </p>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 }
