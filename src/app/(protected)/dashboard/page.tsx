@@ -175,7 +175,7 @@ export default function DashboardPage() {
   const [pets, setPets] = useState<Pet[]>([]);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Hidden by default on mobile
   const [darkMode, setDarkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [notifications, setNotifications] = useState(3);
@@ -250,58 +250,114 @@ export default function DashboardPage() {
 
   return (
     <div className={cn("min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300", darkMode && "dark")}>
-      <div className="flex">
-        {/* Collapsible Sidebar */}
-        <AnimatePresence mode="wait">
+      <div className="flex relative">
+        {/* Mobile Overlay Backdrop */}
+        <AnimatePresence>
           {sidebarOpen && (
-            <motion.aside
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 240, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed lg:sticky top-14 left-0 h-[calc(100vh-3.5rem)] bg-white dark:bg-slate-900 border-r border-slate-200/60 dark:border-slate-700/60 z-40 overflow-hidden"
-            >
-              <nav className="p-3 space-y-1">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
-                  </Link>
-                ))}
-              </nav>
-
-              {/* Tier Progress in Sidebar */}
-              <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-slate-200/60 dark:border-slate-700/60">
-                <div className="bg-gradient-to-r from-indigo-500/10 to-violet-500/10 dark:from-indigo-500/20 dark:to-violet-500/20 rounded-lg p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Trophy className="h-4 w-4 text-indigo-500" />
-                    <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                      {profile?.tier || 'Newborn'}
-                    </span>
-                  </div>
-                  <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all"
-                      style={{ width: `${getProgressToNextTier()}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">
-                    {tierThresholds[getNextTier() || 'Adulthood'] - (profile?.points_balance || 0)} pts to next tier
-                  </p>
-                </div>
-              </div>
-            </motion.aside>
+              className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+            />
           )}
         </AnimatePresence>
 
+        {/* Collapsible Sidebar - Hidden by default on mobile, toggleable */}
+        <motion.aside
+          initial={false}
+          animate={{
+            x: sidebarOpen ? 0 : -240,
+            opacity: sidebarOpen ? 1 : 0,
+          }}
+          transition={{ duration: 0.2, ease: "easeInOut" }}
+          className={cn(
+            "fixed lg:sticky top-0 left-0 h-screen bg-white dark:bg-slate-900 border-r border-slate-200/60 dark:border-slate-700/60 z-50 overflow-hidden w-[240px]",
+            "lg:translate-x-0 lg:opacity-100" // Always visible on desktop
+          )}
+        >
+          {/* Sidebar Header with Close Button for Mobile */}
+          <div className="flex items-center justify-between p-4 border-b border-slate-200/60 dark:border-slate-700/60 lg:hidden">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
+                <Sparkles className="h-4 w-4 text-white" />
+              </div>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
+                Menu
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <nav className="p-3 space-y-1 pt-4 lg:pt-3">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setSidebarOpen(false)} // Close sidebar on mobile when item clicked
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Tier Progress in Sidebar */}
+          <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-slate-200/60 dark:border-slate-700/60">
+            <div className="bg-gradient-to-r from-indigo-500/10 to-violet-500/10 dark:from-indigo-500/20 dark:to-violet-500/20 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Trophy className="h-4 w-4 text-indigo-500" />
+                <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  {profile?.tier || 'Newborn'}
+                </span>
+              </div>
+              <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all"
+                  style={{ width: `${getProgressToNextTier()}%` }}
+                />
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                {tierThresholds[getNextTier() || 'Adulthood'] - (profile?.points_balance || 0)} pts to next tier
+              </p>
+            </div>
+          </div>
+        </motion.aside>
+
         {/* Main Content */}
-        <main className="flex-1 p-4 lg:p-6 min-h-[calc(100vh-3.5rem)]">
-          {/* Welcome Section */}
-          <div className="mb-6">
+        <main className="flex-1 p-4 lg:p-6 min-h-screen w-full">
+          {/* Mobile Header with Menu Toggle */}
+          <div className="flex items-center gap-3 mb-6 lg:hidden">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-10 w-10 shrink-0"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                Welcome back, {profile?.user_name?.split(' ')[0] || 'User'}! 👋
+              </h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Here's what's happening today.
+              </p>
+            </div>
+          </div>
+
+          {/* Desktop Welcome Section */}
+          <div className="hidden lg:block mb-6">
             <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
               Welcome back, {profile?.user_name?.split(' ')[0] || 'User'}! 👋
             </h1>
