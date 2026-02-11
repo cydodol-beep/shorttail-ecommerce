@@ -25,7 +25,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/footer';
 import { StoreLogo } from '@/components/ui/store-logo';
 import { createClient } from '@/lib/supabase/client';
 
@@ -1306,8 +1305,6 @@ export default function AboutPage() {
         </section>
         </div>
       )}
-
-      <Footer />
     </main>
     </div>
   );
