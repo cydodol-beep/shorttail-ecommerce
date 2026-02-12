@@ -262,7 +262,7 @@ export default function DashboardPage() {
   return (
     <div className={cn("min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300", darkMode && "dark")}>
       <div className="flex relative">
-        {/* Mobile Overlay Backdrop */}
+        {/* Mobile Overlay Backdrop - Only visible on mobile when sidebar is open */}
         <AnimatePresence>
           {sidebarOpen && (
             <motion.div
@@ -270,13 +270,14 @@ export default function DashboardPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+              className="fixed inset-0 bg-black/50 z-30 lg:hidden"
               onClick={() => setSidebarOpen(false)}
             />
           )}
         </AnimatePresence>
 
         {/* Collapsible Sidebar - Hidden by default on mobile, always visible on desktop */}
+        {/* Mobile: fixed position with full height, Desktop: sticky below header */}
         <motion.aside
           initial={false}
           animate={{
@@ -285,7 +286,9 @@ export default function DashboardPage() {
           }}
           transition={{ duration: 0.2, ease: "easeInOut" }}
           className={cn(
-            "fixed lg:sticky top-0 left-0 h-screen bg-white dark:bg-slate-900 border-r border-slate-200/60 dark:border-slate-700/60 z-50 overflow-hidden w-[240px]"
+            "fixed lg:sticky lg:top-16 left-0 bg-white dark:bg-slate-900 border-r border-slate-200/60 dark:border-slate-700/60 overflow-hidden w-[240px]",
+            "h-screen lg:h-[calc(100vh-64px)]", // Full height on mobile, subtract header on desktop
+            "z-40 lg:z-30" // Below header (z-50) on desktop, above backdrop on mobile
           )}
         >
           {/* Sidebar Header with Close Button for Mobile */}
