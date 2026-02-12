@@ -176,9 +176,20 @@ export default function DashboardPage() {
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false); // Hidden by default on mobile
+  const [isDesktop, setIsDesktop] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [notifications, setNotifications] = useState(3);
+
+  // Detect desktop screen size
+  useEffect(() => {
+    const checkDesktop = () => {
+      setIsDesktop(window.innerWidth >= 1024); // lg breakpoint
+    };
+    checkDesktop();
+    window.addEventListener('resize', checkDesktop);
+    return () => window.removeEventListener('resize', checkDesktop);
+  }, []);
 
   // Toggle dark mode
   useEffect(() => {
@@ -265,17 +276,16 @@ export default function DashboardPage() {
           )}
         </AnimatePresence>
 
-        {/* Collapsible Sidebar - Hidden by default on mobile, toggleable */}
+        {/* Collapsible Sidebar - Hidden by default on mobile, always visible on desktop */}
         <motion.aside
           initial={false}
           animate={{
-            x: sidebarOpen ? 0 : -240,
-            opacity: sidebarOpen ? 1 : 0,
+            x: isDesktop || sidebarOpen ? 0 : -240,
+            opacity: isDesktop || sidebarOpen ? 1 : 0,
           }}
           transition={{ duration: 0.2, ease: "easeInOut" }}
           className={cn(
-            "fixed lg:sticky top-0 left-0 h-screen bg-white dark:bg-slate-900 border-r border-slate-200/60 dark:border-slate-700/60 z-50 overflow-hidden w-[240px]",
-            "lg:translate-x-0 lg:opacity-100" // Always visible on desktop
+            "fixed lg:sticky top-0 left-0 h-screen bg-white dark:bg-slate-900 border-r border-slate-200/60 dark:border-slate-700/60 z-50 overflow-hidden w-[240px]"
           )}
         >
           {/* Sidebar Header with Close Button for Mobile */}
